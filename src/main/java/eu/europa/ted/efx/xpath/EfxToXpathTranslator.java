@@ -16,7 +16,7 @@ import eu.europa.ted.efx.EfxParser;
 
 	public class EfxToXpathTranslator extends EfxBaseListener {
 
-		static final boolean debug = true;
+		static final boolean debug = false;
 
 		/**
 		 * The stack is used by the methods of this listener 
@@ -113,7 +113,7 @@ import eu.europa.ted.efx.EfxParser;
 			this.efxContext.pop();
 			if (debug) {
 				System.out.println("[In]:  " + ctx.getText());
-				System.out.println("[Out]: " + this.stack.pop());
+				System.out.println("[Out]: " + this.stack.peek());
 				System.out.println();
 			}
 		}
@@ -226,7 +226,7 @@ import eu.europa.ted.efx.EfxParser;
 		}
 		
 		@Override public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
-			this.stack.push("fn:doc('http://notice.service/" + ctx.noticeId.getText() +"')");
+			this.stack.push("fn:doc('http://notice.service/" + this.stack.pop() + "')");
 		}
 		
 		@Override public void exitNodeReference(EfxParser.NodeReferenceContext ctx) {
