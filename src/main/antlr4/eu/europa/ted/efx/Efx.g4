@@ -13,7 +13,7 @@ context: (axis '//')? field=FieldId ':';
  * Conditions
  */
 condition: condition operator='or' condition			# logicalOrCondition
-	| condition operator='and' condition				# logicalAndConditon
+	| condition operator='and' condition				# logicalAndCondition
 	| 'not' condition									# logicalNotCondition
 	| '(' condition ')'									# parenthesizedCondition
 	| 'ALWAYS'											# alwaysCondition

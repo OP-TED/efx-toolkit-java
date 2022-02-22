@@ -125,7 +125,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
 
 
   @Override
-  public void exitLogicalAndConditon(EfxParser.LogicalAndConditonContext ctx) {
+  public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
     String right = this.stack.pop();
     String left = this.stack.pop();
     this.stack.push(left + " " + operators.get("and") + " " + right);
