@@ -56,30 +56,29 @@ public class EfxToXpathTranslator extends EfxBaseListener {
 
   // Static methods
 
-  public static String translateTestFile(String fileName) throws IOException {
+  public static String translateTestFile(final String fileName) throws IOException {
 
-    EfxLexer lexer = new EfxLexer(CharStreams.fromFileName(fileName));
-    CommonTokenStream tokens = new CommonTokenStream(lexer);
-    EfxParser parser = new EfxParser(tokens);
-    ParseTree tree = parser.testfile();
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromFileName(fileName));
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final EfxParser parser = new EfxParser(tokens);
+    final ParseTree tree = parser.testfile();
 
-    ParseTreeWalker walker = new ParseTreeWalker();
-    EfxToXpathTranslator translator = new EfxToXpathTranslator();
+    final ParseTreeWalker walker = new ParseTreeWalker();
+    final EfxToXpathTranslator translator = new EfxToXpathTranslator();
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
   }
 
+  public static String translateCondition(final String condition) {
 
-  public static String translateCondition(String condition) {
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(condition));
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final EfxParser parser = new EfxParser(tokens);
+    final ParseTree tree = parser.condition();
 
-    EfxLexer lexer = new EfxLexer(CharStreams.fromString(condition));
-    CommonTokenStream tokens = new CommonTokenStream(lexer);
-    EfxParser parser = new EfxParser(tokens);
-    ParseTree tree = parser.condition();
-
-    ParseTreeWalker walker = new ParseTreeWalker();
-    EfxToXpathTranslator translator = new EfxToXpathTranslator();
+    final ParseTreeWalker walker = new ParseTreeWalker();
+    final EfxToXpathTranslator translator = new EfxToXpathTranslator();
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
@@ -88,15 +87,14 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   /**
    * Call this method to get the translated code after the walker finished its walk.
    *
-   * @return
+   * @return The translated code, trimmed
    */
   public String getTranslatedString() {
-    String result = "";
-
+    final StringBuilder sb = new StringBuilder(64);
     while (!this.stack.empty()) {
-      result = this.stack.pop() + "\n" + result;
+      sb.insert(0, this.stack.pop() + '\n');
     }
-    return result.trim();
+    return sb.toString().trim();
   }
 
   @Override
@@ -122,7 +120,6 @@ public class EfxToXpathTranslator extends EfxBaseListener {
       System.out.println(ctx.getText());
     }
   }
-
 
   @Override
   public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
