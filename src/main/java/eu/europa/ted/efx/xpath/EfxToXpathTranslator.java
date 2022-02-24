@@ -90,9 +90,9 @@ public class EfxToXpathTranslator extends EfxBaseListener {
    * @return The translated code, trimmed
    */
   public String getTranslatedString() {
-    final StringBuilder sb = new StringBuilder(64);
+    final StringBuilder sb = new StringBuilder(this.stack.size() * 10);
     while (!this.stack.empty()) {
-      sb.insert(0, this.stack.pop() + '\n');
+      sb.insert(0, '\n').insert(0, this.stack.pop());
     }
     return sb.toString().trim();
   }
@@ -245,7 +245,8 @@ public class EfxToXpathTranslator extends EfxBaseListener {
 
   @Override
   public void exitNodeReference(EfxParser.NodeReferenceContext ctx) {
-    this.stack.push(symbols.getRelativeXpathOfNode(ctx.node.getText(), this.efxContext.peek()));
+    this.stack
+        .push(symbols.getRelativeXpathOfFieldOrNode(ctx.node.getText(), this.efxContext.peek()));
   }
 
   @Override
@@ -257,7 +258,8 @@ public class EfxToXpathTranslator extends EfxBaseListener {
 
   @Override
   public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-    this.stack.push(symbols.getRelativeXpathOfField(ctx.field.getText(), this.efxContext.peek()));
+    this.stack
+        .push(symbols.getRelativeXpathOfFieldOrNode(ctx.field.getText(), this.efxContext.peek()));
   }
 
   @Override

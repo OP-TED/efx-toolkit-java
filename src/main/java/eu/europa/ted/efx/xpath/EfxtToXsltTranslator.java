@@ -314,7 +314,8 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
 
   @Override
   public void exitNodeReference(EfxtParser.NodeReferenceContext ctx) {
-    this.stack.push(symbols.getRelativeXpathOfNode(ctx.node.getText(), this.efxContext.peek()));
+    this.stack
+        .push(symbols.getRelativeXpathOfFieldOrNode(ctx.node.getText(), this.efxContext.peek()));
   }
 
   @Override
@@ -326,7 +327,8 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
 
   @Override
   public void exitSimpleFieldReference(EfxtParser.SimpleFieldReferenceContext ctx) {
-    this.stack.push(symbols.getRelativeXpathOfField(ctx.field.getText(), this.efxContext.peek()));
+    this.stack
+        .push(symbols.getRelativeXpathOfFieldOrNode(ctx.field.getText(), this.efxContext.peek()));
   }
 
   @Override

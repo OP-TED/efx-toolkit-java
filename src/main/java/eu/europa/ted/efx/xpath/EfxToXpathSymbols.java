@@ -89,7 +89,7 @@ public class EfxToXpathSymbols {
     // Then find the xPath of that parent node, relative to the given context
     // and return it.
     //
-    return getRelativeXpathOfNode(getParentNodeOfField(fieldId), broaderContextPath);
+    return getRelativeXpathOfFieldOrNode(getParentNodeOfField(fieldId), broaderContextPath);
   }
 
   /**
@@ -99,21 +99,10 @@ public class EfxToXpathSymbols {
    * @param contextPath xPath indicating the context.
    * @return The xPath of the given field relative to the given context.
    */
-  String getRelativeXpathOfField(String fieldId, String contextPath) {
-    return contextPath + "/" + getXpathOfFieldOrNode(fieldId);
+  String getRelativeXpathOfFieldOrNode(String fieldId, String contextPath) {
+    final String xpathOfFieldOrNode = getXpathOfFieldOrNode(fieldId);
+    return XpathTools.contextualizeFromXPath(xpathOfFieldOrNode, contextPath);
   }
-
-  /**
-   * Gets the xPath of a node relative to the given context.
-   *
-   * @param nodeId The id of the node for which we want the relative xPath
-   * @param contextPath The xPath of the context.
-   * @return The xPath of the given node relative to the given context.
-   */
-  String getRelativeXpathOfNode(String nodeId, String contextPath) {
-    return contextPath + "/" + getXpathOfFieldOrNode(nodeId);
-  }
-
 
   /**
    * @return A reusable Jackson object mapper instance.
