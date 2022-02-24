@@ -44,11 +44,17 @@ public class XpathToolsTest {
 
   @Test
   public void testContextualizeFromXpathWithPredicates() {
-    final String xpathPa = "/x/y/";
-    final String context = "/a[i/j]/b/";
-    final String expected = "";
+    final String xpathPa = "/a[i/j]/b/";
+    final String context = "/a[i/j]/c/";
+    final String expected = "../b";
     final String contextualizedXpath = XpathTools.contextualizeFromXPath(xpathPa, context);
     assertEquals(expected, contextualizedXpath);
+  }
+
+  @Test
+  public void testContextualizeFromXpathWithNestedPredicates() {
+    final String xpath = "/a/b[c/d[e]]/g";
+    System.out.println(XpathTools.buildXPathLocation(xpath).getSteps());
   }
 
   @Test
