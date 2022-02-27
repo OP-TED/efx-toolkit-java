@@ -92,6 +92,7 @@ public class EfxToXpathSymbols {
     return getRelativeXpathOfFieldOrNode(getParentNodeOfField(fieldId), broaderContextPath);
   }
 
+  private boolean useRegexParse = false;
   /**
    * Gets the xPath of the given field relative to the given context.
    *
@@ -101,7 +102,11 @@ public class EfxToXpathSymbols {
    */
   String getRelativeXpathOfFieldOrNode(String fieldId, String contextPath) {
     final String xpathOfFieldOrNode = getXpathOfFieldOrNode(fieldId);
-    return XpathTools.contextualizeFromXPath(xpathOfFieldOrNode, contextPath);
+    if (this.useRegexParse) {
+      return XpathTools.contextualizeFromXPath(xpathOfFieldOrNode, contextPath);
+    } else {
+      return XpathContextualizer.contextualize(contextPath, xpathOfFieldOrNode);
+    }
   }
 
   /**
