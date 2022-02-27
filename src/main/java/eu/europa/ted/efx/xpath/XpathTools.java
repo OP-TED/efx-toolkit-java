@@ -23,8 +23,8 @@ public class XpathTools {
    * @return xpath relative to context
    */
   public static String contextualizeFromXPath(final String xpath, final String context) {
-    System.out.println(
-        String.format("contextualizeFromXPath attempting: context=%s, xpath=%s", context, xpath));
+    //System.out.println(
+    //    String.format("contextualizeFromXPath attempting: context=%s, xpath=%s", context, xpath));
 
     if (xpath.isBlank()) {
       throw new IllegalArgumentException(

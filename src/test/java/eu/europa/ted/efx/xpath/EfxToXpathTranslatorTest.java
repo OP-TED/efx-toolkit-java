@@ -13,6 +13,11 @@ public class EfxToXpathTranslatorTest {
   }
 
   @Test
+  public void testTransalteFile() throws IOException {
+    System.out.print(EfxToXpathTranslator.translateTestFile("src/test/resources/examples.efx"));
+  }
+
+  @Test
   public void testTemplateParsing() throws IOException {
     // TODO see this later.
     // String output =
