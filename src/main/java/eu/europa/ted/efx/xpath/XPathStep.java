@@ -8,9 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * XPath fragment representing an XPath location step. There is no leading or trailing slash. For
  * example, the XPath "/a/b[u/v='z']/c" is made of 3 steps: "a", "b[u/v='z']", and "c".
- * 
- * <p>An instance can also represent several steps (a/b/c), for situation when we don't need to
- * handle a, b and c separately.</p>
+ *
+ * <p>
+ * An instance can also represent several steps (a/b/c), for situation when we don't need to handle
+ * a, b and c separately.
+ * </p>
  */
 public class XPathStep implements Comparable<XPathStep> {
 

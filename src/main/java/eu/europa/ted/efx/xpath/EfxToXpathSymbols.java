@@ -93,6 +93,7 @@ public class EfxToXpathSymbols {
   }
 
   private boolean useRegexParse = false;
+
   /**
    * Gets the xPath of the given field relative to the given context.
    *
@@ -104,9 +105,8 @@ public class EfxToXpathSymbols {
     final String xpathOfFieldOrNode = getXpathOfFieldOrNode(fieldId);
     if (this.useRegexParse) {
       return XpathTools.contextualizeFromXPath(xpathOfFieldOrNode, contextPath);
-    } else {
-      return XpathContextualizer.contextualize(contextPath, xpathOfFieldOrNode);
     }
+    return XpathContextualizer.contextualize(contextPath, xpathOfFieldOrNode);
   }
 
   /**
