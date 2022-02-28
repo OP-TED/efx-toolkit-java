@@ -3,7 +3,10 @@ package eu.europa.ted.efx.app;
 import java.util.Arrays;
 import eu.europa.ted.efx.xpath.XpathContextualizer;
 
-public class MainApp {
+/**
+ * Command line entry point.
+ */
+public class EfxMainApp {
   public static void main(String[] args) {
     System.out.println("EFX running: args=" + Arrays.toString(args));
     if (args.length == 0) {

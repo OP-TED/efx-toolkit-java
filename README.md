@@ -6,9 +6,10 @@ ANTLR grammars, see .g4 files
 
 ## IDE setup
 
+`mvn clean install` always do this first to ensure everything is OK outside the IDE.
+
 Build and add "target/generated-source/antlr4" to the build path.
 Rebuild sources after that.
-
 
 ## Testing
 
@@ -20,8 +21,8 @@ See EfxToXpathTranslator.java (translateFile, translateCondition, ...)
 ## Command line
 
 ```
-mvn compile exec:java -Dexec.mainClass="eu.europa.ted.efx.app.MainApp" -Dexec.args="commandName cmdArg1 cmdArg2 ..."
+mvn compile exec:java -Dexec.mainClass="eu.europa.ted.efx.app.EfxMainApp" -Dexec.args="commandName cmdArg1 cmdArg2 ..."
 ```
 
 Commands: command, arg1, arg2, ...
-* contextualize contextxpath xpath
+* contextualize contextXpath xpath, so ` -Dexec.args="contextualize /a/b/ /a/b/c"`
