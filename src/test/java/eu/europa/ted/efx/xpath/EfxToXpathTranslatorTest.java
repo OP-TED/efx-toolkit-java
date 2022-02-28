@@ -7,14 +7,18 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("static-method")
 public class EfxToXpathTranslatorTest {
 
+  // TODO: Currently handling multiple SDK versions is not implemented.
+  final private String testSdkVersion = "latest";
+  final private Boolean testNewContextualizer = true;
+  
   @Test
   public void testTranslateConditionAlways() {
-    assertEquals("true", EfxToXpathTranslator.translateCondition("ALWAYS"));
+    assertEquals("true", EfxToXpathTranslator.translateCondition("ALWAYS", testSdkVersion, testNewContextualizer));
   }
 
   @Test
   public void testTransalteFile() throws IOException {
-    System.out.print(EfxToXpathTranslator.translateTestFile("src/test/resources/examples.efx"));
+    System.out.print(EfxToXpathTranslator.translateTestFile("src/test/resources/examples.efx", testSdkVersion, testNewContextualizer));
   }
 
   @Test

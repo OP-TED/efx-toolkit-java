@@ -6,9 +6,14 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("static-method")
 public class EfxToXpathSymbolsTest {
 
+  // TODO: Currently handling multiple SDK versions is not implemented.
+  final private String testSdkVersion = "latest";
+  final private Boolean testNewContextualizer = true;
+
   @Test
   public void testSymbolsContext() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols();
+    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
 
     final String contextPathOfField = symbols.getContextPathOfField(fieldId);
@@ -26,7 +31,8 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsFieldParentNode() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols();
+    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
     final String parentNodeId = symbols.getParentNodeOfField(fieldId);
     assertEquals("ND-1", parentNodeId);
@@ -34,7 +40,8 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsFieldXpath() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols();
+    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
     final String xpath = symbols.getXpathOfFieldOrNode(fieldId);
     assertEquals(
@@ -44,7 +51,8 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsNodeXpath() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols();
+    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    symbols.useNewContextualizer(testNewContextualizer);
     final String nodeId = "ND-609";
     final String xpath = symbols.getXpathOfFieldOrNode(nodeId);
     assertEquals("/*/cac:AdditionalDocumentReference", xpath);

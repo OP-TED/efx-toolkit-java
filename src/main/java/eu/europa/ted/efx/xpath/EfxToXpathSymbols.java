@@ -3,6 +3,7 @@ package eu.europa.ted.efx.xpath;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -13,15 +14,58 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class EfxToXpathSymbols {
 
-  private static final Map<String, TedefoField> fieldByFieldId = new LinkedHashMap<>();
-  private static final Map<String, TedefoNode> nodeByNodeId = new LinkedHashMap<>();
+  /**
+   * EfxToXpathSymbols is implemented as a "kind-of" singleton.
+   * One instance per version of the eForms SDK.
+   */
+  private static Map<String, EfxToXpathSymbols> instances;
 
-  static {
-    try {
-      populateFieldByIdAndNodeByIdMaps();
-    } catch (IOException e) {
-      e.printStackTrace();
+  /**
+   * Gets the single instance containing the sysmbls 
+   * definned in the given version of the eForms SDK.
+   * 
+   * @param sdkVersion
+   * @return
+   */
+  public static EfxToXpathSymbols getInstance(final String sdkVersion) {
+    if (instances == null) {
+      instances = new HashMap<String, EfxToXpathSymbols>();
     }
+    if (!instances.containsKey(sdkVersion)) {
+      instances.put(sdkVersion, new EfxToXpathSymbols(sdkVersion));
+    }
+    return instances.get(sdkVersion);
+  }
+
+  /**
+   * Temporary flag used while we test the new conextualizer.
+   * Will be removed when we are done with its implementation.
+   */
+  private boolean useRegexParse = false; 
+
+  /**
+   * Sets a flag indicating weather the new contextualizer should be used in subsequent calls
+   * to {@link #getRelativeXpathOfFieldOrNode(String, String)}. 
+   *
+   *  @param useNewContextaulizer  true if we want to use the new contextualizer, otherwise false
+   */
+  public void useNewContextualizer(final boolean useNewContextaulizer) {
+    this.useRegexParse = !useNewContextaulizer;
+  }
+
+  private final Map<String, TedefoField> fieldByFieldId = new LinkedHashMap<>();
+  private final Map<String, TedefoNode> nodeByNodeId = new LinkedHashMap<>();
+
+  /**
+   * 
+   * @param sdkVersion
+   */
+  public EfxToXpathSymbols(final String sdkVersion) {
+      try {
+        this.populateFieldByIdAndNodeByIdMaps(sdkVersion);
+      } catch (IOException e) {
+        throw new RuntimeException(String.format("Unable to load Symbols for eForms-SDK %s", sdkVersion), e);
+      }
   }
 
   /**
@@ -92,21 +136,19 @@ public class EfxToXpathSymbols {
     return getRelativeXpathOfFieldOrNode(getParentNodeOfField(fieldId), broaderContextPath);
   }
 
-  private boolean useRegexParse = false;
-
   /**
    * Gets the xPath of the given field relative to the given context.
    *
-   * @param fieldId The id of the field for which we want to find the relative xPath
+   * @param fieldIdOrNodeId The id of the field for which we want to find the relative xPath
    * @param contextPath xPath indicating the context.
    * @return The xPath of the given field relative to the given context.
    */
-  String getRelativeXpathOfFieldOrNode(String fieldId, String contextPath) {
-    final String xpathOfFieldOrNode = getXpathOfFieldOrNode(fieldId);
+  String getRelativeXpathOfFieldOrNode(String fieldIdOrNodeId, String contextPath) {
+    final String xpath = getXpathOfFieldOrNode(fieldIdOrNodeId);
     if (this.useRegexParse) {
-      return XpathTools.contextualizeFromXPath(xpathOfFieldOrNode, contextPath);
-    }
-    return XpathContextualizer.contextualize(contextPath, xpathOfFieldOrNode);
+      return XpathTools.contextualizeFromXPath(xpath, contextPath);
+    } 
+    return XpathContextualizer.contextualize(contextPath, xpath);
   }
 
   /**
@@ -137,7 +179,12 @@ public class EfxToXpathSymbols {
     return otherNode.asText(null);
   }
 
-  private static final void populateFieldByIdAndNodeByIdMaps() throws IOException {
+  /**
+   * 
+   * @param sdkVersion Currently ignored. It will be effective in a later implementation.
+   * @throws IOException
+   */
+  private final void populateFieldByIdAndNodeByIdMaps(final String sdkVersion) throws IOException {
     final ObjectMapper objectMapper = buildStandardJacksonObjectMapper();
     final File file = Path.of("src/main/resources/eforms-sdk/fields/fields.json").toFile();
     final JsonNode json = objectMapper.readTree(file);
@@ -160,8 +207,7 @@ public class EfxToXpathSymbols {
         final String xpathRelative = node.get("xpathRelative").asText(null);
         final JsonNode jsonRep = node.get("repeatable");
         final boolean repeatable = jsonRep == null ? false : jsonRep.asBoolean(false);
-        nodeByNodeId.put(id,
-            new TedefoNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
+        nodeByNodeId.put(id, new TedefoNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
       }
     }
   }

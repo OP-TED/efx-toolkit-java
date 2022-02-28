@@ -70,7 +70,7 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
    * Symbols are field identifiers and node identifiers. The symbol table is used to resolve these
    * identifiers to their xPath.
    */
-  static final EfxToXpathSymbols symbols = new EfxToXpathSymbols();
+  final EfxToXpathSymbols symbols;
 
   /**
    * Maps efx operators to xPath operators.
@@ -92,11 +92,13 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
     operators.put(">=", ">=");
   }
 
-  public EfxtToXsltTranslator() {}
+  public EfxtToXsltTranslator(final String sdkVersion) {
+    this.symbols = new EfxToXpathSymbols(sdkVersion);
+  }
 
   // Static methods
 
-  public static String translateTestFile(final String fileName) throws IOException {
+  public static String translateTestFile(final String fileName, final String sdkVersion) throws IOException {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromFileName(fileName));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -104,13 +106,13 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
     final ParseTree tree = parser.testfile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator();
+    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator(sdkVersion);
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
   }
 
-  public static String translateTemplateFile(final String fileName) throws IOException {
+  public static String translateTemplateFile(final String fileName, final String sdkVersion) throws IOException {
 
     final EfxtLexer lexer = new EfxtLexer(CharStreams.fromFileName(fileName));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -118,13 +120,13 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator();
+    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator(sdkVersion);
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
   }
 
-  public static String translateCondition(final String condition) {
+  public static String translateCondition(final String condition, final String sdkVersion) {
 
     final EfxtLexer lexer = new EfxtLexer(CharStreams.fromString(condition));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -132,7 +134,7 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
     final ParseTree tree = parser.condition();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator();
+    final EfxtToXsltTranslator translator = new EfxtToXsltTranslator(sdkVersion);
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
