@@ -90,12 +90,11 @@ public class XpathContextualizer extends AbstractXpathBaseListener {
 
       // As we use a stack we are traversing the lines of xPath pairs in the
       // reverse order. Therefore we prepend the preciding lines in the result.
-      result.append(relativeXpath).append(result.isEmpty() ? "" : ("\n" + result));
-
+      final String toAppend = relativeXpath + (result.isEmpty() ? "" : ("\n" + result));
+      result.append(toAppend);
     }
     return result.toString();
   }
-
 
   @Override
   public void enterPath(PathContext ctx) {
