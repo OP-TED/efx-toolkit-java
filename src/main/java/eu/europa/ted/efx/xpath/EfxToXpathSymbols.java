@@ -1,8 +1,8 @@
 package eu.europa.ted.efx.xpath;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,25 +11,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import eu.europa.ted.efx.util.JavaTools;
 
 public class EfxToXpathSymbols {
 
   /**
-   * EfxToXpathSymbols is implemented as a "kind-of" singleton.
-   * One instance per version of the eForms SDK.
+   * EfxToXpathSymbols is implemented as a "kind-of" singleton. One instance per version of the
+   * eForms SDK.
    */
   private static Map<String, EfxToXpathSymbols> instances;
 
   /**
-   * Gets the single instance containing the sysmbls 
-   * definned in the given version of the eForms SDK.
-   * 
+   * Gets the single instance containing the sysmbls definned in the given version of the eForms
+   * SDK.
+   *
    * @param sdkVersion
    * @return
    */
   public static EfxToXpathSymbols getInstance(final String sdkVersion) {
     if (instances == null) {
-      instances = new HashMap<String, EfxToXpathSymbols>();
+      instances = new HashMap<>();
     }
     if (!instances.containsKey(sdkVersion)) {
       instances.put(sdkVersion, new EfxToXpathSymbols(sdkVersion));
@@ -38,34 +39,35 @@ public class EfxToXpathSymbols {
   }
 
   /**
-   * Temporary flag used while we test the new conextualizer.
-   * Will be removed when we are done with its implementation.
+   * Temporary flag used while we test the new conextualizer. Will be removed when we are done with
+   * its implementation.
    */
-  private boolean useRegexParse = false; 
+  private boolean useRegexParse = false;
 
   /**
-   * Sets a flag indicating weather the new contextualizer should be used in subsequent calls
-   * to {@link #getRelativeXpathOfFieldOrNode(String, String)}. 
+   * Sets a flag indicating weather the new contextualizer should be used in subsequent calls to
+   * {@link #getRelativeXpathOfFieldOrNode(String, String)}.
    *
-   *  @param useNewContextaulizer  true if we want to use the new contextualizer, otherwise false
+   * @param useNewContextualizer true if we want to use the new contextualizer, otherwise false
    */
-  public void useNewContextualizer(final boolean useNewContextaulizer) {
-    this.useRegexParse = !useNewContextaulizer;
+  public void useNewContextualizer(final boolean useNewContextualizer) {
+    this.useRegexParse = !useNewContextualizer;
   }
 
   private final Map<String, TedefoField> fieldByFieldId = new LinkedHashMap<>();
   private final Map<String, TedefoNode> nodeByNodeId = new LinkedHashMap<>();
 
   /**
-   * 
+   *
    * @param sdkVersion
    */
   public EfxToXpathSymbols(final String sdkVersion) {
-      try {
-        this.populateFieldByIdAndNodeByIdMaps(sdkVersion);
-      } catch (IOException e) {
-        throw new RuntimeException(String.format("Unable to load Symbols for eForms-SDK %s", sdkVersion), e);
-      }
+    try {
+      this.populateFieldByIdAndNodeByIdMaps(sdkVersion);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          String.format("Unable to load Symbols for eForms-SDK %s", sdkVersion), e);
+    }
   }
 
   /**
@@ -74,7 +76,6 @@ public class EfxToXpathSymbols {
    * @param fieldId The id of the field who's parent node we are looking for.
    * @return The id of the parent node of the given field.
    */
-  @SuppressWarnings("static-method")
   String getParentNodeOfField(final String fieldId) {
     final TedefoField tedefoField = fieldByFieldId.get(fieldId);
     if (tedefoField != null) {
@@ -87,7 +88,6 @@ public class EfxToXpathSymbols {
    * @param fieldOrNodeId The id of a node or a field.
    * @return The xPath of the given node or field.
    */
-  @SuppressWarnings("static-method")
   String getXpathOfFieldOrNode(final String fieldOrNodeId) {
     // We assume NO node and field have the same id.
     final TedefoField tedefoField = fieldByFieldId.get(fieldOrNodeId);
@@ -147,7 +147,7 @@ public class EfxToXpathSymbols {
     final String xpath = getXpathOfFieldOrNode(fieldIdOrNodeId);
     if (this.useRegexParse) {
       return XpathTools.contextualizeFromXPath(xpath, contextPath);
-    } 
+    }
     return XpathContextualizer.contextualize(contextPath, xpath);
   }
 
@@ -180,14 +180,25 @@ public class EfxToXpathSymbols {
   }
 
   /**
-   * 
+   *
    * @param sdkVersion Currently ignored. It will be effective in a later implementation.
    * @throws IOException
+   * @throws URISyntaxException
    */
   private final void populateFieldByIdAndNodeByIdMaps(final String sdkVersion) throws IOException {
+    System.out.println("Populating maps for context, sdkVersion=" + sdkVersion);
     final ObjectMapper objectMapper = buildStandardJacksonObjectMapper();
-    final File file = Path.of("src/main/resources/eforms-sdk/fields/fields.json").toFile();
-    final JsonNode json = objectMapper.readTree(file);
+    final InputStream fieldsJsonInputStream = JavaTools.getResourceAsStream(
+        EfxToXpathSymbols.class.getClassLoader(), "eforms-sdk/fields/fields.json");
+    if (fieldsJsonInputStream == null) {
+      throw new RuntimeException("Cannot find fields.json file.");
+    }
+    if (fieldsJsonInputStream.available() == 0) {
+      throw new RuntimeException("Cannot find fields.json file (not available).");
+    }
+    final JsonNode json = objectMapper.readTree(fieldsJsonInputStream);
+
+    // POPULATE FIELDS.
     {
       final ArrayNode fields = (ArrayNode) json.get("fields");
       for (final JsonNode field : fields) {
@@ -198,6 +209,11 @@ public class EfxToXpathSymbols {
         fieldByFieldId.put(id, new TedefoField(id, parentNodeId, xpathAbsolute, xpathRelative));
       }
     }
+    if (fieldByFieldId.isEmpty()) {
+      throw new RuntimeException("fieldByFieldId is empty!");
+    }
+
+    // POPULATE NODES.
     {
       final ArrayNode nodes = (ArrayNode) json.get("xmlStructure");
       for (final JsonNode node : nodes) {
@@ -207,8 +223,12 @@ public class EfxToXpathSymbols {
         final String xpathRelative = node.get("xpathRelative").asText(null);
         final JsonNode jsonRep = node.get("repeatable");
         final boolean repeatable = jsonRep == null ? false : jsonRep.asBoolean(false);
-        nodeByNodeId.put(id, new TedefoNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
+        nodeByNodeId.put(id,
+            new TedefoNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
       }
+    }
+    if (nodeByNodeId.isEmpty()) {
+      throw new RuntimeException("nodeByNodeId is empty!");
     }
   }
 }

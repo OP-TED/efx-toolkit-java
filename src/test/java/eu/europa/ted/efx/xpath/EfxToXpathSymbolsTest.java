@@ -3,7 +3,6 @@ package eu.europa.ted.efx.xpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("static-method")
 public class EfxToXpathSymbolsTest {
 
   // TODO: Currently handling multiple SDK versions is not implemented.

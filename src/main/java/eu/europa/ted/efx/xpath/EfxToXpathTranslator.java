@@ -52,14 +52,15 @@ public class EfxToXpathTranslator extends EfxBaseListener {
     operators.put(">=", ">=");
   }
 
-  public EfxToXpathTranslator(final String sdkVersion, final boolean useNewContextaulizer) {
+  public EfxToXpathTranslator(final String sdkVersion, final boolean useNewContextualizer) {
     this.symbols = EfxToXpathSymbols.getInstance(sdkVersion);
-    this.symbols.useNewContextualizer(useNewContextaulizer);
+    this.symbols.useNewContextualizer(useNewContextualizer);
   }
 
   // Static methods
 
-  public static String translateTestFile(final String fileName, final String sdkVersion, final boolean useNewContextaulizer) throws IOException {
+  public static String translateTestFile(final String fileName, final String sdkVersion,
+      final boolean useNewContextualizer) throws IOException {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromFileName(fileName));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -67,21 +68,24 @@ public class EfxToXpathTranslator extends EfxBaseListener {
     final ParseTree tree = parser.testfile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxToXpathTranslator translator = new EfxToXpathTranslator(sdkVersion, useNewContextaulizer);
+    final EfxToXpathTranslator translator =
+        new EfxToXpathTranslator(sdkVersion, useNewContextualizer);
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
   }
 
-  public static String translateCondition(final String condition, final String sdkVersion, final boolean useNewContextaulizer) {
+  public static String translateCondition(final String condition, final String sdkVersion,
+      final boolean useNewContextualizer) {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(condition));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
-    final ParseTree tree = parser.condition();
+    final ParseTree tree = parser.statement();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxToXpathTranslator translator = new EfxToXpathTranslator(sdkVersion, useNewContextaulizer);
+    final EfxToXpathTranslator translator =
+        new EfxToXpathTranslator(sdkVersion, useNewContextualizer);
     walker.walk(translator, tree);
 
     return translator.getTranslatedString();
