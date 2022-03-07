@@ -93,12 +93,13 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
   }
 
   public EfxtToXsltTranslator(final String sdkVersion) {
-    this.symbols = new EfxToXpathSymbols(sdkVersion);
+    this.symbols = EfxToXpathSymbols.getInstance(sdkVersion);
   }
 
   // Static methods
 
-  public static String translateTestFile(final String fileName, final String sdkVersion) throws IOException {
+  public static String translateTestFile(final String fileName, final String sdkVersion)
+      throws IOException {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromFileName(fileName));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -112,7 +113,8 @@ public class EfxtToXsltTranslator extends EfxtBaseListener {
     return translator.getTranslatedString();
   }
 
-  public static String translateTemplateFile(final String fileName, final String sdkVersion) throws IOException {
+  public static String translateTemplateFile(final String fileName, final String sdkVersion)
+      throws IOException {
 
     final EfxtLexer lexer = new EfxtLexer(CharStreams.fromFileName(fileName));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
