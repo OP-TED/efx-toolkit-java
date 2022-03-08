@@ -11,6 +11,7 @@ import com.helger.genericode.v10.Value;
 public class GenericodeTools {
 
   public static final String KEY_CODE = "code";
+  public static final String EXTENSION_DOT_GC = ".gc";
 
   public static final Genericode10CodeListMarshaller getMarshaller() {
     // https://stackoverflow.com/questions/7400422/jaxb-creating-context-and-marshallers-cost
@@ -30,4 +31,5 @@ public class GenericodeTools {
   public static String extractColRefId(final Value value) {
     return ((Column) value.getColumnRef()).getId();
   }
+
 }

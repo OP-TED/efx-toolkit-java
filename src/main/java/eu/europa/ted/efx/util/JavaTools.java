@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -53,6 +54,13 @@ public class JavaTools {
     assert !resourcePath.startsWith("/") : String
         .format("resourcePath should not start with forward slash: %s", resourcePath);
     return classLoader.getResourceAsStream(resourcePath);
+  }
+
+  /**
+   * @return empty if blank, otherwise present and stripped.
+   */
+  public static final Optional<String> getOpt(final String str) {
+    return StringUtils.isBlank(str) ? Optional.empty() : Optional.of(str.strip());
   }
 
 }
