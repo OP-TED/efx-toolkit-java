@@ -3,46 +3,53 @@ package eu.europa.ted.efx.xpath;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.helger.genericode.Genericode10CodeListMarshaller;
+import com.helger.genericode.v10.CodeListDocument;
+import com.helger.genericode.v10.SimpleCodeList;
+import eu.europa.ted.efx.util.GenericodeTools;
 import eu.europa.ted.efx.util.JavaTools;
 
 public class EfxToXpathSymbols {
 
-  /**
-   * EfxToXpathSymbols is implemented as a "kind-of" singleton. One instance per version of the
-   * eForms SDK.
-   */
-  private static Map<String, EfxToXpathSymbols> instances;
-
-  /**
-   * Gets the single instance containing the sysmbls definned in the given version of the eForms
-   * SDK.
-   *
-   * @param sdkVersion
-   * @return
-   */
-  public static EfxToXpathSymbols getInstance(final String sdkVersion) {
-    if (instances == null) {
-      instances = new HashMap<>();
-    }
-    if (!instances.containsKey(sdkVersion)) {
-      instances.put(sdkVersion, new EfxToXpathSymbols(sdkVersion));
-    }
-    return instances.get(sdkVersion);
-  }
+  private final Map<String, TedefoField> fieldByFieldId = new HashMap<>();
+  private final Map<String, TedefoNode> nodeByNodeId = new HashMap<>();
+  private final Map<String, SdkCodelist> codelistById = new HashMap<>();
 
   /**
    * Temporary flag used while we test the new conextualizer. Will be removed when we are done with
    * its implementation.
    */
   private boolean useRegexParse = false;
+
+  /**
+   * EfxToXpathSymbols is implemented as a "kind-of" singleton. One instance per version of the
+   * eForms SDK.
+   */
+  private static final Map<String, EfxToXpathSymbols> instances = new HashMap<>();
+
+  /**
+   * Gets the single instance containing the sysmbls definned in the given version of the eForms
+   * SDK.
+   *
+   * @param sdkVersion Version of the SDK
+   */
+  public static EfxToXpathSymbols getInstance(final String sdkVersion) {
+    return instances.computeIfAbsent(sdkVersion, k -> new EfxToXpathSymbols(sdkVersion));
+  }
 
   /**
    * Sets a flag indicating weather the new contextualizer should be used in subsequent calls to
@@ -54,14 +61,59 @@ public class EfxToXpathSymbols {
     this.useRegexParse = !useNewContextualizer;
   }
 
-  private final Map<String, TedefoField> fieldByFieldId = new LinkedHashMap<>();
-  private final Map<String, TedefoNode> nodeByNodeId = new LinkedHashMap<>();
+  /**
+   * Builds EFX list from the passed codelist refence. This will lazily compute and cache the result
+   * for reuse as the operation can be costly on some large lists.
+   *
+   * @param codelistReference A reference to an SDK codelist.
+   * @return The EFX string representation of the list of all the codes of the referenced codelist.
+   */
+  public final String getCodelistCodesAsEfxList(final String codelistReference) {
+    if (StringUtils.isBlank(codelistReference)) {
+      throw new RuntimeException("Unsupported blank codelistReference");
+    }
+
+    // Get or create instance lazily.
+    final Function<? super String, ? extends SdkCodelist> mappingFunc = k -> {
+      // Find the SDK codelist .gc file that corresponds to the passed reference.
+      // Stream the data from that file.
+      final String filename = codelistReference; // TODO handle tailored codelists.
+      try (InputStream is =
+          JavaTools.getResourceAsStream("eforms-sdk/codelists/" + filename + ".gc")) {
+
+        final Genericode10CodeListMarshaller marshaller = GenericodeTools.getMarshaller();
+        final CodeListDocument cl = marshaller.read(is);
+        final SimpleCodeList scl = cl.getSimpleCodeList();
+        final String codelistVersion = cl.getIdentification().getVersion(); // Version tag of .gc
+
+        // Get all the code values in a list.
+        // We assume there are no duplicate code values in the referenced codelists.
+        final List<String> codes = scl.getRow().stream().map(row -> {
+          final String codeVal = row.getValue().stream().filter(
+              value -> (GenericodeTools.KEY_CODE.equals(GenericodeTools.extractColRefId(value))))//
+              .findFirst()//
+              .orElseThrow(RuntimeException::new)//
+              .getSimpleValue()//
+              .getValue().strip();
+          return codeVal;
+        }).collect(Collectors.toList());
+
+        return new SdkCodelist(codelistReference, codelistVersion, buildEfxList(codes));
+
+      } catch (final IOException e) {
+        throw new RuntimeException(e);
+      }
+    };
+
+    return codelistById.computeIfAbsent(codelistReference, mappingFunc).getCodelistAsEfxList();
+  }
 
   /**
+   * Private, use getInstance method instead.
    *
-   * @param sdkVersion
+   * @param sdkVersion The version of the SDK.
    */
-  public EfxToXpathSymbols(final String sdkVersion) {
+  private EfxToXpathSymbols(final String sdkVersion) {
     try {
       this.populateFieldByIdAndNodeByIdMaps(sdkVersion);
     } catch (IOException e) {
@@ -230,5 +282,14 @@ public class EfxToXpathSymbols {
     if (nodeByNodeId.isEmpty()) {
       throw new RuntimeException("nodeByNodeId is empty!");
     }
+  }
+
+  public static String buildEfxList(final List<String> codes) {
+    // Do lazy loading of map entry from file.
+    final StringJoiner joiner = new StringJoiner(", ", "{", "}"); // Separator, prefix, suffix
+    for (final String code : codes) {
+      joiner.add("'" + code + "'");
+    }
+    return joiner.toString();
   }
 }

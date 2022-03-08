@@ -6,12 +6,25 @@ import org.junit.jupiter.api.Test;
 public class EfxToXpathSymbolsTest {
 
   // TODO: Currently handling multiple SDK versions is not implemented.
-  final private String testSdkVersion = "latest";
-  final private Boolean testNewContextualizer = true;
+  private final String testSdkVersion = "latest";
+  private final Boolean testNewContextualizer = true;
+
+  private EfxToXpathSymbols getDummyInstance() {
+    return EfxToXpathSymbols.getInstance(testSdkVersion);
+  }
+
+  @Test
+  void testGetCodelistCodesNonTailored() {
+    final EfxToXpathSymbols symbols = getDummyInstance();
+    final String expected =
+        "{'all-rev-tic', 'cost-comp', 'exc-right', 'other', 'publ-ser-obl', 'soc-stand'}";
+    final String efxList = symbols.getCodelistCodesAsEfxList("contract-detail"); // Has no parent.
+    assertEquals(expected, efxList);
+  }
 
   @Test
   public void testSymbolsContext() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    final EfxToXpathSymbols symbols = getDummyInstance();
     symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
 
@@ -30,7 +43,7 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsFieldParentNode() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    final EfxToXpathSymbols symbols = getDummyInstance();
     symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
     final String parentNodeId = symbols.getParentNodeOfField(fieldId);
@@ -39,7 +52,7 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsFieldXpath() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    final EfxToXpathSymbols symbols = getDummyInstance();
     symbols.useNewContextualizer(testNewContextualizer);
     final String fieldId = "BT-01(c)-Procedure";
     final String xpath = symbols.getXpathOfFieldOrNode(fieldId);
@@ -50,7 +63,7 @@ public class EfxToXpathSymbolsTest {
 
   @Test
   public void testSymbolsNodeXpath() {
-    final EfxToXpathSymbols symbols = new EfxToXpathSymbols(testSdkVersion);
+    final EfxToXpathSymbols symbols = getDummyInstance();
     symbols.useNewContextualizer(testNewContextualizer);
     final String nodeId = "ND-609";
     final String xpath = symbols.getXpathOfFieldOrNode(nodeId);

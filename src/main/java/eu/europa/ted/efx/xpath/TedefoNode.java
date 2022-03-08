@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * A node is something like a section. Nodes can be parents of other nodes or parents of fields.
  */
-public class TedefoNode {
+public class TedefoNode implements Comparable<TedefoNode> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
@@ -19,6 +19,14 @@ public class TedefoNode {
     this.xpathAbsolute = xpathAbsolute;
     this.xpathRelative = xpathRelative;
     this.repeatable = repeatable;
+  }
+
+  /**
+   * Helps with hash maps collisions. Should be consistent with equals.
+   */
+  @Override
+  public int compareTo(TedefoNode o) {
+    return o.getId().compareTo(o.getId());
   }
 
   @Override
