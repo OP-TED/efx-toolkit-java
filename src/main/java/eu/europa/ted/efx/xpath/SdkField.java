@@ -2,13 +2,13 @@ package eu.europa.ted.efx.xpath;
 
 import java.util.Objects;
 
-public class TedefoField implements Comparable<TedefoField> {
+public class SdkField implements Comparable<SdkField> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
   private final String parentNodeId;
 
-  public TedefoField(final String id, final String parentNodeId, final String xpathAbsolute,
+  public SdkField(final String id, final String parentNodeId, final String xpathAbsolute,
       final String xpathRelative) {
     this.id = id;
     this.parentNodeId = parentNodeId;
@@ -20,7 +20,7 @@ public class TedefoField implements Comparable<TedefoField> {
    * Helps with hash maps collisions. Should be consistent with equals.
    */
   @Override
-  public int compareTo(TedefoField o) {
+  public int compareTo(SdkField o) {
     return this.getId().compareTo(o.getId());
   }
 
@@ -35,7 +35,7 @@ public class TedefoField implements Comparable<TedefoField> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    TedefoField other = (TedefoField) obj;
+    SdkField other = (SdkField) obj;
     return Objects.equals(id, other.id);
   }
 

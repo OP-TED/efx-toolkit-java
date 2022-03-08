@@ -3,14 +3,12 @@ package eu.europa.ted.efx.xpath;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,8 +23,8 @@ import eu.europa.ted.efx.util.JavaTools;
 
 public class EfxToXpathSymbols {
 
-  private final Map<String, TedefoField> fieldByFieldId = new HashMap<>();
-  private final Map<String, TedefoNode> nodeByNodeId = new HashMap<>();
+  private final Map<String, SdkField> fieldById = new HashMap<>();
+  private final Map<String, SdkNode> nodeById = new HashMap<>();
   private final Map<String, SdkCodelist> codelistById = new HashMap<>();
 
   /**
@@ -129,9 +127,9 @@ public class EfxToXpathSymbols {
    * @return The id of the parent node of the given field.
    */
   String getParentNodeOfField(final String fieldId) {
-    final TedefoField tedefoField = fieldByFieldId.get(fieldId);
-    if (tedefoField != null) {
-      return tedefoField.getParentNodeId();
+    final SdkField sdkField = fieldById.get(fieldId);
+    if (sdkField != null) {
+      return sdkField.getParentNodeId();
     }
     return null;
   }
@@ -142,13 +140,13 @@ public class EfxToXpathSymbols {
    */
   String getXpathOfFieldOrNode(final String fieldOrNodeId) {
     // We assume NO node and field have the same id.
-    final TedefoField tedefoField = fieldByFieldId.get(fieldOrNodeId);
-    if (tedefoField != null) {
-      return tedefoField.getXpathAbsolute();
+    final SdkField sdkField = fieldById.get(fieldOrNodeId);
+    if (sdkField != null) {
+      return sdkField.getXpathAbsolute();
     }
-    final TedefoNode tedefoNode = nodeByNodeId.get(fieldOrNodeId);
-    if (tedefoNode != null) {
-      return tedefoNode.getXpathAbsolute();
+    final SdkNode sdkNode = nodeById.get(fieldOrNodeId);
+    if (sdkNode != null) {
+      return sdkNode.getXpathAbsolute();
     }
     return fieldOrNodeId; // TODO Or should it fail if not found ?
   }
@@ -258,10 +256,10 @@ public class EfxToXpathSymbols {
         final String parentNodeId = getTextNullOtherwise(field, "parentNodeId");
         final String xpathAbsolute = field.get("xpathAbsolute").asText(null);
         final String xpathRelative = field.get("xpathRelative").asText(null);
-        fieldByFieldId.put(id, new TedefoField(id, parentNodeId, xpathAbsolute, xpathRelative));
+        fieldById.put(id, new SdkField(id, parentNodeId, xpathAbsolute, xpathRelative));
       }
     }
-    if (fieldByFieldId.isEmpty()) {
+    if (fieldById.isEmpty()) {
       throw new RuntimeException("fieldByFieldId is empty!");
     }
 
@@ -275,11 +273,11 @@ public class EfxToXpathSymbols {
         final String xpathRelative = node.get("xpathRelative").asText(null);
         final JsonNode jsonRep = node.get("repeatable");
         final boolean repeatable = jsonRep == null ? false : jsonRep.asBoolean(false);
-        nodeByNodeId.put(id,
-            new TedefoNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
+        nodeById.put(id,
+            new SdkNode(id, parentId, xpathAbsolute, xpathRelative, repeatable));
       }
     }
-    if (nodeByNodeId.isEmpty()) {
+    if (nodeById.isEmpty()) {
       throw new RuntimeException("nodeByNodeId is empty!");
     }
   }

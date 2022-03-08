@@ -5,14 +5,14 @@ import java.util.Objects;
 /**
  * A node is something like a section. Nodes can be parents of other nodes or parents of fields.
  */
-public class TedefoNode implements Comparable<TedefoNode> {
+public class SdkNode implements Comparable<SdkNode> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
   private final String parentId;
   private final boolean repeatable;
 
-  public TedefoNode(final String id, final String parentId, final String xpathAbsolute,
+  public SdkNode(final String id, final String parentId, final String xpathAbsolute,
       final String xpathRelative, final boolean repeatable) {
     this.id = id;
     this.parentId = parentId;
@@ -25,7 +25,7 @@ public class TedefoNode implements Comparable<TedefoNode> {
    * Helps with hash maps collisions. Should be consistent with equals.
    */
   @Override
-  public int compareTo(TedefoNode o) {
+  public int compareTo(SdkNode o) {
     return o.getId().compareTo(o.getId());
   }
 
@@ -40,7 +40,7 @@ public class TedefoNode implements Comparable<TedefoNode> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    TedefoNode other = (TedefoNode) obj;
+    SdkNode other = (SdkNode) obj;
     return Objects.equals(id, other.id);
   }
 
