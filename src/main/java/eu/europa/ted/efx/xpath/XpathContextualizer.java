@@ -8,9 +8,9 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -24,7 +24,7 @@ import eu.europa.ted.efx.XPath20Parser.StepexprContext;
 public class XpathContextualizer extends XPath20BaseListener {
 
   private final CharStream inputStream;
-  private final Queue<StepInfo> steps = new LinkedList<StepInfo>();
+  private final Queue<StepInfo> steps = new LinkedList<>();
 
   public XpathContextualizer(CharStream inputStream) {
     this.inputStream = inputStream;
@@ -123,7 +123,7 @@ public class XpathContextualizer extends XPath20BaseListener {
    * Helper method that returns the input text that matched a paresr rule context. It is usefull
    * because {@link ParserRuleContext#getText()} ommits whitespace and other lexer tokens in the
    * HIDDEN channel.
-   * 
+   *
    * @param context
    * @return
    */
