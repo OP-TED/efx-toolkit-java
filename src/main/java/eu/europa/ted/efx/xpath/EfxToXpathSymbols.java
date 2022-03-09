@@ -302,7 +302,7 @@ public class EfxToXpathSymbols {
 
   public static String buildEfxList(final List<String> codes) {
     // Do lazy loading of map entry from file.
-    final StringJoiner joiner = new StringJoiner(", ", "{", "}"); // Separator, prefix, suffix
+    final StringJoiner joiner = new StringJoiner(", ", "(", ")"); // Separator, prefix, suffix
     for (final String code : codes) {
       joiner.add("'" + code + "'");
     }

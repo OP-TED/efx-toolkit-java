@@ -206,8 +206,10 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   public void exitInListCondition(EfxParser.InListConditionContext ctx) {
     String list = this.stack.pop();
     String expression = this.stack.pop();
-    String not = ctx.modifier != null && ctx.modifier.getText() == "not" ? "!" : "";
-    this.stack.push(not + list + ".contains(" + expression + ")");
+    boolean hasNot = ctx.modifier != null && ctx.modifier.getText().equals("not");
+    String not = hasNot ? "not(" : "";
+    String endNot = hasNot ? ")" : "";
+    this.stack.push(not + expression + "=" + list + endNot);
   }
 
   @Override
@@ -227,7 +229,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitCodeList(CodeListContext ctx) {
     if (this.stack.empty()) {
-      this.stack.push("{}");
+      this.stack.push("()");
       return;
     }
   }
@@ -235,15 +237,15 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitExplicitList(ExplicitListContext ctx) {
     if (this.stack.empty() || ctx.value().size() == 0) {
-      this.stack.push("{}");
+      this.stack.push("()");
       return;
     }
 
-    String list = this.stack.pop() + " }";
+    String list = this.stack.pop() + ")";
     for (int i = 1; i < ctx.value().size(); i++) {
       list = this.stack.pop() + ", " + list;
     }
-    list = "{ " + list;
+    list = "(" + list;
     this.stack.push(list);
   }
 

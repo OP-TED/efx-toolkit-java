@@ -75,6 +75,22 @@ public class EfxToXpathTranslatorTest {
         testSdkVersion, testNewContextualizer));
   }
 
+  @Test
+  public void TranslateConditionValueInList() {
+    final String condition = "'a' in {'a','b','c'};";
+    final String expected = "'a'=('a', 'b', 'c')";
+    assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + condition,
+        testSdkVersion, testNewContextualizer));
+  }
+
+  @Test
+  public void TranslateConditionValueNotInList() {
+    final String condition = "'z' not in {'a','b','c'}";
+    final String expected = "not('z'=('a', 'b', 'c'))";
+    assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + condition,
+        testSdkVersion, testNewContextualizer));
+  }
+
   /**
    * This is a bit more than just a unit test as it tests many features of the language.
    */
@@ -105,7 +121,7 @@ public class EfxToXpathTranslatorTest {
 
   @Test
   public void translateCodelist() {
-    String expected = "{'31985R2137', '31992L0013', '31994D0001', '31994D0800', '32001R2157', '32002D0309', '32002R2342', '32003R1435', '32004L0017', '32004L0018', '32005D0015', '32007D0005_01', '32007L0066', '32007R0718', '32007R1370', '32008E0124', '32008R1008', '32009L0081', '32012R0966', '32012R1268', '32013L0016', '32014D0115', '32014D0486', '32014D0691', '32014L0023', '32014L0024', '32014L0025', '32014R0230', '32014R0231', '32014R0232', '32014R0233', '32014R0236', '32014R0237', '32015R0323', '32016D0002', '32017D2263', '32018R1046', '32019D0312', 'other'}.contains(../../../../../../cbc:RegulatoryDomain/text())";
+    String expected = "../../../../../../cbc:RegulatoryDomain/text()=('31985R2137', '31992L0013', '31994D0001', '31994D0800', '32001R2157', '32002D0309', '32002R2342', '32003R1435', '32004L0017', '32004L0018', '32005D0015', '32007D0005_01', '32007L0066', '32007R0718', '32007R1370', '32008E0124', '32008R1008', '32009L0081', '32012R0966', '32012R1268', '32013L0016', '32014D0115', '32014D0486', '32014D0691', '32014L0023', '32014L0024', '32014L0025', '32014R0230', '32014R0231', '32014R0232', '32014R0233', '32014R0236', '32014R0237', '32015R0323', '32016D0002', '32017D2263', '32018R1046', '32019D0312', 'other')";
     assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + "BT-01-notice in codelist(legal-basis);", testSdkVersion, testNewContextualizer));
   }
 }
