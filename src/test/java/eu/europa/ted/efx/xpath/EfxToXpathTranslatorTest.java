@@ -67,6 +67,14 @@ public class EfxToXpathTranslatorTest {
         testSdkVersion, testNewContextualizer));
   }
 
+  @Test
+  public void TranslateConditionNegated() {
+    final String condition = "not ('a' == 'b');";
+    final String expected = "not ('a'='b')";
+    assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + condition,
+        testSdkVersion, testNewContextualizer));
+  }
+
   /**
    * This is a bit more than just a unit test as it tests many features of the language.
    */
@@ -74,7 +82,7 @@ public class EfxToXpathTranslatorTest {
   public void yTranslateCondition111Complex() {
     final String context = "BT-1311(d)-Lot";
     final String expected =
-        "(../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-mult' and null (cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = '')) or (../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-single' and null (cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = ''))";
+        "(../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-mult' and not (cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = '')) or (../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-single' and not (cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = ''))";
     final String condition =
         "(BT-105-Procedure == 'oth-mult' and not (BT-131(d)-Lot is not empty)) or (BT-105-Procedure == 'oth-single' and not (BT-131(d)-Lot is not empty));";
     assertEquals(expected, EfxToXpathTranslator.translateCondition(context + ": " + condition,

@@ -47,6 +47,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
     operators.put("%", "mod");
     operators.put("and", "and");
     operators.put("or", "or");
+    operators.put("not", "not");
     operators.put("==", "=");
     operators.put("!=", "!=");
     operators.put("<", "<");
