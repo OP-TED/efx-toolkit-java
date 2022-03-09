@@ -20,7 +20,7 @@ condition: condition operator='or' condition			# logicalOrCondition
 	| 'NEVER'											# neverCondition
 	| expression operator=('==' | '!=' | '>' | '>=' | '<' | '<=') expression 	# comparisonCondition
 	| expression modifier='not'? 'in' list				# inListCondition
-	| expression 'is' modifier='not'? 'empty'			# emptynessCondition
+	| expression 'is' modifier='not'? 'empty'			# emptinessCondition
 	| reference 'is' modifier='not'? 'present'			# presenceCondition
 	| expression modifier='not'? 'like' pattern=STRING	# likePatternCondition
 	| expression										# expressionCondition
@@ -35,7 +35,9 @@ expression: expression operator=('*' | '/' | '%') expression 	#multiplicationExp
 	| value														#valueExpression
 	;
 	
-list: '{' value (',' value)* '}';
+list: '{' value (',' value)* '}' 	# explicitList 
+	| codelistReference				# codeList
+	;
 
 value: literal | reference | functionCall;
 
@@ -60,6 +62,7 @@ predicate: condition;
 nodeReference: node=NodeId;
 
 noticeReference: 'notice' '(' noticeId=expression ')';
+codelistReference: 'codelist' '(' codeListId=CodelistId ')';
 
 /*
  * Function calls
@@ -72,7 +75,8 @@ argument: expression;
 FunctionName: 'TODAY' | 'NOW' | 'PARENT';
 NodeId: 'ND' '-' DIGIT+;
 FieldId: ('BT' | 'OPP' | 'OPT') '-' INTEGER ('(' (BtId | [a-z]) ')')? ('-' Identifier)+;
-BtId: 'BT-' DIGIT+;
+BtId: 'BT' '-' DIGIT+;
+CodelistId: Identifier ('-' Identifier)*;
 
 Identifier: LETTER (LETTER | DIGIT)* ;
 

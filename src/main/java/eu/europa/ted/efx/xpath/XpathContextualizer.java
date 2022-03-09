@@ -86,7 +86,7 @@ public class XpathContextualizer extends XPath20BaseListener {
       // pathQueue.
       while (!pathQueue.isEmpty()) {
         final StepInfo step = pathQueue.poll();
-        relativeXpath += step.slash + step.stepText + step.getPredicateText();
+        relativeXpath += "/" + step.stepText + step.getPredicateText();
       }
 
       // We remove any leading forward slashes from the resulting xPath.
@@ -156,12 +156,10 @@ public class XpathContextualizer extends XPath20BaseListener {
   }
 
   private class StepInfo {
-    String slash;
     String stepText;
     List<String> predicates;
 
     public StepInfo(StepexprContext ctx, Function<ParserRuleContext, String> getInputText) {
-      this.slash = ctx.getParent().getToken(XPath20Lexer.SS, ctx.start.getStartIndex()-2) != null ? "//" : ctx.getParent().getToken(XPath20Lexer.SLASH, ctx.start.getStartIndex()-1) != null ? "/" : "";
       this.stepText = getInputText.apply(ctx.step());
       this.predicates =
           ctx.predicatelist().predicate().stream().map(getInputText).collect(Collectors.toList());

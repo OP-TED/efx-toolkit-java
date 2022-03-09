@@ -10,6 +10,9 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import eu.europa.ted.efx.EfxBaseListener;
 import eu.europa.ted.efx.EfxLexer;
 import eu.europa.ted.efx.EfxParser;
+import eu.europa.ted.efx.EfxParser.CodeListContext;
+import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
+import eu.europa.ted.efx.EfxParser.ExplicitListContext;
 
 public class EfxToXpathTranslator extends EfxBaseListener {
 
@@ -166,7 +169,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   }
 
   @Override
-  public void exitEmptynessCondition(EfxParser.EmptynessConditionContext ctx) {
+  public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
     String expression = this.stack.pop();
     String operator = ctx.modifier != null && ctx.modifier.getText() == "not" ? "!=" : "==";
     this.stack.push(expression + " " + operators.get(operator) + " ''");
@@ -221,7 +224,15 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   }
 
   @Override
-  public void exitList(EfxParser.ListContext ctx) {
+  public void exitCodeList(CodeListContext ctx) {
+    if (this.stack.empty()) {
+      this.stack.push("{}");
+      return;
+    }
+  }
+
+  @Override
+  public void exitExplicitList(ExplicitListContext ctx) {
     if (this.stack.empty() || ctx.value().size() == 0) {
       this.stack.push("{}");
       return;
@@ -313,6 +324,11 @@ public class EfxToXpathTranslator extends EfxBaseListener {
     String field = this.stack.pop();
     String attribute = ctx.attribute != null ? "/@" + ctx.attribute.getText() : "/text()";
     this.stack.push(field + attribute);
+  }
+
+  @Override
+  public void exitCodelistReference(CodelistReferenceContext ctx) {
+    this.stack.push(this.symbols.getCodelistCodesAsEfxList(ctx.CodelistId().getText()));
   }
 }
 

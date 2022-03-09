@@ -3,8 +3,6 @@ package eu.europa.ted.efx.xpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
-import eu.europa.ted.efx.AbstractXpathLexer;
-
 @SuppressWarnings("static-method")
 public class XpathContextualizerTest {
 
