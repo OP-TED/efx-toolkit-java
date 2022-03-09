@@ -91,6 +91,22 @@ public class EfxToXpathTranslatorTest {
         testSdkVersion, testNewContextualizer));
   }
 
+  @Test
+  public void TranslateConditionValueLike() {
+    final String condition = "'abc' like 'ab.*';";
+    final String expected = "fn:matches('abc', 'ab.*')";
+    assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + condition,
+        testSdkVersion, testNewContextualizer));
+  }
+
+  @Test
+  public void TranslateConditionValueNotLike() {
+    final String condition = "'zzz' not like 'ab.*';";
+    final String expected = "not(fn:matches('zzz', 'ab.*'))";
+    assertEquals(expected, EfxToXpathTranslator.translateCondition(DUMMY_CONTEXT + condition,
+        testSdkVersion, testNewContextualizer));
+  }
+
   /**
    * This is a bit more than just a unit test as it tests many features of the language.
    */

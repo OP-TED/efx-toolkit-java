@@ -198,8 +198,10 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
     String expression = this.stack.pop();
-    String modifier = ctx.modifier != null && ctx.modifier.getText() == "not" ? "!" : "";
-    this.stack.push(modifier + "fn:matches(" + expression + ", " + ctx.pattern.getText() + ")");
+    boolean hasNot = ctx.modifier != null && ctx.modifier.getText().equals("not");
+    String not = hasNot ? "not(" : "";
+    String endNot = hasNot ? ")" : "";
+    this.stack.push(not + "fn:matches(" + expression + ", " + ctx.pattern.getText() + ")" + endNot);
   }
 
   @Override
