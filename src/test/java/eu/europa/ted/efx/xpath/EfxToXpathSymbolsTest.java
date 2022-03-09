@@ -17,7 +17,7 @@ public class EfxToXpathSymbolsTest {
   void testGetCodelistCodesNonTailored() {
     final EfxToXpathSymbols symbols = getDummyInstance();
     final String expected =
-        "{'all-rev-tic', 'cost-comp', 'exc-right', 'other', 'publ-ser-obl', 'soc-stand'}";
+        "('all-rev-tic', 'cost-comp', 'exc-right', 'other', 'publ-ser-obl', 'soc-stand')";
     final String codelistReference = "contract-detail";
     final String efxList = symbols.getCodelistCodesAsEfxList(codelistReference); // Has no parent.
     assertEquals(expected, efxList);
@@ -28,7 +28,7 @@ public class EfxToXpathSymbolsTest {
     final EfxToXpathSymbols symbols = getDummyInstance();
     final String codelistReference = "eu-official-language";
     final String expected =
-        "{'BUL', 'CES', 'DAN', 'DEU', 'ELL', 'ENG', 'EST', 'FIN', 'FRA', 'GLE', 'HRV', 'HUN', 'ITA', 'LAV', 'LIT', 'MLT', 'NLD', 'POL', 'POR', 'RON', 'SLK', 'SLV', 'SPA', 'SWE'}";
+        "('BUL', 'CES', 'DAN', 'DEU', 'ELL', 'ENG', 'EST', 'FIN', 'FRA', 'GLE', 'HRV', 'HUN', 'ITA', 'LAV', 'LIT', 'MLT', 'NLD', 'POL', 'POR', 'RON', 'SLK', 'SLV', 'SPA', 'SWE')";
     final String efxList = symbols.getCodelistCodesAsEfxList(codelistReference);
     assertEquals(expected, efxList);
   }
