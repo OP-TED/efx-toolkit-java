@@ -327,7 +327,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitSimpleReference(EfxParser.SimpleReferenceContext ctx) {
     String field = this.stack.pop();
-    String attribute = ctx.attribute != null ? "/@" + ctx.attribute.getText() : "/text()";
+    String attribute = ctx.attribute != null ? "/@" + ctx.attribute.getText() : "/normalize-space(text())";
     this.stack.push(field + attribute);
   }
 
