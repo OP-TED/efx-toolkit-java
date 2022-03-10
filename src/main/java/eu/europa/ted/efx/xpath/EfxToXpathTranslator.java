@@ -149,7 +149,7 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitLogicalNotCondition(EfxParser.LogicalNotConditionContext ctx) {
     String condition = this.stack.pop();
-    this.stack.push(operators.get("not") + " " + condition);
+    this.stack.push(operators.get("not") + condition);
   }
 
   @Override
