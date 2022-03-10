@@ -172,14 +172,14 @@ public class EfxToXpathTranslator extends EfxBaseListener {
   @Override
   public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
     String expression = this.stack.pop();
-    String operator = ctx.modifier != null && ctx.modifier.getText() == "not" ? "!=" : "==";
+    String operator = ctx.modifier != null && ctx.modifier.getText().equals("not") ? "!=" : "==";
     this.stack.push(expression + " " + operators.get(operator) + " ''");
   }
 
   @Override
   public void exitPresenceCondition(EfxParser.PresenceConditionContext ctx) {
     String reference = this.stack.pop();
-    String operator = ctx.modifier != null && ctx.modifier.getText() == "not" ? "==" : "!=";
+    String operator = ctx.modifier != null && ctx.modifier.getText().equals("not") ? "==" : "!=";
     this.stack.push(reference + " " + operators.get(operator) + " ''");
   }
 

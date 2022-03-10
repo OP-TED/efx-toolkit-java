@@ -114,7 +114,7 @@ public class EfxToXpathTranslatorTest {
   public void yTranslateCondition111Complex() {
     final String context = "BT-1311(d)-Lot";
     final String expected =
-        "(../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-mult' and not(cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = '')) or (../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-single' and not(cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() = ''))";
+        "(../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-mult' and not(cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() != '')) or (../../cac:TenderingProcess/cbc:ProcedureCode/text()='oth-single' and not(cac:TenderSubmissionDeadlinePeriod/cbc:EndDate/text() != ''))";
     final String condition =
         "(BT-105-Procedure == 'oth-mult' and not (BT-131(d)-Lot is not empty)) or (BT-105-Procedure == 'oth-single' and not (BT-131(d)-Lot is not empty));";
     assertEquals(expected, EfxToXpathTranslator.translateCondition(context + ": " + condition,
