@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.labels;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -45,32 +46,33 @@ public class LabelMapImpl implements LabelMap {
   /**
    * Private, use getInstance method instead.
    *
-   * @param sdkVersion The version of the SDK.
+   * @param sdkVersion The version of the SDK to get the labels from.
    */
   private LabelMapImpl(final String sdkVersion) {
     //
   }
 
   @Override
-  public String mapLabel(final String labelCode, final Locale language) throws IOException {
-    final String languageTwoLetterCode = language.getLanguage();
+  public String mapLabel(final String labelId, final Locale locale) throws IOException {
+    final String languageTwoLetterCode = locale.getLanguage();
     if (languageTwoLetterCode.length() != 2) {
       throw new IllegalArgumentException(String.format(
           "Expected two letter code but found: %s, maybe try passing language and country separately",
           languageTwoLetterCode));
     }
-    // TODO load all labels for this language from the translations folder.
-    // EFORMS_SDK_TRANSLATIONS load resource as stream ? walk folder ?
     final String ext = EFORMS_SDK_TRANSLATIONS_EXT;
 
     final Map<String, String> labelById =
         labelsByLanguage.computeIfAbsent(languageTwoLetterCode, k -> new HashMap<>());
 
     if (labelById.isEmpty()) {
+
       // Lazily load all labels associated to given language.
       JavaTools.listFilesUsingFileWalk(JavaTools.getResourceAsPath(EFORMS_SDK_TRANSLATIONS), 2, ext)
           .forEach(path -> {
             final String filenameStr = path.getFileName().toString();
+
+            // Rely on SDK naming convention to find the language in the filename.
             final int lastIndexOfLangSeparator = filenameStr.lastIndexOf("_");
             assert lastIndexOfLangSeparator > 0 : "lastIndexOfLangSeparator must be > 0";
 
@@ -80,51 +82,31 @@ public class LabelMapImpl implements LabelMap {
             final String langFromFilename =
                 filenameStr.substring(lastIndexOfLangSeparator + 1, lastIndexOfExt);
 
+            // Load data from the file if it contains the desired language.
             if (languageTwoLetterCode.equals(langFromFilename)) {
-              final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-              dbf.setValidating(false);
-              dbf.setNamespaceAware(true);
-              try {
-                dbf.setFeature("http://xml.org/sax/features/namespaces", false);
-                dbf.setFeature("http://xml.org/sax/features/validation", false);
-                dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
-                    false);
-                dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
-                final DocumentBuilder db = dbf.newDocumentBuilder();
-                final Document doc = db.parse(path.toFile());
-                final NodeList elements = doc.getElementsByTagName("entry");
-                for (int i = 0; i < elements.getLength(); i++) {
-                  final Node item = elements.item(i);
-                  final String labelId = item.getAttributes().getNamedItem("key").getNodeValue();
-                  final String labelText = item.getTextContent();
-                  assert StringUtils.isNotBlank(labelId) : "labelId is blank";
-                  labelById.put(labelId, labelText);
-                }
-              } catch (ParserConfigurationException e) {
-                throw new RuntimeException(e);
-              } catch (SAXException e) {
-                throw new RuntimeException(e);
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
+              populateMap(labelById, path);
             }
           });
+
       if (labelById.isEmpty()) {
-        // It should not be empty anymore at this point!
+        // It should not be empty anymore after being populated!
         throw new IllegalArgumentException(String.format(
-            "Found no texts for language: %s, please use a language provided by in the SDK translations",
-            languageTwoLetterCode));
+            "Found no texts for language '%s'. Please use a language provided in folder '%s'",
+            languageTwoLetterCode, EFORMS_SDK_TRANSLATIONS));
       }
     }
-    final String labelText = labelById.get(labelCode);
+
+    // Get the label by the SDK unique label identifier.
+    final String labelText = labelById.get(labelId);
+
     final String fallbackLanguage = "en";
     if (labelText != null) {
       return labelText;
     }
     if (languageTwoLetterCode != fallbackLanguage) {
-      return mapLabel(labelCode, "en"); // Fallback to english.
+      return mapLabel(labelId, "en"); // Fallback to english.
     }
+
     return null;
   }
 
@@ -133,5 +115,36 @@ public class LabelMapImpl implements LabelMap {
     return mapLabel(labelId, new Locale(language));
   }
 
+  private static void populateMap(final Map<String, String> labelById, Path path) {
+    final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    try {
+
+      dbf.setValidating(false);
+      dbf.setNamespaceAware(true);
+      dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+      dbf.setFeature("http://xml.org/sax/features/validation", false);
+      dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+      dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+      final DocumentBuilder db = dbf.newDocumentBuilder();
+      final Document doc = db.parse(path.toFile());
+
+      // For each entry add the key and the value to the map.
+      final NodeList elements = doc.getElementsByTagName("entry");
+      for (int i = 0; i < elements.getLength(); i++) {
+        final Node item = elements.item(i);
+        final String labelId = item.getAttributes().getNamedItem("key").getNodeValue();
+        final String labelText = item.getTextContent();
+        assert StringUtils.isNotBlank(labelId) : "labelId is blank";
+        labelById.put(labelId, labelText);
+      }
+    } catch (final ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    } catch (final SAXException e) {
+      throw new RuntimeException(e);
+    } catch (final IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
 }
