@@ -1,42 +1,78 @@
 grammar Efx;
 	
-testfile: (statement | lineComment)+ EOF;
-lineComment: Comment;
+options { tokenVocab = EfxLexer; }
 
-statement: context condition ';';
+singleExpression: Context ColonColon expressionBlock EOF;
 
-axis: '.';
+// A template file contains template lines.
+templateFile: (templateLine /* additonalTemplateLine* */)* EOF;
 
-context: (axis '//')? field=FieldId ':';
+// A template line contains a template which may or may not be indented with tabs or spaces.
+templateLine: indent=(Tabs | Spaces)? Context ColonColon txt=template CRLF;
+// additonalTemplateLine: indent=(Tabs | Spaces)? ColonColon txt=template CRLF;
+
+// A template is a combination of free-text, label placeholders and expressions to be evaluated.
+template: txt=text template? 			# textTemplate
+	| lbl=labelBlock template? 			# labelTemplate
+	| val=expressionBlock template? 	# valueTemplate
+	;
+
+// A label block starts with a # and contains a label identifier inside curly braces.
+labelBlock
+	: StartLabel assetType Pipe labelType Pipe assetId EndLabel 		# standardLabelReference
+	| StartLabel labelType Pipe BtAssetId EndLabel 						# shorthandBtLabelTypeReference
+	| StartLabel labelType Pipe FieldAssetId EndLabel 					# shorthandFieldLabelTypeReference
+	| StartLabel BtAssetId EndLabel 									# shorthandBtLabelReference
+	| StartLabel FieldAssetId EndLabel 		    						# shorthandFieldLabelReference
+	| StartLabel OpenValueBlock FieldAssetId CloseValueBlock EndLabel	# shorthandFieldValueLabelReference
+	| SelfLabel															# selfLabeleReference
+	;
+
+// A value reference starts with a $ and contains an expression to be evaluated inside curly braces.
+expressionBlock
+	: StartExpression condition EndExpression
+	| StartNestedExpression condition EndExpression
+	| SelfValue
+	;
+
+assetType: AssetType | expressionBlock;
+labelType: LabelType | expressionBlock;
+assetId: BtAssetId | FieldAssetId | CodelistAssetId | expressionBlock;
+
+text: whitespace | FreeText+ text*;
+
+whitespace: Whitespace+;
+
+context: field=FieldId Colon Colon;
 
 /*
  * Conditions
  */
-condition: condition operator='or' condition			# logicalOrCondition
-	| condition operator='and' condition				# logicalAndCondition
-	| 'not' condition									# logicalNotCondition
-	| '(' condition ')'									# parenthesizedCondition
-	| 'ALWAYS'											# alwaysCondition
-	| 'NEVER'											# neverCondition
-	| expression operator=('==' | '!=' | '>' | '>=' | '<' | '<=') expression 	# comparisonCondition
-	| expression modifier='not'? 'in' list				# inListCondition
-	| expression 'is' modifier='not'? 'empty'			# emptinessCondition
-	| reference 'is' modifier='not'? 'present'			# presenceCondition
-	| expression modifier='not'? 'like' pattern=STRING	# likePatternCondition
-	| expression										# expressionCondition
+condition: condition operator=Or condition			# logicalOrCondition
+	| condition operator=And condition				# logicalAndCondition
+	| Not condition									# logicalNotCondition
+	| OpenParenthesis condition CloseParenthesis	# parenthesizedCondition
+	| Always										# alwaysCondition
+	| Never											# neverCondition
+	| expression operator=Comparison expression 	# comparisonCondition
+	| expression modifier=Not? In list				# inListCondition
+	| expression Is modifier=Not? Empty				# emptinessCondition
+	| reference Is modifier=Not? Present			# presenceCondition
+	| expression modifier=Not? Like pattern=STRING	# likePatternCondition
+	| expression									# expressionCondition
 	;
 
 /*
  * Expressions
  */
-expression: expression operator=('*' | '/' | '%') expression 	#multiplicationExpression
-	| expression operator=('+' | '-') expression				#additionExpression
-	| '(' expression ')'										#parenthesizedExpression
-	| value														#valueExpression
+expression: expression operator=Multiplication expression 	# multiplicationExpression
+	| expression operator=Addition expression				# additionExpression
+	| OpenParenthesis expression CloseParenthesis			# parenthesizedExpression
+	| value													# valueExpression
 	;
 	
-list: '{' value (',' value)* '}' 	# explicitList 
-	| codelistReference				# codeList
+list: OpenParenthesis value (Comma value)* CloseParenthesis	# explicitList 
+	| codelistReference										# codeList
 	;
 
 value: literal | reference | functionCall;
@@ -47,53 +83,28 @@ literal: STRING | INTEGER | DECIMAL | UUIDV4;
  * References
  */
 reference: 
-	fieldReference ('/@' attribute=Identifier)?		# simpleReference
-	| ctx=context reference							# referenceWithContextOverride
+	fieldReference (SlashAt attribute=Identifier)?		# simpleReference
+	| ctx=context reference								# referenceWithContextOverride
 	;
 
 fieldReference:
-	ref=fieldReference '[' pred=predicate ']'	#fieldReferenceWithPredicate
-	| notice=noticeReference '/' fieldReference	#fieldInNoticeReference
-	| field=FieldId								#simpleFieldReference
+	ref=fieldReference OpenBracket pred=predicate CloseBracket	#fieldReferenceWithPredicate
+	| notice=noticeReference Slash fieldReference				#fieldInNoticeReference
+	| field=FieldId												#simpleFieldReference
 	;
 
 predicate: condition;
 
 nodeReference: node=NodeId;
 
-noticeReference: 'notice' '(' noticeId=expression ')';
-codelistReference: 'codelist' '(' codeListId=CodelistId ')';
+noticeReference: Notice OpenParenthesis noticeId=expression CloseParenthesis;
+codelistReference: Codelist? OpenParenthesis codeListId=codelistId CloseParenthesis;
+codelistId: CodelistId;
 
 /*
  * Function calls
  */
-functionCall: FunctionName '(' arguments? ')';
-arguments: argument (',' argument)*;
-argument: expression;
+functionCall: FunctionName OpenParenthesis arguments? CloseParenthesis;
+arguments: argument (Comma argument)*;
+argument: condition;
 
-
-FunctionName: 'TODAY' | 'NOW' | 'PARENT';
-NodeId: 'ND' '-' DIGIT+;
-FieldId: ('BT' | 'OPP' | 'OPT') '-' INTEGER ('(' (BtId | [a-z]) ')')? ('-' Identifier)+;
-BtId: 'BT' '-' DIGIT+;
-CodelistId: Identifier ('-' Identifier)*;
-
-Identifier: LETTER (LETTER | DIGIT)* ;
-
-
-INTEGER: DIGIT+;
-DECIMAL: DIGIT? '.' DIGIT+;
-STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
-UUIDV4: '{' HEX4 HEX4 '-' HEX4 '-' HEX4 '-' HEX4 '-' HEX4 HEX4 HEX4 '}';
-
-fragment HEX4: HEX HEX HEX HEX;
-fragment HEX: [0-9a-fA-F];
-fragment CHAR_SEQ: CHAR+;
-fragment CHAR: ~["'\\\r\n] | ESC_SEQ;
-fragment ESC_SEQ: '\\' ["'\\];
-fragment LETTER: [a-zA-Z_];
-fragment DIGIT: [0-9];
-
-WS: [ \t]+  -> skip;
-CRLF:('\r' '\n'? | '\n') -> skip;
-Comment:   '//' ~[\r\n]*;

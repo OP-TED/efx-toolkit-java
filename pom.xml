@@ -3,7 +3,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>eforms-expression-language</groupId>
+  <groupId>eu.europa.ted.eforms</groupId>
   <artifactId>eforms-expression-language</artifactId>
   <version>0.0.1</version>
 
@@ -12,12 +12,18 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <antlr4.version>4.9.3</antlr4.version>
-    <project.build.directory>eu.europa.ted.efx.app</project.build.directory>
-    <project.build.finalName>EfxMainApp</project.build.finalName>
   </properties>
 
 
   <dependencies>
+
+        
+    <dependency>
+      <groupId>eu.europa.ted.eforms</groupId>
+      <artifactId>eforms-sdk-utils</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+    
     <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -81,6 +87,7 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
