@@ -25,6 +25,10 @@ import eu.europa.ted.efx.EfxParser.TemplateLineContext;
 import eu.europa.ted.efx.EfxParser.TextContext;
 import eu.europa.ted.efx.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
+import eu.europa.ted.efx.interfaces.LabelMap;
+import eu.europa.ted.efx.interfaces.NoticeReader;
+import eu.europa.ted.efx.interfaces.NoticeRenderer;
+import eu.europa.ted.efx.interfaces.SymbolMap;
 
 public class EfxTemplateRenderer extends EfxToXPathTranspiler {
 

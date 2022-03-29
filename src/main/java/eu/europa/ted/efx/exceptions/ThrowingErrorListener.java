@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.exceptions;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;

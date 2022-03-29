@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.interfaces;
 
 public interface SymbolMap {
 

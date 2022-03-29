@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Locale;
 import java.util.Map;
-import eu.europa.ted.efx.LabelMap;
+import eu.europa.ted.efx.interfaces.LabelMap;
 
 public class MockLabelMap implements LabelMap {
 

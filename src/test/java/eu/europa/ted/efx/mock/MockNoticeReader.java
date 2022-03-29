@@ -2,8 +2,8 @@ package eu.europa.ted.efx.mock;
 
 import java.util.HashMap;
 import java.util.Map;
-import eu.europa.ted.efx.NoticeReader;
-import eu.europa.ted.efx.SymbolMap;
+import eu.europa.ted.efx.interfaces.NoticeReader;
+import eu.europa.ted.efx.interfaces.SymbolMap;
 
 public class MockNoticeReader implements NoticeReader {
 
@@ -32,7 +32,7 @@ public class MockNoticeReader implements NoticeReader {
     }
 
     public void mockFieldValue(final SymbolMap symbols, final String fieldId,
-            final String contextId, final String value) {
+    final String contextId, final String value) {
         String contextPath = symbols.contextPathOfField(contextId);
         String xpath = symbols.relativeXpathOfField(fieldId, contextPath);
         values.put(this.mockXpath(xpath, contextPath), value);

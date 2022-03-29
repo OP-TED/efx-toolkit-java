@@ -2,6 +2,7 @@ package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.MockSymbolMap;
 
 public class EfxToXPathTranspilerTests {

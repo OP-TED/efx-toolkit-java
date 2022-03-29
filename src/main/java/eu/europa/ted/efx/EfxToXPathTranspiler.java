@@ -11,6 +11,7 @@ import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedExpressionContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
+import eu.europa.ted.efx.interfaces.SymbolMap;
 
 public class EfxToXPathTranspiler extends EfxBaseListener {
 

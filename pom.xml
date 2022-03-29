@@ -16,11 +16,10 @@
 
 
   <dependencies>
-
         
     <dependency>
       <groupId>eu.europa.ted.eforms</groupId>
-      <artifactId>eforms-sdk-utils</artifactId>
+      <artifactId>eforms-sdk-lib</artifactId>
       <version>0.0.1</version>
     </dependency>
     

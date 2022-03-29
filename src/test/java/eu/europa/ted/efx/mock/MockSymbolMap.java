@@ -1,22 +1,19 @@
 package eu.europa.ted.efx.mock;
 
 import static java.util.Map.entry;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Map;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import eu.europa.ted.eforms.XpathContextualizer;
 import eu.europa.ted.eforms.sdk.SdkCodelist;
 import eu.europa.ted.eforms.sdk.SdkField;
 import eu.europa.ted.eforms.sdk.SdkNode;
-import eu.europa.ted.efx.SymbolMap;
+import eu.europa.ted.eforms.xpath.XPathContextualizer;
+import eu.europa.ted.efx.interfaces.SymbolMap;
 
 
 public class MockSymbolMap implements SymbolMap {
@@ -86,13 +83,13 @@ public class MockSymbolMap implements SymbolMap {
     @Override
     public String relativeXpathOfField(String fieldId, String contextPath) {
         final String xpath = absoluteXpathOfField(fieldId);
-        return XpathContextualizer.contextualize(contextPath, xpath);
+        return XPathContextualizer.contextualize(contextPath, xpath);
     }
 
     @Override
     public String relativeXpathOfNode(String nodeId, String contextPath) {
         final String xpath = absoluteXpathOfNode(nodeId);
-        return XpathContextualizer.contextualize(contextPath, xpath);
+        return XPathContextualizer.contextualize(contextPath, xpath);
     }
 
     @Override

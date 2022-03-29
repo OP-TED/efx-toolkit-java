@@ -1,6 +1,6 @@
 package eu.europa.ted.efx.mock;
 
-import eu.europa.ted.efx.NoticeRenderer;
+import eu.europa.ted.efx.interfaces.NoticeRenderer;
 
 public class MockNoticeRenderer implements NoticeRenderer {
 
