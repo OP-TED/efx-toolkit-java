@@ -15,7 +15,6 @@ import eu.europa.ted.eforms.sdk.SdkNode;
 import eu.europa.ted.eforms.xpath.XPathContextualizer;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 
-
 public class MockSymbolMap implements SymbolMap {
 
     private static final Map<String, MockSymbolMap> instances = new HashMap<>();
@@ -130,6 +129,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param fieldId The id of the field who's parent node we are looking for.
      * @return The id of the parent node of the given field.
      */
+    @Override
     public String parentNodeOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField != null) {
@@ -142,6 +142,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param fieldId The id of a field.
      * @return The xPath of the given field.
      */
+    @Override
     public String absoluteXpathOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
@@ -155,6 +156,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param nodeId The id of a node or a field.
      * @return The xPath of the given node or field.
      */
+    @Override
     public String absoluteXpathOfNode(final String nodeId) {
         final SdkNode sdkNode = nodeById.get(nodeId);
         if (sdkNode == null) {
