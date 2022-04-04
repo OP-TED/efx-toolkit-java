@@ -4,8 +4,9 @@ lexer grammar EfxLexer;
  * DEFAULT mode
 */
 
-// The Context has the same definition as a FieldId in EXPRESSION mode
-Context: ('BT' | 'OPP' | 'OPT') '-' [0-9]+ ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
+// The Context has the same definition as a FieldId or NodeId in EXPRESSION mode
+FieldContext: ('BT' | 'OPP' | 'OPT') '-' [0-9]+ ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
+NodeContext: 'ND' '-' [0-9]+;
 
 // Empty lines and comment lines are to be ignored by the parser.
 Comment: [ \t]* '//' ~[\r\n\f]* EOL* ->skip;
@@ -39,14 +40,14 @@ FreeText: CharSequence+;
 fragment CharSequence: Char+;
 fragment Char: ~[\r\n\f\t #$}{];
 
-Dollar: '$';    // Used for label placeholders
-Sharp: '#';     // Used for expression placeholders
+fragment Dollar: '$';    // Used for label placeholders
+fragment Sharp: '#';     // Used for expression placeholders
 
 SelfLabel: Sharp 'label';    
 SelfValue: Dollar 'value';
 
-// Opening a curly brace switches to EXPRESSION mode.
-OpenBrace : '{';// -> pushMode(EXPRESSION);
+
+fragment OpenBrace : '{';
 
 StartExpression: Dollar OpenBrace -> pushMode(EXPRESSION);
 StartLabel: Sharp OpenBrace -> pushMode(LABEL);
@@ -66,14 +67,15 @@ CloseValueBlock: ']';
 EndLabel : '}' -> popMode;
 
 StartNestedExpression: NestedDollar NestedOpenBrace -> pushMode(EXPRESSION);
-NestedDollar: '$';
-NestedOpenBrace: '{';
+fragment NestedDollar: '$';
+fragment NestedOpenBrace: '{';
 
 AssetType: 'business_term' | 'field' | 'code' | 'decoration';
 LabelType: 'name' | 'value';
-FieldAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+ ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
-BtAssetId: 'BT' '-' [0-9]+;
+FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
+BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
 CodelistAssetId: 'CL' ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
+OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 
 /*
  *

@@ -130,7 +130,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param fieldId The id of the field who's parent node we are looking for.
      * @return The id of the parent node of the given field.
      */
-    String parentNodeOfField(final String fieldId) {
+    public String parentNodeOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField != null) {
             return sdkField.getParentNodeId();
@@ -142,7 +142,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param fieldId The id of a field.
      * @return The xPath of the given field.
      */
-    String absoluteXpathOfField(final String fieldId) {
+    public String absoluteXpathOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
             throw new InputMismatchException(
@@ -155,7 +155,7 @@ public class MockSymbolMap implements SymbolMap {
      * @param nodeId The id of a node or a field.
      * @return The xPath of the given node or field.
      */
-    String absoluteXpathOfNode(final String nodeId) {
+    public String absoluteXpathOfNode(final String nodeId) {
         final SdkNode sdkNode = nodeById.get(nodeId);
         if (sdkNode == null) {
             throw new InputMismatchException(

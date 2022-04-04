@@ -2,13 +2,13 @@ grammar Efx;
 	
 options { tokenVocab = EfxLexer; }
 
-singleExpression: Context ColonColon expressionBlock EOF;
+singleExpression: (FieldContext | NodeContext) ColonColon expressionBlock EOF;
 
 // A template file contains template lines.
 templateFile: (templateLine /* additonalTemplateLine* */)* EOF;
 
 // A template line contains a template which may or may not be indented with tabs or spaces.
-templateLine: indent=(Tabs | Spaces)? Context ColonColon txt=template CRLF;
+templateLine: indent=(Tabs | Spaces)? (FieldContext | NodeContext) ColonColon txt=template CRLF;
 // additonalTemplateLine: indent=(Tabs | Spaces)? ColonColon txt=template CRLF;
 
 // A template is a combination of free-text, label placeholders and expressions to be evaluated.
@@ -37,7 +37,7 @@ expressionBlock
 
 assetType: AssetType | expressionBlock;
 labelType: LabelType | expressionBlock;
-assetId: BtAssetId | FieldAssetId | CodelistAssetId | expressionBlock;
+assetId: BtAssetId | FieldAssetId | CodelistAssetId | OtherAssetId | expressionBlock;
 
 text: whitespace | FreeText+ text*;
 

@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.EfxParser.CodeListContext;
 import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
@@ -32,10 +33,11 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     /**
      * The context stack is used to keep track of xPath contexts for nested conditions.
      */
-    protected Stack<String> efxContext = new Stack<>();
+    protected final ContextStack efxContext;
 
     public EfxToXPathTranspiler(final SymbolMap symbols) {
         this.symbols = symbols;
+        this.efxContext = new ContextStack(symbols);
     }
 
     public static String transpileExpression(final String context, final String expression,
@@ -59,10 +61,11 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
         return translator.getTranspiledXPath();
     }
 
-    public static String transpileExpression(final String context, final String expression, final SymbolMap symbols) {
+    public static String transpileExpression(final String context, final String expression,
+            final SymbolMap symbols) {
         return transpileExpression(context, expression, symbols, null);
     }
-    
+
     /**
      * Call this method to get the translated code after the walker finished its walk.
      *
@@ -78,7 +81,15 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
 
     @Override
     public void enterSingleExpression(SingleExpressionContext ctx) {
-        this.efxContext.push(this.symbols.contextPathOfField(ctx.Context().getText()));
+        final TerminalNode fieldContext = ctx.FieldContext();
+        if (fieldContext != null) {
+            this.efxContext.pushFieldContext(fieldContext.getText());
+        } else {
+            final TerminalNode nodeContext = ctx.NodeContext();
+            if (nodeContext != null) {
+                this.efxContext.pushNodeContext(nodeContext.getText());
+            }
+        }
     }
 
     @Override
@@ -236,8 +247,8 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
 
     @Override
     public void exitNodeReference(EfxParser.NodeReferenceContext ctx) {
-        this.stack.push(
-                symbols.relativeXpathOfNode(ctx.node.getText(), this.efxContext.peek()));
+        this.stack.push(symbols.relativeXpathOfNode(ctx.node.getText(),
+                this.efxContext.peek().absolutePath()));
     }
 
     @Override
@@ -249,8 +260,8 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
 
     @Override
     public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-        this.stack.push(
-                symbols.relativeXpathOfField(ctx.field.getText(), this.efxContext.peek()));
+        this.stack.push(symbols.relativeXpathOfField(ctx.field.getText(),
+                this.efxContext.peek().absolutePath()));
     }
 
     @Override
@@ -269,8 +280,8 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     public void enterPredicate(EfxParser.PredicateContext ctx) {
         EfxParser.SimpleFieldReferenceContext refCtx =
                 ctx.getParent().getChild(EfxParser.SimpleFieldReferenceContext.class, 0);
-        this.efxContext.push(
-                symbols.contextPathOfField(refCtx.field.getText(), this.efxContext.peek()));
+        String fieldId = refCtx.field.getText();
+        this.efxContext.pushFieldContext(fieldId);
     }
 
     /**
@@ -284,8 +295,8 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     @Override
     public void enterReferenceWithContextOverride(
             EfxParser.ReferenceWithContextOverrideContext ctx) {
-        this.efxContext
-                .push(symbols.contextPathOfField(ctx.ctx.getText(), this.efxContext.peek()));
+        String fieldId = ctx.ctx.getText();
+        this.efxContext.pushFieldContext(fieldId);
     }
 
     @Override

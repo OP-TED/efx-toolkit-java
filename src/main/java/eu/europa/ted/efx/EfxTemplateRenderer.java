@@ -1,14 +1,16 @@
 package eu.europa.ted.efx;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
-import java.util.Stack;
+import java.util.List;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.EfxParser.ExpressionBlockContext;
@@ -22,15 +24,22 @@ import eu.europa.ted.efx.EfxParser.ShorthandFieldValueLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.StandardLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.EfxParser.TextContext;
 import eu.europa.ted.efx.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
-import eu.europa.ted.efx.interfaces.LabelMap;
-import eu.europa.ted.efx.interfaces.NoticeReader;
-import eu.europa.ted.efx.interfaces.NoticeRenderer;
+import eu.europa.ted.efx.interfaces.Renderer;
 import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 
 public class EfxTemplateRenderer extends EfxToXPathTranspiler {
+
+  private static final String INCONSISTENT_INDENTATION_SPACES =
+      "Inconsistent indentation. Expected a multiple of %d spaces.";
+  private static final String INDENTATION_LEVEL_SKIPPED = "Indentation level skipped.";
+  private static final String START_INTENDAT_AT_ZERO =
+      "Incorrect intendation. Please do not indent the first level in your template.";
+  private static final String MIXED_INDENTATION =
+      "Don't mix indentation methods. Stick with either tabs or spaces.";
+  private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
   static final boolean debug = true;
 
@@ -41,30 +50,73 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
   private Indent indentWith = Indent.UNSET;
   private int indentSpaces = -1;
 
-  private Stack<Integer> indentStack = new Stack<>();
+  Renderer renderer;
 
-  NoticeRenderer renderer;
 
-  LabelMap labels;
+  final ContentBlock rootBlock = ContentBlock.newRootBlock();
 
-  NoticeReader xml;
+  ContentBlockStack blockStack = new ContentBlockStack();
 
-  String language;
 
-  public EfxTemplateRenderer(final SymbolMap symbols, final LabelMap labels,
-      final NoticeReader xml, final NoticeRenderer renderer, final String language) {
+  public EfxTemplateRenderer(TranslatorDependencyFactory factory, final String sdkVersion) {
+    super(factory.getSymbolMap(sdkVersion));
+    this.renderer = factory.Renderer();
+  }
+
+  public EfxTemplateRenderer(final SymbolMap symbols, final Renderer renderer) {
     super(symbols);
-    this.xml = xml;
-    this.labels = labels;
     this.renderer = renderer;
-    this.language = language;
   }
 
   // Static methods
 
+  public static String renderTemplateFile(final Path pathname, final String sdkVersion,
+      final TranslatorDependencyFactory factory) throws IOException {
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromPath(pathname));
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final EfxParser parser = new EfxParser(tokens);
+
+    final BaseErrorListener errorListener = factory.getErrorListener();
+    if (errorListener != null) {
+      parser.removeErrorListeners();
+      parser.addErrorListener(errorListener);
+    }
+
+    final ParseTree tree = parser.templateFile();
+
+    final ParseTreeWalker walker = new ParseTreeWalker();
+    final EfxTemplateRenderer translator = new EfxTemplateRenderer(factory, sdkVersion);
+
+    walker.walk(translator, tree);
+
+    return translator.getTranspiledXPath();
+  }
+
+  public static String renderTemplate(final String template, final String sdkVersion,
+      final TranslatorDependencyFactory factory) {
+
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final EfxParser parser = new EfxParser(tokens);
+
+    final BaseErrorListener errorListener = factory.getErrorListener();
+    if (errorListener != null) {
+      parser.removeErrorListeners();
+      parser.addErrorListener(errorListener);
+    }
+
+    final ParseTree tree = parser.templateFile();
+
+    final ParseTreeWalker walker = new ParseTreeWalker();
+    final EfxTemplateRenderer translator = new EfxTemplateRenderer(factory, sdkVersion);
+
+    walker.walk(translator, tree);
+
+    return translator.getTranspiledXPath();
+  }
+
   public static String renderTemplate(final String template, final SymbolMap symbols,
-      final LabelMap labels, final NoticeReader xml, final NoticeRenderer renderer, final String language,
-      final BaseErrorListener errorListener) {
+      final Renderer renderer, final BaseErrorListener errorListener) {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -78,8 +130,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateRenderer translator =
-        new EfxTemplateRenderer(symbols, labels, xml, renderer, language);
+    final EfxTemplateRenderer translator = new EfxTemplateRenderer(symbols, renderer);
     walker.walk(translator, tree);
 
     return translator.getTranspiledXPath();
@@ -101,29 +152,30 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
     this.efxContext.push(null);
-    this.renderer.beginFile();
+    assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
     this.efxContext.pop();
-    while (!this.indentStack.isEmpty()) {
-      this.indentStack.pop();
-      this.renderer.endBlock();
-    }
-    this.renderer.endFile();
-  }
+    this.blockStack.pop();
 
-  @Override
-  public void exitText(TextContext ctx) {
-    this.stack.push(ctx.getText());
+    List<String> templateCalls = new ArrayList<>();
+    List<String> templates = new ArrayList<>();
+    for (ContentBlock rootBlock : this.rootBlock.children) {
+      templateCalls.add(rootBlock.renderCallTemplate(renderer));
+      rootBlock.renderTemplate(renderer, templates);
+    }
+    String file =
+        this.renderer.renderFile(String.join("\n", templateCalls), String.join("\n", templates));
+    this.stack.push(file);
   }
 
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
     String template = ctx.template() != null ? this.stack.pop() : "";
-    String text = ctx.text() != null ? this.stack.pop() : "";
-    this.stack.push(String.format("%s %s", text, template).trim());
+    String text = ctx.text() != null ? ctx.text().getText() : "";
+    this.stack.push(String.format("%s%s", this.renderer.renderFreeText(text), template));
   }
 
   @Override
@@ -145,32 +197,22 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     String assetId = ctx.assetId() != null ? this.stack.pop() : "";
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
     String assetType = ctx.assetType() != null ? this.stack.pop() : "";
-    try {
-      this.stack.push(this.labels.mapLabel(assetType, labelType, assetId, this.language));
-    } catch (IOException e) {
-      throw new ParseCancellationException("Unable to load labels.", e);
-    }
+    this.stack.push(this.renderer
+        .renderLabelReference(String.format("%s|%s|%s", assetType, labelType, assetId)));
   }
 
   @Override
   public void exitShorthandBtLabelTypeReference(ShorthandBtLabelTypeReferenceContext ctx) {
     String assetId = ctx.BtAssetId().getText();
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
-    try {
-      this.stack.push(this.labels.mapLabel("business_term", labelType, assetId, this.language));
-    } catch (IOException e) {
-      throw new ParseCancellationException("Unable to load labels.", e);
-    }
+    this.stack.push(this.renderer
+        .renderLabelReference(String.format("%s|%s|%s", "business_term", labelType, assetId)));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    try {
-      this.stack.push(
-          this.labels.mapLabel("business_term", "name", ctx.BtAssetId().getText(), this.language));
-    } catch (IOException e) {
-      throw new ParseCancellationException("Unable to load labels.", e);
-    }
+    this.stack.push(this.renderer.renderLabelReference(
+        String.format("%s|%s|%s", "business_term", "name", ctx.BtAssetId().getText())));
   }
 
 
@@ -178,47 +220,33 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
   public void exitShorthandFieldLabelTypeReference(ShorthandFieldLabelTypeReferenceContext ctx) {
     String assetId = ctx.FieldAssetId().getText();
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
-    try {
-      this.stack.push(this.labels.mapLabel("field", labelType, assetId, this.language));
-    } catch (IOException e) {
-      throw new ParseCancellationException("Unable to load labels.", e);
-    }
+    this.stack.push(
+        this.renderer.renderLabelReference(String.format("%s|%s|%s", "field", labelType, assetId)));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
-    try {
-      this.stack
-          .push(this.labels.mapLabel("field", "name", ctx.FieldAssetId().getText(), this.language));
-    } catch (IOException e) {
-      throw new ParseCancellationException("Unable to load labels.", e);
-    }
+    this.stack.push(this.renderer.renderLabelReference(
+        String.format("%s|%s|%s", "field", "name", ctx.FieldAssetId().getText())));
   }
 
   @Override
   public void exitShorthandFieldValueLabelReference(ShorthandFieldValueLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldAssetId().getText();
-    final String contextPath = this.efxContext.peek();
-    final String valuePath = symbols.relativeXpathOfField(fieldId, contextPath);
-    final String value = this.xml.valueOf(valuePath, contextPath);
+    final Context contextPath = this.efxContext.peek();
+    final String valuePath = symbols.relativeXpathOfField(fieldId, contextPath.absolutePath());
+    final String value = "???"; // this.xml.valueOf(valuePath, contextPath);
+    //TODO: implement this properly
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
-        try {
-          this.stack.push(this.labels.mapLabel("code", String.format("value-%s", value), fieldId,
-              this.language));
-        } catch (IOException e) {
-          throw new ParseCancellationException("Unable to load labels.", e);
-        }
+        this.stack.push(this.renderer.renderLabelReference(
+            String.format("%s|%s|%s", "code", String.format("value-%s", value), fieldId)));
         break;
       case "code":
-        try {
-          this.stack.push(this.labels.mapLabel("code", "value",
-              String.format("%s.%s", this.symbols.rootCodelistOfField(fieldId), value),
-              this.language));
-        } catch (IOException e) {
-          throw new ParseCancellationException("Unable to load labels.", e);
-        }
+      case "internal-code":
+        this.stack.push(this.renderer.renderLabelReference(String.format("%s|%s|%s", "code",
+            "value", String.format("%s.%s", this.symbols.rootCodelistOfField(fieldId), value))));
         break;
       default:
         throw new InputMismatchException(String.format(
@@ -248,77 +276,96 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     }
   }
 
-
   @Override
   public void exitExpressionBlock(ExpressionBlockContext ctx) {
-    System.out.print("Value='" + ctx.getText() + "'");
+    final String expression = this.stack.pop();
+    this.stack.push(this.renderer.renderValueReference(expression));
   }
 
   @Override
   public void enterTemplateLine(TemplateLineContext ctx) {
-    if (this.indentStack.isEmpty()) {
-      this.indentStack.push(0);
-    }
-    this.efxContext.push(this.symbols.contextPathOfField(ctx.Context().getText()));
-
-    System.out.println();
+    final Context context = this.getTemplateLineContext(ctx);
+    this.efxContext.push(context);
   }
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
-    int indentLevel = 0;
+    this.efxContext.pop();
+    final int indentLevel = this.getIndentLevel(ctx);
+    final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
+    final String content = ctx.template() != null ? this.stack.pop() : "";
+    assert this.stack.isEmpty() : "Stack should be empty at this point.";
 
+    if (indentChange > 1) {
+      throw new InputMismatchException(INDENTATION_LEVEL_SKIPPED);
+    } else if (indentChange == 1) {
+      if (this.blockStack.isEmpty()) {
+        throw new InputMismatchException(START_INTENDAT_AT_ZERO);
+      }
+      this.blockStack.pushChild(content, this.getTemplateLineContext(ctx));
+    } else if (indentChange < 0) {
+      // lower indent level
+      for (int i = indentChange; i < 0; i++) {
+        assert !this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+        assert this.blockStack.currentIndentationLevel() > indentLevel : UNEXPECTED_INDENTATION;
+        this.blockStack.pop();
+      }
+      assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
+      this.blockStack.pushSibling(content, this.getTemplateLineContext(ctx));
+    } else if (indentChange == 0) {
+
+      if (blockStack.isEmpty()) {
+        assert indentLevel == 0 : UNEXPECTED_INDENTATION;
+        this.blockStack.push(this.rootBlock.addChild(content, this.getTemplateLineContext(ctx)));
+      } else {
+        this.blockStack.pushSibling(content, this.getTemplateLineContext(ctx));
+      }
+    }
+  }
+
+  private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.Spaces() != null) {
       if (this.indentWith == Indent.UNSET) {
         this.indentWith = Indent.SPACES;
         this.indentSpaces = ctx.Spaces().getText().length();
       } else if (this.indentWith == Indent.TABS) {
-        throw new InputMismatchException(
-            "Don't mix indentation methods. Stick with either tabs or spaces.");
+        throw new InputMismatchException(MIXED_INDENTATION);
       }
 
       if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-        throw new InputMismatchException(String.format(
-            "Inconsistent indentation. Expected a multiple of %s spaces.", this.indentSpaces));
+        throw new InputMismatchException(
+            String.format(INCONSISTENT_INDENTATION_SPACES, this.indentSpaces));
       }
-      indentLevel = ctx.Spaces().getText().length() / this.indentSpaces;
+      return ctx.Spaces().getText().length() / this.indentSpaces;
     } else if (ctx.Tabs() != null) {
       if (this.indentWith == Indent.UNSET) {
         this.indentWith = Indent.TABS;
       } else if (this.indentWith == Indent.SPACES) {
-        throw new InputMismatchException(
-            "Don't mix indentation methods. Stick with either tabs or spaces.");
+        throw new InputMismatchException(MIXED_INDENTATION);
       }
 
-      indentLevel = ctx.Tabs().getText().length();
+      return ctx.Tabs().getText().length();
+    }
+    return 0;
+  }
+
+
+  private Context getTemplateLineContext(TemplateLineContext ctx) {
+    final int indent = this.getIndentLevel(ctx);
+    final ContentBlock contextBlock = this.blockStack.blockAtLevel(indent - 1);
+    final Context currentContext = contextBlock == null ? null : contextBlock.context;
+
+    final TerminalNode fieldContext = ctx.FieldContext();
+    if (fieldContext != null) {
+      return Context.fromFieldId(fieldContext.getText(), currentContext, this.symbols);
+    }
+    
+    final TerminalNode nodeContext = ctx.NodeContext();
+    if (nodeContext != null) {
+      return Context.fromNodeId(nodeContext.getText(), currentContext, this.symbols);
     }
 
-    int indentChange = indentLevel - this.indentStack.peek();
-
-    if (indentChange > 1) {
-      throw new InputMismatchException("Indentation level skipped.");
-    } else if (indentChange == 1) {
-      this.indentStack.push(indentLevel);
-      System.out.println(String.format("Indent %s", indentLevel));
-      this.renderer.beginBlock(indentLevel, ctx.template().getText());
-    } else if (indentChange < 0) {
-      // lower indent level
-      for (int i = indentChange; i < 0; i++) {
-        if (this.indentStack.isEmpty()) {
-          throw new RuntimeException("Unexpected indentation tracker state.");
-        }
-        if (this.indentStack.peek() > indentLevel) {
-          this.indentStack.pop();
-          this.renderer.endBlock();
-        }
-      }
-      if (this.indentStack.peek() != indentLevel) {
-        throw new RuntimeException("Unexpected indentation tracker state.");
-      }
-    } else if (indentChange == 0) {
-      // same indent level
-      this.renderer.beginBlock(indentLevel, ctx.template().getText());
-    }
+    throw new RuntimeException("Unexpected context tracking state.");
   }
 }
 
