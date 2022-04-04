@@ -3,7 +3,7 @@ package eu.europa.ted.efx;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import eu.europa.ted.efx.interfaces.NoticeRenderer;
+import eu.europa.ted.efx.interfaces.Renderer;
 
 public class ContentBlock {
     final ContentBlock parent;
@@ -59,7 +59,7 @@ public class ContentBlock {
         return targetBlock;
     }
 
-    public String renderContent(NoticeRenderer renderer) {
+    public String renderContent(Renderer renderer) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.content);
         for (ContentBlock child : this.children) {
@@ -68,14 +68,14 @@ public class ContentBlock {
         return sb.toString();
     }
 
-    public void renderTemplate(NoticeRenderer renderer, List<String> templates) {
+    public void renderTemplate(Renderer renderer, List<String> templates) {
         templates.add(renderer.renderTemplate(this.id, this.renderContent(renderer)));
         for (ContentBlock child : this.children) {
             child.renderTemplate(renderer, templates);
         }
     }
 
-    public String renderCallTemplate(NoticeRenderer renderer) {
+    public String renderCallTemplate(Renderer renderer) {
         return renderer.renderCallTemplate(this.id, this.context.relativePath());
     }
 }

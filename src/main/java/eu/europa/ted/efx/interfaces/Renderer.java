@@ -1,6 +1,6 @@
 package eu.europa.ted.efx.interfaces;
 
-public interface NoticeRenderer {
+public interface Renderer {
     
     /**
      * Given a body (main content) and a set of templates (all in one prerendered string), this

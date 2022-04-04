@@ -1,8 +1,8 @@
 package eu.europa.ted.efx.mock;
 
-import eu.europa.ted.efx.interfaces.NoticeRenderer;
+import eu.europa.ted.efx.interfaces.Renderer;
 
-public class MockNoticeRenderer implements NoticeRenderer {
+public class MockRenderer implements Renderer {
 
     @Override
     public String renderValueReference(String valueReference) {

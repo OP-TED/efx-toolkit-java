@@ -3,7 +3,7 @@ package eu.europa.ted.efx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
-import eu.europa.ted.efx.mock.MockNoticeRenderer;
+import eu.europa.ted.efx.mock.MockRenderer;
 import eu.europa.ted.efx.mock.MockSymbolMap;
 
 public class EfxTemplateRendererTests {
@@ -13,7 +13,7 @@ public class EfxTemplateRendererTests {
     private String translate(final String template) {
         return EfxTemplateRenderer.renderTemplate(template + "\n",
                 MockSymbolMap.getInstance(SDK_VERSION), 
-                new MockNoticeRenderer(), ThrowingErrorListener.INSTANCE);
+                new MockRenderer(), ThrowingErrorListener.INSTANCE);
     }
 
     @Test

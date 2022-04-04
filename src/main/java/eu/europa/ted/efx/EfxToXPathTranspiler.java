@@ -280,8 +280,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     public void enterPredicate(EfxParser.PredicateContext ctx) {
         EfxParser.SimpleFieldReferenceContext refCtx =
                 ctx.getParent().getChild(EfxParser.SimpleFieldReferenceContext.class, 0);
-        String fieldId = refCtx.field.getText();
-        this.efxContext.pushFieldContext(fieldId);
+        this.efxContext.pushFieldContext(refCtx.field.getText());
     }
 
     /**
@@ -295,8 +294,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     @Override
     public void enterReferenceWithContextOverride(
             EfxParser.ReferenceWithContextOverrideContext ctx) {
-        String fieldId = ctx.ctx.getText();
-        this.efxContext.pushFieldContext(fieldId);
+        this.efxContext.pushFieldContext(ctx.ctx.getText());
     }
 
     @Override
