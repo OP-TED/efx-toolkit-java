@@ -21,6 +21,4 @@ public interface SymbolMap {
     public String rootCodelistOfField(final String fieldId);
 
     public String expandCodelist(final String codelistId);
-
-    public String mapOperator(final String operator);
 }

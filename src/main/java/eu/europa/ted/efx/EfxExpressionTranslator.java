@@ -13,8 +13,9 @@ import eu.europa.ted.efx.EfxParser.ExplicitListContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedExpressionContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
 import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.interfaces.SyntaxMap;
 
-public class EfxToXPathTranspiler extends EfxBaseListener {
+public class EfxExpressionTranslator extends EfxBaseListener {
 
     static final boolean debug = true;
 
@@ -30,18 +31,21 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
      */
     protected final SymbolMap symbols;
 
+    protected final SyntaxMap syntax;
+
     /**
      * The context stack is used to keep track of xPath contexts for nested conditions.
      */
     protected final ContextStack efxContext;
 
-    public EfxToXPathTranspiler(final SymbolMap symbols) {
+    public EfxExpressionTranslator(final SymbolMap symbols, final SyntaxMap syntax) {
         this.symbols = symbols;
+        this.syntax = syntax;
         this.efxContext = new ContextStack(symbols);
     }
 
     public static String transpileExpression(final String context, final String expression,
-            final SymbolMap symbols, final BaseErrorListener errorListener) {
+            final SymbolMap symbols, final SyntaxMap syntax, final BaseErrorListener errorListener) {
         final EfxLexer lexer = new EfxLexer(
                 CharStreams.fromString(String.format("%s::${%s}", context, expression)));
         final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -54,7 +58,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
 
         final ParseTree tree = parser.singleExpression();
         final ParseTreeWalker walker = new ParseTreeWalker();
-        final EfxToXPathTranspiler translator = new EfxToXPathTranspiler(symbols);
+        final EfxExpressionTranslator translator = new EfxExpressionTranslator(symbols, syntax);
 
         walker.walk(translator, tree);
 
@@ -62,8 +66,8 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     }
 
     public static String transpileExpression(final String context, final String expression,
-            final SymbolMap symbols) {
-        return transpileExpression(context, expression, symbols, null);
+            final SymbolMap symbols, final SyntaxMap syntax) {
+        return transpileExpression(context, expression, symbols, syntax, null);
     }
 
     /**
@@ -106,20 +110,20 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + " " + this.symbols.mapOperator("and") + " " + right);
+        this.stack.push(left + " " + this.syntax.mapOperator("and") + " " + right);
     }
 
     @Override
     public void exitLogicalOrCondition(EfxParser.LogicalOrConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + " " + this.symbols.mapOperator("or") + " " + right);
+        this.stack.push(left + " " + this.syntax.mapOperator("or") + " " + right);
     }
 
     @Override
     public void exitLogicalNotCondition(EfxParser.LogicalNotConditionContext ctx) {
         String condition = this.stack.pop();
-        this.stack.push(this.symbols.mapOperator("not") + condition);
+        this.stack.push(this.syntax.mapOperator("not") + condition);
     }
 
     @Override
@@ -136,7 +140,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     public void exitComparisonCondition(EfxParser.ComparisonConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.symbols.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
     }
 
     @Override
@@ -144,7 +148,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
         String expression = this.stack.pop();
         String operator =
                 ctx.modifier != null && ctx.modifier.getText().equals("not") ? "!=" : "==";
-        this.stack.push(expression + " " + this.symbols.mapOperator(operator) + " ''");
+        this.stack.push(expression + " " + this.syntax.mapOperator(operator) + " ''");
     }
 
     @Override
@@ -152,7 +156,7 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
         String reference = this.stack.pop();
         String operator =
                 ctx.modifier != null && ctx.modifier.getText().equals("not") ? "==" : "!=";
-        this.stack.push(reference + " " + this.symbols.mapOperator(operator) + " ''");
+        this.stack.push(reference + " " + this.syntax.mapOperator(operator) + " ''");
     }
 
     @Override
@@ -191,14 +195,14 @@ public class EfxToXPathTranspiler extends EfxBaseListener {
     public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.symbols.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
     }
 
     @Override
     public void exitMultiplicationExpression(EfxParser.MultiplicationExpressionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.symbols.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
     }
 
     @Override

@@ -27,14 +27,6 @@ public class MockSymbolMap implements SymbolMap {
     protected Map<String, SdkNode> nodeById;
     protected Map<String, SdkCodelist> codelistById;
 
-    /**
-     * Maps efx operators to xPath operators.
-     */
-    static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), entry("-", "-"),
-            entry("*", "*"), entry("/", "div"), entry("%", "mod"), entry("and", "and"),
-            entry("or", "or"), entry("not", "not"), entry("==", "="), entry("!=", "!="),
-            entry("<", "<"), entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
-
     protected MockSymbolMap() {
         try {
             this.loadMapData();
@@ -116,11 +108,6 @@ public class MockSymbolMap implements SymbolMap {
             throw new InputMismatchException(String.format("Codelist '%s' not found.", codelistId));
         }
         return codelist.toString(", ", "(", ")", '\'');
-    }
-
-    @Override
-    public String mapOperator(String operator) {
-        return MockSymbolMap.operators.get(operator);
     }
 
     /**

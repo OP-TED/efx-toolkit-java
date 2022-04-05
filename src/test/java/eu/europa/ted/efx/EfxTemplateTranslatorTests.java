@@ -6,13 +6,14 @@ import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.MockRenderer;
 import eu.europa.ted.efx.mock.MockSymbolMap;
 
-public class EfxTemplateRendererTests {
+public class EfxTemplateTranslatorTests {
 
     final private String SDK_VERSION = "latest";
 
     private String translate(final String template) {
-        return EfxTemplateRenderer.renderTemplate(template + "\n",
+        return EfxTemplateTranslator.renderTemplate(template + "\n",
                 MockSymbolMap.getInstance(SDK_VERSION), 
+                new XPathSyntaxMap(),
                 new MockRenderer(), ThrowingErrorListener.INSTANCE);
     }
 

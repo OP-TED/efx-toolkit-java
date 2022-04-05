@@ -28,9 +28,10 @@ import eu.europa.ted.efx.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
 import eu.europa.ted.efx.interfaces.Renderer;
 import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.interfaces.SyntaxMap;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 
-public class EfxTemplateRenderer extends EfxToXPathTranspiler {
+public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
@@ -58,13 +59,13 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
   ContentBlockStack blockStack = new ContentBlockStack();
 
 
-  public EfxTemplateRenderer(TranslatorDependencyFactory factory, final String sdkVersion) {
-    super(factory.getSymbolMap(sdkVersion));
-    this.renderer = factory.Renderer();
+  public EfxTemplateTranslator(TranslatorDependencyFactory factory, final String sdkVersion) {
+    super(factory.createSymbolMap(sdkVersion), factory.createSyntaxMap());
+    this.renderer = factory.createRenderer();
   }
 
-  public EfxTemplateRenderer(final SymbolMap symbols, final Renderer renderer) {
-    super(symbols);
+  public EfxTemplateTranslator(final SymbolMap symbols, final SyntaxMap syntax, final Renderer renderer) {
+    super(symbols, syntax);
     this.renderer = renderer;
   }
 
@@ -76,7 +77,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
-    final BaseErrorListener errorListener = factory.getErrorListener();
+    final BaseErrorListener errorListener = factory.createErrorListener();
     if (errorListener != null) {
       parser.removeErrorListeners();
       parser.addErrorListener(errorListener);
@@ -85,7 +86,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateRenderer translator = new EfxTemplateRenderer(factory, sdkVersion);
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
 
     walker.walk(translator, tree);
 
@@ -99,7 +100,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
-    final BaseErrorListener errorListener = factory.getErrorListener();
+    final BaseErrorListener errorListener = factory.createErrorListener();
     if (errorListener != null) {
       parser.removeErrorListeners();
       parser.addErrorListener(errorListener);
@@ -108,14 +109,14 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateRenderer translator = new EfxTemplateRenderer(factory, sdkVersion);
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
 
     walker.walk(translator, tree);
 
     return translator.getTranspiledXPath();
   }
 
-  public static String renderTemplate(final String template, final SymbolMap symbols,
+  public static String renderTemplate(final String template, final SymbolMap symbols, final SyntaxMap syntax,
       final Renderer renderer, final BaseErrorListener errorListener) {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
@@ -130,7 +131,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateRenderer translator = new EfxTemplateRenderer(symbols, renderer);
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, syntax, renderer);
     walker.walk(translator, tree);
 
     return translator.getTranspiledXPath();

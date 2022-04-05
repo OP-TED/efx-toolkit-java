@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.MockSymbolMap;
 
-public class EfxToXPathTranspilerTests {
+public class EfxExpressionTranslatorTests {
 
     // TODO: Currently handling multiple SDK versions is not implemented.
     final private String SDK_VERSION = "latest";
 
     private String test(final String context, final String expression) {
-        return EfxToXPathTranspiler.transpileExpression(context, expression,
-                MockSymbolMap.getInstance(SDK_VERSION), ThrowingErrorListener.INSTANCE);
+        return EfxExpressionTranslator.transpileExpression(context, expression,
+                MockSymbolMap.getInstance(SDK_VERSION), new XPathSyntaxMap(), ThrowingErrorListener.INSTANCE);
     }
 
     @Test
