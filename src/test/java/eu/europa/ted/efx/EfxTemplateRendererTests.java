@@ -43,11 +43,11 @@ public class EfxTemplateRendererTests {
 
     @Test
     public void testShorthandFieldValueLabelReferenceForIndicators() {
-        assertEquals("block01 = 'code|value-???|BT-02-indicator'; for-each('/*') { block01(); }", translate("BT-01-text::#{[BT-02-indicator]}"));
+        assertEquals("block01 = 'concat('code|value-', indicator, '|BT-02-indicator')'; for-each('/*') { block01(); }", translate("BT-01-text::#{[BT-02-indicator]}"));
     }
 
     @Test
     public void testShorthandFieldValueLabelReferenceForCodeLists() {
-        assertEquals("block01 = 'code|value|main-activity.???'; for-each('/*') { block01(); }", translate("BT-01-text::#{[BT-03-code]}"));
+        assertEquals("block01 = 'concat('code|value|main-activity.', ../*/code)'; for-each('/*') { block01(); }", translate("BT-01-text::#{[BT-03-code]}"));
     }
 }

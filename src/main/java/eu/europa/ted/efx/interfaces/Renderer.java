@@ -16,10 +16,16 @@ public interface Renderer {
     String renderValueReference(final String valueReference);
 
     /**
-     * Given a reference (which will eventually, at runtime, evaluate to a label text), this method
-     * should return the template code that encapsulates this reference in the target template.
+     * Given a label key (which will eventually, at runtime, be evaluated to a label text), this method
+     * should return the template code that renders this label in the target template.
      */
-    String renderLabelReference(final String labelReference);
+    String renderLabelFromKey(final String key);
+
+    /**
+     * Given an expression (which will eventually, at runtime, be evaluated to a label key and subsequently to a label text), this method
+     * should return the template code that renders this label in the target template.
+     */    
+    String renderLabelFromExpression(final String expression);
 
     /**
      * Given a string of free text, this method should return the template code that encapsulates
@@ -28,7 +34,7 @@ public interface Renderer {
     String renderFreeText(final String freeText);
 
     /**
-     * Given a template name (identifier) and some prerendered content, this method should return
+     * Given a template name (identifier) and some pre-rendered content, this method should return
      * the template code that encapsulates it in the target template.
      */
     String renderTemplate(final String name, String content);

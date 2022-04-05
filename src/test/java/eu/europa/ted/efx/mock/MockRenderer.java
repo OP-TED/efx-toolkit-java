@@ -10,8 +10,13 @@ public class MockRenderer implements Renderer {
     }
 
     @Override
-    public String renderLabelReference(String labelReference) {
-        return labelReference;
+    public String renderLabelFromKey(String key) {
+        return key;
+    }
+
+    @Override
+    public String renderLabelFromExpression(String expression) {
+        return expression;
     }
 
     @Override

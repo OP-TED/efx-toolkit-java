@@ -198,7 +198,7 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
     String assetType = ctx.assetType() != null ? this.stack.pop() : "";
     this.stack.push(this.renderer
-        .renderLabelReference(String.format("%s|%s|%s", assetType, labelType, assetId)));
+        .renderLabelFromKey(String.format("%s|%s|%s", assetType, labelType, assetId)));
   }
 
   @Override
@@ -206,12 +206,12 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     String assetId = ctx.BtAssetId().getText();
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
     this.stack.push(this.renderer
-        .renderLabelReference(String.format("%s|%s|%s", "business_term", labelType, assetId)));
+        .renderLabelFromKey(String.format("%s|%s|%s", "business_term", labelType, assetId)));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    this.stack.push(this.renderer.renderLabelReference(
+    this.stack.push(this.renderer.renderLabelFromKey(
         String.format("%s|%s|%s", "business_term", "name", ctx.BtAssetId().getText())));
   }
 
@@ -221,12 +221,12 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     String assetId = ctx.FieldAssetId().getText();
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
     this.stack.push(
-        this.renderer.renderLabelReference(String.format("%s|%s|%s", "field", labelType, assetId)));
+        this.renderer.renderLabelFromKey(String.format("%s|%s|%s", "field", labelType, assetId)));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
-    this.stack.push(this.renderer.renderLabelReference(
+    this.stack.push(this.renderer.renderLabelFromKey(
         String.format("%s|%s|%s", "field", "name", ctx.FieldAssetId().getText())));
   }
 
@@ -235,18 +235,14 @@ public class EfxTemplateRenderer extends EfxToXPathTranspiler {
     final String fieldId = ctx.FieldAssetId().getText();
     final Context contextPath = this.efxContext.peek();
     final String valuePath = symbols.relativeXpathOfField(fieldId, contextPath.absolutePath());
-    final String value = "???"; // this.xml.valueOf(valuePath, contextPath);
-    //TODO: implement this properly
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
-        this.stack.push(this.renderer.renderLabelReference(
-            String.format("%s|%s|%s", "code", String.format("value-%s", value), fieldId)));
+        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value-', %s, '|%s')", valuePath, fieldId)));
         break;
       case "code":
       case "internal-code":
-        this.stack.push(this.renderer.renderLabelReference(String.format("%s|%s|%s", "code",
-            "value", String.format("%s.%s", this.symbols.rootCodelistOfField(fieldId), value))));
+        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value|%s.', %s)", this.symbols.rootCodelistOfField(fieldId), this.symbols.relativeXpathOfField(fieldId, valuePath))));
         break;
       default:
         throw new InputMismatchException(String.format(
