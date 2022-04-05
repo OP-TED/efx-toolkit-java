@@ -243,7 +243,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
         break;
       case "code":
       case "internal-code":
-        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value|%s.', %s)", this.symbols.rootCodelistOfField(fieldId), this.symbols.relativeXpathOfField(fieldId, valuePath))));
+        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value|%s.', %s)", this.symbols.rootCodelistOfField(fieldId), valuePath)));
         break;
       default:
         throw new InputMismatchException(String.format(
