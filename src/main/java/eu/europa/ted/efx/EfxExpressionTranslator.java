@@ -293,7 +293,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void enterPredicate(EfxParser.PredicateContext ctx) {
         EfxParser.SimpleFieldReferenceContext refCtx =
                 ctx.getParent().getChild(EfxParser.SimpleFieldReferenceContext.class, 0);
-        this.efxContext.pushFieldContext(refCtx.FieldId().getText());
+        this.efxContext.pushFieldContextForPredicate(refCtx.FieldId().getText());
     }
 
     /**

@@ -23,8 +23,8 @@ public class ContextStack extends Stack<Context> {
 
     /**
      * Creates a new Context for the given field and places it at the top of the stack. The new
-     * Context is relative to the one currently at the top of the stack (or absolute if the stack is
-     * empty).
+     * Context is determined by the parent of the field, and it is made to be relative to the one
+     * currently at the top of the stack (or absolute if the stack is empty).
      */
     public Context pushFieldContext(String fieldId) {
         String absolutePath = symbols.contextPathOfField(fieldId);
@@ -33,6 +33,20 @@ public class ContextStack extends Stack<Context> {
         }
         String relativePath = symbols.contextPathOfField(fieldId, this.peek().absolutePath());
         return this.push(new Context(absolutePath, relativePath));
+    }
+
+    /**
+     * Creates a new Context for the given field and places it at the top of the stack. The new
+     * Context is determined by the field itself, and it is made to be relative to the one
+     * currently at the top of the stack (or absolute if the stack is empty).
+     */
+    public Context pushFieldContextForPredicate(String fieldId) {
+        String absoluteCompletePath = symbols.absoluteXpathOfField(fieldId);
+        if (this.isEmpty()) {
+            return this.push(new Context(absoluteCompletePath));
+        }
+        String relativePath = symbols.contextPathOfField(fieldId, this.peek().absolutePath());
+        return this.push(new Context(absoluteCompletePath, relativePath));
     }
 
     /**

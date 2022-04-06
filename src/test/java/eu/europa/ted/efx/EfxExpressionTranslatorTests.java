@@ -101,4 +101,10 @@ public class EfxExpressionTranslatorTests {
         assertEquals("'a'=('code1', 'code2', 'code3')",
                 test("BT-01-text", "'a' in (accessibility)"));
     }
+
+    @Test
+    public void testPredicate() {
+        assertEquals("indicator[../code/normalize-space(text())='a']/normalize-space(text())",
+                test("BT-01-text", "BT-02-indicator[BT-03-code == 'a']"));
+    }
 }
