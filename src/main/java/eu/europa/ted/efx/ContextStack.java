@@ -48,4 +48,20 @@ public class ContextStack extends Stack<Context> {
         String relativePath = symbols.relativeXpathOfNode(nodeId, this.peek().absolutePath());
         return this.push(new Context(absolutePath, relativePath));
     }
+
+    public String absolutePath() {
+        if (this.isEmpty() || this.peek() == null) {
+            return null;
+        }
+
+        return this.peek().absolutePath();
+    }
+
+    public String relativePath() {
+        if (this.isEmpty() || this.peek() == null) {
+            return null;
+        }
+
+        return this.peek().relativePath();
+    }
 }

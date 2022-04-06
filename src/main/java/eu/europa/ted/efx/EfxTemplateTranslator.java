@@ -10,9 +10,9 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.EfxParser.AssetTypeContext;
+import eu.europa.ted.efx.EfxParser.ContextExpressionBlockContext;
 import eu.europa.ted.efx.EfxParser.ExpressionBlockContext;
 import eu.europa.ted.efx.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.EfxParser.LabelTypeContext;
@@ -152,13 +152,11 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
-    this.efxContext.push(null);
     assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
-    this.efxContext.pop();
     this.blockStack.pop();
 
     List<String> templateCalls = new ArrayList<>();
@@ -174,21 +172,21 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
-    String template = ctx.template() != null ? this.stack.pop() : "";
+    String template = ctx.templateFragment() != null ? this.stack.pop() : "";
     String text = ctx.text() != null ? ctx.text().getText() : "";
     this.stack.push(String.format("%s%s", this.renderer.renderFreeText(text), template));
   }
 
   @Override
   public void exitLabelTemplate(LabelTemplateContext ctx) {
-    String template = ctx.template() != null ? this.stack.pop() : "";
+    String template = ctx.templateFragment() != null ? this.stack.pop() : "";
     String text = ctx.labelBlock() != null ? this.stack.pop() : "";
     this.stack.push(String.format("%s %s", text, template).trim());
   }
 
   @Override
   public void exitValueTemplate(ValueTemplateContext ctx) {
-    String template = ctx.template() != null ? this.stack.pop() : "";
+    String template = ctx.templateFragment() != null ? this.stack.pop() : "";
     String expression = ctx.expressionBlock() != null ? this.stack.pop() : "";
     this.stack.push(String.format("%s %s", expression, template).trim());
   }
@@ -280,14 +278,13 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   }
 
   @Override
-  public void enterTemplateLine(TemplateLineContext ctx) {
-    final Context context = this.getTemplateLineContext(ctx);
-    this.efxContext.push(context);
+  public void exitContextExpressionBlock(ContextExpressionBlockContext ctx) {
+    this.efxContext.push(new Context(this.stack.pop()));
   }
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
-    this.efxContext.pop();
+    final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final String content = ctx.template() != null ? this.stack.pop() : "";
@@ -299,7 +296,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (this.blockStack.isEmpty()) {
         throw new InputMismatchException(START_INTENDAT_AT_ZERO);
       }
-      this.blockStack.pushChild(content, this.getTemplateLineContext(ctx));
+      this.blockStack.pushChild(content, lineContext);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -308,14 +305,14 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(content, this.getTemplateLineContext(ctx));
+      this.blockStack.pushSibling(content, lineContext);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(content, this.getTemplateLineContext(ctx)));
+        this.blockStack.push(this.rootBlock.addChild(content, lineContext));
       } else {
-        this.blockStack.pushSibling(content, this.getTemplateLineContext(ctx));
+        this.blockStack.pushSibling(content, lineContext);
       }
     }
   }
@@ -344,25 +341,6 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       return ctx.Tabs().getText().length();
     }
     return 0;
-  }
-
-
-  private Context getTemplateLineContext(TemplateLineContext ctx) {
-    final int indent = this.getIndentLevel(ctx);
-    final ContentBlock contextBlock = this.blockStack.blockAtLevel(indent - 1);
-    final Context currentContext = contextBlock == null ? null : contextBlock.context;
-
-    final TerminalNode fieldContext = ctx.FieldContext();
-    if (fieldContext != null) {
-      return Context.fromFieldId(fieldContext.getText(), currentContext, this.symbols);
-    }
-    
-    final TerminalNode nodeContext = ctx.NodeContext();
-    if (nodeContext != null) {
-      return Context.fromNodeId(nodeContext.getText(), currentContext, this.symbols);
-    }
-
-    throw new RuntimeException("Unexpected context tracking state.");
   }
 }
 

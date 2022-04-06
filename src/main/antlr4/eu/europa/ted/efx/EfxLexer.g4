@@ -1,16 +1,16 @@
 lexer grammar EfxLexer;
 
-/*  
+/*
  * DEFAULT mode
-*/
+ */
 
 // The Context has the same definition as a FieldId or NodeId in EXPRESSION mode
 FieldContext: ('BT' | 'OPP' | 'OPT') '-' [0-9]+ ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
 NodeContext: 'ND' '-' [0-9]+;
 
 // Empty lines and comment lines are to be ignored by the parser.
-Comment: [ \t]* '//' ~[\r\n\f]* EOL* ->skip;
-EmptyLine: [ \t]* EOL+ ->skip;
+Comment: [ \t]* '//' ~[\r\n\f]* EOL* -> skip;
+EmptyLine: [ \t]* EOL+ -> skip;
 
 // Tabs and spaces are used to express structure through indentation (like in Python).  
 Tabs: Tab+;
@@ -23,31 +23,34 @@ EOL: ('\r'? '\n' | '\r' | '\f');
 // A double colon triggers a mode change (from default mode to TEMPLATE mode).
 ColonColon: [ \t]* '::' [ \t]* -> pushMode(TEMPLATE);
 
+/*
+ * The context of a row can be either a field or a node refernece, followed by one or more optional
+ * predicates. In order to be able to parse any predicates, we need to treat the context declaration
+ * as an expression block. Therefore the curly brace that opens a context declaration block, switches
+ * the lexer to EXPRESSION mode.
+ */
+StartContextExpression: '{' -> pushMode(EXPRESSION);
 
 /*
- * TEMPLATE mode
- * In template mode, whitespace is significant. 
- * In this mode we are looking for the text that is tho be displayed.
- * The text can contain placeholders for labels and expressions.
+ * TEMPLATE mode In template mode, whitespace is significant. In this mode we are looking for the
+ * text that is tho be displayed. The text can contain placeholders for labels and expressions.
  */
 mode TEMPLATE;
 
 // A newline terminates TEMPLATE mode and switches back to DEFAULT mode.
-CRLF: ( '\r'? '\n' | '\r' | '\f' ) -> popMode;
-
+CRLF: ('\r'? '\n' | '\r' | '\f') -> popMode;
 
 FreeText: CharSequence+;
 fragment CharSequence: Char+;
 fragment Char: ~[\r\n\f\t #$}{];
 
-fragment Dollar: '$';    // Used for label placeholders
-fragment Sharp: '#';     // Used for expression placeholders
+fragment Dollar: '$';	// Used for label placeholders
+fragment Sharp: '#';	// Used for expression placeholders
 
-SelfLabel: Sharp 'label';    
+SelfLabel: Sharp 'label';
 SelfValue: Dollar 'value';
 
-
-fragment OpenBrace : '{';
+fragment OpenBrace: '{';
 
 StartExpression: Dollar OpenBrace -> pushMode(EXPRESSION);
 StartLabel: Sharp OpenBrace -> pushMode(LABEL);
@@ -55,7 +58,7 @@ StartLabel: Sharp OpenBrace -> pushMode(LABEL);
 Whitespace: [\t ];
 
 /*
- *
+ * 
  */
 mode LABEL;
 
@@ -64,7 +67,7 @@ Pipe: '|';
 OpenValueBlock: '[';
 CloseValueBlock: ']';
 
-EndLabel : '}' -> popMode;
+EndLabel: '}' -> popMode;
 
 StartNestedExpression: NestedDollar NestedOpenBrace -> pushMode(EXPRESSION);
 fragment NestedDollar: '$';
@@ -78,7 +81,9 @@ CodelistAssetId: 'CL' ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
 OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 
 /*
- *
+ * EXPRESSION mode
+ * 
+ * This lexer mode is used in efx expression blocks and context expression blocks.
  */
 
 mode EXPRESSION;
@@ -89,7 +94,12 @@ OpenBracket: '[';
 CloseBracket: ']';
 
 Dash: '-';
-EndExpression : '}' -> popMode;
+
+/*
+ * Curly braces are not used by expressions themselves. So we use them to indicate the start and end
+ * of an expression block, and to switch in and out of EXPRESSION mode.
+ */
+EndExpression: '}' -> popMode;
 
 /*
  * Keywords
@@ -132,7 +142,6 @@ DECIMAL: DIGIT? '.' DIGIT+;
 STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
 UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
 
-
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
 Multiplication: '*' | '/' | '%';
 Addition: '+' | '-';
@@ -140,7 +149,6 @@ Comma: ',';
 Slash: '/';
 SlashAt: '/@';
 Colon: ':';
-
 
 fragment HEX4: HEX HEX HEX HEX;
 fragment HEX: [0-9a-fA-F];
@@ -150,4 +158,4 @@ fragment ESC_SEQ: '\\' ["'\\];
 fragment LETTER: [a-zA-Z_];
 fragment DIGIT: [0-9];
 
-WS: [ \t]+  -> skip;
+WS: [ \t]+ -> skip;
