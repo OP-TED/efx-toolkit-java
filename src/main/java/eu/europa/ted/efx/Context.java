@@ -86,4 +86,18 @@ public class Context {
         }
         return parentContext.createNestedContextForNode(nodeId, symbols);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        Context other = (Context) obj;
+        return this.absolutePath.equals(other.absolutePath);
+    }
 }

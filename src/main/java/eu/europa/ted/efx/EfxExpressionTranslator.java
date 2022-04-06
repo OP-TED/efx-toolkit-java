@@ -10,7 +10,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.EfxParser.CodeListContext;
 import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
+import eu.europa.ted.efx.EfxParser.NodeReferenceWithPredicateContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedExpressionContext;
+import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.interfaces.SyntaxMap;
@@ -250,9 +252,16 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitNodeReference(EfxParser.NodeReferenceContext ctx) {
-        this.stack.push(symbols.relativeXpathOfNode(ctx.node.getText(),
-                this.efxContext.peek().absolutePath()));
+    public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
+        String condition = this.stack.pop();
+        String ref = this.stack.pop();
+        this.stack.push(ref + '[' + condition + ']');
+    }
+
+    @Override
+    public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
+        this.stack.push(symbols.relativeXpathOfNode(ctx.NodeId().getText(),
+                this.efxContext.absolutePath()));
     }
 
     @Override
@@ -264,8 +273,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-        this.stack.push(symbols.relativeXpathOfField(ctx.field.getText(),
-                this.efxContext.peek().absolutePath()));
+        this.stack.push(symbols.relativeXpathOfField(ctx.FieldId().getText(),
+                this.efxContext.absolutePath()));
     }
 
     @Override
@@ -284,7 +293,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void enterPredicate(EfxParser.PredicateContext ctx) {
         EfxParser.SimpleFieldReferenceContext refCtx =
                 ctx.getParent().getChild(EfxParser.SimpleFieldReferenceContext.class, 0);
-        this.efxContext.pushFieldContext(refCtx.field.getText());
+        this.efxContext.pushFieldContext(refCtx.FieldId().getText());
     }
 
     /**
