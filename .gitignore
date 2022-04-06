@@ -3,5 +3,5 @@
 .settings
 .project
 .classpath
-.vscode
+.vscode/
 *.code-workspace
