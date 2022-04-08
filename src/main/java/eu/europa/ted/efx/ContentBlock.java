@@ -63,6 +63,10 @@ public class ContentBlock {
         return targetBlock;
     }
 
+    public Queue<ContentBlock> getChildren() {
+        return this.children;
+    }
+
     public String getOutlineNumber() {
         if (this.parent == null || this.parent.number == 0) {
             return String.format("%d", this.number);

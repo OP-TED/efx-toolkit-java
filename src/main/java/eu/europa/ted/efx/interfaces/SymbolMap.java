@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.interfaces;
 
+import java.util.List;
+
 public interface SymbolMap {
 
     public String parentNodeOfField(final String fieldId);
@@ -20,5 +22,5 @@ public interface SymbolMap {
 
     public String rootCodelistOfField(final String fieldId);
 
-    public String expandCodelist(final String codelistId);
+    public List<String> expandCodelist(final String codelistId);
 }

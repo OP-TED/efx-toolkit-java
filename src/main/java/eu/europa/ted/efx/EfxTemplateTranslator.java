@@ -161,7 +161,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     List<String> templateCalls = new ArrayList<>();
     List<String> templates = new ArrayList<>();
-    for (ContentBlock rootBlock : this.rootBlock.children) {
+    for (ContentBlock rootBlock : this.rootBlock.getChildren()) {
       templateCalls.add(rootBlock.renderCallTemplate(renderer));
       rootBlock.renderTemplate(renderer, templates);
     }

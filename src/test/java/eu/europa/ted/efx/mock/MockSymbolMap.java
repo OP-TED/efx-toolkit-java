@@ -4,6 +4,7 @@ import static java.util.Map.entry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -102,12 +103,12 @@ public class MockSymbolMap implements SymbolMap {
     }
 
     @Override
-    public String expandCodelist(String codelistId) {
+    public List<String> expandCodelist(String codelistId) {
         SdkCodelist codelist = codelistById.get(codelistId);
         if (codelist == null) {
             throw new InputMismatchException(String.format("Codelist '%s' not found.", codelistId));
         }
-        return codelist.toString(", ", "(", ")", '\'');
+        return codelist.getCodes();
     }
 
     /**
