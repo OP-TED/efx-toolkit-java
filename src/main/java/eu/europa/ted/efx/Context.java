@@ -7,8 +7,8 @@ import eu.europa.ted.efx.interfaces.SymbolMap;
  * path.
  */
 public class Context {
-    final String absolutePath;
-    final String relativePath;
+    private final String absolutePath;
+    private final String relativePath;
 
     public Context(String absolutePath, String relativePath) {
         this.absolutePath = absolutePath;

@@ -39,6 +39,6 @@ public class ContentBlockStack extends Stack<ContentBlock>{
         if (this.isEmpty()) {
             return 0;
         }
-        return this.peek().indentationLevel;
+        return this.peek().getIndentationLevel();
     }
 }
