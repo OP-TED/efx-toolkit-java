@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
 import java.util.List;

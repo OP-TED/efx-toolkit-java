@@ -10,11 +10,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.europa.ted.eforms.sdk.SdkCodelist;
-import eu.europa.ted.eforms.sdk.SdkField;
-import eu.europa.ted.eforms.sdk.SdkNode;
-import eu.europa.ted.eforms.xpath.XPathContextualizer;
 import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.model.SdkCodelist;
+import eu.europa.ted.efx.model.SdkField;
+import eu.europa.ted.efx.model.SdkNode;
+import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class MockSymbolMap implements SymbolMap {
 

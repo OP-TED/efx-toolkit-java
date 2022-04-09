@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.model;
 
 import eu.europa.ted.efx.interfaces.SymbolMap;
 

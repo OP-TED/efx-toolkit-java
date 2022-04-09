@@ -20,6 +20,7 @@ import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.interfaces.SyntaxMap;
+import eu.europa.ted.efx.model.ContextStack;
 
 public class EfxExpressionTranslator extends EfxBaseListener {
 
