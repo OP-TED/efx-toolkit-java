@@ -6,13 +6,13 @@ import java.util.Queue;
 import eu.europa.ted.efx.interfaces.Renderer;
 
 public class ContentBlock {
-    final ContentBlock parent;
-    final String id;
-    final Integer indentationLevel;
-    final String content;
-    final Context context;
-    final Queue<ContentBlock> children = new LinkedList<>();
-    final int number;
+    private final ContentBlock parent;
+    private final String id;
+    private final Integer indentationLevel;
+    private final String content;
+    private final Context context;
+    private final Queue<ContentBlock> children = new LinkedList<>();
+    private final int number;
 
     private ContentBlock() {
         this.parent = null;
@@ -68,6 +68,10 @@ public class ContentBlock {
             return String.format("%d", this.number);
         }
         return String.format("%s.%d",  this.parent.getOutlineNumber(), this.number);
+    }
+
+    public Integer getIndentationLevel() {
+        return this.indentationLevel;
     }
 
     public String renderContent(Renderer renderer) {
