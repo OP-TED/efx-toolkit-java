@@ -26,41 +26,12 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.antlr/antlr4 -->
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4</artifactId>
-      <version>${antlr4.version}</version>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <version>${antlr4.version}</version>
       <scope>compile</scope>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.13.1</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.12.0</version>
-    </dependency>
-
-    <!-- Used for the codelists (gc files). -->
-    <dependency>
-      <groupId>com.helger</groupId>
-      <artifactId>ph-genericode</artifactId>
-      <version>6.2.0</version>
     </dependency>
 
   </dependencies>
@@ -97,28 +68,6 @@
               <sources>
                 <source>${project.build.directory}/generated-sources/antlr4/</source>
               </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>${fully.qualified.main.class}</mainClass>
-                </transformer>
-              </transformers>
             </configuration>
           </execution>
         </executions>
