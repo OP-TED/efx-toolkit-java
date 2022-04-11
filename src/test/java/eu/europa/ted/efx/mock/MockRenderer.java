@@ -25,7 +25,7 @@ public class MockRenderer implements Renderer {
     }
 
     @Override
-    public String renderTemplate(String name, String content) {
+    public String renderTemplate(String name, String number, String content) {
         return String.format("%s = '%s';", name,  content);
     }
 

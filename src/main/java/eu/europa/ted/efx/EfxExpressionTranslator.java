@@ -1,6 +1,10 @@
 package eu.europa.ted.efx;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -16,6 +20,7 @@ import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.interfaces.SyntaxMap;
+import eu.europa.ted.efx.model.ContextStack;
 
 public class EfxExpressionTranslator extends EfxBaseListener {
 
@@ -47,7 +52,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     public static String transpileExpression(final String context, final String expression,
-            final SymbolMap symbols, final SyntaxMap syntax, final BaseErrorListener errorListener) {
+            final SymbolMap symbols, final SyntaxMap syntax,
+            final BaseErrorListener errorListener) {
         final EfxLexer lexer = new EfxLexer(
                 CharStreams.fromString(String.format("%s::${%s}", context, expression)));
         final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -112,37 +118,37 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + " " + this.syntax.mapOperator("and") + " " + right);
+        this.stack.push(this.syntax.mapLogicalAnd(left, right));
     }
 
     @Override
     public void exitLogicalOrCondition(EfxParser.LogicalOrConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + " " + this.syntax.mapOperator("or") + " " + right);
+        this.stack.push(this.syntax.mapLogicalOr(left, right));
     }
 
     @Override
     public void exitLogicalNotCondition(EfxParser.LogicalNotConditionContext ctx) {
         String condition = this.stack.pop();
-        this.stack.push(this.syntax.mapOperator("not") + condition);
+        this.stack.push(this.syntax.mapLogicalNot(condition));
     }
 
     @Override
     public void exitAlwaysCondition(EfxParser.AlwaysConditionContext ctx) {
-        this.stack.push("true");
+        this.stack.push(this.syntax.mapBoolean(true));
     }
 
     @Override
     public void exitNeverCondition(EfxParser.NeverConditionContext ctx) {
-        this.stack.push("false");
+        this.stack.push(this.syntax.mapBoolean(false));
     }
 
     @Override
     public void exitComparisonCondition(EfxParser.ComparisonConditionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(this.syntax.mapOperator(left, ctx.operator.getText(), right));
     }
 
     @Override
@@ -150,7 +156,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         String expression = this.stack.pop();
         String operator =
                 ctx.modifier != null && ctx.modifier.getText().equals("not") ? "!=" : "==";
-        this.stack.push(expression + " " + this.syntax.mapOperator(operator) + " ''");
+        this.stack.push(this.syntax.mapOperator(expression, operator, "''"));
     }
 
     @Override
@@ -158,13 +164,13 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         String reference = this.stack.pop();
         String operator =
                 ctx.modifier != null && ctx.modifier.getText().equals("not") ? "==" : "!=";
-        this.stack.push(reference + " " + this.syntax.mapOperator(operator) + " ''");
+        this.stack.push(this.syntax.mapOperator(reference, operator, "''"));
     }
 
     @Override
     public void exitParenthesizedCondition(EfxParser.ParenthesizedConditionContext ctx) {
         String condition = this.stack.pop();
-        this.stack.push('(' + condition + ')');
+        this.stack.push(this.syntax.mapParenthesizedExpression(condition));
     }
 
     @Override
@@ -176,47 +182,50 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
         String expression = this.stack.pop();
-        boolean hasNot = ctx.modifier != null && ctx.modifier.getText().equals("not");
-        String not = hasNot ? "not(" : "";
-        String endNot = hasNot ? ")" : "";
-        this.stack.push(
-                not + "fn:matches(" + expression + ", " + ctx.pattern.getText() + ")" + endNot);
+
+        String condition =
+                this.syntax.mapMatchesPatternCondition(expression, ctx.pattern.getText());
+        if (ctx.modifier != null && ctx.modifier.getText().equals("not")) {
+            condition = this.syntax.mapLogicalNot(condition);
+        }
+        this.stack.push(condition);
     }
 
     @Override
     public void exitInListCondition(EfxParser.InListConditionContext ctx) {
         String list = this.stack.pop();
         String expression = this.stack.pop();
-        boolean hasNot = ctx.modifier != null && ctx.modifier.getText().equals("not");
-        String not = hasNot ? "not(" : "";
-        String endNot = hasNot ? ")" : "";
-        this.stack.push(not + expression + "=" + list + endNot);
+        String condition = this.syntax.mapInListCondition(expression, list);
+        if (ctx.modifier != null && ctx.modifier.getText().equals("not")) {
+            condition = this.syntax.mapLogicalNot(condition);
+        }
+        this.stack.push(condition);
     }
 
     @Override
     public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(this.syntax.mapOperator(left, ctx.operator.getText(), right));
     }
 
     @Override
     public void exitMultiplicationExpression(EfxParser.MultiplicationExpressionContext ctx) {
         String right = this.stack.pop();
         String left = this.stack.pop();
-        this.stack.push(left + this.syntax.mapOperator(ctx.operator.getText()) + right);
+        this.stack.push(this.syntax.mapOperator(left, ctx.operator.getText(), right));
     }
 
     @Override
     public void exitParenthesizedExpression(ParenthesizedExpressionContext ctx) {
         String expression = this.stack.pop();
-        this.stack.push('(' + expression + ')');
+        this.stack.push(this.syntax.mapParenthesizedExpression(expression));
     }
 
     @Override
     public void exitCodeList(CodeListContext ctx) {
         if (this.stack.empty()) {
-            this.stack.push("()");
+            this.stack.push(this.syntax.mapList(Collections.emptyList()));
             return;
         }
     }
@@ -224,43 +233,45 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitExplicitList(ExplicitListContext ctx) {
         if (this.stack.empty() || ctx.value().size() == 0) {
-            this.stack.push("()");
+            this.stack.push(this.syntax.mapList(Collections.emptyList()));
             return;
         }
 
-        String list = this.stack.pop() + ")";
-        for (int i = 1; i < ctx.value().size(); i++) {
-            list = this.stack.pop() + ", " + list;
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < ctx.value().size(); i++) {
+            list.add(0, this.stack.pop());
         }
-        list = "(" + list;
-        this.stack.push(list);
+        this.stack.push(this.syntax.mapList(list));
     }
 
     @Override
     public void exitLiteral(EfxParser.LiteralContext ctx) {
-        this.stack.push(ctx.getText());
+        this.stack.push(this.syntax.mapLiteral(ctx.getText()));
     }
 
     @Override
     public void exitFunctionCall(EfxParser.FunctionCallContext ctx) {
-        this.stack.push(ctx.getText());
+        final List<String> arguments = ctx.arguments() == null ? Collections.emptyList()
+                : ctx.arguments().argument().stream().map(c -> c.getText())
+                        .collect(Collectors.toList());
+        this.stack.push(this.syntax.mapFunctionCall(ctx.FunctionName().getText(), arguments));
     }
 
     @Override
     public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
-        this.stack.push("fn:doc('http://notice.service/" + this.stack.pop() + "')");
+        this.stack.push(this.syntax.mapExternalReference(this.stack.pop()));
     }
 
     @Override
     public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
-        String condition = this.stack.pop();
-        String ref = this.stack.pop();
-        this.stack.push(ref + '[' + condition + ']');
+        String predicate = this.stack.pop();
+        String nodeReference = this.stack.pop();
+        this.stack.push(this.syntax.mapNodeReferenceWithPredicate(nodeReference, predicate));
     }
 
     @Override
     public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
-        this.stack.push(symbols.relativeXpathOfNode(ctx.NodeId().getText(),
+        this.stack.push(this.symbols.relativeXpathOfNode(ctx.NodeId().getText(),
                 this.efxContext.absolutePath()));
     }
 
@@ -268,7 +279,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitFieldInNoticeReference(EfxParser.FieldInNoticeReferenceContext ctx) {
         String field = this.stack.pop();
         String notice = this.stack.pop();
-        this.stack.push(notice + "/" + field);
+        this.stack.push(this.syntax.mapFieldInExternalReference(notice, field));
     }
 
     @Override
@@ -279,9 +290,9 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
-        String condition = this.stack.pop();
-        String fieldRef = this.stack.pop();
-        this.stack.push(fieldRef + '[' + condition + ']');
+        String predicate = this.stack.pop();
+        String fieldReference = this.stack.pop();
+        this.stack.push(this.syntax.mapFieldReferenceWithPredicate(fieldReference, predicate));
     }
 
     /**
@@ -319,13 +330,15 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitSimpleReference(EfxParser.SimpleReferenceContext ctx) {
         String field = this.stack.pop();
-        String attribute =
-                ctx.attribute != null ? "/@" + ctx.attribute.getText() : "/normalize-space(text())";
-        this.stack.push(field + attribute);
+        if (ctx.attribute != null) {
+            this.stack.push(this.syntax.mapAttributeReference(field, ctx.attribute.getText()));
+        } else {
+            this.stack.push(this.syntax.mapFieldTextReference(field));
+        }
     }
 
     @Override
     public void exitCodelistReference(CodelistReferenceContext ctx) {
-        this.stack.push(this.symbols.expandCodelist(ctx.codeListId.getText()));
+        this.stack.push(this.syntax.mapList(this.symbols.expandCodelist(ctx.codeListId.getText())));
     }
 }

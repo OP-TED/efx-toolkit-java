@@ -37,7 +37,7 @@ public interface Renderer {
      * Given a template name (identifier) and some pre-rendered content, this method should return
      * the template code that encapsulates it in the target template.
      */
-    String renderTemplate(final String name, String content);
+    String renderTemplate(final String name, String number, String content);
 
     /**
      * Given a template name (identifier), and an evaluation context, this method should return the

@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.model;
 
 import java.util.Stack;
 
@@ -39,6 +39,6 @@ public class ContentBlockStack extends Stack<ContentBlock>{
         if (this.isEmpty()) {
             return 0;
         }
-        return this.peek().indentationLevel;
+        return this.peek().getIndentationLevel();
     }
 }

@@ -30,6 +30,9 @@ import eu.europa.ted.efx.interfaces.Renderer;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.interfaces.SyntaxMap;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
+import eu.europa.ted.efx.model.ContentBlock;
+import eu.europa.ted.efx.model.ContentBlockStack;
+import eu.europa.ted.efx.model.Context;
 
 public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
@@ -161,7 +164,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     List<String> templateCalls = new ArrayList<>();
     List<String> templates = new ArrayList<>();
-    for (ContentBlock rootBlock : this.rootBlock.children) {
+    for (ContentBlock rootBlock : this.rootBlock.getChildren()) {
       templateCalls.add(rootBlock.renderCallTemplate(renderer));
       rootBlock.renderTemplate(renderer, templates);
     }
