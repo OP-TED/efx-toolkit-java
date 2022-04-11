@@ -11,14 +11,14 @@ public class XPathSyntaxMap implements SyntaxMap {
     /**
      * Maps efx operators to xPath operators.
      */
-    static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), entry("-", "-"),
+    private static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), entry("-", "-"),
             entry("*", "*"), entry("/", "div"), entry("%", "mod"),
             entry("==", "="), entry("!=", "!="),
             entry("<", "<"), entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
 
     @Override
     public String mapOperator(String leftOperand, String operator, String rightOperand) {
-        return String.format("%s %s %s", leftOperand, XPathSyntaxMap.operators.get(operator), rightOperand);    
+        return String.format("%s %s %s", leftOperand, operators.get(operator), rightOperand);    
     }
 
     @Override
@@ -95,7 +95,7 @@ public class XPathSyntaxMap implements SyntaxMap {
 
     @Override
     public String mapMatchesPatternCondition(String expression, String pattern) {
-        return "fn:matches(normalize-space(" + expression + "), " + pattern + ")";
+        return String.format("fn:matches(normalize-space(%s), %s)", expression, pattern);
     }
 
     @Override
