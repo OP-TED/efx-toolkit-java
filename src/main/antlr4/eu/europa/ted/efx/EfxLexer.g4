@@ -107,7 +107,6 @@ EndExpression: '}' -> popMode;
 
 And: 'and';
 Or: 'or';
-Not: 'not';
 Is: 'is';
 In: 'in';
 Like: 'like';
@@ -115,20 +114,37 @@ Present: 'present';
 Empty: 'empty';
 Always: 'ALWAYS';
 Never: 'NEVER';
+True: 'TRUE';
+False: 'FALSE';
 Notice: 'notice';
 Codelist: 'codelist';
 
 
-FunctionName: 'substring' | 'substring-after' | 'substring-before' 
-    | 'contains' | 'starts-with' | 'ends-with' | 'matches'
-    | 'concat' | 'normalize-space' | 'format-number'
-    | 'escape-html-uri'
-    | 'string-length' | 'count'
-    | 'upper-case' | 'lower-case'
-    | 'ceiling' | 'floor' | 'sum'
-    | 'string' | 'number'
-    | 'true' | 'false'
-    ;
+/*
+ * Functions
+ */
+
+Not: 'not';
+CountFunction: 'count';
+SubstringFunction: 'substring';
+StringFunction: 'string';
+NumberFunction: 'number';
+ContainsFunction: 'contains';
+StartsWithFunction: 'starts-with';
+EndsWithFunction: 'ends-with';
+StringLengthFunction: 'string-length';
+SumFunction: 'sum';
+FormatNumberFunction: 'format-number';
+ConcatFunction: 'concat';
+DateFunction: 'date';
+TimeFunction: 'time';
+DateTimeFunction: 'date-time';
+DurationFunction: 'duration';
+AddDaysFunction: 'add-days';
+AddWeeksFunction: 'add-weeks';
+AddMonthsFunction: 'add-months';
+AddYearsFunction: 'add-years';
+
 
 NodeId: 'ND' Dash DIGIT+;
 FieldId: ('BT' | 'OPP' | 'OPT') Dash INTEGER (OpenParenthesis (BtId | [a-z]) CloseParenthesis)? (Dash Identifier)+;
@@ -141,6 +157,10 @@ INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;
 STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
 UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
+DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
+TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
+DATETIME: DATE WS TIME;
+DURATION: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
 Multiplication: '*' | '/' | '%';

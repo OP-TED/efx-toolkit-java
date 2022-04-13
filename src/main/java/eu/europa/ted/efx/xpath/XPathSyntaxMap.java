@@ -11,14 +11,15 @@ public class XPathSyntaxMap implements SyntaxMap {
     /**
      * Maps efx operators to xPath operators.
      */
-    static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), entry("-", "-"),
-            entry("*", "*"), entry("/", "div"), entry("%", "mod"),
-            entry("==", "="), entry("!=", "!="),
-            entry("<", "<"), entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
+    static final Map<String, String> operators =
+            Map.ofEntries(entry("+", "+"), entry("-", "-"), entry("*", "*"), entry("/", "div"),
+                    entry("%", "mod"), entry("==", "="), entry("!=", "!="), entry("<", "<"),
+                    entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
 
     @Override
     public String mapOperator(String leftOperand, String operator, String rightOperand) {
-        return String.format("%s %s %s", leftOperand, XPathSyntaxMap.operators.get(operator), rightOperand);    
+        return String.format("%s %s %s", leftOperand, XPathSyntaxMap.operators.get(operator),
+                rightOperand);
     }
 
     @Override
@@ -32,22 +33,13 @@ public class XPathSyntaxMap implements SyntaxMap {
     }
 
     @Override
-    public String mapFieldTextReference(String fieldReference) {
+    public String mapFieldValueReference(String fieldReference) {
         return fieldReference + "/normalize-space(text())";
     }
 
     @Override
-    public String mapAttributeReference(String fieldReference, String attribute) {
+    public String mapFieldAttributeReference(String fieldReference, String attribute) {
         return fieldReference + "/@" + attribute;
-    }
-
-    @Override
-    public String mapFunctionCall(String functionName, List<String> arguments) {
-        final StringJoiner joiner = new StringJoiner(",", "(", ")");
-        for (final String argument : arguments) {
-            joiner.add(argument);
-        }        
-        return functionName + joiner.toString();
     }
 
     @Override
@@ -73,20 +65,7 @@ public class XPathSyntaxMap implements SyntaxMap {
         return value ? "true()" : "false()";
     }
 
-    @Override
-    public String mapLogicalAnd(String leftOperand, String rightOperand) {
-        return String.format("%s and %s", leftOperand, rightOperand);
-    }
 
-    @Override
-    public String mapLogicalOr(String leftOperand, String rightOperand) {
-        return String.format("%s or %s", leftOperand, rightOperand);
-    }    
-    
-    @Override
-    public String mapLogicalNot(String condition) {
-        return String.format("not(%s)", condition);
-    }
 
     @Override
     public String mapInListCondition(String expression, String List) {
@@ -113,5 +92,138 @@ public class XPathSyntaxMap implements SyntaxMap {
     @Override
     public String mapFieldInExternalReference(String externalReference, String fieldReference) {
         return externalReference + "/" + fieldReference;
+    }
+
+    /*** BooleanExpressions ***/
+
+
+    @Override
+    public String mapLogicalAnd(String leftOperand, String rightOperand) {
+        return String.format("%s and %s", leftOperand, rightOperand);
+    }
+
+    @Override
+    public String mapLogicalOr(String leftOperand, String rightOperand) {
+        return String.format("%s or %s", leftOperand, rightOperand);
+    }
+
+    @Override
+    public String mapLogicalNot(String condition) {
+        return String.format("not(%s)", condition);
+    }
+
+    @Override
+    public String mapExistsExpression(String reference) {
+        return reference;
+    }
+    
+    
+    /*** Boolean functions ***/
+
+    @Override
+    public String mapStringContainsFunction(String haystack, String needle) {
+        return "contains(" + haystack + ", " + needle + ")";
+    }
+
+    @Override
+    public String mapStringStartsWithFunction(String text, String startsWith) {
+        return "starts-with(" + text + ", " + startsWith + ")";
+    }
+
+    @Override
+    public String mapStringEndsWithFunction(String text, String endsWith) {
+        return "ends-with(" + text + ", " + endsWith + ")";
+    }
+
+
+    /*** Numeric functions ***/
+
+    @Override
+    public String mapCountFunction(String nodeSet) {
+        return "count(" + nodeSet + ")";
+    }
+
+    @Override
+    public String mapToNumberFunction(String text) {
+        return "number(" + text + ")";
+    }
+
+    @Override
+    public String mapSumFunction(String nodeSet) {
+        return "sum(" + nodeSet + ")";
+    }
+
+    @Override
+    public String mapStringLengthFunction(String text) {
+        return "string-length(" + text + ")";
+    }
+
+
+    /*** String functions ***/
+
+    @Override
+    public String mapSubstringFunction(String text, String start, String length) {
+        return "substring(" + text + ", " + start + ", " + length + ")";
+    }
+
+    @Override
+    public String mapSubstringFunction(String text, String start) {
+        return "substring(" + text + ", " + start + ")";
+    }
+
+    @Override
+    public String mapNumberToStringFunction(String number) {
+        return "string(" + number + ")";
+    }
+
+    @Override
+    public String mapStringConcatenationFunction(List<String> list) {
+        return "concat(" + String.join(", ", list) + ")";
+    }
+
+    @Override
+    public String mapFormatNumberFunction(String number, String format) {
+        return "format-number(" + number + ", " + format + ")";
+    }
+
+
+    /*** Date functions ***/
+
+    @Override
+    public String mapDateFromStringFunction(String date) {
+        return "xs:date(" + date + ")";
+    }
+
+
+    /*** Time functions ***/
+
+    @Override
+    public String mapTimeFromStringFunction(String time) {
+        return "xs:time(" + time + ")";
+    }
+
+
+    /*** Duration functions ***/
+
+    @Override
+    public String mapDurationFromDatesFunction(String startDate, String endDate) {
+        return "(xs:date(" + startDate + ") - xs:date(" + endDate + "))";
+    }
+
+
+
+    private static String ensureQuotes(String text) {
+        if (text.startsWith("'") && text.endsWith("'")) {
+            return text;
+        }
+
+        if (text.startsWith("\"") && text.endsWith("\"")) {
+            text = text.replaceAll("^\"|\"$", "");
+            if (text.contains("'")) {
+                text = text.replaceAll("'", "\'");
+            }
+        }
+
+        return "'" + text + "'";
     }
 }

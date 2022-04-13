@@ -58,8 +58,8 @@ labelBlock
  * An expression-block starts with a $ and contains the expression to be evaluated inside curly braces.
  */
 expressionBlock
-	: StartExpression condition EndExpression
-	| StartNestedExpression condition EndExpression
+	: StartExpression expression EndExpression
+	| StartNestedExpression expression EndExpression
 	| SelfValue
 	;
 
@@ -89,55 +89,114 @@ whitespace: Whitespace+;
 context: field = FieldId Colon Colon;
 
 /*
- * Conditions
- */
-condition
-	: condition operator = Or condition					# logicalOrCondition
-	| condition operator = And condition				# logicalAndCondition
-	| Not condition										# logicalNotCondition
-	| OpenParenthesis condition CloseParenthesis		# parenthesizedCondition
-	| Always											# alwaysCondition
-	| Never												# neverCondition
-	| expression operator = Comparison expression		# comparisonCondition
-	| expression modifier = Not? In list				# inListCondition
-	| expression Is modifier = Not? Empty				# emptinessCondition
-	| reference Is modifier = Not? Present				# presenceCondition
-	| expression modifier = Not? Like pattern = STRING	# likePatternCondition
-	| expression										# expressionCondition
-	;
-
-/*
  * Expressions
  */
-expression
-	: expression operator = Multiplication expression	# multiplicationExpression
-	| expression operator = Addition expression			# additionExpression
-	| OpenParenthesis expression CloseParenthesis		# parenthesizedExpression
-	| value												# valueExpression
+
+expression: numericExpression | stringExpression | booleanExpression | dateExpression | timeExpression | durationExpression;
+
+booleanExpression
+	: booleanLiteral 												# booleanLiteralExpression
+	| booleanFunction 												# booleanFunctionExpression
+	| booleanReference 												# booleanReferenceExpression
+	| OpenParenthesis booleanExpression CloseParenthesis			# parenthesizedBooleanExpression
+	| booleanExpression operator=Or booleanExpression				# logicalOrCondition
+	| booleanExpression operator=And booleanExpression				# logicalAndCondition
+	| stringExpression modifier = Not? In list						# inListCondition
+	| stringExpression Is modifier = Not? Empty						# emptinessCondition
+	| setReference Is modifier = Not? Present						# presenceCondition
+	| stringExpression modifier = Not? Like pattern = STRING		# likePatternCondition
+	| booleanExpression operator = Comparison booleanExpression		# booleanComparison
+	| numericExpression operator = Comparison numericExpression		# numericComparison
+	| stringExpression operator = Comparison stringExpression		# stringComparison
+	| dateExpression operator = Comparison dateExpression			# dateComparison
+	| timeExpression operator = Comparison timeExpression			# timeComparison
+	| durationExpression operator = Comparison durationExpression	# durationComparison
+	;
+	
+numericExpression
+	: numericExpression operator=Multiplication numericExpression	# multiplicationExpression
+	| numericExpression operator=Addition numericExpression			# additionExpression
+	| OpenParenthesis numericExpression CloseParenthesis			# parenthesizedNumericExpression
+	| numericLiteral 												# numericLiteralExpression
+	| numericFunction 												# numericFunctionExpression
+	| numericReference												# numericReferenceExpression
 	;
 
-list
-	: OpenParenthesis value (Comma value)* CloseParenthesis	# explicitList
-	| codelistReference										# codeList
+stringExpression: stringLiteral | stringFunction | stringReference;
+
+dateExpression: dateLiteral | dateFunction | dateReference;
+
+timeExpression: timeLiteral | timeFunction | timeReference;
+
+durationExpression: durationLiteral | durationFunction | durationReference;
+
+list: OpenParenthesis expression (Comma expression)* CloseParenthesis	# explicitList
+	| codelistReference													# codeList
 	;
 
-value: literal | reference | functionCall;
+predicate: booleanExpression;
 
-literal: STRING | INTEGER | DECIMAL | UUIDV4;
+/*
+ * Literals
+ */
 
-predicate: condition;
+literal: numericLiteral | stringLiteral | booleanLiteral | dateLiteral | timeLiteral | durationLiteral;
+stringLiteral: STRING | UUIDV4;
+numericLiteral: INTEGER | DECIMAL;
+booleanLiteral: trueBooleanLiteral | falseBooleanLiteral;
+trueBooleanLiteral: Always | True;
+falseBooleanLiteral: Never | False;
+dateLiteral: DATE;
+timeLiteral: TIME;
+dateTimeLiteral: DATETIME;
+durationLiteral: DURATION;
+
 
 /*
  * References
  */
-reference
-	: fieldReference (SlashAt attribute = Identifier)?		# simpleReference
-	| ctx = context reference								# referenceWithContextOverride
+
+stringReference
+	: fieldReference						# textFieldReference
+	| fieldReference SlashAt Identifier		# textAttributeReference
 	;
+
+numericReference
+	: fieldReference						# numericFieldReference
+	| fieldReference SlashAt Identifier		# numericAttributeReference 
+	;
+
+booleanReference
+	: fieldReference						# booleanFieldReference
+	| fieldReference SlashAt Identifier		# booleanAttributeReference
+	;
+
+dateReference
+	: fieldReference						# dateFieldReference
+	| fieldReference SlashAt Identifier		# dateAttributeReference
+	;
+
+timeReference
+	: fieldReference						# timeFieldReference
+	| fieldReference SlashAt Identifier		# timeAttributeReference
+	;
+
+durationReference
+	: fieldReference						# durationFieldReference
+	| fieldReference SlashAt Identifier		# durationAttributeReference
+	;
+
+fieldValueReference
+	: fieldReference						# untypedFieldValueReference
+	| fieldReference SlashAt Identifier		# untypedAttributeValueReference 
+	;
+
+setReference: fieldReference;
 
 fieldReference
 	: fieldReference OpenBracket predicate CloseBracket		# fieldReferenceWithPredicate
 	| noticeReference Slash fieldReference					# fieldInNoticeReference
+	| ctx = context fieldReference							# referenceWithContextOverride
 	| FieldId												# simpleFieldReference
 	;
 
@@ -146,14 +205,49 @@ nodeReference
 	| NodeId												# simpleNodeReference
 	;
 
-noticeReference: Notice OpenParenthesis noticeId=expression CloseParenthesis;
+noticeReference: Notice OpenParenthesis noticeId=stringExpression CloseParenthesis;
+
 codelistReference: Codelist? OpenParenthesis codeListId=codelistId CloseParenthesis;
 codelistId: CodelistId;
+
 
 /*
  * Function calls
  */
-functionCall: FunctionName OpenParenthesis arguments? CloseParenthesis;
-arguments: argument (Comma argument)*;
-argument: condition;
+
+booleanFunction
+	: Not OpenParenthesis booleanExpression CloseParenthesis																# notFunction
+	| ContainsFunction OpenParenthesis haystack=stringExpression Comma needle=stringExpression CloseParenthesis 			# containsFunction
+	| StartsWithFunction OpenParenthesis haystack=stringExpression Comma needle=stringExpression CloseParenthesis			# startsWithFunction
+	| EndsWithFunction OpenParenthesis haystack=stringExpression Comma needle=stringExpression CloseParenthesis				# endsWithFunction
+	;
+
+numericFunction
+	: CountFunction OpenParenthesis setReference CloseParenthesis 									# countFunction
+	| NumberFunction OpenParenthesis (stringExpression | stringReference) CloseParenthesis			# numberFunction
+	| SumFunction OpenParenthesis setReference CloseParenthesis 									# sumFunction
+	| StringLengthFunction OpenParenthesis (stringExpression | stringReference) CloseParenthesis	# stringLengthFunction
+	;
+
+stringFunction
+	: SubstringFunction OpenParenthesis stringExpression Comma start=numericExpression (Comma length=numericExpression)? CloseParenthesis 	# substringFunction
+	| StringFunction OpenParenthesis numericExpression CloseParenthesis																		# toStringFunction
+	| ConcatFunction OpenParenthesis stringExpression (Comma stringExpression)* CloseParenthesis											# concatFunction
+	| FormatNumberFunction OpenParenthesis numericExpression (Comma format=stringExpression)? CloseParenthesis								# formatNumberFunction
+	;
+
+
+dateFunction
+	: DateFunction OpenParenthesis stringExpression CloseParenthesis		# dateFromStringFunction
+	;
+
+timeFunction
+	: TimeFunction OpenParenthesis stringExpression CloseParenthesis		# timeFromStringFunction
+	;
+
+
+durationFunction
+	: DurationFunction OpenParenthesis start=dateExpression Comma end=dateExpression CloseParenthesis 	# durationFromDatesFunction
+	;
+
 
