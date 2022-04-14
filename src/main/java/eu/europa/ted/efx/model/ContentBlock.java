@@ -82,7 +82,7 @@ public class ContentBlock {
         StringBuilder sb = new StringBuilder();
         sb.append(this.content);
         for (ContentBlock child : this.children) {
-            sb.append("\n" + child.renderCallTemplate(renderer));
+            sb.append("\n").append(child.renderCallTemplate(renderer));
         }
         return sb.toString();
     }

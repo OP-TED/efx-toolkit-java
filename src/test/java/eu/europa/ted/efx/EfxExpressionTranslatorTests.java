@@ -209,4 +209,10 @@ public class EfxExpressionTranslatorTests {
                 "(xs:date(PathNode/TextField/normalize-space(text())) - xs:date(PathNode/TextField/normalize-space(text())))",
                 test("ND-0", "duration(BT-01-Text, BT-01-Text)"));
     }
+
+    @Test
+    public void testPredicate() {
+        assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']/normalize-space(text())",
+                test("BT-01-Text", "BT-02-Indicator[BT-03-Code == 'a']"));
+    }
 }
