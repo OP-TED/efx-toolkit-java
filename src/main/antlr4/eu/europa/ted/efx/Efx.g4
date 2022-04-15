@@ -2,6 +2,8 @@ grammar Efx;
 
 options { tokenVocab = EfxLexer;}
 
+/*** Using the lexer's DEFAULT_MODE ***/
+
 /* 
  * A single-expression is typically used to evaluate a condition.
  * If you do not need to process EFX templates, then you can create a full EFX parser that parses these expressions.
@@ -14,7 +16,7 @@ singleExpression: (FieldContext | NodeContext) ColonColon expressionBlock EOF;
 /* 
  * A template-file is a series of template-lines.
  */
-templateFile: (templateLine /* additonalTemplateLine* */)* EOF;
+templateFile: (templateLine)* EOF;
 
 /* 
  * A template line contains three parts: indentation, context-declaration and template.
@@ -25,10 +27,11 @@ templateFile: (templateLine /* additonalTemplateLine* */)* EOF;
  * Furthermore, all the expression-blocks in the template part of this template-line will
  * be evaluated relative to the context indicated by the context-declaration. 
  */
-templateLine: indent = (Tabs | Spaces)? contextExpressionBlock ColonColon template CRLF;
-// additonalTemplateLine: indent=(Tabs | Spaces)? ColonColon txt=template CRLF;
+templateLine: indent = (Tabs | Spaces)? contextDeclarationBlock ColonColon template CRLF;
 
-contextDeclaration: contextExpressionBlock;
+
+/*** Templates are matched when the lexical analyser is in LABEL mode ***/
+
 template: templateFragment;
 
 /*
@@ -41,35 +44,23 @@ templateFragment
 	| expressionBlock templateFragment?		# valueTemplate
 	;
 
+
+text: whitespace | FreeText+ text*;
+
+whitespace: Whitespace+;
+
+/*** Labels are matched when the lexical analyser is in LABEL mode ***/
+
+
 /*
  * A label-block starts with a # and contains a label identifier inside curly braces.
  */
 labelBlock
 	: StartLabel assetType Pipe labelType Pipe assetId EndLabel			# standardLabelReference
-	| StartLabel labelType Pipe BtAssetId EndLabel						# shorthandBtLabelTypeReference
-	| StartLabel labelType Pipe FieldAssetId EndLabel					# shorthandFieldLabelTypeReference
-	| StartLabel BtAssetId EndLabel										# shorthandBtLabelReference
-	| StartLabel FieldAssetId EndLabel									# shorthandFieldLabelReference
-	| StartLabel OpenValueBlock FieldAssetId CloseValueBlock EndLabel	# shorthandFieldValueLabelReference
-	| SelfLabel 														# selfLabeleReference
-	;
-
-/* 
- * An expression-block starts with a $ and contains the expression to be evaluated inside curly braces.
- */
-expressionBlock
-	: StartExpression expression EndExpression
-	| StartNestedExpression expression EndExpression
-	| SelfValue
-	;
-
-/*
- * A context-declaration is contained within curly braces and can be either 
- * a field-identifier or a node-identifier followed by an optional predicate.
- */
-contextExpressionBlock
-	: StartContextExpression fieldReference EndExpression
-	| StartContextExpression nodeReference EndExpression
+	| StartLabel labelType Pipe BtAssetId EndLabel						# shorthandBtLabelReference
+	| StartLabel labelType Pipe FieldAssetId EndLabel					# shorthandFieldLabelReference
+	| StartLabel FieldAssetId EndLabel									# shorthandFieldValueLabelReference
+	| StartLabel LabelType EndLabel										# shorthandContextLabelReference
 	;
 
 assetType: AssetType | expressionBlock;
@@ -82,9 +73,28 @@ assetId
 	| expressionBlock
 	;
 
-text: whitespace | FreeText+ text*;
 
-whitespace: Whitespace+;
+/*** Expressions are matched when the lexical analyser is in EXPRESSION mode ***/
+
+
+/* 
+ * An expression-block starts with a $ and contains the expression to be evaluated inside curly braces.
+ */
+expressionBlock
+	: StartExpression expression EndExpression
+	| SelfValue
+	;
+
+/*
+ * A context-declaration is contained within curly braces and can be either 
+ * a field-identifier or a node-identifier followed by an optional predicate.
+ */
+contextDeclarationBlock
+	: StartExpression fieldReference EndExpression
+	| StartExpression nodeReference EndExpression
+	;
+
+
 
 context: field = FieldId Colon Colon;
 
@@ -249,5 +259,3 @@ timeFunction
 durationFunction
 	: DurationFunction OpenParenthesis start=dateExpression Comma end=dateExpression CloseParenthesis 	# durationFromDatesFunction
 	;
-
-

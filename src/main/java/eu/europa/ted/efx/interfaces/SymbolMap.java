@@ -6,10 +6,6 @@ public interface SymbolMap {
 
     public String parentNodeOfField(final String fieldId);
 
-    public String contextPathOfField(final String fieldId);
-
-    public String contextPathOfField(final String fieldId, final String contextPath);
-
     public String relativeXpathOfField(final String fieldId, final String contextPath);
 
     public String relativeXpathOfNode(final String nodeId, final String contextPath);

@@ -7,6 +7,7 @@ import java.util.Stack;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -38,6 +39,7 @@ import eu.europa.ted.efx.EfxParser.NumericComparisonContext;
 import eu.europa.ted.efx.EfxParser.NumericFieldReferenceContext;
 import eu.europa.ted.efx.EfxParser.NumericLiteralContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedNumericExpressionContext;
+import eu.europa.ted.efx.EfxParser.SimpleFieldReferenceContext;
 import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
 import eu.europa.ted.efx.EfxParser.StartsWithFunctionContext;
@@ -96,6 +98,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         final EfxParser parser = new EfxParser(tokens);
 
         if (errorListener != null) {
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(errorListener);
             parser.removeErrorListeners();
             parser.addErrorListener(errorListener);
         }
@@ -127,11 +131,45 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         return sb.toString().trim();
     }
 
+    protected static String getContextFieldId(ParserRuleContext ctx) {
+
+        SimpleFieldReferenceContext fieldReferenceContext =
+                ctx.getChild(SimpleFieldReferenceContext.class, 0);
+        if (fieldReferenceContext != null) {
+            return fieldReferenceContext.FieldId().getText();
+        }
+
+        return null;
+    }
+
+    protected static String getContextNodeId(ParserRuleContext ctx) {
+
+        SimpleNodeReferenceContext nodeReferenceContext =
+                ctx.getChild(SimpleNodeReferenceContext.class, 0);
+        if (nodeReferenceContext != null) {
+            return nodeReferenceContext.NodeId().getText();
+        }
+
+        return null;
+    }
+
+    protected String quoted(final String s) {
+        return String.format("%s%s%s", this.syntax.mapStringQuote(), s,
+                this.syntax.mapStringQuote());
+    }
+
     @Override
     public void enterSingleExpression(SingleExpressionContext ctx) {
         final TerminalNode fieldContext = ctx.FieldContext();
         if (fieldContext != null) {
-            this.efxContext.pushFieldContext(fieldContext.getText());
+            // In this case we want the context to be that of the specified field's parent node.
+            // This is a temporary workaround for the fact that the current version of the MDC
+            // passes the field identifier as the context when evaluating conditions for schematron
+            // generation.
+            // TODO: we should fix that in the MDC and revert the next line to push the field's
+            // context when a field is specified as a context of the expression.
+            // see TEDEFO-852
+            this.efxContext.pushNodeContext(symbols.parentNodeOfField(fieldContext.getText()));
         } else {
             final TerminalNode nodeContext = ctx.NodeContext();
             if (nodeContext != null) {
@@ -429,9 +467,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
      */
     @Override
     public void enterPredicate(EfxParser.PredicateContext ctx) {
-        EfxParser.SimpleFieldReferenceContext refCtx =
-                ctx.getParent().getChild(EfxParser.SimpleFieldReferenceContext.class, 0);
-        this.efxContext.pushFieldContextForPredicate(refCtx.FieldId().getText());
+        final String fieldId = getContextFieldId(ctx.getParent());
+        this.efxContext.pushFieldContext(fieldId);
     }
 
     /**

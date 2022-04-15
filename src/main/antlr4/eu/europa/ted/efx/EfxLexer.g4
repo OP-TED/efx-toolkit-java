@@ -29,7 +29,7 @@ ColonColon: [ \t]* '::' [ \t]* -> pushMode(TEMPLATE);
  * as an expression block. Therefore the curly brace that opens a context declaration block, switches
  * the lexer to EXPRESSION mode.
  */
-StartContextExpression: '{' -> pushMode(EXPRESSION);
+StartContextExpression: '{' -> pushMode(EXPRESSION), type(StartExpression);
 
 /*
  * TEMPLATE mode In template mode, whitespace is significant. In this mode we are looking for the
@@ -47,8 +47,8 @@ fragment Char: ~[\r\n\f\t #$}{];
 fragment Dollar: '$';	// Used for label placeholders
 fragment Sharp: '#';	// Used for expression placeholders
 
-SelfLabel: Sharp 'label';
 SelfValue: Dollar 'value';
+ShorthandLabelType: LabelType -> type(LabelType);
 
 fragment OpenBrace: '{';
 
@@ -64,19 +64,23 @@ mode LABEL;
 
 Pipe: '|';
 
-OpenValueBlock: '[';
-CloseValueBlock: ']';
-
 EndLabel: '}' -> popMode;
 
-StartNestedExpression: NestedDollar NestedOpenBrace -> pushMode(EXPRESSION);
-fragment NestedDollar: '$';
-fragment NestedOpenBrace: '{';
+StartNestedExpression: '$' '{' -> pushMode(EXPRESSION), type(StartExpression);
 
-AssetType: 'business_term' | 'field' | 'code' | 'decoration';
-LabelType: 'name' | 'value';
-FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
-BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
+AssetType: ASSET_TYPE_BT | ASSET_TYPE_FIELD | ASSET_TYPE_CODE | ASSET_TYPE_INDICATOR | ASSET_TYPE_DECORATION;
+ASSET_TYPE_BT: 'business_term';
+ASSET_TYPE_FIELD: 'field';
+ASSET_TYPE_CODE: 'code';
+ASSET_TYPE_INDICATOR: 'indicator';
+ASSET_TYPE_DECORATION: 'decoration';
+
+LabelType: LABEL_TYPE_NAME | LABEL_TYPE_VALUE;
+LABEL_TYPE_NAME: 'name';
+LABEL_TYPE_VALUE: 'value';
+
+FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;// ->type(FieldId);
+BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;// -> type(BtId);
 CodelistAssetId: 'CL' ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
 OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 

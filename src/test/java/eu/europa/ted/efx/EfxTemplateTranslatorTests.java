@@ -1,6 +1,9 @@
 package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.InputMismatchException;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.MockRenderer;
@@ -13,38 +16,84 @@ public class EfxTemplateTranslatorTests {
 
     private String translate(final String template) {
         return EfxTemplateTranslator.renderTemplate(template + "\n",
-                MockSymbolMap.getInstance(SDK_VERSION), 
-                new XPathSyntaxMap(),
-                new MockRenderer(), ThrowingErrorListener.INSTANCE);
+                MockSymbolMap.getInstance(SDK_VERSION), new XPathSyntaxMap(), new MockRenderer(),
+                ThrowingErrorListener.INSTANCE);
     }
 
     @Test
     public void testStandardLabelReference() {
-        assertEquals("block01 = 'field|name|BT-01-Text'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{field|name|BT-01-Text}"));
+        assertEquals(
+                "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{field|name|BT-00-Text}"));
     }
 
     @Test
     public void testShorthandBtLabelTypeReference() {
-        assertEquals("block01 = 'business_term|name|BT-01'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{name|BT-01}"));
+        assertEquals(
+                "block01 = label(concat('business_term', '|', 'name', '|', 'BT-00')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{name|BT-00}"));
     }
 
     @Test
     public void testShorthandFieldLabelTypeReference() {
-        assertEquals("block01 = 'field|name|BT-01-Text'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{name|BT-01-Text}"));
+        assertEquals(
+                "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{name|BT-00-Text}"));
     }
 
     @Test
     public void testShorthandBtLabelReference() {
-        assertEquals("block01 = 'business_term|name|BT-01'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{BT-01}"));
+        assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}::#{BT-01}"));
     }
 
     @Test
     public void testShorthandFieldLabelReference() {
-        assertEquals("block01 = 'field|name|BT-01-Text'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{BT-01-Text}"));
+        assertThrows(InputMismatchException.class, () -> translate("{BT-00-Text}::#{BT-01-Text}"));
     }
 
     @Test
     public void testShorthandFieldValueLabelReferenceForIndicators() {
-        assertEquals("block01 = 'concat('code|value-', ../IndicatorField, '|BT-02-Indicator')'; for-each('/*/PathNode/TextField') { block01(); }", translate("{BT-01-Text}::#{[BT-02-Indicator]}"));
+        assertEquals(
+                "block01 = label(concat('indicator', '|', 'value', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{BT-00-Indicator}"));
+    }
+
+
+    @Test
+    public void testSelfLabelReference_WithValueLabelTypeAndIdicatorField() {
+        assertEquals(
+                "block01 = label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/IndicatorField) { block01(); }",
+                translate("{BT-00-Indicator}::#{value}"));
+    }
+    
+    @Test
+    public void testSelfLabelReference_WithValueLabelTypeAndCodeField() {
+        assertEquals(
+                "block01 = label(concat('code', '|', 'value', '|', 'main-activity', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
+                translate("{BT-00-Code}::#{value}"));
+    }
+
+    @Test
+    public void testSelfLabelReference_WithValueLabelTypeAndTextField() {
+        assertThrows(InputMismatchException.class, () -> translate("{BT-00-Text}::#{value}"));
+    }
+
+    @Test
+    public void testSelfLabelReference_WithOtherLabelType() {
+        assertEquals(
+                "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{name}"));
+    }
+
+    @Test
+    public void testSelfLabelReference_WithUnknownLabelType() {
+        assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}::#{whatever}"));
+    }
+
+    @Test
+    public void testNestedExpression() {
+        assertEquals(
+                "block01 = label(concat('field', '|', 'name', '|', ./normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}::#{field|name|${BT-00-Text}}"));
     }
 }

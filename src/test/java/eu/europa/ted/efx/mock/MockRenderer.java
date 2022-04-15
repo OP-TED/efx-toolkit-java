@@ -11,12 +11,12 @@ public class MockRenderer implements Renderer {
 
     @Override
     public String renderLabelFromKey(String key) {
-        return key;
+        return String.format("label(%s)", key);
     }
 
     @Override
     public String renderLabelFromExpression(String expression) {
-        return expression;
+        return String.format("label(%s)", expression);
     }
 
     @Override
@@ -26,12 +26,12 @@ public class MockRenderer implements Renderer {
 
     @Override
     public String renderTemplate(String name, String number, String content) {
-        return String.format("%s = '%s';", name,  content);
+        return String.format("%s = %s;", name,  content);
     }
 
     @Override
     public String renderCallTemplate(String name, String context) {
-        return String.format("for-each('%s') { %s(); }", context, name);
+        return String.format("for-each(%s) { %s(); }", context, name);
     }
 
     @Override

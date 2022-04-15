@@ -22,6 +22,11 @@ public class XPathSyntaxMap implements SyntaxMap {
     }
 
     @Override
+    public Character mapStringQuote() {
+        return '\'';
+    }
+
+    @Override
     public String mapNodeReferenceWithPredicate(String nodeReference, String predicate) {
         return nodeReference + '[' + predicate + ']';
     }
@@ -225,4 +230,5 @@ public class XPathSyntaxMap implements SyntaxMap {
 
         return "'" + text + "'";
     }
+
 }

@@ -2,6 +2,8 @@ package eu.europa.ted.efx.model;
 
 import java.util.Stack;
 import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.model.Context.FieldContext;
+import eu.europa.ted.efx.model.Context.NodeContext;
 
 /**
  * Used to keep trak of the current evaluation context. Extends Stack<Context> to provide helper
@@ -17,22 +19,8 @@ public class ContextStack extends Stack<Context> {
      * 
      * @param symbols the SymbolMap is used to resolve fieldIds and nodeIds.
      */
-    public ContextStack(SymbolMap symbols) {
+    public ContextStack(final SymbolMap symbols) {
         this.symbols = symbols;
-    }
-
-    /**
-     * Creates a new Context for the given field and places it at the top of the stack. The new
-     * Context is determined by the parent of the field, and it is made to be relative to the one
-     * currently at the top of the stack (or absolute if the stack is empty).
-     */
-    public Context pushFieldContext(String fieldId) {
-        String absolutePath = symbols.contextPathOfField(fieldId);
-        if (this.isEmpty()) {
-            return this.push(new Context(absolutePath));
-        }
-        String relativePath = symbols.contextPathOfField(fieldId, this.peek().absolutePath());
-        return this.push(new Context(absolutePath, relativePath));
     }
 
     /**
@@ -40,13 +28,17 @@ public class ContextStack extends Stack<Context> {
      * Context is determined by the field itself, and it is made to be relative to the one
      * currently at the top of the stack (or absolute if the stack is empty).
      */
-    public Context pushFieldContextForPredicate(String fieldId) {
-        String absoluteCompletePath = symbols.absoluteXpathOfField(fieldId);
+    public FieldContext pushFieldContext(final String fieldId) {
+        String absolutePath = symbols.absoluteXpathOfField(fieldId);
         if (this.isEmpty()) {
-            return this.push(new Context(absoluteCompletePath));
+            FieldContext context = new FieldContext(fieldId, absolutePath);
+            this.push(context);
+            return context;
         }
-        String relativePath = symbols.contextPathOfField(fieldId, this.peek().absolutePath());
-        return this.push(new Context(absoluteCompletePath, relativePath));
+        String relativePath = symbols.relativeXpathOfField(fieldId, this.peek().absolutePath());
+        FieldContext context = new FieldContext(fieldId, absolutePath, relativePath);
+        this.push(context);
+        return context;
     }
 
     /**
@@ -54,15 +46,59 @@ public class ContextStack extends Stack<Context> {
      * Context is relative to the one currently at the top of the stack (or absolute if the stack is
      * empty).
      */
-    public Context pushNodeContext(String nodeId) {
+    public NodeContext pushNodeContext(final String nodeId) {
         String absolutePath = symbols.absoluteXpathOfNode(nodeId);
         if (this.isEmpty()) {
-            return this.push(new Context(absolutePath));
+            NodeContext context = new NodeContext(nodeId, absolutePath);
+            this.push(context);
+            return context;
         }
         String relativePath = symbols.relativeXpathOfNode(nodeId, this.peek().absolutePath());
-        return this.push(new Context(absolutePath, relativePath));
+        NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
+        this.push(context);
+        return context;
     }
 
+    /**
+     * Returns true  if the context at the top of the stack is a {@link FieldContext}.
+     * Does not remove the context from the stack.
+     */
+    public Boolean isFieldContext() {
+        if (this.isEmpty() || this.peek() == null) {
+            return null;
+        }
+
+        return this.peek().isFieldContext();
+    }
+
+    /**
+     * Returns true  if the context at the top of the stack is a {@link NodeContext}.
+     * Does not remove the context from the stack.
+     */
+    public Boolean isNodeContext() {
+        if (this.isEmpty() || this.peek() == null) {
+            return null;
+        }
+
+        return this.peek().isNodeContext();
+    }
+
+    /**
+     * Returns the [field or node] identifier that was used to create the context that is currently at the top of the stack.
+     * Does not remove the context from the stack.
+     */
+    public String symbol() {
+        if (this.isEmpty() || this.peek() == null) {
+            return null;
+        }
+
+        return this.peek().symbol();
+    }
+
+    /**
+     * Returns the absolute path of the context that is currently at the top of the stack.
+     * Does not remove the context from the stack.
+     */
     public String absolutePath() {
         if (this.isEmpty() || this.peek() == null) {
             return null;
@@ -71,6 +107,10 @@ public class ContextStack extends Stack<Context> {
         return this.peek().absolutePath();
     }
 
+    /**
+     * Returns the relative path of the context that is currently at the top of the stack.
+     * Does not remove the context from the stack.
+     */
     public String relativePath() {
         if (this.isEmpty() || this.peek() == null) {
             return null;

@@ -12,14 +12,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.EfxParser.AssetTypeContext;
-import eu.europa.ted.efx.EfxParser.ContextExpressionBlockContext;
+import eu.europa.ted.efx.EfxParser.ContextDeclarationBlockContext;
 import eu.europa.ted.efx.EfxParser.ExpressionBlockContext;
 import eu.europa.ted.efx.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.EfxParser.LabelTypeContext;
 import eu.europa.ted.efx.EfxParser.ShorthandBtLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandBtLabelTypeReferenceContext;
+import eu.europa.ted.efx.EfxParser.ShorthandContextLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.ShorthandFieldLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandFieldLabelTypeReferenceContext;
 import eu.europa.ted.efx.EfxParser.ShorthandFieldValueLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.StandardLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.TemplateFileContext;
@@ -33,6 +32,8 @@ import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
 import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.Context.FieldContext;
+import eu.europa.ted.efx.model.Context.NodeContext;
 
 public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
@@ -44,6 +45,17 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private static final String MIXED_INDENTATION =
       "Don't mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
+
+  private static final String LABEL_TYPE_VALUE =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_VALUE).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_INDICATOR =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_BT =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_FIELD =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_CODE =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
 
   static final boolean debug = true;
 
@@ -67,7 +79,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     this.renderer = factory.createRenderer();
   }
 
-  public EfxTemplateTranslator(final SymbolMap symbols, final SyntaxMap syntax, final Renderer renderer) {
+  public EfxTemplateTranslator(final SymbolMap symbols, final SyntaxMap syntax,
+      final Renderer renderer) {
     super(symbols, syntax);
     this.renderer = renderer;
   }
@@ -82,6 +95,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     final BaseErrorListener errorListener = factory.createErrorListener();
     if (errorListener != null) {
+      lexer.removeErrorListeners();
+      lexer.addErrorListener(errorListener);
       parser.removeErrorListeners();
       parser.addErrorListener(errorListener);
     }
@@ -105,6 +120,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     final BaseErrorListener errorListener = factory.createErrorListener();
     if (errorListener != null) {
+      lexer.removeErrorListeners();
+      lexer.addErrorListener(errorListener);
       parser.removeErrorListeners();
       parser.addErrorListener(errorListener);
     }
@@ -119,14 +136,16 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     return translator.getTranspiledXPath();
   }
 
-  public static String renderTemplate(final String template, final SymbolMap symbols, final SyntaxMap syntax,
-      final Renderer renderer, final BaseErrorListener errorListener) {
+  public static String renderTemplate(final String template, final SymbolMap symbols,
+      final SyntaxMap syntax, final Renderer renderer, final BaseErrorListener errorListener) {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
     if (errorListener != null) {
+      lexer.removeErrorListeners();
+      lexer.addErrorListener(errorListener);
       parser.removeErrorListeners();
       parser.addErrorListener(errorListener);
     }
@@ -199,52 +218,56 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     String assetId = ctx.assetId() != null ? this.stack.pop() : "";
     String labelType = ctx.labelType() != null ? this.stack.pop() : "";
     String assetType = ctx.assetType() != null ? this.stack.pop() : "";
-    this.stack.push(this.renderer
-        .renderLabelFromKey(String.format("%s|%s|%s", assetType, labelType, assetId)));
-  }
-
-  @Override
-  public void exitShorthandBtLabelTypeReference(ShorthandBtLabelTypeReferenceContext ctx) {
-    String assetId = ctx.BtAssetId().getText();
-    String labelType = ctx.labelType() != null ? this.stack.pop() : "";
-    this.stack.push(this.renderer
-        .renderLabelFromKey(String.format("%s|%s|%s", "business_term", labelType, assetId)));
+    this.stack.push(this.renderer.renderLabelFromKey(this.syntax.mapStringConcatenationFunction(
+        List.of(assetType, quoted("|"), labelType, quoted("|"), assetId))));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    this.stack.push(this.renderer.renderLabelFromKey(
-        String.format("%s|%s|%s", "business_term", "name", ctx.BtAssetId().getText())));
-  }
-
-
-  @Override
-  public void exitShorthandFieldLabelTypeReference(ShorthandFieldLabelTypeReferenceContext ctx) {
-    String assetId = ctx.FieldAssetId().getText();
-    String labelType = ctx.labelType() != null ? this.stack.pop() : "";
-    this.stack.push(
-        this.renderer.renderLabelFromKey(String.format("%s|%s|%s", "field", labelType, assetId)));
+    String assetId = ctx.BtAssetId().getText();
+    String labelType = ctx.labelType() != null ? this.stack.pop() : quoted("");
+    this.stack.push(this.renderer.renderLabelFromKey(this.syntax.mapStringConcatenationFunction(
+        List.of(quoted(ASSET_TYPE_BT), quoted("|"), labelType, quoted("|"), quoted(assetId)))));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
-    this.stack.push(this.renderer.renderLabelFromKey(
-        String.format("%s|%s|%s", "field", "name", ctx.FieldAssetId().getText())));
+    final String fieldId = ctx.FieldAssetId().getText();
+    String labelType = ctx.labelType() != null ? this.stack.pop() : quoted("");
+
+    if (labelType.equals("value")) {
+      this.shorthandFieldValueLabelReference(fieldId);
+    } else {
+      this.stack.push(this.renderer.renderLabelFromKey(
+          this.syntax.mapStringConcatenationFunction(List.of(quoted(ASSET_TYPE_FIELD), quoted("|"),
+              labelType, quoted("|"), quoted(fieldId)))));
+    }
   }
 
   @Override
   public void exitShorthandFieldValueLabelReference(ShorthandFieldValueLabelReferenceContext ctx) {
-    final String fieldId = ctx.FieldAssetId().getText();
-    final Context contextPath = this.efxContext.peek();
-    final String valuePath = symbols.relativeXpathOfField(fieldId, contextPath.absolutePath());
+    this.shorthandFieldValueLabelReference(ctx.FieldAssetId().getText());
+  }
+
+
+  private void shorthandFieldValueLabelReference(final String fieldId) {
+    final Context currentContext = this.efxContext.peek();
+    final String valueReference = this.syntax
+        .mapFieldValueReference(symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()));
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
-        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value-', %s, '|%s')", valuePath, fieldId)));
+        this.stack.push(
+            this.renderer.renderLabelFromExpression(this.syntax.mapStringConcatenationFunction(
+                List.of(quoted(ASSET_TYPE_INDICATOR), quoted("|"), quoted(LABEL_TYPE_VALUE),
+                    quoted("-"), valueReference, quoted("|"), quoted(fieldId)))));
         break;
       case "code":
       case "internal-code":
-        this.stack.push(this.renderer.renderLabelFromExpression(String.format("concat('code|value|%s.', %s)", this.symbols.rootCodelistOfField(fieldId), valuePath)));
+        this.stack.push(
+            this.renderer.renderLabelFromExpression(this.syntax.mapStringConcatenationFunction(
+                List.of(quoted(ASSET_TYPE_CODE), quoted("|"), quoted(LABEL_TYPE_VALUE), quoted("|"),
+                    quoted(this.symbols.rootCodelistOfField(fieldId)), valueReference))));
         break;
       default:
         throw new InputMismatchException(String.format(
@@ -253,24 +276,50 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+  /**
+   * Handles the #{labelType} shorthand syntax which renders the label of the Field or Node declared
+   * as the context.
+   * 
+   * If the labelType is 'value', then the label depends on the field's value and is rendered
+   * according to the field's type. The assetType is infered from the Field or Node declared as
+   * context.
+   */
+  @Override
+  public void exitShorthandContextLabelReference(ShorthandContextLabelReferenceContext ctx) {
+    final String labelType = ctx.LabelType().getText();
+    if (this.efxContext.isFieldContext()) {
+      if (labelType.equals(LABEL_TYPE_VALUE)) {
+        this.shorthandFieldValueLabelReference(this.efxContext.symbol());
+      } else {
+        this.stack.push(this.renderer.renderLabelFromKey(
+            this.syntax.mapStringConcatenationFunction(List.of(quoted(ASSET_TYPE_FIELD),
+                quoted("|"), quoted(labelType), quoted("|"), quoted(this.efxContext.symbol())))));
+      }
+    } else if (this.efxContext.isNodeContext()) {
+      this.stack.push(this.renderer.renderLabelFromKey(
+          this.syntax.mapStringConcatenationFunction(List.of(quoted(ASSET_TYPE_BT), quoted("|"),
+              quoted(labelType), quoted("|"), quoted(this.efxContext.symbol())))));
+    }
+  }
+
   @Override
   public void exitAssetType(AssetTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(ctx.getText());
+      this.stack.push(quoted(ctx.getText()));
     }
   }
 
   @Override
   public void exitLabelType(LabelTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(ctx.getText());
+      this.stack.push(quoted(ctx.getText()));
     }
   }
 
   @Override
   public void exitAssetId(AssetIdContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(ctx.getText());
+      this.stack.push(quoted(ctx.getText()));
     }
   }
 
@@ -280,9 +329,23 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     this.stack.push(this.renderer.renderValueReference(expression));
   }
 
+  /**
+   * This method changes the current EFX context.
+   * 
+   * The EFX context is always assummed to be either a Field or a Node. Any predicate included in
+   * the EFX context declaration is not relevant and is ignored.
+   */
   @Override
-  public void exitContextExpressionBlock(ContextExpressionBlockContext ctx) {
-    this.efxContext.push(new Context(this.stack.pop()));
+  public void exitContextDeclarationBlock(ContextDeclarationBlockContext ctx) {
+
+    final String filedId = getContextFieldId(ctx);
+    if (filedId != null) {
+      this.efxContext.push(new FieldContext(filedId, this.stack.pop()));
+    } else {
+      final String nodeId = getContextNodeId(ctx);
+      assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
+      this.efxContext.push(new NodeContext(nodeId, this.stack.pop()));
+    }
   }
 
   @Override
