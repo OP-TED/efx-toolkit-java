@@ -65,7 +65,7 @@ public class EfxTemplateTranslatorTests {
                 "block01 = label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/IndicatorField) { block01(); }",
                 translate("{BT-00-Indicator}::#{value}"));
     }
-    
+
     @Test
     public void testSelfLabelReference_WithValueLabelTypeAndCodeField() {
         assertEquals(
@@ -87,13 +87,22 @@ public class EfxTemplateTranslatorTests {
 
     @Test
     public void testSelfLabelReference_WithUnknownLabelType() {
-        assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}::#{whatever}"));
+        assertThrows(ParseCancellationException.class,
+                () -> translate("{BT-00-Text}::#{whatever}"));
     }
 
     @Test
     public void testNestedExpression() {
         assertEquals(
-                "block01 = label(concat('field', '|', 'name', '|', ./normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
+                "block01 = label(concat('field', '|', 'name', '|', eval(./normalize-space(text())))); for-each(/*/PathNode/TextField) { block01(); }",
                 translate("{BT-00-Text}::#{field|name|${BT-00-Text}}"));
+    }
+
+
+    @Test
+    public void testShorthandContextFieldValueReference() {
+        assertEquals(
+                "block01 = text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', ./normalize-space(text())))text(' ')text('blah ')eval(./normalize-space(text()))text(' ')text('blah'); for-each(/*/PathNode/CodeField) { block01(); }",
+                translate("{BT-00-Code} :: blah #value blah $value blah"));
     }
 }

@@ -47,7 +47,9 @@ fragment Char: ~[\r\n\f\t #$}{];
 fragment Dollar: '$';	// Used for label placeholders
 fragment Sharp: '#';	// Used for expression placeholders
 
-SelfValue: Dollar 'value';
+ShorthandContextFieldValueReference: Dollar 'value';
+ShorthandContextFieldLabelReference: Sharp 'value';
+
 ShorthandLabelType: LabelType -> type(LabelType);
 
 fragment OpenBrace: '{';

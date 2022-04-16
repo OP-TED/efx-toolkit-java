@@ -1,12 +1,14 @@
 package eu.europa.ted.efx.interfaces;
 
+import java.util.List;
+
 public interface Renderer {
     
     /**
      * Given a body (main content) and a set of templates (all in one prerendered string), this
      * method should return the full content of the target template.
      */
-    String renderFile(final String body, final String templates);
+    String renderFile(final List<String> instructions, final List<String> templates);
 
     /**
      * Given a reference (which will eventually, at runtime, evaluate to the value of a field), this

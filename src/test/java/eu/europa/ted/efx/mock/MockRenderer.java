@@ -1,12 +1,13 @@
 package eu.europa.ted.efx.mock;
 
+import java.util.List;
 import eu.europa.ted.efx.interfaces.Renderer;
 
 public class MockRenderer implements Renderer {
 
     @Override
     public String renderValueReference(String valueReference) {
-        return valueReference;
+        return String.format("eval(%s)", valueReference);
     }
 
     @Override
@@ -21,7 +22,7 @@ public class MockRenderer implements Renderer {
 
     @Override
     public String renderFreeText(String freeText) {
-        return freeText;
+        return String.format("text('%s')", freeText);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class MockRenderer implements Renderer {
     }
 
     @Override
-    public String renderFile(String body, String templates) {
-        return String.format("%s %s", templates, body);
+    public String renderFile(List<String> body, List<String> templates) {
+        return String.format("%s %s", String.join("\n", templates), String.join("\n", body));
     }
 }

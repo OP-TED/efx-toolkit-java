@@ -61,6 +61,7 @@ labelBlock
 	| StartLabel labelType Pipe FieldAssetId EndLabel					# shorthandFieldLabelReference
 	| StartLabel FieldAssetId EndLabel									# shorthandFieldValueLabelReference
 	| StartLabel LabelType EndLabel										# shorthandContextLabelReference
+	| ShorthandContextFieldLabelReference								# shorthandContextFieldLabelReference
 	;
 
 assetType: AssetType | expressionBlock;
@@ -81,8 +82,8 @@ assetId
  * An expression-block starts with a $ and contains the expression to be evaluated inside curly braces.
  */
 expressionBlock
-	: StartExpression expression EndExpression
-	| SelfValue
+	: StartExpression expression EndExpression	# standardExpressionBlock
+	| ShorthandContextFieldValueReference		# shorthandContextFieldValueReference
 	;
 
 /*

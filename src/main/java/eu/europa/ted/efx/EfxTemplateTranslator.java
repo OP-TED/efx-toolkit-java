@@ -13,13 +13,15 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.EfxParser.ContextDeclarationBlockContext;
-import eu.europa.ted.efx.EfxParser.ExpressionBlockContext;
 import eu.europa.ted.efx.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.EfxParser.LabelTypeContext;
 import eu.europa.ted.efx.EfxParser.ShorthandBtLabelReferenceContext;
+import eu.europa.ted.efx.EfxParser.ShorthandContextFieldLabelReferenceContext;
+import eu.europa.ted.efx.EfxParser.ShorthandContextFieldValueReferenceContext;
 import eu.europa.ted.efx.EfxParser.ShorthandContextLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.ShorthandFieldLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.ShorthandFieldValueLabelReferenceContext;
+import eu.europa.ted.efx.EfxParser.StandardExpressionBlockContext;
 import eu.europa.ted.efx.EfxParser.StandardLabelReferenceContext;
 import eu.europa.ted.efx.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.EfxParser.TemplateLineContext;
@@ -187,8 +189,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       templateCalls.add(rootBlock.renderCallTemplate(renderer));
       rootBlock.renderTemplate(renderer, templates);
     }
-    String file =
-        this.renderer.renderFile(String.join("\n", templateCalls), String.join("\n", templates));
+    String file = this.renderer.renderFile(templateCalls, templates);
     this.stack.push(file);
   }
 
@@ -252,8 +253,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   private void shorthandFieldValueLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
-    final String valueReference = this.syntax
-        .mapFieldValueReference(symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()));
+    final String valueReference = this.syntax.mapFieldValueReference(
+        symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()));
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
@@ -302,6 +303,21 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+  /**
+   * Handles the #value shorthand syntax which renders the label coresponding to the value of the
+   * the field declared as the context of the current line of the template.
+   * This shorthand syntax is only supported for fields of type 'code' or 'indicator'.
+   */
+  @Override
+  public void exitShorthandContextFieldLabelReference(
+      ShorthandContextFieldLabelReferenceContext ctx) {
+    if (!this.efxContext.isFieldContext()) {
+      throw new InputMismatchException(
+          "The #value shorthand syntax can only be used in a field is declared as context.");
+    }
+    this.shorthandFieldValueLabelReference(this.efxContext.symbol());
+  }
+
   @Override
   public void exitAssetType(AssetTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
@@ -323,10 +339,29 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+  /**
+   * Handles a standard expression block in a template line. Most of the work is done by the base
+   * class {@link EfxExpressionTranslator}. After the expression is translated, the result is passed
+   * through the renderer.
+   */
   @Override
-  public void exitExpressionBlock(ExpressionBlockContext ctx) {
-    final String expression = this.stack.pop();
-    this.stack.push(this.renderer.renderValueReference(expression));
+  public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {
+    this.stack.push(this.renderer.renderValueReference(this.stack.pop()));
+  }
+
+  /***
+   * Handles the $value shorthand syntax which renders the value of the field declared as context in
+   * the current line of the template.
+   */
+  @Override
+  public void exitShorthandContextFieldValueReference(
+      ShorthandContextFieldValueReferenceContext ctx) {
+    if (!this.efxContext.isFieldContext()) {
+      throw new InputMismatchException(
+          "The $value shorthand syntax can only be used when a field is declated as the context.");
+    }
+    this.stack.push(this.renderer.renderValueReference(this.syntax.mapFieldValueReference(
+        symbols.relativeXpathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()))));
   }
 
   /**
