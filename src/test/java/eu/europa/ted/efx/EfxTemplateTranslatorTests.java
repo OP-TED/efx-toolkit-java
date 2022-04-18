@@ -94,7 +94,7 @@ public class EfxTemplateTranslatorTests {
     @Test
     public void testNestedExpression() {
         assertEquals(
-                "block01 = label(concat('field', '|', 'name', '|', eval(./normalize-space(text())))); for-each(/*/PathNode/TextField) { block01(); }",
+                "block01 = label(concat('field', '|', 'name', '|', ./normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
                 translate("{BT-00-Text}::#{field|name|${BT-00-Text}}"));
     }
 

@@ -1,234 +1,280 @@
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 import eu.europa.ted.efx.interfaces.SyntaxMap;
+import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Expression.BooleanExpression;
+import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
+import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 public class XPathSyntaxMap implements SyntaxMap {
 
     /**
      * Maps efx operators to xPath operators.
      */
-    private static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), entry("-", "-"),
-            entry("*", "*"), entry("/", "div"), entry("%", "mod"),
-            entry("==", "="), entry("!=", "!="),
-            entry("<", "<"), entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
+    private static final Map<String, String> operators =
+            Map.ofEntries(entry("+", "+"), entry("-", "-"), entry("*", "*"), entry("/", "div"),
+                    entry("%", "mod"), entry("==", "="), entry("!=", "!="), entry("<", "<"),
+                    entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
+
 
     @Override
-    public String mapOperator(String leftOperand, String operator, String rightOperand) {
-        return String.format("%s %s %s", leftOperand, operators.get(operator), rightOperand);    
+    public <T extends Expression> T mapNodeReferenceWithPredicate(PathExpression nodeReference,
+            BooleanExpression predicate, Class<T> type) {
+        return instantiate(nodeReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
-    public Character mapStringQuote() {
-        return '\'';
+    public <T extends Expression> T mapFieldReferenceWithPredicate(PathExpression fieldReference,
+            BooleanExpression predicate, Class<T> type) {
+        return instantiate(fieldReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
-    public String mapNodeReferenceWithPredicate(String nodeReference, String predicate) {
-        return nodeReference + '[' + predicate + ']';
+    public <T extends Expression> T mapFieldValueReference(PathExpression fieldReference,
+            Class<T> type) {
+        return instantiate(fieldReference.script + "/normalize-space(text())", type);
     }
 
     @Override
-    public String mapFieldReferenceWithPredicate(String fieldReference, String predicate) {
-        return fieldReference + '[' + predicate + ']';
+    public <T extends Expression> T mapFieldAttributeReference(PathExpression fieldReference,
+            String attribute, Class<T> type) {
+        return instantiate("(" + fieldReference.script + "/@" + attribute + ")", type);
     }
 
     @Override
-    public String mapFieldValueReference(String fieldReference) {
-        return fieldReference + "/normalize-space(text())";
-    }
-
-    @Override
-    public String mapFieldAttributeReference(String fieldReference, String attribute) {
-        return fieldReference + "/@" + attribute;
-    }
-
-    @Override
-    public String mapList(final List<String> list) {
+    public StringListExpression mapList(List<StringExpression> list) {
         if (list == null || list.isEmpty()) {
-            return "()";
+            return new StringListExpression("()");
         }
 
         final StringJoiner joiner = new StringJoiner(",", "(", ")");
-        for (final String item : list) {
-            joiner.add('\'' + item.replaceAll("^'|'$", "") + '\'');
+        for (final StringExpression item : list) {
+            joiner.add(item.script);
         }
-        return joiner.toString();
+        return new StringListExpression(joiner.toString());
     }
 
     @Override
-    public String mapLiteral(String literal) {
-        return literal;
+    public NumericExpression mapNumericLiteral(String literal) {
+        return new NumericExpression(literal);
     }
 
     @Override
-    public String mapBoolean(Boolean value) {
-        return value ? "true()" : "false()";
-    }
-
-
-
-    @Override
-    public String mapInListCondition(String expression, String List) {
-        return String.format("%s = %s", expression, List);
+    public StringExpression mapStringLiteral(String literal) {
+        return new StringExpression(literal);
     }
 
     @Override
-    public String mapMatchesPatternCondition(String expression, String pattern) {
-        return String.format("fn:matches(normalize-space(%s), %s)", expression, pattern);
-    }
-
-    @Override
-    public String mapParenthesizedExpression(String expression) {
-        return "(" + expression + ")";
-    }
-
-    @Override
-    public String mapExternalReference(String reference) {
-        // TODO: implement this properly
-        return "fn:doc('http://notice.service/" + reference + "')";
+    public BooleanExpression mapBoolean(Boolean value) {
+        return new BooleanExpression(value ? "true()" : "false()");
     }
 
 
     @Override
-    public String mapFieldInExternalReference(String externalReference, String fieldReference) {
-        return externalReference + "/" + fieldReference;
+    public BooleanExpression mapInListCondition(StringExpression expression,
+            StringListExpression list) {
+        return new BooleanExpression(String.format("%s = %s", expression.script, list.script));
     }
+
+    @Override
+    public BooleanExpression mapMatchesPatternCondition(StringExpression expression,
+            String pattern) {
+        return new BooleanExpression(
+                String.format("fn:matches(normalize-space(%s), %s)", expression.script, pattern));
+    }
+
+    @Override
+    public <T extends Expression> T mapParenthesizedExpression(T expression, Class<T> type) {
+        try {
+            Constructor<T> ctor = type.getConstructor(String.class);
+            return ctor.newInstance("(" + expression.script + ")");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Expression mapExternalReference(Expression externalReference) {
+        // TODO: implement this properly.
+        return new Expression("fn:doc('http://notice.service/" + externalReference.script + "')");
+    }
+
+
+    @Override
+    public Expression mapFieldInExternalReference(Expression externalReference,
+            PathExpression fieldReference) {
+        return new Expression(externalReference.script + "/" + fieldReference.script);
+    }
+
 
     /*** BooleanExpressions ***/
 
 
     @Override
-    public String mapLogicalAnd(String leftOperand, String rightOperand) {
-        return String.format("%s and %s", leftOperand, rightOperand);
+    public BooleanExpression mapLogicalAnd(BooleanExpression leftOperand,
+            BooleanExpression rightOperand) {
+        return new BooleanExpression(
+                String.format("%s and %s", leftOperand.script, rightOperand.script));
     }
 
     @Override
-    public String mapLogicalOr(String leftOperand, String rightOperand) {
-        return String.format("%s or %s", leftOperand, rightOperand);
+    public BooleanExpression mapLogicalOr(BooleanExpression leftOperand,
+            BooleanExpression rightOperand) {
+        return new BooleanExpression(
+                String.format("%s or %s", leftOperand.script, rightOperand.script));
     }
 
     @Override
-    public String mapLogicalNot(String condition) {
-        return String.format("not(%s)", condition);
+    public BooleanExpression mapLogicalNot(BooleanExpression condition) {
+        return new BooleanExpression(String.format("not(%s)", condition.script));
     }
 
     @Override
-    public String mapExistsExpression(String reference) {
-        return reference;
+    public BooleanExpression mapExistsExpression(PathExpression reference) {
+        return new BooleanExpression(reference.script);
     }
-    
-    
+
+
     /*** Boolean functions ***/
 
     @Override
-    public String mapStringContainsFunction(String haystack, String needle) {
-        return "contains(" + haystack + ", " + needle + ")";
+    public BooleanExpression mapStringContainsFunction(StringExpression haystack,
+            StringExpression needle) {
+        return new BooleanExpression("contains(" + haystack.script + ", " + needle.script + ")");
     }
 
     @Override
-    public String mapStringStartsWithFunction(String text, String startsWith) {
-        return "starts-with(" + text + ", " + startsWith + ")";
+    public BooleanExpression mapStringStartsWithFunction(StringExpression text,
+            StringExpression startsWith) {
+        return new BooleanExpression("starts-with(" + text.script + ", " + startsWith.script + ")");
     }
 
     @Override
-    public String mapStringEndsWithFunction(String text, String endsWith) {
-        return "ends-with(" + text + ", " + endsWith + ")";
+    public BooleanExpression mapStringEndsWithFunction(StringExpression text,
+            StringExpression endsWith) {
+        return new BooleanExpression("ends-with(" + text.script + ", " + endsWith.script + ")");
+    }
+
+    @Override
+    public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
+            Expression rightOperand) {
+        return new BooleanExpression(
+                leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
     }
 
 
     /*** Numeric functions ***/
 
     @Override
-    public String mapCountFunction(String nodeSet) {
-        return "count(" + nodeSet + ")";
+    public NumericExpression mapCountFunction(PathExpression nodeSet) {
+        return new NumericExpression("count(" + nodeSet.script + ")");
     }
 
     @Override
-    public String mapToNumberFunction(String text) {
-        return "number(" + text + ")";
+    public NumericExpression mapToNumberFunction(StringExpression text) {
+        return new NumericExpression("number(" + text.script + ")");
     }
 
     @Override
-    public String mapSumFunction(String nodeSet) {
-        return "sum(" + nodeSet + ")";
+    public NumericExpression mapSumFunction(PathExpression nodeSet) {
+        return new NumericExpression("sum(" + nodeSet.script + ")");
     }
 
     @Override
-    public String mapStringLengthFunction(String text) {
-        return "string-length(" + text + ")";
+    public NumericExpression mapStringLengthFunction(StringExpression text) {
+        return new NumericExpression("string-length(" + text.script + ")");
+    }
+
+    @Override
+    public NumericExpression mapNumericOperator(NumericExpression leftOperand, String operator,
+            NumericExpression rightOperand) {
+        return new NumericExpression(
+                leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
     }
 
 
     /*** String functions ***/
 
     @Override
-    public String mapSubstringFunction(String text, String start, String length) {
-        return "substring(" + text + ", " + start + ", " + length + ")";
+    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start,
+            NumericExpression length) {
+        return new StringExpression(
+                "substring(" + text.script + ", " + start.script + ", " + length.script + ")");
     }
 
     @Override
-    public String mapSubstringFunction(String text, String start) {
-        return "substring(" + text + ", " + start + ")";
+    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start) {
+        return new StringExpression("substring(" + text.script + ", " + start.script + ")");
     }
 
     @Override
-    public String mapNumberToStringFunction(String number) {
-        return "string(" + number + ")";
+    public StringExpression mapNumberToStringFunction(NumericExpression number) {
+        return new StringExpression("string(" + number.script + ")");
     }
 
     @Override
-    public String mapStringConcatenationFunction(List<String> list) {
-        return "concat(" + String.join(", ", list) + ")";
+    public StringExpression mapStringConcatenationFunction(List<StringExpression> list) {
+        return new StringExpression("concat("
+                + list.stream().map(i -> i.script).collect(Collectors.joining(", ")) + ")");
     }
 
     @Override
-    public String mapFormatNumberFunction(String number, String format) {
-        return "format-number(" + number + ", " + format + ")";
+    public StringExpression mapFormatNumberFunction(NumericExpression number,
+            StringExpression format) {
+        return new StringExpression("format-number(" + number.script + ", " + format.script + ")");
+    }
+
+    @Override
+    public StringExpression mapString(String value) {
+        return new StringExpression("'" + value + "'");
     }
 
 
     /*** Date functions ***/
 
     @Override
-    public String mapDateFromStringFunction(String date) {
-        return "xs:date(" + date + ")";
+    public DateExpression mapDateFromStringFunction(StringExpression date) {
+        return new DateExpression("xs:date(" + date.script + ")");
     }
 
 
     /*** Time functions ***/
 
     @Override
-    public String mapTimeFromStringFunction(String time) {
-        return "xs:time(" + time + ")";
+    public TimeExpression mapTimeFromStringFunction(StringExpression time) {
+        return new TimeExpression("xs:time(" + time.script + ")");
     }
 
 
     /*** Duration functions ***/
 
     @Override
-    public String mapDurationFromDatesFunction(String startDate, String endDate) {
-        return "(xs:date(" + startDate + ") - xs:date(" + endDate + "))";
+    public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
+            DateExpression endDate) {
+        return new DurationExpression(
+                "xs:date(" + startDate.script + ") - xs:date(" + endDate.script + ")");
+    }
+
+    private <T extends Expression> T instantiate(String value, Class<T> type) {
+        try {
+            Constructor<T> constructor = type.getConstructor(String.class);
+            return constructor.newInstance(value);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
-
-    private static String ensureQuotes(String text) {
-        if (text.startsWith("'") && text.endsWith("'")) {
-            return text;
-        }
-
-        if (text.startsWith("\"") && text.endsWith("\"")) {
-            text = text.replaceAll("^\"|\"$", "");
-            if (text.contains("'")) {
-                text = text.replaceAll("'", "\'");
-            }
-        }
-
-        return "'" + text + "'";
-    }
 
 }

@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.StepexprContext;
 
@@ -27,9 +28,9 @@ public class XPathContextualizer extends XPath20BaseListener {
     this.inputStream = inputStream;
   }
 
-  private static Queue<StepInfo> getSteps(String xpath) {
+  private static Queue<StepInfo> getSteps(PathExpression xpath) {
 
-    final CharStream inputStream = CharStreams.fromString(xpath);
+    final CharStream inputStream = CharStreams.fromString(xpath.script);
     final XPath20Lexer lexer = new XPath20Lexer(inputStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final XPath20Parser parser = new XPath20Parser(tokens);
@@ -42,11 +43,12 @@ public class XPathContextualizer extends XPath20BaseListener {
     return contextualizer.steps;
   }
 
-  public static String contextualize(final String contextXpath, final String xpath) {
+  
+  public static PathExpression contextualize(final PathExpression contextXpath, final PathExpression xpath) {
 
     // If we are asked to contextualise against a null or empty context
     // then we must return the original xpath (instead of throwing an exception).
-    if (contextXpath == null || contextXpath.isEmpty()) {
+    if (contextXpath == null || contextXpath.script.isEmpty()) {
       return xpath;
     }
     
@@ -56,7 +58,7 @@ public class XPathContextualizer extends XPath20BaseListener {
     return getContextualizedXpath(contextSteps, pathSteps);
   }
 
-  private static String getContextualizedXpath(Queue<StepInfo> contextQueue,
+  private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 
     final StringBuilder result = new StringBuilder();
@@ -125,7 +127,7 @@ public class XPathContextualizer extends XPath20BaseListener {
     final String toAppend = relativeXpath + (result.length() == 0 ? "" : ("\n" + result));
     result.append(toAppend);
 
-    return result.toString();
+    return new PathExpression(result.toString());
   }
 
   /**
@@ -216,5 +218,4 @@ public class XPathContextualizer extends XPath20BaseListener {
       return pathPredicates.equals(contextPredicates);
     }
   }
-
 }

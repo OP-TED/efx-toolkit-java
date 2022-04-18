@@ -4,6 +4,7 @@ import java.util.Stack;
 import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.Expression.PathExpression;
 
 /**
  * Used to keep trak of the current evaluation context. Extends Stack<Context> to provide helper
@@ -29,13 +30,13 @@ public class ContextStack extends Stack<Context> {
      * currently at the top of the stack (or absolute if the stack is empty).
      */
     public FieldContext pushFieldContext(final String fieldId) {
-        String absolutePath = symbols.absoluteXpathOfField(fieldId);
+        PathExpression absolutePath = symbols.absoluteXpathOfField(fieldId);
         if (this.isEmpty()) {
             FieldContext context = new FieldContext(fieldId, absolutePath);
             this.push(context);
             return context;
         }
-        String relativePath = symbols.relativeXpathOfField(fieldId, this.peek().absolutePath());
+        PathExpression relativePath = symbols.relativeXpathOfField(fieldId, this.peek().absolutePath());
         FieldContext context = new FieldContext(fieldId, absolutePath, relativePath);
         this.push(context);
         return context;
@@ -47,13 +48,13 @@ public class ContextStack extends Stack<Context> {
      * empty).
      */
     public NodeContext pushNodeContext(final String nodeId) {
-        String absolutePath = symbols.absoluteXpathOfNode(nodeId);
+        PathExpression absolutePath = symbols.absoluteXpathOfNode(nodeId);
         if (this.isEmpty()) {
             NodeContext context = new NodeContext(nodeId, absolutePath);
             this.push(context);
             return context;
         }
-        String relativePath = symbols.relativeXpathOfNode(nodeId, this.peek().absolutePath());
+        PathExpression relativePath = symbols.relativeXpathOfNode(nodeId, this.peek().absolutePath());
         NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
         this.push(context);
         return context;
@@ -99,7 +100,7 @@ public class ContextStack extends Stack<Context> {
      * Returns the absolute path of the context that is currently at the top of the stack.
      * Does not remove the context from the stack.
      */
-    public String absolutePath() {
+    public PathExpression absolutePath() {
         if (this.isEmpty() || this.peek() == null) {
             return null;
         }
@@ -111,7 +112,7 @@ public class ContextStack extends Stack<Context> {
      * Returns the relative path of the context that is currently at the top of the stack.
      * Does not remove the context from the stack.
      */
-    public String relativePath() {
+    public PathExpression relativePath() {
         if (this.isEmpty() || this.peek() == null) {
             return null;
         }

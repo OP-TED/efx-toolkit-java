@@ -149,7 +149,7 @@ public class EfxExpressionTranslatorTests {
 
     @Test
     public void testSumFunction() {
-        assertEquals("sum(PathNode/TextField)", test("ND-0", "sum(BT-00-Text)"));
+        assertEquals("sum(PathNode/NumberField)", test("ND-0", "sum(BT-00-Number)"));
     }
 
     @Test
@@ -180,8 +180,8 @@ public class EfxExpressionTranslatorTests {
 
     @Test
     public void testFormatNumberFunction() {
-        assertEquals("format-number(PathNode/TextField/normalize-space(text()), '#,##0.00')",
-                test("ND-0", "format-number(BT-00-Text, '#,##0.00')"));
+        assertEquals("format-number(PathNode/NumberField/normalize-space(text()), '#,##0.00')",
+                test("ND-0", "format-number(BT-00-Number, '#,##0.00')"));
     }
 
 
@@ -206,8 +206,8 @@ public class EfxExpressionTranslatorTests {
     @Test
     public void testDurationFromDatesFunction() {
         assertEquals(
-                "(xs:date(PathNode/TextField/normalize-space(text())) - xs:date(PathNode/TextField/normalize-space(text())))",
-                test("ND-0", "duration(BT-00-Text, BT-00-Text)"));
+                "xs:date(PathNode/DateField/normalize-space(text())) - xs:date(PathNode/DateField/normalize-space(text()))",
+                test("ND-0", "duration(BT-00-Date, BT-00-Date)"));
     }
 
     @Test

@@ -1,105 +1,222 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Expression.BooleanExpression;
+import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
+import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 public interface SyntaxMap {
 
   /**
-   * Returns the quote character used by the target language.
+   * Given a PathExpression and a predicate, this method should return the target language script
+   * for matching the subeset of nodes in the PathExpression that match the predicate.
+   * 
+   * Similar to {@link mapFieldReferenceWithPredicate} but for nodes. Quick reminder: the difference
+   * between fields and nodes is that fields contain values, while nodes contain other nodes and/or
+   * fields.
    */
-  public Character mapStringQuote();
+  public <T extends Expression> T mapNodeReferenceWithPredicate(final PathExpression nodeReference,
+      final BooleanExpression predicate, Class<T> type);
 
   /**
-   * Given an operator and two operands, the method should return the operation expression in the
-   * targte language.
+   * Given a PathExpression and a predicate, this method should return the target language script
+   * for matching the subeset of nodes in the PathExpression that match the predicate.
+   * 
+   * Similar to {@link mapNodeReferenceWithPredicate} but for fields. Quick reminder: the difference
+   * between fields and nodes is that fields contain values, while nodes contain other nodes and/or
+   * fields.
    */
-  public String mapOperator(String leftOperand, String operator, String rightOperand);
+  public <T extends Expression> T mapFieldReferenceWithPredicate(
+      final PathExpression fieldReference, final BooleanExpression predicate, Class<T> type);
 
-  public String mapNodeReferenceWithPredicate(final String nodeReference, final String predicate);
+  /**
+   * Given a PathExpression, this method should return the target language script for retrieving the
+   * value of the field.
+   */
+  public <T extends Expression> T mapFieldValueReference(final PathExpression fieldReference,
+      Class<T> type);
 
-  public String mapFieldReferenceWithPredicate(final String fieldReference, final String predicate);
+  /**
+   * Given a PathExpression and an attribute name, this method should return the target language
+   * script for retrieving the value of the attribute.
+   */
+  public <T extends Expression> T mapFieldAttributeReference(final PathExpression fieldReference,
+      String attribute, Class<T> type);
 
-  public String mapFieldValueReference(final String fieldReference);
+  /**
+   * Takes a list of string expressions and returns the target language script that corresponds to a
+   * list of string expressions.
+   */
+  public StringListExpression mapList(final List<StringExpression> list);
 
-  public String mapFieldAttributeReference(final String fieldReference, String attribute);
 
-  public String mapList(final List<String> list);
+  /**
+   * Takes a Java Boolean value and returns the coresponding target language script.
+   */
+  public BooleanExpression mapBoolean(Boolean value);
 
-  public String mapLiteral(final String literal);
+  /**
+   * Returns the target language script for performing a logical AND operation on the two given
+   * operands.
+   */
+  public BooleanExpression mapLogicalAnd(final BooleanExpression leftOperand,
+      final BooleanExpression rightOperand);
 
-  public String mapBoolean(Boolean value);
+  /**
+   * Returns the target language script for performing a logical OR operation on the two given
+   * operands.
+   */
+  public BooleanExpression mapLogicalOr(final BooleanExpression leftOperand,
+      final BooleanExpression rightOperand);
 
-  public String mapLogicalAnd(final String leftOperand, final String rightOperand);
+  /**
+   * Returns the target language script for performing a logical NOT operation on the given boolean
+   * expression.
+   */
+  public BooleanExpression mapLogicalNot(BooleanExpression condition);
 
-  public String mapLogicalOr(final String leftOperand, final String rightOperand);
+  /**
+   * Returns the target language script that checks wheter a given list of strings (haystack)
+   * contains a given string (needle).
+   */
+  public BooleanExpression mapInListCondition(final StringExpression needle,
+      final StringListExpression haystack);
 
-  public String mapLogicalNot(String condition);
+  /**
+   * Returns the target language script that checks wheter a given string matches the given RegEx
+   * pattern.
+   */
+  public BooleanExpression mapMatchesPatternCondition(final StringExpression expression,
+      final String pattern);
 
-  public String mapInListCondition(final String expression, final String List);
+  /**
+   * Returns the given expression parenthesized in the traget language.
+   */
+  public <T extends Expression> T mapParenthesizedExpression(T expression, Class<T> type);
 
-  public String mapMatchesPatternCondition(final String expression, final String pattern);
 
-  public String mapParenthesizedExpression(final String expression);
+  /**
+   * TODO: Not properly defined yet.
+   * 
+   * When we need data from an external source, we need some script that gets that data. Getting the
+   * data is a two-step process: a) we need to access the data source, b) we need to get the actual
+   * data from the data source. This method should return the target language script that connects
+   * to the data source and premits us to subsequently get the data by using a PathExpression.
+   */
+  public Expression mapExternalReference(final Expression externalReference);
 
-  public String mapExternalReference(final String externalReference);
+  /**
+   * TODO: Not properly defined yet.
+   * 
+   * See {@link mapExternalReference} for more details.
+   */
+  public Expression mapFieldInExternalReference(final Expression externalReference,
+      final PathExpression fieldReference);
 
-  public String mapFieldInExternalReference(final String externalReference,
-      final String fieldReference);
+  /**
+   * Gets a piece of text and returns it inside quotes as expected by the target language.
+   * 
+   * @param value
+   * @return
+   */
+  public StringExpression mapString(String value);
+
+  /**
+   * Returns the target language script that compares the two operands (for equality etc.).
+   * 
+   * @param operator The EFX operator that is used to compare the two operands. Don't forget to
+   *        trnaslate the operator to the target language equivalent.
+   */
+  public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
+      Expression rightOperand);
+
+  /**
+   * Given a numeric operation, this method should return the target language script that performs
+   * the operation.
+   * 
+   * @param operator The EFX intended operator. Don't forget to translate the operator to the target
+   *        language equivalent.
+   */
+  public NumericExpression mapNumericOperator(NumericExpression leftOperand, String operator,
+      NumericExpression rightOperand);
+
+  /**
+   * Returns the numeric literal passed in target language script. The passed literal is in EFX.
+   */
+  public NumericExpression mapNumericLiteral(final String literal);
+
+  /**
+   * Returns the string literal in the target language. Note that the string literal passed as a
+   * parameter is already between quotes in EFX.
+   */
+  public StringExpression mapStringLiteral(final String literal);
 
   /*
    * Numeric Functions
    */
 
-  public String mapCountFunction(final String setReference);
+  public NumericExpression mapCountFunction(final PathExpression set);
 
-  public String mapToNumberFunction(String text);
+  public NumericExpression mapToNumberFunction(StringExpression text);
 
-  public String mapSumFunction(String setReference);
+  public NumericExpression mapSumFunction(PathExpression setReference);
 
-  public String mapStringLengthFunction(String text);
+  public NumericExpression mapStringLengthFunction(StringExpression text);
 
   /*
    * String Functions
    */
 
-  public String mapStringConcatenationFunction(List<String> list);
+  public StringExpression mapStringConcatenationFunction(List<StringExpression> list);
 
-  public String mapStringEndsWithFunction(String text, String endsWith);
+  public BooleanExpression mapStringEndsWithFunction(StringExpression text,
+      StringExpression endsWith);
 
-  public String mapStringStartsWithFunction(String text, String startsWith);
+  public BooleanExpression mapStringStartsWithFunction(StringExpression text,
+      StringExpression startsWith);
 
-  public String mapStringContainsFunction(String haystack, String needle);
+  public BooleanExpression mapStringContainsFunction(StringExpression haystack,
+      StringExpression needle);
 
-  public String mapSubstringFunction(String text, String start);
+  public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start);
 
-  public String mapSubstringFunction(String text, String start, String length);
+  public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start,
+      NumericExpression length);
 
-  public String mapNumberToStringFunction(String pop);
+  public StringExpression mapNumberToStringFunction(NumericExpression number);
 
   /*
    * Boolean Functions
    */
 
-  public String mapExistsExpression(String reference);
+  public BooleanExpression mapExistsExpression(PathExpression reference);
 
   /*
    * Date Functions
    */
 
-  public String mapDateFromStringFunction(String pop);
+  public DateExpression mapDateFromStringFunction(StringExpression pop);
 
   /*
    * Time Functions
    */
 
-  public String mapTimeFromStringFunction(String pop);
+  public TimeExpression mapTimeFromStringFunction(StringExpression pop);
 
   /*
    * Duration Functions
    */
 
 
-  public String mapDurationFromDatesFunction(String startDate, String endDate);
+  public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
+      DateExpression endDate);
 
-  public String mapFormatNumberFunction(String number, String format);
+  public StringExpression mapFormatNumberFunction(NumericExpression number,
+      StringExpression format);
 }

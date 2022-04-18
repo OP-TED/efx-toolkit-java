@@ -9,7 +9,7 @@ public class ContentBlock {
     private final ContentBlock parent;
     private final String id;
     private final Integer indentationLevel;
-    private final String content;
+    private final Markup content;
     private final Context context;
     private final Queue<ContentBlock> children = new LinkedList<>();
     private final int number;
@@ -18,12 +18,12 @@ public class ContentBlock {
         this.parent = null;
         this.id = "block";
         this.indentationLevel = -1;
-        this.content = "";
+        this.content = new Markup("");
         this.context = null;
         this.number = 0;
     }
 
-    public ContentBlock(final ContentBlock parent, final String id, final int number, final String content,
+    public ContentBlock(final ContentBlock parent, final String id, final int number, final Markup content,
             Context contextPath) {
         this.parent = parent;
         this.id = id;
@@ -37,7 +37,7 @@ public class ContentBlock {
         return new ContentBlock();
     }
 
-    public ContentBlock addChild(final String content, final Context context) {
+    public ContentBlock addChild(final Markup content, final Context context) {
         final int number = children.size() + 1;
         String newBlockId = String.format("%s%02d", this.id, number);
         ContentBlock newBlock = new ContentBlock(this, newBlockId, number, content, context);
@@ -45,7 +45,7 @@ public class ContentBlock {
         return newBlock;
     }
 
-    public ContentBlock addSibling(final String content, final Context context) {
+    public ContentBlock addSibling(final Markup content, final Context context) {
         if (this.parent == null) {
             throw new IllegalStateException("Cannot add sibling to root block");
         }
@@ -78,23 +78,23 @@ public class ContentBlock {
         return this.indentationLevel;
     }
 
-    public String renderContent(Renderer renderer) {
+    public Markup renderContent(Renderer renderer) {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.content);
+        sb.append(this.content.script);
         for (ContentBlock child : this.children) {
-            sb.append("\n").append(child.renderCallTemplate(renderer));
+            sb.append("\n").append(child.renderCallTemplate(renderer).script);
         }
-        return sb.toString();
+        return new Markup(sb.toString());
     }
 
-    public void renderTemplate(Renderer renderer, List<String> templates) {
+    public void renderTemplate(Renderer renderer, List<Markup> templates) {
         templates.add(renderer.renderTemplate(this.id, this.getOutlineNumber(), this.renderContent(renderer)));
         for (ContentBlock child : this.children) {
             child.renderTemplate(renderer, templates);
         }
     }
 
-    public String renderCallTemplate(Renderer renderer) {
+    public Markup renderCallTemplate(Renderer renderer) {
         return renderer.renderCallTemplate(this.id, this.context.relativePath());
     }
 }

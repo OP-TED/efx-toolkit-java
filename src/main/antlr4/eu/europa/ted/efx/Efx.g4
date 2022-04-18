@@ -106,22 +106,23 @@ context: field = FieldId Colon Colon;
 expression: numericExpression | stringExpression | booleanExpression | dateExpression | timeExpression | durationExpression;
 
 booleanExpression
-	: booleanLiteral 												# booleanLiteralExpression
-	| booleanFunction 												# booleanFunctionExpression
-	| booleanReference 												# booleanReferenceExpression
-	| OpenParenthesis booleanExpression CloseParenthesis			# parenthesizedBooleanExpression
+	: OpenParenthesis booleanExpression CloseParenthesis			# parenthesizedBooleanExpression
 	| booleanExpression operator=Or booleanExpression				# logicalOrCondition
 	| booleanExpression operator=And booleanExpression				# logicalAndCondition
 	| stringExpression modifier = Not? In list						# inListCondition
 	| stringExpression Is modifier = Not? Empty						# emptinessCondition
 	| setReference Is modifier = Not? Present						# presenceCondition
 	| stringExpression modifier = Not? Like pattern = STRING		# likePatternCondition
+	| fieldValueReference operator = Comparison fieldValueReference	# fieldValueComparison
 	| booleanExpression operator = Comparison booleanExpression		# booleanComparison
 	| numericExpression operator = Comparison numericExpression		# numericComparison
 	| stringExpression operator = Comparison stringExpression		# stringComparison
 	| dateExpression operator = Comparison dateExpression			# dateComparison
 	| timeExpression operator = Comparison timeExpression			# timeComparison
 	| durationExpression operator = Comparison durationExpression	# durationComparison
+	| booleanLiteral 												# booleanLiteralExpression
+	| booleanFunction 												# booleanFunctionExpression
+	| fieldValueReference 											# booleanReferenceExpression
 	;
 	
 numericExpression
@@ -130,16 +131,16 @@ numericExpression
 	| OpenParenthesis numericExpression CloseParenthesis			# parenthesizedNumericExpression
 	| numericLiteral 												# numericLiteralExpression
 	| numericFunction 												# numericFunctionExpression
-	| numericReference												# numericReferenceExpression
+	| fieldValueReference											# numericReferenceExpression
 	;
 
-stringExpression: stringLiteral | stringFunction | stringReference;
+stringExpression: stringLiteral | stringFunction | fieldValueReference;
 
-dateExpression: dateLiteral | dateFunction | dateReference;
+dateExpression: dateLiteral | dateFunction | fieldValueReference;
 
-timeExpression: timeLiteral | timeFunction | timeReference;
+timeExpression: timeLiteral | timeFunction | fieldValueReference;
 
-durationExpression: durationLiteral | durationFunction | durationReference;
+durationExpression: durationLiteral | durationFunction | fieldValueReference;
 
 list: OpenParenthesis expression (Comma expression)* CloseParenthesis	# explicitList
 	| codelistReference													# codeList
@@ -166,36 +167,6 @@ durationLiteral: DURATION;
 /*
  * References
  */
-
-stringReference
-	: fieldReference						# textFieldReference
-	| fieldReference SlashAt Identifier		# textAttributeReference
-	;
-
-numericReference
-	: fieldReference						# numericFieldReference
-	| fieldReference SlashAt Identifier		# numericAttributeReference 
-	;
-
-booleanReference
-	: fieldReference						# booleanFieldReference
-	| fieldReference SlashAt Identifier		# booleanAttributeReference
-	;
-
-dateReference
-	: fieldReference						# dateFieldReference
-	| fieldReference SlashAt Identifier		# dateAttributeReference
-	;
-
-timeReference
-	: fieldReference						# timeFieldReference
-	| fieldReference SlashAt Identifier		# timeAttributeReference
-	;
-
-durationReference
-	: fieldReference						# durationFieldReference
-	| fieldReference SlashAt Identifier		# durationAttributeReference
-	;
 
 fieldValueReference
 	: fieldReference						# untypedFieldValueReference
@@ -234,10 +205,10 @@ booleanFunction
 	;
 
 numericFunction
-	: CountFunction OpenParenthesis setReference CloseParenthesis 									# countFunction
-	| NumberFunction OpenParenthesis (stringExpression | stringReference) CloseParenthesis			# numberFunction
-	| SumFunction OpenParenthesis setReference CloseParenthesis 									# sumFunction
-	| StringLengthFunction OpenParenthesis (stringExpression | stringReference) CloseParenthesis	# stringLengthFunction
+	: CountFunction OpenParenthesis setReference CloseParenthesis 										# countFunction
+	| NumberFunction OpenParenthesis (stringExpression | fieldValueReference) CloseParenthesis			# numberFunction
+	| SumFunction OpenParenthesis setReference CloseParenthesis 										# sumFunction
+	| StringLengthFunction OpenParenthesis (stringExpression | fieldValueReference) CloseParenthesis	# stringLengthFunction
 	;
 
 stringFunction

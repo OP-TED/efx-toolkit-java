@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.model;
 
+import eu.europa.ted.efx.model.Expression.PathExpression;
+
 /**
  * Used to store an evaluation context.
  * 
@@ -17,11 +19,11 @@ public abstract class Context {
      */
     public static class FieldContext extends Context {
 
-        public FieldContext(final String fieldId, final String absolutePath, final String relativePath) {
+        public FieldContext(final String fieldId, final PathExpression absolutePath, final PathExpression relativePath) {
             super(fieldId, absolutePath, relativePath);
         }
 
-        public FieldContext(final String fieldId, final String absolutePath) {
+        public FieldContext(final String fieldId, final PathExpression absolutePath) {
             super(fieldId, absolutePath);
         }
     }
@@ -31,26 +33,26 @@ public abstract class Context {
      */
     public static class NodeContext extends Context {
 
-        public NodeContext(final String nodeId, final String absolutePath, final String relativePath) {
+        public NodeContext(final String nodeId, final PathExpression absolutePath, final PathExpression relativePath) {
             super(nodeId, absolutePath, relativePath);
         }
 
-        public NodeContext(final String nodeId, final String absolutePath) {
+        public NodeContext(final String nodeId, final PathExpression absolutePath) {
             super(nodeId, absolutePath);
         }
     }
 
     private final String symbol;
-    private final String absolutePath;
-    private final String relativePath;
+    private final PathExpression absolutePath;
+    private final PathExpression relativePath;
 
-    protected Context(final String symbol, final String absolutePath, final String relativePath) {
+    protected Context(final String symbol, final PathExpression absolutePath, final PathExpression relativePath) {
         this.symbol = symbol;
         this.absolutePath = absolutePath;
         this.relativePath = relativePath == null ? absolutePath : relativePath;
     }
 
-    protected Context(final String symbol, final String absolutePath) {
+    protected Context(final String symbol, final PathExpression absolutePath) {
         this(symbol, absolutePath, absolutePath);
     }
 
@@ -73,14 +75,14 @@ public abstract class Context {
      * The absolute path of the context is needed when we want to create a new context relative to
      * this one.
      */
-    public String absolutePath() {
+    public PathExpression absolutePath() {
         return absolutePath;
     }
 
     /**
      * Returns the relative path of the context.
      */
-    public String relativePath() {
+    public PathExpression relativePath() {
         return relativePath;
     }
 }

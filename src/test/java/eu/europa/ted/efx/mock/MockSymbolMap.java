@@ -14,6 +14,7 @@ import eu.europa.ted.efx.interfaces.SymbolMap;
 import eu.europa.ted.efx.model.SdkCodelist;
 import eu.europa.ted.efx.model.SdkField;
 import eu.europa.ted.efx.model.SdkNode;
+import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class MockSymbolMap implements SymbolMap {
@@ -90,15 +91,13 @@ public class MockSymbolMap implements SymbolMap {
     }
 
     @Override
-    public String relativeXpathOfField(String fieldId, String contextPath) {
-        final String xpath = absoluteXpathOfField(fieldId);
-        return XPathContextualizer.contextualize(contextPath, xpath);
+    public PathExpression relativeXpathOfField(String fieldId, PathExpression contextPath) {
+        return XPathContextualizer.contextualize(contextPath, absoluteXpathOfField(fieldId));
     }
 
     @Override
-    public String relativeXpathOfNode(String nodeId, String contextPath) {
-        final String xpath = absoluteXpathOfNode(nodeId);
-        return XPathContextualizer.contextualize(contextPath, xpath);
+    public PathExpression relativeXpathOfNode(String nodeId, PathExpression contextPath) {
+        return XPathContextualizer.contextualize(contextPath, absoluteXpathOfNode(nodeId));
     }
 
     @Override
@@ -148,13 +147,13 @@ public class MockSymbolMap implements SymbolMap {
      * @return The xPath of the given field.
      */
     @Override
-    public String absoluteXpathOfField(final String fieldId) {
+    public PathExpression absoluteXpathOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
             throw new InputMismatchException(
                     String.format("Unknown field identifier '%s'.", fieldId));
         }
-        return sdkField.getXpathAbsolute();
+        return new PathExpression(sdkField.getXpathAbsolute());
     }
 
     /**
@@ -162,12 +161,12 @@ public class MockSymbolMap implements SymbolMap {
      * @return The xPath of the given node or field.
      */
     @Override
-    public String absoluteXpathOfNode(final String nodeId) {
+    public PathExpression absoluteXpathOfNode(final String nodeId) {
         final SdkNode sdkNode = nodeById.get(nodeId);
         if (sdkNode == null) {
             throw new InputMismatchException(
                     String.format("Unknown node identifier '%s'.", nodeId));
         }
-        return sdkNode.getXpathAbsolute();
+        return new PathExpression(sdkNode.getXpathAbsolute());
     }
 }

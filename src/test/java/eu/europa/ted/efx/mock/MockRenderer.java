@@ -1,42 +1,47 @@
 package eu.europa.ted.efx.mock;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import eu.europa.ted.efx.interfaces.Renderer;
+import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.Expression.StringExpression;
 
 public class MockRenderer implements Renderer {
 
     @Override
-    public String renderValueReference(String valueReference) {
-        return String.format("eval(%s)", valueReference);
+    public Markup renderValueReference(Expression valueReference) {
+        return new Markup(String.format("eval(%s)", valueReference.script));
     }
 
     @Override
-    public String renderLabelFromKey(String key) {
-        return String.format("label(%s)", key);
+    public Markup renderLabelFromKey(StringExpression key) {
+        return new Markup(String.format("label(%s)", key.script));
     }
 
     @Override
-    public String renderLabelFromExpression(String expression) {
-        return String.format("label(%s)", expression);
+    public Markup renderLabelFromExpression(Expression expression) {
+        return new Markup(String.format("label(%s)", expression.script));
     }
 
     @Override
-    public String renderFreeText(String freeText) {
-        return String.format("text('%s')", freeText);
+    public Markup renderFreeText(String freeText) {
+        return new Markup(String.format("text('%s')", freeText));
     }
 
     @Override
-    public String renderTemplate(String name, String number, String content) {
-        return String.format("%s = %s;", name,  content);
+    public Markup renderTemplate(String name, String number, Markup content) {
+        return new Markup(String.format("%s = %s;", name,  content.script));
     }
 
     @Override
-    public String renderCallTemplate(String name, String context) {
-        return String.format("for-each(%s) { %s(); }", context, name);
+    public Markup renderCallTemplate(String name, PathExpression context) {
+        return new Markup(String.format("for-each(%s) { %s(); }", context.script, name));
     }
 
     @Override
-    public String renderFile(List<String> body, List<String> templates) {
-        return String.format("%s %s", String.join("\n", templates), String.join("\n", body));
+    public Markup renderFile(List<Markup> body, List<Markup> templates) {
+        return new Markup(String.format("%s %s", templates.stream().map(t -> t.script).collect(Collectors.joining("\n")), body.stream().map(t -> t.script).collect(Collectors.joining("\n"))));
     }
 }
