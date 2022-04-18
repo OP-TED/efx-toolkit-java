@@ -10,26 +10,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.SdkCodelist;
 import eu.europa.ted.efx.model.SdkField;
 import eu.europa.ted.efx.model.SdkNode;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-public class MockSymbolMap implements SymbolMap {
+public class SymbolResolverMock implements SymbolResolver {
 
-    private static final Map<String, MockSymbolMap> instances = new HashMap<>();
+    private static final Map<String, SymbolResolverMock> instances = new HashMap<>();
 
-    public static MockSymbolMap getInstance(final String sdkVersion) {
-        return instances.computeIfAbsent(sdkVersion, k -> new MockSymbolMap());
+    public static SymbolResolverMock getInstance(final String sdkVersion) {
+        return instances.computeIfAbsent(sdkVersion, k -> new SymbolResolverMock());
     }
 
     protected Map<String, SdkField> fieldById;
     protected Map<String, SdkNode> nodeById;
     protected Map<String, SdkCodelist> codelistById;
 
-    protected MockSymbolMap() {
+    protected SymbolResolverMock() {
         try {
             this.loadMapData();
         } catch (JsonProcessingException e) {

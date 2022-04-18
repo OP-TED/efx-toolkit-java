@@ -27,9 +27,9 @@ import eu.europa.ted.efx.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.EfxParser.TemplateLineContext;
 import eu.europa.ted.efx.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
-import eu.europa.ted.efx.interfaces.Renderer;
-import eu.europa.ted.efx.interfaces.SymbolMap;
-import eu.europa.ted.efx.interfaces.SyntaxMap;
+import eu.europa.ted.efx.interfaces.MarkupGenerator;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
@@ -72,7 +72,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private Indent indentWith = Indent.UNSET;
   private int indentSpaces = -1;
 
-  Renderer renderer;
+  MarkupGenerator markup;
 
 
   final ContentBlock rootBlock = ContentBlock.newRootBlock();
@@ -81,14 +81,14 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
 
   public EfxTemplateTranslator(TranslatorDependencyFactory factory, final String sdkVersion) {
-    super(factory.createSymbolMap(sdkVersion), factory.createSyntaxMap());
-    this.renderer = factory.createRenderer();
+    super(factory.createSymbolResolver(sdkVersion), factory.createScriptGenerator());
+    this.markup = factory.createMarkupGenerator();
   }
 
-  public EfxTemplateTranslator(final SymbolMap symbols, final SyntaxMap syntax,
-      final Renderer renderer) {
-    super(symbols, syntax);
-    this.renderer = renderer;
+  public EfxTemplateTranslator(final SymbolResolver symbols, final ScriptGenerator scriptGenerator,
+      final MarkupGenerator markupGenerator) {
+    super(symbols, scriptGenerator);
+    this.markup = markupGenerator;
   }
 
   // Static methods
@@ -142,8 +142,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     return translator.getTranspiledXPath();
   }
 
-  public static String renderTemplate(final String template, final SymbolMap symbols,
-      final SyntaxMap syntax, final Renderer renderer, final BaseErrorListener errorListener) {
+  public static String renderTemplate(final String template, final SymbolResolver symbols,
+      final ScriptGenerator scriptGenerator, final MarkupGenerator markupGenerator, final BaseErrorListener errorListener) {
 
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -159,7 +159,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, syntax, renderer);
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, scriptGenerator, markupGenerator);
     walker.walk(translator, tree);
 
     return translator.getTranspiledXPath();
@@ -190,10 +190,10 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
     for (ContentBlock rootBlock : this.rootBlock.getChildren()) {
-      templateCalls.add(rootBlock.renderCallTemplate(renderer));
-      rootBlock.renderTemplate(renderer, templates);
+      templateCalls.add(rootBlock.renderCallTemplate(markup));
+      rootBlock.renderTemplate(markup, templates);
     }
-    Markup file = this.renderer.renderFile(templateCalls, templates);
+    Markup file = this.markup.renderFile(templateCalls, templates);
     this.stack.push(file);
   }
 
@@ -201,7 +201,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   public void exitTextTemplate(TextTemplateContext ctx) {
     Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.text() != null ? ctx.text().getText() : "";
-    this.stack.push(this.renderer.renderFreeText(text).join(template));
+    this.stack.push(this.markup.renderFreeText(text).join(template));
   }
 
   @Override
@@ -215,37 +215,37 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   public void exitValueTemplate(ValueTemplateContext ctx) {
     Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
-    this.stack.push(this.renderer.renderValueReference(expression).join(template));
+    this.stack.push(this.markup.renderValueReference(expression).join(template));
   }
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
-    StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class) : this.syntax.mapString("");
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.syntax.mapString("");
-    StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class) : this.syntax.mapString("");
-    this.stack.push(this.renderer.renderLabelFromKey(this.syntax.mapStringConcatenationFunction(
-        List.of(assetType, this.syntax.mapString("|"), labelType, this.syntax.mapString("|"), assetId))));
+    StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
+        List.of(assetType, this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    StringExpression assetId = this.syntax.mapString(ctx.BtAssetId().getText());
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.syntax.mapString("");
-    this.stack.push(this.renderer.renderLabelFromKey(this.syntax.mapStringConcatenationFunction(
-        List.of(this.syntax.mapString(ASSET_TYPE_BT), this.syntax.mapString("|"), labelType, this.syntax.mapString("|"), assetId))));
+    StringExpression assetId = this.script.mapString(ctx.BtAssetId().getText());
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
+        List.of(this.script.mapString(ASSET_TYPE_BT), this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldAssetId().getText();
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.syntax.mapString("");
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
 
     if (labelType.script.equals("value")) {
       this.shorthandFieldValueLabelReference(fieldId);
     } else {
-      this.stack.push(this.renderer.renderLabelFromKey(
-          this.syntax.mapStringConcatenationFunction(List.of(this.syntax.mapString(ASSET_TYPE_FIELD), this.syntax.mapString("|"),
-              labelType, this.syntax.mapString("|"), this.syntax.mapString(fieldId)))));
+      this.stack.push(this.markup.renderLabelFromKey(
+          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD), this.script.mapString("|"),
+              labelType, this.script.mapString("|"), this.script.mapString(fieldId)))));
     }
   }
 
@@ -257,22 +257,22 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   private void shorthandFieldValueLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
-    final StringExpression valueReference = this.syntax.mapFieldValueReference(
+    final StringExpression valueReference = this.script.mapFieldValueReference(
         symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()), StringExpression.class);
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
         this.stack.push(
-            this.renderer.renderLabelFromExpression(this.syntax.mapStringConcatenationFunction(
-                List.of(this.syntax.mapString(ASSET_TYPE_INDICATOR), this.syntax.mapString("|"), this.syntax.mapString(LABEL_TYPE_VALUE),
-                this.syntax.mapString("-"), valueReference, this.syntax.mapString("|"), this.syntax.mapString(fieldId)))));
+            this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
+                List.of(this.script.mapString(ASSET_TYPE_INDICATOR), this.script.mapString("|"), this.script.mapString(LABEL_TYPE_VALUE),
+                this.script.mapString("-"), valueReference, this.script.mapString("|"), this.script.mapString(fieldId)))));
         break;
       case "code":
       case "internal-code":
         this.stack.push(
-            this.renderer.renderLabelFromExpression(this.syntax.mapStringConcatenationFunction(
-                List.of(this.syntax.mapString(ASSET_TYPE_CODE), this.syntax.mapString("|"), this.syntax.mapString(LABEL_TYPE_VALUE), this.syntax.mapString("|"),
-                this.syntax.mapString(this.symbols.rootCodelistOfField(fieldId)), valueReference))));
+            this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
+                List.of(this.script.mapString(ASSET_TYPE_CODE), this.script.mapString("|"), this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("|"),
+                this.script.mapString(this.symbols.rootCodelistOfField(fieldId)), valueReference))));
         break;
       default:
         throw new InputMismatchException(String.format(
@@ -296,14 +296,14 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (labelType.equals(LABEL_TYPE_VALUE)) {
         this.shorthandFieldValueLabelReference(this.efxContext.symbol());
       } else {
-        this.stack.push(this.renderer.renderLabelFromKey(
-            this.syntax.mapStringConcatenationFunction(List.of(this.syntax.mapString(ASSET_TYPE_FIELD),
-            this.syntax.mapString("|"), this.syntax.mapString(labelType), this.syntax.mapString("|"), this.syntax.mapString(this.efxContext.symbol())))));
+        this.stack.push(this.markup.renderLabelFromKey(
+            this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD),
+            this.script.mapString("|"), this.script.mapString(labelType), this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
       }
     } else if (this.efxContext.isNodeContext()) {
-      this.stack.push(this.renderer.renderLabelFromKey(
-          this.syntax.mapStringConcatenationFunction(List.of(this.syntax.mapString(ASSET_TYPE_BT), this.syntax.mapString("|"),
-          this.syntax.mapString(labelType), this.syntax.mapString("|"), this.syntax.mapString(this.efxContext.symbol())))));
+      this.stack.push(this.markup.renderLabelFromKey(
+          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT), this.script.mapString("|"),
+          this.script.mapString(labelType), this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
     }
   }
 
@@ -325,21 +325,21 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   @Override
   public void exitAssetType(AssetTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.syntax.mapString(ctx.getText()));
+      this.stack.push(this.script.mapString(ctx.getText()));
     }
   }
 
   @Override
   public void exitLabelType(LabelTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.syntax.mapString(ctx.getText()));
+      this.stack.push(this.script.mapString(ctx.getText()));
     }
   }
 
   @Override
   public void exitAssetId(AssetIdContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.syntax.mapString(ctx.getText()));
+      this.stack.push(this.script.mapString(ctx.getText()));
     }
   }
 
@@ -364,7 +364,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       throw new InputMismatchException(
           "The $value shorthand syntax can only be used when a field is declated as the context.");
     }
-    this.stack.push(this.syntax.mapFieldValueReference(
+    this.stack.push(this.script.mapFieldValueReference(
         symbols.relativeXpathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()), Expression.class));
   }
 

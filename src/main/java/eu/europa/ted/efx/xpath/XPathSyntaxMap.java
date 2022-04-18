@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import eu.europa.ted.efx.interfaces.SyntaxMap;
+import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
@@ -17,7 +17,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-public class XPathSyntaxMap implements SyntaxMap {
+public class XPathSyntaxMap implements ScriptGenerator {
 
     /**
      * Maps efx operators to xPath operators.

@@ -3,7 +3,7 @@ package eu.europa.ted.efx.interfaces;
 import java.util.List;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 
-public interface SymbolMap {
+public interface SymbolResolver {
 
     public String parentNodeOfField(final String fieldId);
 

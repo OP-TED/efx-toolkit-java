@@ -1,7 +1,7 @@
 package eu.europa.ted.efx.model;
 
 import java.util.Stack;
-import eu.europa.ted.efx.interfaces.SymbolMap;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -13,14 +13,14 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
  */
 public class ContextStack extends Stack<Context> {
 
-    private final SymbolMap symbols;
+    private final SymbolResolver symbols;
 
     /**
      * Creates a new ContextStack.
      * 
      * @param symbols the SymbolMap is used to resolve fieldIds and nodeIds.
      */
-    public ContextStack(final SymbolMap symbols) {
+    public ContextStack(final SymbolResolver symbols) {
         this.symbols = symbols;
     }
 

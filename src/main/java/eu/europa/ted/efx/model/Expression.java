@@ -2,14 +2,14 @@ package eu.europa.ted.efx.model;
 
 import static java.util.Map.entry;
 import java.util.Map;
-import eu.europa.ted.efx.interfaces.Renderer;
+import eu.europa.ted.efx.interfaces.MarkupGenerator;
 
 /**
  * This class represents an expression in the target scripting language.
  * 
  * The class is used to restric the parameter types and return types of the methods that the EFX
  * translator calls. This makes it easier for users to understand the nature and usage of each
- * parameter when implementing {@link SyntaxMap}, {@link Renderer} and {@link SymbolMap} interfaces
+ * parameter when implementing {@link ScriptGenerator}, {@link MarkupGenerator} and {@link SymbolResolver} interfaces
  * for transalting to a new target language. It also enables to EFX translator to parform type
  * checking of EFX expressions.
  *

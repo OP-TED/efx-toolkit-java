@@ -6,7 +6,7 @@ import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 
-public interface Renderer {
+public interface MarkupGenerator {
     
     /**
      * Given a body (main content) and a set of templates (all in one prerendered string), this

@@ -11,7 +11,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-public interface SyntaxMap {
+public interface ScriptGenerator {
 
   /**
    * Given a PathExpression and a predicate, this method should return the target language script

@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
-import eu.europa.ted.efx.mock.MockSymbolMap;
+import eu.europa.ted.efx.mock.SymbolResolverMock;
 import eu.europa.ted.efx.xpath.XPathSyntaxMap;
 
 public class EfxExpressionTranslatorTests {
@@ -16,7 +16,7 @@ public class EfxExpressionTranslatorTests {
 
     private String test(final String context, final String expression) {
         return EfxExpressionTranslator.transpileExpression(context, expression,
-                MockSymbolMap.getInstance(SDK_VERSION), new XPathSyntaxMap(),
+                SymbolResolverMock.getInstance(SDK_VERSION), new XPathSyntaxMap(),
                 ThrowingErrorListener.INSTANCE);
     }
 

@@ -2,13 +2,13 @@ package eu.europa.ted.efx.mock;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import eu.europa.ted.efx.interfaces.Renderer;
+import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 
-public class MockRenderer implements Renderer {
+public class MockRenderer implements MarkupGenerator {
 
     @Override
     public Markup renderValueReference(Expression valueReference) {

@@ -3,7 +3,7 @@ package eu.europa.ted.efx.model;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import eu.europa.ted.efx.interfaces.Renderer;
+import eu.europa.ted.efx.interfaces.MarkupGenerator;
 
 public class ContentBlock {
     private final ContentBlock parent;
@@ -78,23 +78,23 @@ public class ContentBlock {
         return this.indentationLevel;
     }
 
-    public Markup renderContent(Renderer renderer) {
+    public Markup renderContent(MarkupGenerator markupGenerator) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.content.script);
         for (ContentBlock child : this.children) {
-            sb.append("\n").append(child.renderCallTemplate(renderer).script);
+            sb.append("\n").append(child.renderCallTemplate(markupGenerator).script);
         }
         return new Markup(sb.toString());
     }
 
-    public void renderTemplate(Renderer renderer, List<Markup> templates) {
-        templates.add(renderer.renderTemplate(this.id, this.getOutlineNumber(), this.renderContent(renderer)));
+    public void renderTemplate(MarkupGenerator markupGenerator, List<Markup> templates) {
+        templates.add(markupGenerator.renderTemplate(this.id, this.getOutlineNumber(), this.renderContent(markupGenerator)));
         for (ContentBlock child : this.children) {
-            child.renderTemplate(renderer, templates);
+            child.renderTemplate(markupGenerator, templates);
         }
     }
 
-    public Markup renderCallTemplate(Renderer renderer) {
-        return renderer.renderCallTemplate(this.id, this.context.relativePath());
+    public Markup renderCallTemplate(MarkupGenerator markupGenerator) {
+        return markupGenerator.renderCallTemplate(this.id, this.context.relativePath());
     }
 }
