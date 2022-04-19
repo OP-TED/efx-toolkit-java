@@ -180,7 +180,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFormatNumberFunction() {
-        assertEquals("format-number(PathNode/NumberField/normalize-space(text()), '#,##0.00')",
+        assertEquals("format-number(PathNode/NumberField, '#,##0.00')",
                 test("ND-0", "format-number(BT-00-Number, '#,##0.00')"));
     }
 
@@ -206,13 +206,13 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testDurationFromDatesFunction() {
         assertEquals(
-                "xs:date(PathNode/DateField/normalize-space(text())) - xs:date(PathNode/DateField/normalize-space(text()))",
+                "xs:date(PathNode/DateField) - xs:date(PathNode/DateField)",
                 test("ND-0", "duration(BT-00-Date, BT-00-Date)"));
     }
 
     @Test
     public void testPredicate() {
-        assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']/normalize-space(text())",
+        assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']",
                 test("BT-00-Text", "BT-00-Indicator[BT-00-Code == 'a']"));
     }
 }

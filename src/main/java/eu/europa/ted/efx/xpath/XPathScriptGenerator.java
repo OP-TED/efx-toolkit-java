@@ -51,7 +51,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public <T extends Expression> T mapFieldValueReference(PathExpression fieldReference,
             Class<T> type) {
-        return instantiate(fieldReference.script + "/normalize-space(text())", type);
+        String suffix = "";
+        if (type == StringExpression.class) {
+            suffix = "/normalize-space(text())";
+        }
+        return instantiate(fieldReference.script + suffix, type);
     }
 
     @Override
