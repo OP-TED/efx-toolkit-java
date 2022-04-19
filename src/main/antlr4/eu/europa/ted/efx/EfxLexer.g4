@@ -29,7 +29,7 @@ ColonColon: [ \t]* '::' [ \t]* -> pushMode(TEMPLATE);
  * as an expression block. Therefore the curly brace that opens a context declaration block, switches
  * the lexer to EXPRESSION mode.
  */
-StartContextExpression: '{' -> pushMode(EXPRESSION);
+StartContextExpression: '{' -> pushMode(EXPRESSION), type(StartExpression);
 
 /*
  * TEMPLATE mode In template mode, whitespace is significant. In this mode we are looking for the
@@ -47,8 +47,10 @@ fragment Char: ~[\r\n\f\t #$}{];
 fragment Dollar: '$';	// Used for label placeholders
 fragment Sharp: '#';	// Used for expression placeholders
 
-SelfLabel: Sharp 'label';
-SelfValue: Dollar 'value';
+ShorthandContextFieldValueReference: Dollar 'value';
+ShorthandContextFieldLabelReference: Sharp 'value';
+
+ShorthandLabelType: LabelType -> type(LabelType);
 
 fragment OpenBrace: '{';
 
@@ -64,19 +66,23 @@ mode LABEL;
 
 Pipe: '|';
 
-OpenValueBlock: '[';
-CloseValueBlock: ']';
-
 EndLabel: '}' -> popMode;
 
-StartNestedExpression: NestedDollar NestedOpenBrace -> pushMode(EXPRESSION);
-fragment NestedDollar: '$';
-fragment NestedOpenBrace: '{';
+StartNestedExpression: '$' '{' -> pushMode(EXPRESSION), type(StartExpression);
 
-AssetType: 'business_term' | 'field' | 'code' | 'decoration';
-LabelType: 'name' | 'value';
-FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
-BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
+AssetType: ASSET_TYPE_BT | ASSET_TYPE_FIELD | ASSET_TYPE_CODE | ASSET_TYPE_INDICATOR | ASSET_TYPE_DECORATION;
+ASSET_TYPE_BT: 'business_term';
+ASSET_TYPE_FIELD: 'field';
+ASSET_TYPE_CODE: 'code';
+ASSET_TYPE_INDICATOR: 'indicator';
+ASSET_TYPE_DECORATION: 'decoration';
+
+LabelType: LABEL_TYPE_NAME | LABEL_TYPE_VALUE;
+LABEL_TYPE_NAME: 'name';
+LABEL_TYPE_VALUE: 'value';
+
+FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;// ->type(FieldId);
+BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;// -> type(BtId);
 CodelistAssetId: 'CL' ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
 OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 
@@ -107,7 +113,6 @@ EndExpression: '}' -> popMode;
 
 And: 'and';
 Or: 'or';
-Not: 'not';
 Is: 'is';
 In: 'in';
 Like: 'like';
@@ -115,20 +120,37 @@ Present: 'present';
 Empty: 'empty';
 Always: 'ALWAYS';
 Never: 'NEVER';
+True: 'TRUE';
+False: 'FALSE';
 Notice: 'notice';
 Codelist: 'codelist';
 
 
-FunctionName: 'substring' | 'substring-after' | 'substring-before' 
-    | 'contains' | 'starts-with' | 'ends-with' | 'matches'
-    | 'concat' | 'normalize-space' | 'format-number'
-    | 'escape-html-uri'
-    | 'string-length' | 'count'
-    | 'upper-case' | 'lower-case'
-    | 'ceiling' | 'floor' | 'sum'
-    | 'string' | 'number'
-    | 'true' | 'false'
-    ;
+/*
+ * Functions
+ */
+
+Not: 'not';
+CountFunction: 'count';
+SubstringFunction: 'substring';
+StringFunction: 'string';
+NumberFunction: 'number';
+ContainsFunction: 'contains';
+StartsWithFunction: 'starts-with';
+EndsWithFunction: 'ends-with';
+StringLengthFunction: 'string-length';
+SumFunction: 'sum';
+FormatNumberFunction: 'format-number';
+ConcatFunction: 'concat';
+DateFunction: 'date';
+TimeFunction: 'time';
+DateTimeFunction: 'date-time';
+DurationFunction: 'duration';
+AddDaysFunction: 'add-days';
+AddWeeksFunction: 'add-weeks';
+AddMonthsFunction: 'add-months';
+AddYearsFunction: 'add-years';
+
 
 NodeId: 'ND' Dash DIGIT+;
 FieldId: ('BT' | 'OPP' | 'OPT') Dash INTEGER (OpenParenthesis (BtId | [a-z]) CloseParenthesis)? (Dash Identifier)+;
@@ -141,6 +163,10 @@ INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;
 STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
 UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
+DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
+TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
+DATETIME: DATE WS TIME;
+DURATION: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
 Multiplication: '*' | '/' | '%';
