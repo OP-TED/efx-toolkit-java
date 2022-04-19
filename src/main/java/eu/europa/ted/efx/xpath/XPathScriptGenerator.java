@@ -17,15 +17,23 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-public class XPathSyntaxMap implements ScriptGenerator {
+public class XPathScriptGenerator implements ScriptGenerator {
 
     /**
      * Maps efx operators to xPath operators.
      */
     private static final Map<String, String> operators =
-            Map.ofEntries(entry("+", "+"), entry("-", "-"), entry("*", "*"), entry("/", "div"),
-                    entry("%", "mod"), entry("==", "="), entry("!=", "!="), entry("<", "<"),
-                    entry("<=", "<="), entry(">", ">"), entry(">=", ">="));
+            Map.ofEntries(entry("+", "+"), //
+             entry("-", "-"),   //
+             entry("*", "*"),   //
+             entry("/", "div"), //
+             entry("%", "mod"), //
+             entry("==", "="),  //
+             entry("!=", "!="), //
+             entry("<", "<"),   //
+             entry("<=", "<="), //
+             entry(">", ">"),   //
+             entry(">=", ">="));
 
 
     @Override

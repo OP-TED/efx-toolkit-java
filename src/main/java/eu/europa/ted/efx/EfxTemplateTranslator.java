@@ -49,7 +49,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private static final String START_INTENDAT_AT_ZERO =
       "Incorrect intendation. Please do not indent the first level in your template.";
   private static final String MIXED_INDENTATION =
-      "Don't mix indentation methods. Stick with either tabs or spaces.";
+      "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
   private static final String LABEL_TYPE_VALUE =
@@ -114,7 +114,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     walker.walk(translator, tree);
 
-    return translator.getTranspiledXPath();
+    return translator.getTranslatedScript();
   }
 
   public static String renderTemplate(final String template, final String sdkVersion,
@@ -139,7 +139,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
     walker.walk(translator, tree);
 
-    return translator.getTranspiledXPath();
+    return translator.getTranslatedScript();
   }
 
   public static String renderTemplate(final String template, final SymbolResolver symbols,
@@ -162,7 +162,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, scriptGenerator, markupGenerator);
     walker.walk(translator, tree);
 
-    return translator.getTranspiledXPath();
+    return translator.getTranslatedScript();
   }
 
   /**
@@ -170,10 +170,10 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
    *
    * @return The translated code, trimmed
    */
-  private String getTranspiledXPath() {
+  private String getTranslatedScript() {
     final StringBuilder sb = new StringBuilder(64);
     while (!this.stack.empty()) {
-      sb.insert(0, this.stack.pop(Markup.class).script + '\n'); //
+      sb.insert(0,'\n').insert(0, this.stack.pop(Markup.class).script);
     }
     return sb.toString().trim();
   }

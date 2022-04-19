@@ -14,22 +14,30 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
  * checking of EFX expressions.
  *
  */
-public class Expression extends StackObjectBase {
+public class Expression extends CallStackObjectBase {
 
     /**
-     * eForms types a mapped to Expression types. This allows the tran
+     * eForms types a mapped to Expression types.
      */
     public static final Map<String, Class<? extends Expression>> types = Map.ofEntries(
-            entry("internal-code", StringExpression.class), entry("id", StringExpression.class),
-            entry("text-multilingual", StringExpression.class), entry("date", DateExpression.class),
-            entry("time", TimeExpression.class), entry("code", StringExpression.class),
-            entry("integer", NumericExpression.class), entry("indicator", BooleanExpression.class),
-            entry("amount", NumericExpression.class), entry("url", StringExpression.class),
-            entry("text", StringExpression.class), entry("zoned-date", DateExpression.class),
-            entry("zoned-time", TimeExpression.class), entry("id-ref", StringExpression.class),
-            entry("number", NumericExpression.class), entry("measure", NumericExpression.class),
-            entry("phone", StringExpression.class), entry("email", StringExpression.class));
-
+            entry("id", StringExpression.class), //
+            entry("id-ref", StringExpression.class), //
+            entry("text", StringExpression.class), //
+            entry("text-multilingual", StringExpression.class), //
+            entry("indicator", BooleanExpression.class), //
+            entry("amount", NumericExpression.class), // 
+            entry("number", NumericExpression.class), //
+            entry("measure", NumericExpression.class), //
+            entry("code", StringExpression.class),
+            entry("internal-code", StringExpression.class), //
+            entry("integer", NumericExpression.class), //
+            entry("date", DateExpression.class), //
+            entry("zoned-date", DateExpression.class), //
+            entry("time", TimeExpression.class), //
+            entry("zoned-time", TimeExpression.class), //
+            entry("url", StringExpression.class), //
+            entry("phone", StringExpression.class), //
+            entry("email", StringExpression.class));
 
     /**
      * Stores the expression represented in the target language.

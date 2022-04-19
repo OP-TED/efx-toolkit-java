@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
-import eu.europa.ted.efx.xpath.XPathSyntaxMap;
+import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 public class EfxExpressionTranslatorTest {
 
@@ -16,7 +16,7 @@ public class EfxExpressionTranslatorTest {
 
     private String test(final String context, final String expression) {
         return EfxExpressionTranslator.transpileExpression(context, expression,
-                SymbolResolverMock.getInstance(SDK_VERSION), new XPathSyntaxMap(),
+                SymbolResolverMock.getInstance(SDK_VERSION), new XPathScriptGenerator(),
                 ThrowingErrorListener.INSTANCE);
     }
 

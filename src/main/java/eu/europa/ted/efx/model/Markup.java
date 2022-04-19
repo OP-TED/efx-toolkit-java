@@ -3,7 +3,7 @@ package eu.europa.ted.efx.model;
 /**
  * Represents markup in the target template language.
  */
-public class Markup extends StackObjectBase {
+public class Markup extends CallStackObjectBase {
     
     /**
      * Stores the markup script in the target language.
@@ -11,7 +11,7 @@ public class Markup extends StackObjectBase {
     public final String script;
 
     public Markup(final String script) {
-        this.script = script;
+        this.script = script == null ? "" : script;
     }
 
     /**

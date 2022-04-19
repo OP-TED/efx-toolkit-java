@@ -82,7 +82,7 @@ public class ContentBlock {
         StringBuilder sb = new StringBuilder();
         sb.append(this.content.script);
         for (ContentBlock child : this.children) {
-            sb.append("\n").append(child.renderCallTemplate(markupGenerator).script);
+            sb.append('\n').append(child.renderCallTemplate(markupGenerator).script);
         }
         return new Markup(sb.toString());
     }

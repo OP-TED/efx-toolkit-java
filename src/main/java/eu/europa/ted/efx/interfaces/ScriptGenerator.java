@@ -15,7 +15,7 @@ public interface ScriptGenerator {
 
   /**
    * Given a PathExpression and a predicate, this method should return the target language script
-   * for matching the subeset of nodes in the PathExpression that match the predicate.
+   * for matching the subset of nodes in the PathExpression that match the predicate.
    * 
    * Similar to {@link mapFieldReferenceWithPredicate} but for nodes. Quick reminder: the difference
    * between fields and nodes is that fields contain values, while nodes contain other nodes and/or
@@ -26,7 +26,7 @@ public interface ScriptGenerator {
 
   /**
    * Given a PathExpression and a predicate, this method should return the target language script
-   * for matching the subeset of nodes in the PathExpression that match the predicate.
+   * for matching the subset of nodes in the PathExpression that match the predicate.
    * 
    * Similar to {@link mapNodeReferenceWithPredicate} but for fields. Quick reminder: the difference
    * between fields and nodes is that fields contain values, while nodes contain other nodes and/or
@@ -57,7 +57,7 @@ public interface ScriptGenerator {
 
 
   /**
-   * Takes a Java Boolean value and returns the coresponding target language script.
+   * Takes a Java Boolean value and returns the corresponding target language script.
    */
   public BooleanExpression mapBoolean(Boolean value);
 
@@ -130,7 +130,7 @@ public interface ScriptGenerator {
   /**
    * Returns the target language script that compares the two operands (for equality etc.).
    * 
-   * @param operator The EFX operator that is used to compare the two operands. Don't forget to
+   * @param operator The EFX operator that is used to compare the two operands. Do not forget to
    *        trnaslate the operator to the target language equivalent.
    */
   public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
@@ -140,7 +140,7 @@ public interface ScriptGenerator {
    * Given a numeric operation, this method should return the target language script that performs
    * the operation.
    * 
-   * @param operator The EFX intended operator. Don't forget to translate the operator to the target
+   * @param operator The EFX intended operator. Do not forget to translate the operator to the target
    *        language equivalent.
    */
   public NumericExpression mapNumericOperator(NumericExpression leftOperand, String operator,

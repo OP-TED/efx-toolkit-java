@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.MarkupGeneratorMock;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
-import eu.europa.ted.efx.xpath.XPathSyntaxMap;
+import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 public class EfxTemplateTranslatorTest {
 
@@ -16,7 +16,7 @@ public class EfxTemplateTranslatorTest {
 
     private String translate(final String template) {
         return EfxTemplateTranslator.renderTemplate(template + "\n",
-                SymbolResolverMock.getInstance(SDK_VERSION), new XPathSyntaxMap(), new MarkupGeneratorMock(),
+                SymbolResolverMock.getInstance(SDK_VERSION), new XPathScriptGenerator(), new MarkupGeneratorMock(),
                 ThrowingErrorListener.INSTANCE);
     }
 
