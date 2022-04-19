@@ -52,7 +52,7 @@ public class EfxExpressionTranslatorTest {
 
 
     @Test
-    public void testcomparisonCondition() {
+    public void testComparisonCondition() {
         assertEquals("2 > 1 and 3 >= 1 and 1 = 1 and 4 < 5 and 5 <= 5",
                 test("BT-00-Text", "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5"));
     }
@@ -64,14 +64,14 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testEmptinessCondition() {
-    assertEquals("PathNode/TextField/normalize-space(text()) != ''",
-    test("BT-00-Text", "BT-00-Text is not empty"));
+        assertEquals("PathNode/TextField/normalize-space(text()) != ''",
+                test("BT-00-Text", "BT-00-Text is not empty"));
     }
 
     @Test
     public void testPresenceCondition() {
-    assertEquals("PathNode/TextField",
-    test("BT-00-Text", "BT-00-Text is present"));
+        assertEquals("PathNode/TextField",
+                test("BT-00-Text", "BT-00-Text is present"));
     }
 
     @Test
