@@ -272,7 +272,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
         this.stack.push(
             this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
                 List.of(this.script.mapString(ASSET_TYPE_CODE), this.script.mapString("|"), this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("|"),
-                this.script.mapString(this.symbols.rootCodelistOfField(fieldId)), valueReference))));
+                this.script.mapString(this.symbols.rootCodelistOfField(fieldId)), this.script.mapString("."), valueReference))));
         break;
       default:
         throw new InputMismatchException(String.format(
