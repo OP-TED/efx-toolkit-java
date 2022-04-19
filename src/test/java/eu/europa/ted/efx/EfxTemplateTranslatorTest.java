@@ -69,7 +69,7 @@ public class EfxTemplateTranslatorTest {
     @Test
     public void testSelfLabelReference_WithValueLabelTypeAndCodeField() {
         assertEquals(
-                "block01 = label(concat('code', '|', 'value', '|', 'main-activity', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
+                "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
                 translate("{BT-00-Code}::#{value}"));
     }
 
@@ -102,7 +102,7 @@ public class EfxTemplateTranslatorTest {
     @Test
     public void testShorthandContextFieldValueReference() {
         assertEquals(
-                "block01 = text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', ./normalize-space(text())))text(' ')text('blah ')eval(./normalize-space(text()))text(' ')text('blah'); for-each(/*/PathNode/CodeField) { block01(); }",
+                "block01 = text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(./normalize-space(text()))text(' ')text('blah'); for-each(/*/PathNode/CodeField) { block01(); }",
                 translate("{BT-00-Code} :: blah #value blah $value blah"));
     }
 }
