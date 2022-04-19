@@ -7,17 +7,17 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
 /**
  * This class represents an expression in the target scripting language.
  * 
- * The class is used to restric the parameter types and return types of the methods that the EFX
+ * The class is used to restrict the parameter types and return types of the methods that the EFX
  * translator calls. This makes it easier for users to understand the nature and usage of each
  * parameter when implementing {@link ScriptGenerator}, {@link MarkupGenerator} and {@link SymbolResolver} interfaces
- * for transalting to a new target language. It also enables to EFX translator to parform type
+ * for translating to a new target language. It also enables to EFX translator to perform type
  * checking of EFX expressions.
  *
  */
 public class Expression extends CallStackObjectBase {
 
     /**
-     * eForms types a mapped to Expression types.
+     * eForms types are mapped to Expression types.
      */
     public static final Map<String, Class<? extends Expression>> types = Map.ofEntries(
             entry("id", StringExpression.class), //
@@ -49,9 +49,9 @@ public class Expression extends CallStackObjectBase {
     }
 
     /**
-     * A PathExpression points to a node in your data set.
+     * An PathExpression points to a node in your data set.
      * 
-     * Typicaly the data set is a XML document and therefore, in this case, the path expression is a
+     * Typically the data set is a XML document and therefore, in this case, the path expression is a
      * XPath expression.
      */
     public static class PathExpression extends Expression {

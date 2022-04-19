@@ -82,21 +82,21 @@ public interface ScriptGenerator {
   public BooleanExpression mapLogicalNot(BooleanExpression condition);
 
   /**
-   * Returns the target language script that checks wheter a given list of strings (haystack)
+   * Returns the target language script that checks whether a given list of strings (haystack)
    * contains a given string (needle).
    */
   public BooleanExpression mapInListCondition(final StringExpression needle,
       final StringListExpression haystack);
 
   /**
-   * Returns the target language script that checks wheter a given string matches the given RegEx
+   * Returns the target language script that checks whether a given string matches the given RegEx
    * pattern.
    */
   public BooleanExpression mapMatchesPatternCondition(final StringExpression expression,
       final String pattern);
 
   /**
-   * Returns the given expression parenthesized in the traget language.
+   * Returns the given expression parenthesized in the target language.
    */
   public <T extends Expression> T mapParenthesizedExpression(T expression, Class<T> type);
 
@@ -107,7 +107,7 @@ public interface ScriptGenerator {
    * When we need data from an external source, we need some script that gets that data. Getting the
    * data is a two-step process: a) we need to access the data source, b) we need to get the actual
    * data from the data source. This method should return the target language script that connects
-   * to the data source and premits us to subsequently get the data by using a PathExpression.
+   * to the data source and permits us to subsequently get the data by using a PathExpression.
    */
   public Expression mapExternalReference(final Expression externalReference);
 
@@ -131,7 +131,7 @@ public interface ScriptGenerator {
    * Returns the target language script that compares the two operands (for equality etc.).
    * 
    * @param operator The EFX operator that is used to compare the two operands. Do not forget to
-   *        trnaslate the operator to the target language equivalent.
+   *        translate the operator to the target language equivalent.
    */
   public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
       Expression rightOperand);
