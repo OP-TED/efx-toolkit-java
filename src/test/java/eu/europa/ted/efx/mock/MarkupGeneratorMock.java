@@ -8,7 +8,7 @@ import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 
-public class MockRenderer implements MarkupGenerator {
+public class MarkupGeneratorMock implements MarkupGenerator {
 
     @Override
     public Markup renderValueReference(Expression valueReference) {

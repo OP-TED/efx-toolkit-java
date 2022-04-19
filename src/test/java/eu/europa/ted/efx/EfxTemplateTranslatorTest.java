@@ -6,17 +6,17 @@ import java.util.InputMismatchException;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
-import eu.europa.ted.efx.mock.MockRenderer;
+import eu.europa.ted.efx.mock.MarkupGeneratorMock;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
 import eu.europa.ted.efx.xpath.XPathSyntaxMap;
 
-public class EfxTemplateTranslatorTests {
+public class EfxTemplateTranslatorTest {
 
     final private String SDK_VERSION = "latest";
 
     private String translate(final String template) {
         return EfxTemplateTranslator.renderTemplate(template + "\n",
-                SymbolResolverMock.getInstance(SDK_VERSION), new XPathSyntaxMap(), new MockRenderer(),
+                SymbolResolverMock.getInstance(SDK_VERSION), new XPathSyntaxMap(), new MarkupGeneratorMock(),
                 ThrowingErrorListener.INSTANCE);
     }
 

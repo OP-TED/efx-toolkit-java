@@ -9,7 +9,7 @@ import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
 import eu.europa.ted.efx.xpath.XPathSyntaxMap;
 
-public class EfxExpressionTranslatorTests {
+public class EfxExpressionTranslatorTest {
 
     // TODO: Currently handling multiple SDK versions is not implemented.
     final private String SDK_VERSION = "latest";
