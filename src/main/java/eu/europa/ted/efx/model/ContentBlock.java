@@ -3,6 +3,7 @@ package eu.europa.ted.efx.model;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 
 public class ContentBlock {
@@ -47,7 +48,7 @@ public class ContentBlock {
 
     public ContentBlock addSibling(final Markup content, final Context context) {
         if (this.parent == null) {
-            throw new IllegalStateException("Cannot add sibling to root block");
+            throw new ParseCancellationException("Cannot add sibling to root block");
         }
         return this.parent.addChild(content, context);
     }

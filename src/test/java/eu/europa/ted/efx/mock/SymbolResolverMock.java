@@ -3,18 +3,18 @@ package eu.europa.ted.efx.mock;
 import static java.util.Map.entry;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.SdkCodelist;
 import eu.europa.ted.efx.model.SdkField;
 import eu.europa.ted.efx.model.SdkNode;
-import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class SymbolResolverMock implements SymbolResolver {
@@ -104,7 +104,7 @@ public class SymbolResolverMock implements SymbolResolver {
     public String typeOfField(String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
-            throw new InputMismatchException(String.format("Unknown field '%s'.", fieldId));
+            throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
         }
         return sdkField.getType();
     }
@@ -113,7 +113,7 @@ public class SymbolResolverMock implements SymbolResolver {
     public String rootCodelistOfField(String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
-            throw new InputMismatchException(String.format("Unknown field '%s'.", fieldId));
+            throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
         }
         return sdkField.getRootCodelistId();
     }
@@ -122,7 +122,7 @@ public class SymbolResolverMock implements SymbolResolver {
     public List<String> expandCodelist(String codelistId) {
         SdkCodelist codelist = codelistById.get(codelistId);
         if (codelist == null) {
-            throw new InputMismatchException(String.format("Codelist '%s' not found.", codelistId));
+            throw new ParseCancellationException(String.format("Codelist '%s' not found.", codelistId));
         }
         return codelist.getCodes();
     }
@@ -139,7 +139,7 @@ public class SymbolResolverMock implements SymbolResolver {
         if (sdkField != null) {
             return sdkField.getParentNodeId();
         }
-        throw new InputMismatchException(String.format("Unknown field '%s'", fieldId));
+        throw new ParseCancellationException(String.format("Unknown field '%s'", fieldId));
     }
 
     /**
@@ -150,7 +150,7 @@ public class SymbolResolverMock implements SymbolResolver {
     public PathExpression absoluteXpathOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
-            throw new InputMismatchException(
+            throw new ParseCancellationException(
                     String.format("Unknown field identifier '%s'.", fieldId));
         }
         return new PathExpression(sdkField.getXpathAbsolute());
@@ -164,7 +164,7 @@ public class SymbolResolverMock implements SymbolResolver {
     public PathExpression absoluteXpathOfNode(final String nodeId) {
         final SdkNode sdkNode = nodeById.get(nodeId);
         if (sdkNode == null) {
-            throw new InputMismatchException(
+            throw new ParseCancellationException(
                     String.format("Unknown node identifier '%s'.", nodeId));
         }
         return new PathExpression(sdkNode.getXpathAbsolute());
