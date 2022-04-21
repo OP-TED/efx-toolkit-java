@@ -11,7 +11,7 @@ options { tokenVocab = EfxLexer;}
  * Currently we only allow a field-identifier or a node-identifier in the context-declaration.
  * We may also add support for adding one or more predicates to the context-declaration in the future.
  */
-singleExpression: (FieldContext | NodeContext) ColonColon expressionBlock EOF;
+singleExpression: (FieldId | NodeId) ColonColon expressionBlock EOF;
 
 /* 
  * A template-file is a series of template-lines.
@@ -27,7 +27,7 @@ templateFile: (templateLine)* EOF;
  * Furthermore, all the expression-blocks in the template part of this template-line will
  * be evaluated relative to the context indicated by the context-declaration. 
  */
-templateLine: indent = (Tabs | Spaces)? contextDeclarationBlock ColonColon template CRLF;
+templateLine: indent = (Tabs | Spaces)? contextDeclarationBlock template CRLF;
 
 
 /*** Templates are matched when the lexical analyser is in LABEL mode ***/
@@ -57,9 +57,9 @@ whitespace: Whitespace+;
  */
 labelBlock
 	: StartLabel assetType Pipe labelType Pipe assetId EndLabel			# standardLabelReference
-	| StartLabel labelType Pipe BtAssetId EndLabel						# shorthandBtLabelReference
-	| StartLabel labelType Pipe FieldAssetId EndLabel					# shorthandFieldLabelReference
-	| StartLabel FieldAssetId EndLabel									# shorthandFieldValueLabelReference
+	| StartLabel labelType Pipe BtId EndLabel						# shorthandBtLabelReference
+	| StartLabel labelType Pipe FieldId EndLabel					# shorthandFieldLabelReference
+	| StartLabel FieldId EndLabel									# shorthandFieldValueLabelReference
 	| StartLabel LabelType EndLabel										# shorthandContextLabelReference
 	| ShorthandContextFieldLabelReference								# shorthandContextFieldLabelReference
 	;
@@ -67,8 +67,8 @@ labelBlock
 assetType: AssetType | expressionBlock;
 labelType: LabelType | expressionBlock;
 assetId
-	: BtAssetId
-	| FieldAssetId
+	: BtId
+	| FieldId
 	| CodelistAssetId
 	| OtherAssetId
 	| expressionBlock
@@ -160,7 +160,6 @@ trueBooleanLiteral: Always | True;
 falseBooleanLiteral: Never | False;
 dateLiteral: DATE;
 timeLiteral: TIME;
-dateTimeLiteral: DATETIME;
 durationLiteral: DURATION;
 
 
@@ -189,7 +188,7 @@ nodeReference
 
 noticeReference: Notice OpenParenthesis noticeId=stringExpression CloseParenthesis;
 
-codelistReference: Codelist? OpenParenthesis codeListId=codelistId CloseParenthesis;
+codelistReference: OpenParenthesis codeListId=codelistId CloseParenthesis;
 codelistId: CodelistId;
 
 

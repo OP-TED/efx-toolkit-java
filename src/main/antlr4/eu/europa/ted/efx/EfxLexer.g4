@@ -5,8 +5,8 @@ lexer grammar EfxLexer;
  */
 
 // The Context has the same definition as a FieldId or NodeId in EXPRESSION mode
-FieldContext: ('BT' | 'OPP' | 'OPT') '-' [0-9]+ ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
-NodeContext: 'ND' '-' [0-9]+;
+FieldContext: FieldId -> type(FieldId);
+NodeContext: NodeId -> type(NodeId);
 
 // Empty lines and comment lines are to be ignored by the parser.
 Comment: [ \t]* '//' ~[\r\n\f]* EOL* -> skip;
@@ -29,7 +29,12 @@ ColonColon: [ \t]* '::' [ \t]* -> pushMode(TEMPLATE);
  * as an expression block. Therefore the curly brace that opens a context declaration block, switches
  * the lexer to EXPRESSION mode.
  */
-StartContextExpression: '{' -> pushMode(EXPRESSION), type(StartExpression);
+StartContextExpression: '{' -> pushMode(SKIP_WHITESPACE), pushMode(EXPRESSION), type(StartExpression);
+
+
+mode SKIP_WHITESPACE;
+
+SWS: [ \t]* -> skip, mode(TEMPLATE);
 
 /*
  * TEMPLATE mode In template mode, whitespace is significant. In this mode we are looking for the
@@ -60,7 +65,7 @@ StartLabel: Sharp OpenBrace -> pushMode(LABEL);
 Whitespace: [\t ];
 
 /*
- * 
+ *
  */
 mode LABEL;
 
@@ -70,19 +75,25 @@ EndLabel: '}' -> popMode;
 
 StartNestedExpression: '$' '{' -> pushMode(EXPRESSION), type(StartExpression);
 
-AssetType: ASSET_TYPE_BT | ASSET_TYPE_FIELD | ASSET_TYPE_CODE | ASSET_TYPE_INDICATOR | ASSET_TYPE_DECORATION;
+AssetType: ASSET_TYPE_BT | ASSET_TYPE_FIELD | ASSET_TYPE_CODE | ASSET_TYPE_INDICATOR | ASSET_TYPE_DECORATION | ASSET_TYPE_RULE | ASSET_TYPE_CONDITION;
 ASSET_TYPE_BT: 'business_term';
 ASSET_TYPE_FIELD: 'field';
 ASSET_TYPE_CODE: 'code';
 ASSET_TYPE_INDICATOR: 'indicator';
 ASSET_TYPE_DECORATION: 'decoration';
+ASSET_TYPE_RULE: 'rule';
+ASSET_TYPE_CONDITION: 'condition';
 
-LabelType: LABEL_TYPE_NAME | LABEL_TYPE_VALUE;
+LabelType: LABEL_TYPE_NAME | LABEL_TYPE_VALUE | LABEL_TYPE_DESCRIPTION | LABEL_TYPE_TOOLTIP | LABEL_TYPE_MESSAGE | LABEL_TYPE_MESSAGE_TEMPLATE;
 LABEL_TYPE_NAME: 'name';
 LABEL_TYPE_VALUE: 'value';
+LABEL_TYPE_DESCRIPTION: 'description';
+LABEL_TYPE_TOOLTIP: 'tooltip';
+LABEL_TYPE_MESSAGE: 'message'; 
+LABEL_TYPE_MESSAGE_TEMPLATE: 'message_template';
 
-FieldAssetId: BtAssetId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;// ->type(FieldId);
-BtAssetId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;// -> type(BtId);
+FieldAssetId: FieldId -> type(FieldId);
+BtAssetId: BtId -> type(BtId);
 CodelistAssetId: 'CL' ('-' [a-zA-Z_] [a-zA-Z0-9_]*)+;
 OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 
@@ -152,9 +163,10 @@ AddMonthsFunction: 'add-months';
 AddYearsFunction: 'add-years';
 
 
-NodeId: 'ND' Dash DIGIT+;
-FieldId: ('BT' | 'OPP' | 'OPT') Dash INTEGER (OpenParenthesis (BtId | [a-z]) CloseParenthesis)? (Dash Identifier)+;
-BtId: 'BT' Dash DIGIT+;
+BtId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
+FieldId: BtId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
+NodeId: 'ND' '-' [0-9]+;
+
 CodelistId: Identifier (Dash Identifier)*;
 
 Identifier: LETTER (LETTER | DIGIT)*;
@@ -165,7 +177,6 @@ STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
 UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
 DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
 TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
-DATETIME: DATE WS TIME;
 DURATION: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
