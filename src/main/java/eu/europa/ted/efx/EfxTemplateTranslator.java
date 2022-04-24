@@ -393,6 +393,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
+    final Integer outlineNumber = ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.isEmpty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
@@ -401,7 +402,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INTENDAT_AT_ZERO);
       }
-      this.blockStack.pushChild(content, lineContext);
+      this.blockStack.pushChild(outlineNumber, content, lineContext);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -410,19 +411,23 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(content, lineContext);
+      this.blockStack.pushSibling(outlineNumber, content, lineContext);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(content, lineContext));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, lineContext));
       } else {
-        this.blockStack.pushSibling(content, lineContext);
+        this.blockStack.pushSibling(outlineNumber, content, lineContext);
       }
     }
   }
 
   private int getIndentLevel(TemplateLineContext ctx) {
+    if (ctx.MixedIndent() != null) {
+      throw new ParseCancellationException(MIXED_INDENTATION);
+    }
+  
     if (ctx.Spaces() != null) {
       if (this.indentWith == Indent.UNSET) {
         this.indentWith = Indent.SPACES;

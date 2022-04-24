@@ -13,12 +13,17 @@ Comment: [ \t]* '//' ~[\r\n\f]* EOL* -> skip;
 EmptyLine: [ \t]* EOL+ -> skip;
 
 // Tabs and spaces are used to express structure through indentation (like in Python).  
+MixedIndent: Tabs Spaces MixedIndent* | Spaces Tabs MixedIndent*;
 Tabs: Tab+;
 Spaces: Space+;
 fragment Tab: [\t];
 fragment Space: [ ];
 
 EOL: ('\r'? '\n' | '\r' | '\f');
+
+// For the top level sections, (at the root outline level), the user can specify 
+// an integer value as the root outline number for the section. 
+OutlineNumber: [0-9]+ [ \t]*;
 
 // A double colon triggers a mode change (from default mode to TEMPLATE mode).
 ColonColon: [ \t]* '::' [ \t]* -> pushMode(TEMPLATE);
@@ -34,7 +39,7 @@ StartContextExpression: '{' -> pushMode(SKIP_WHITESPACE), pushMode(EXPRESSION), 
 
 mode SKIP_WHITESPACE;
 
-SWS: [ \t]* -> skip, mode(TEMPLATE);
+SWS: [ \t]+ -> skip, mode(TEMPLATE);
 
 /*
  * TEMPLATE mode In template mode, whitespace is significant. In this mode we are looking for the
@@ -89,7 +94,7 @@ LABEL_TYPE_NAME: 'name';
 LABEL_TYPE_VALUE: 'value';
 LABEL_TYPE_DESCRIPTION: 'description';
 LABEL_TYPE_TOOLTIP: 'tooltip';
-LABEL_TYPE_MESSAGE: 'message'; 
+LABEL_TYPE_MESSAGE: 'message';
 LABEL_TYPE_MESSAGE_TEMPLATE: 'message_template';
 
 FieldAssetId: FieldId -> type(FieldId);
