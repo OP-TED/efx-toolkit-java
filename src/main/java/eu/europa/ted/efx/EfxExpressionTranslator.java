@@ -200,14 +200,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void enterSingleExpression(SingleExpressionContext ctx) {
         final TerminalNode fieldContext = ctx.FieldContext();
         if (fieldContext != null) {
-            // In this case we want the context to be that of the specified field's parent node.
-            // This is a temporary workaround for the fact that the current version of the MDC
-            // passes the field identifier as the context when evaluating conditions for schematron
-            // generation.
-            // TODO: we should fix that in the MDC and revert the next line to push the field's
-            // context when a field is specified as a context of the expression.
-            // see TEDEFO-852
-            this.efxContext.pushNodeContext(symbols.parentNodeOfField(fieldContext.getText()));
+            this.efxContext.pushFieldContext(fieldContext.getText());
         } else {
             final TerminalNode nodeContext = ctx.NodeContext();
             if (nodeContext != null) {
