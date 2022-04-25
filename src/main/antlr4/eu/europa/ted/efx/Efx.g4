@@ -174,10 +174,11 @@ fieldValueReference
 setReference: fieldReference;
 
 fieldReference
-	: fieldReference OpenBracket predicate CloseBracket		# fieldReferenceWithPredicate
-	| noticeReference Slash fieldReference					# fieldInNoticeReference
-	| ctx = context fieldReference							# referenceWithContextOverride
-	| FieldId												# simpleFieldReference
+	: fieldReference OpenBracket predicate CloseBracket					# fieldReferenceWithPredicate
+	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
+	| context = fieldReference ColonColon reference = fieldReference	# fieldReferenceWithFieldContextOverride
+	| context = nodeReference ColonColon reference = fieldReference		# fieldReferenceWithNodeContextOverride
+	| FieldId															# simpleFieldReference
 	;
 
 nodeReference
@@ -189,8 +190,6 @@ noticeReference: Notice OpenParenthesis noticeId=stringExpression CloseParenthes
 
 codelistReference: OpenParenthesis codeListId=codelistId CloseParenthesis;
 codelistId: CodelistId;
-
-context: field = FieldId Colon Colon;
 
 
 /*
