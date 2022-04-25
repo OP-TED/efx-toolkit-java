@@ -64,6 +64,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
  * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
@@ -469,20 +470,26 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitUntypedFieldValueReference(UntypedFieldValueReferenceContext ctx) {
+
+        PathExpression path = this.stack.pop(PathExpression.class);
         String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-        if (fieldId != null) {
-            this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
+        XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
+
+        if (parsedPath.hasAttribute()) {
+            this.stack.push(this.script.mapFieldAttributeReference(parsedPath.getPath(),
+                    parsedPath.getAttribute(), StringExpression.class));
+        } else if (fieldId != null) {
+            this.stack.push(this.script.mapFieldValueReference(path,
                     Expression.types.get(this.symbols.typeOfField(fieldId))));
         } else {
-            this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
-                    PathExpression.class));
+            this.stack.push(this.script.mapFieldValueReference(path, PathExpression.class));
         }
     }
 
     @Override
     public void exitUntypedAttributeValueReference(UntypedAttributeValueReferenceContext ctx) {
-        this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
-                StringExpression.class));
+        this.stack.push(this.script.mapFieldAttributeReference(this.stack.pop(PathExpression.class),
+                ctx.Identifier().getText(), StringExpression.class));
     }
 
     /**

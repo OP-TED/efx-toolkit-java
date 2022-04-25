@@ -45,9 +45,11 @@ public class SymbolResolverMock implements SymbolResolver {
     }
 
     public void loadMapData() throws JsonMappingException, JsonProcessingException {
-        this.fieldById = Map.ofEntries(
+        this.fieldById = Map.ofEntries(//
                 entry("BT-00-Text", new SdkField(fromString(
                         "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
+                entry("BT-00-Attribute", new SdkField(fromString(
+                        "{\"id\":\"BT-00-Attributte\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
                 entry("BT-00-Indicator", new SdkField(fromString(
                         "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
                 entry("BT-00-Code", new SdkField(fromString(
@@ -122,7 +124,8 @@ public class SymbolResolverMock implements SymbolResolver {
     public List<String> expandCodelist(String codelistId) {
         SdkCodelist codelist = codelistById.get(codelistId);
         if (codelist == null) {
-            throw new ParseCancellationException(String.format("Codelist '%s' not found.", codelistId));
+            throw new ParseCancellationException(
+                    String.format("Codelist '%s' not found.", codelistId));
         }
         return codelist.getCodes();
     }

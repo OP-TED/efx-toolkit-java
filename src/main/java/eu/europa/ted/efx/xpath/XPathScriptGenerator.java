@@ -68,7 +68,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public <T extends Expression> T mapFieldAttributeReference(PathExpression fieldReference,
             String attribute, Class<T> type) {
-        return instantiate("(" + fieldReference.script + "/@" + attribute + ")", type);
+        return instantiate(fieldReference.script + "/@" + attribute, type);
     }
 
     @Override
