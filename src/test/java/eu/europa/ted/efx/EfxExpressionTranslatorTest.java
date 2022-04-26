@@ -1,14 +1,11 @@
 package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
-import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 public class EfxExpressionTranslatorTest {
@@ -27,34 +24,6 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testFieldAttributeValueReference() {
         assertEquals("PathNode/TextField/@Attribute = 'text'", test("ND-0", "BT-00-Attribute == 'text'"));
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithAttribute() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path/@attribute"));
-        assertEquals("/path/path", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithMultipleAttributes() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']/@attribute"));
-        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithoutAttribute() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']"));
-        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
-        assertNull(locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithoutPath() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("@attribute"));
-        assertEquals("", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
     }
 
     /*** Boolean expressions ***/
@@ -302,6 +271,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testCountWithNodeContextOverride() {
+        // FIXME: Test causes exception
         assertEquals("count(PathNode/CodeField) = 1",
                 test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
     }
