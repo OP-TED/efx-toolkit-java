@@ -1,0 +1,80 @@
+package eu.europa.ted.efx.xpath;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.xpath.XPath20Parser.AbbrevforwardstepContext;
+import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
+
+public class XPathAttributeLocator extends XPath20BaseListener {
+
+    private int inPredicate = 0;
+    private int splitPosition = -1;
+    private PathExpression path;
+    private String attribute;
+
+    public PathExpression getPath() {
+        return path;
+    }
+
+    public String getAttribute() {
+        return attribute;
+    }
+
+    public Boolean hasAttribute() {
+        return attribute != null;
+    }
+
+    @Override
+    public void enterPredicate(PredicateContext ctx) {
+        this.inPredicate++;
+    }
+
+    @Override
+    public void exitPredicate(PredicateContext ctx) {
+        this.inPredicate--;
+    }
+
+    @Override
+    public void exitAbbrevforwardstep(AbbrevforwardstepContext ctx) {
+        if (this.inPredicate == 0 && ctx.AT() != null) {
+            this.splitPosition = ctx.AT().getSymbol().getCharPositionInLine();
+            this.attribute = ctx.nodetest().getText();
+        }
+    }
+
+    public static XPathAttributeLocator findAttribute(final PathExpression xpath) {
+
+        final XPathAttributeLocator locator = new XPathAttributeLocator();
+
+        if (!xpath.script.contains("@")) {
+            locator.path = xpath;
+            locator.attribute = null;
+            return locator;
+        }
+
+        final CharStream inputStream = CharStreams.fromString(xpath.script);
+        final XPath20Lexer lexer = new XPath20Lexer(inputStream);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final XPath20Parser parser = new XPath20Parser(tokens);
+        final ParseTree tree = parser.xpath();
+
+        final ParseTreeWalker walker = new ParseTreeWalker();
+        walker.walk(locator, tree);
+
+        if (locator.splitPosition > -1) {
+            String path = xpath.script.substring(0, locator.splitPosition);
+            while (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            locator.path = new PathExpression(path) ;
+        } else {
+            locator.path = xpath;
+        }
+
+        return locator;
+    }
+}

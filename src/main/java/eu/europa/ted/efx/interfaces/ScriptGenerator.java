@@ -157,6 +157,12 @@ public interface ScriptGenerator {
    */
   public StringExpression mapStringLiteral(final String literal);
 
+  public DateExpression mapDateLiteral(final String literal);
+
+  public TimeExpression mapTimeLiteral(final String literal);
+
+  public DurationExpression mapDurationLiteral(final String literal);
+
   /*
    * Numeric Functions
    */

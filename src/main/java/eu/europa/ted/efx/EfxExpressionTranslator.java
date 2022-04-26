@@ -2,13 +2,13 @@ package eu.europa.ted.efx;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -20,11 +20,15 @@ import eu.europa.ted.efx.EfxParser.ContainsFunctionContext;
 import eu.europa.ted.efx.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.EfxParser.DateComparisonContext;
 import eu.europa.ted.efx.EfxParser.DateFromStringFunctionContext;
+import eu.europa.ted.efx.EfxParser.DateLiteralContext;
 import eu.europa.ted.efx.EfxParser.DurationComparisonContext;
 import eu.europa.ted.efx.EfxParser.DurationFromDatesFunctionContext;
+import eu.europa.ted.efx.EfxParser.DurationLiteralContext;
 import eu.europa.ted.efx.EfxParser.EndsWithFunctionContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
 import eu.europa.ted.efx.EfxParser.FalseBooleanLiteralContext;
+import eu.europa.ted.efx.EfxParser.FieldReferenceWithFieldContextOverrideContext;
+import eu.europa.ted.efx.EfxParser.FieldReferenceWithNodeContextOverrideContext;
 import eu.europa.ted.efx.EfxParser.FieldValueComparisonContext;
 import eu.europa.ted.efx.EfxParser.FormatNumberFunctionContext;
 import eu.europa.ted.efx.EfxParser.NodeReferenceWithPredicateContext;
@@ -44,15 +48,18 @@ import eu.europa.ted.efx.EfxParser.SubstringFunctionContext;
 import eu.europa.ted.efx.EfxParser.SumFunctionContext;
 import eu.europa.ted.efx.EfxParser.TimeComparisonContext;
 import eu.europa.ted.efx.EfxParser.TimeFromStringFunctionContext;
+import eu.europa.ted.efx.EfxParser.TimeLiteralContext;
 import eu.europa.ted.efx.EfxParser.ToStringFunctionContext;
 import eu.europa.ted.efx.EfxParser.TrueBooleanLiteralContext;
 import eu.europa.ted.efx.EfxParser.UntypedAttributeValueReferenceContext;
 import eu.europa.ted.efx.EfxParser.UntypedFieldValueReferenceContext;
-import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Context.FieldContext;
+import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -61,6 +68,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
  * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
@@ -198,11 +206,11 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void enterSingleExpression(SingleExpressionContext ctx) {
-        final TerminalNode fieldContext = ctx.FieldContext();
+        final TerminalNode fieldContext = ctx.FieldId();
         if (fieldContext != null) {
             this.efxContext.pushFieldContext(fieldContext.getText());
         } else {
-            final TerminalNode nodeContext = ctx.NodeContext();
+            final TerminalNode nodeContext = ctx.NodeId();
             if (nodeContext != null) {
                 this.efxContext.pushNodeContext(nodeContext.getText());
             }
@@ -240,7 +248,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         Expression right = this.stack.pop(Expression.class);
         Expression left = this.stack.pop(Expression.class);
         if (!left.getClass().equals(right.getClass())) {
-            throw new InputMismatchException(
+            throw new ParseCancellationException(
                     "Type mismatch. Cannot compare values of different types: " + left.getClass()
                             + " and " + right.getClass());
         }
@@ -403,6 +411,21 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
+    public void exitDateLiteral(DateLiteralContext ctx) {
+        this.stack.push(this.script.mapDateLiteral(ctx.DATE().getText()));
+    }
+
+    @Override
+    public void exitTimeLiteral(TimeLiteralContext ctx) {
+        this.stack.push(this.script.mapTimeLiteral(ctx.TIME().getText()));
+    }
+
+    @Override
+    public void exitDurationLiteral(DurationLiteralContext ctx) {
+        this.stack.push(this.script.mapDurationLiteral(ctx.DURATION().getText()));
+    }
+
+    @Override
     public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
         this.stack.push(this.script.mapExternalReference(this.stack.pop(PathExpression.class)));
     }
@@ -422,7 +445,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitFieldInNoticeReference(EfxParser.FieldInNoticeReferenceContext ctx) {
+    public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
         PathExpression field = this.stack.pop(PathExpression.class);
         Expression notice = this.stack.pop(Expression.class);
         this.stack.push(this.script.mapFieldInExternalReference(notice, field));
@@ -444,20 +467,26 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitUntypedFieldValueReference(UntypedFieldValueReferenceContext ctx) {
+
+        PathExpression path = this.stack.pop(PathExpression.class);
         String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-        if (fieldId != null) {
-            this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
+        XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
+
+        if (parsedPath.hasAttribute()) {
+            this.stack.push(this.script.mapFieldAttributeReference(parsedPath.getPath(),
+                    parsedPath.getAttribute(), StringExpression.class));
+        } else if (fieldId != null) {
+            this.stack.push(this.script.mapFieldValueReference(path,
                     Expression.types.get(this.symbols.typeOfField(fieldId))));
         } else {
-            this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
-                    PathExpression.class));
+            this.stack.push(this.script.mapFieldValueReference(path, PathExpression.class));
         }
     }
 
     @Override
     public void exitUntypedAttributeValueReference(UntypedAttributeValueReferenceContext ctx) {
-        this.stack.push(this.script.mapFieldValueReference(this.stack.pop(PathExpression.class),
-                StringExpression.class));
+        this.stack.push(this.script.mapFieldAttributeReference(this.stack.pop(PathExpression.class),
+                ctx.Identifier().getText(), StringExpression.class));
     }
 
     /**
@@ -480,14 +509,24 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void enterReferenceWithContextOverride(
-            EfxParser.ReferenceWithContextOverrideContext ctx) {
-        this.efxContext.pushFieldContext(ctx.ctx.getText());
+    public void enterFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
+        final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.context);
+        this.efxContext.push(new FieldContext(contextFieldId, new PathExpression( ctx.context.getText())));
     }
 
     @Override
-    public void exitReferenceWithContextOverride(
-            EfxParser.ReferenceWithContextOverrideContext ctx) {
+    public void exitFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
+        this.efxContext.pop();
+    }
+
+    @Override
+    public void enterFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
+        final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
+        this.efxContext.push( new NodeContext(contextNodeId, new PathExpression(ctx.context.getText())));
+    }
+
+    @Override
+    public void exitFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         this.efxContext.pop();
     }
 

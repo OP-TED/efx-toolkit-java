@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
@@ -22,18 +23,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /**
      * Maps efx operators to xPath operators.
      */
-    private static final Map<String, String> operators =
-            Map.ofEntries(entry("+", "+"), //
-             entry("-", "-"),   //
-             entry("*", "*"),   //
-             entry("/", "div"), //
-             entry("%", "mod"), //
-             entry("==", "="),  //
-             entry("!=", "!="), //
-             entry("<", "<"),   //
-             entry("<=", "<="), //
-             entry(">", ">"),   //
-             entry(">=", ">="));
+    private static final Map<String, String> operators = Map.ofEntries(entry("+", "+"), //
+            entry("-", "-"), //
+            entry("*", "*"), //
+            entry("/", "div"), //
+            entry("%", "mod"), //
+            entry("==", "="), //
+            entry("!=", "!="), //
+            entry("<", "<"), //
+            entry("<=", "<="), //
+            entry(">", ">"), //
+            entry(">=", ">="));
 
 
     @Override
@@ -51,17 +51,24 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public <T extends Expression> T mapFieldValueReference(PathExpression fieldReference,
             Class<T> type) {
-        String suffix = "";
-        if (type == StringExpression.class) {
-            suffix = "/normalize-space(text())";
+
+        if (StringExpression.class.isAssignableFrom(type)) {
+            return this.instantiate(fieldReference.script + "/normalize-space(text())", type);
         }
-        return instantiate(fieldReference.script + suffix, type);
+        if (DateExpression.class.isAssignableFrom(type)) {
+            return this.instantiate(fieldReference.script + "/xs:date(text())", type);
+        }
+        if (TimeExpression.class.isAssignableFrom(type)) {
+            return this.instantiate(fieldReference.script + "/xs:time(text())", type);
+        }
+
+        return instantiate(fieldReference.script, type);
     }
 
     @Override
     public <T extends Expression> T mapFieldAttributeReference(PathExpression fieldReference,
             String attribute, Class<T> type) {
-        return instantiate("(" + fieldReference.script + "/@" + attribute + ")", type);
+        return instantiate(fieldReference.script + "/@" + attribute, type);
     }
 
     @Override
@@ -92,6 +99,20 @@ public class XPathScriptGenerator implements ScriptGenerator {
         return new BooleanExpression(value ? "true()" : "false()");
     }
 
+    @Override
+    public DateExpression mapDateLiteral(String literal) {
+        return new DateExpression("xs:date(" + quoted(literal) + ")");
+    }
+
+    @Override
+    public TimeExpression mapTimeLiteral(String literal) {
+        return new TimeExpression("xs:time(" + quoted(literal) + ")");
+    }
+
+    @Override
+    public DurationExpression mapDurationLiteral(String literal) {
+        return new DurationExpression(literal);
+    }
 
     @Override
     public BooleanExpression mapInListCondition(StringExpression expression,
@@ -112,7 +133,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
             Constructor<T> ctor = type.getConstructor(String.class);
             return ctor.newInstance("(" + expression.script + ")");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ParseCancellationException(e);
         }
     }
 
@@ -274,8 +295,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
             DateExpression endDate) {
-        return new DurationExpression(
-                "xs:date(" + startDate.script + ") - xs:date(" + endDate.script + ")");
+        return new DurationExpression(startDate.script + " - " + endDate.script);
     }
 
     private <T extends Expression> T instantiate(String value, Class<T> type) {
@@ -283,10 +303,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
             Constructor<T> constructor = type.getConstructor(String.class);
             return constructor.newInstance(value);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ParseCancellationException(e);
         }
     }
 
-
-
+    private String quoted(final String text) {
+        return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";
+    }
 }

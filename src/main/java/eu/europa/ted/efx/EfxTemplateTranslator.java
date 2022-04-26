@@ -3,11 +3,11 @@ package eu.europa.ted.efx;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.InputMismatchException;
 import java.util.List;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
@@ -229,7 +229,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    StringExpression assetId = this.script.mapString(ctx.BtAssetId().getText());
+    StringExpression assetId = this.script.mapString(ctx.BtId().getText());
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
     this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
         List.of(this.script.mapString(ASSET_TYPE_BT), this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
@@ -237,7 +237,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
-    final String fieldId = ctx.FieldAssetId().getText();
+    final String fieldId = ctx.FieldId().getText();
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
 
     if (labelType.script.equals("value")) {
@@ -251,7 +251,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void exitShorthandFieldValueLabelReference(ShorthandFieldValueLabelReferenceContext ctx) {
-    this.shorthandFieldValueLabelReference(ctx.FieldAssetId().getText());
+    this.shorthandFieldValueLabelReference(ctx.FieldId().getText());
   }
 
 
@@ -275,7 +275,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
                 this.script.mapString(this.symbols.rootCodelistOfField(fieldId)), this.script.mapString("."), valueReference))));
         break;
       default:
-        throw new InputMismatchException(String.format(
+        throw new ParseCancellationException(String.format(
             "Unexpected field type '%s'. Expected a field of either type 'code' or 'indicator'.",
             fieldType));
     }
@@ -316,7 +316,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   public void exitShorthandContextFieldLabelReference(
       ShorthandContextFieldLabelReferenceContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new InputMismatchException(
+      throw new ParseCancellationException(
           "The #value shorthand syntax can only be used in a field is declared as context.");
     }
     this.shorthandFieldValueLabelReference(this.efxContext.symbol());
@@ -361,7 +361,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   public void exitShorthandContextFieldValueReference(
       ShorthandContextFieldValueReferenceContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new InputMismatchException(
+      throw new ParseCancellationException(
           "The $value shorthand syntax can only be used when a field is declated as the context.");
     }
     this.stack.push(this.script.mapFieldValueReference(
@@ -393,15 +393,16 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
+    final Integer outlineNumber = ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.isEmpty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
-      throw new InputMismatchException(INDENTATION_LEVEL_SKIPPED);
+      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new InputMismatchException(START_INTENDAT_AT_ZERO);
+        throw new ParseCancellationException(START_INTENDAT_AT_ZERO);
       }
-      this.blockStack.pushChild(content, lineContext);
+      this.blockStack.pushChild(outlineNumber, content, lineContext);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -410,29 +411,33 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(content, lineContext);
+      this.blockStack.pushSibling(outlineNumber, content, lineContext);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(content, lineContext));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, lineContext));
       } else {
-        this.blockStack.pushSibling(content, lineContext);
+        this.blockStack.pushSibling(outlineNumber, content, lineContext);
       }
     }
   }
 
   private int getIndentLevel(TemplateLineContext ctx) {
+    if (ctx.MixedIndent() != null) {
+      throw new ParseCancellationException(MIXED_INDENTATION);
+    }
+  
     if (ctx.Spaces() != null) {
       if (this.indentWith == Indent.UNSET) {
         this.indentWith = Indent.SPACES;
         this.indentSpaces = ctx.Spaces().getText().length();
       } else if (this.indentWith == Indent.TABS) {
-        throw new InputMismatchException(MIXED_INDENTATION);
+        throw new ParseCancellationException(MIXED_INDENTATION);
       }
 
       if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-        throw new InputMismatchException(
+        throw new ParseCancellationException(
             String.format(INCONSISTENT_INDENTATION_SPACES, this.indentSpaces));
       }
       return ctx.Spaces().getText().length() / this.indentSpaces;
@@ -440,7 +445,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (this.indentWith == Indent.UNSET) {
         this.indentWith = Indent.TABS;
       } else if (this.indentWith == Indent.SPACES) {
-        throw new InputMismatchException(MIXED_INDENTATION);
+        throw new ParseCancellationException(MIXED_INDENTATION);
       }
 
       return ctx.Tabs().getText().length();

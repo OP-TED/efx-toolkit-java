@@ -1,12 +1,14 @@
 package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 public class EfxExpressionTranslatorTest {
@@ -20,6 +22,41 @@ public class EfxExpressionTranslatorTest {
                 ThrowingErrorListener.INSTANCE);
     }
 
+    /*** Value References ***/
+
+    @Test
+    public void testFieldAttributeValueReference() {
+        assertEquals("PathNode/TextField/@Attribute = 'text'", test("BT-00-Text", "BT-00-Attribute == 'text'"));
+    }
+
+    @Test
+    public void testXPathAttributeLocator_WithAttribute() {
+        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path/@attribute"));
+        assertEquals("/path/path", locator.getPath().script);
+        assertEquals("attribute", locator.getAttribute());
+    }
+
+    @Test
+    public void testXPathAttributeLocator_WithMultipleAttributes() {
+        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']/@attribute"));
+        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
+        assertEquals("attribute", locator.getAttribute());
+    }
+
+    @Test
+    public void testXPathAttributeLocator_WithoutAttribute() {
+        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']"));
+        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
+        assertNull(locator.getAttribute());
+    }
+
+    @Test
+    public void testXPathAttributeLocator_WithoutPath() {
+        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("@attribute"));
+        assertEquals("", locator.getPath().script);
+        assertEquals("attribute", locator.getAttribute());
+    }
+
     /*** Boolean expressions ***/
 
     @Test
@@ -27,7 +64,7 @@ public class EfxExpressionTranslatorTest {
         assertEquals("(true() or true()) and false()",
                 test("BT-00-Text", "(ALWAYS or TRUE) and NEVER"));
     }
-    
+
     @Test
     public void testLogicalOrCondition() {
         assertEquals("true() or false()", test("BT-00-Text", "ALWAYS or NEVER"));
@@ -55,6 +92,42 @@ public class EfxExpressionTranslatorTest {
     public void testComparisonCondition() {
         assertEquals("2 > 1 and 3 >= 1 and 1 = 1 and 4 < 5 and 5 <= 5",
                 test("BT-00-Text", "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5"));
+    }
+
+    @Test
+    public void testDateComparison_OfTwoDateLiterals() {
+        assertEquals("xs:date('2018-01-01') > xs:date('2018-01-01')",
+                test("BT-00-Text", "2018-01-01 > 2018-01-01"));
+    }
+
+    @Test
+    public void testDateComparison_OfTwoDateReferences() {
+        assertEquals("PathNode/DateField/xs:date(text()) = PathNode/DateField/xs:date(text())",
+                test("BT-00-Text", "BT-00-Date == BT-00-Date"));
+    }
+
+    @Test
+    public void testDateComparison_OfDateReferenceAndDateFunction() {
+        assertEquals("PathNode/DateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
+                test("BT-00-Text", "BT-00-Date == date(BT-00-Text)"));
+    }
+    
+    @Test
+    public void testTimeComparison_OfTwoTimeLiterals() {
+        assertEquals("xs:time('13:00:10') > xs:time('21:20:30')",
+                test("BT-00-Text", "13:00:10 > 21:20:30"));
+    }
+
+    @Test
+    public void testTimeComparison_OfTwoTimeReferences() {
+        assertEquals("PathNode/TimeField/xs:time(text()) = PathNode/TimeField/xs:time(text())",
+                test("BT-00-Text", "BT-00-Time == BT-00-Time"));
+    }
+
+    @Test
+    public void testTimeComparison_OfTimeReferenceAndTimeFunction() {
+        assertEquals("PathNode/TimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
+                test("BT-00-Text", "BT-00-Time == time(BT-00-Text)"));
     }
 
     @Test
@@ -204,10 +277,21 @@ public class EfxExpressionTranslatorTest {
     /*** Duration functions ***/
 
     @Test
-    public void testDurationFromDatesFunction() {
-        assertEquals(
-                "xs:date(PathNode/DateField) - xs:date(PathNode/DateField)",
+    public void testDurationFromDatesFunction_UsingTwoDateFields() {
+        assertEquals("PathNode/DateField/xs:date(text()) - PathNode/DateField/xs:date(text())",
                 test("ND-0", "duration(BT-00-Date, BT-00-Date)"));
+    }
+
+    @Test
+    public void testDurationFromDatesFunction_UsingOneNonDateField() {
+        assertThrows(ParseCancellationException.class,
+                () -> test("ND-0", "duration(BT-00-Date, BT-00-Text)"));
+    }
+
+    @Test
+    public void testDurationFromDatesFunction_UsingTwoDateLiterals() {
+        assertEquals("xs:date('2019-12-01') - xs:date('2021-01-12')",
+                test("ND-0", "duration(2019-12-01, 2021-01-12)"));
     }
 
     @Test
