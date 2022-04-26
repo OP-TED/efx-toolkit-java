@@ -49,7 +49,7 @@ public class SymbolResolverMock implements SymbolResolver {
                 entry("BT-00-Text", new SdkField(fromString(
                         "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
                 entry("BT-00-Attribute", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Attributte\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
+                        "{\"id\":\"BT-00-Attribute\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
                 entry("BT-00-Indicator", new SdkField(fromString(
                         "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
                 entry("BT-00-Code", new SdkField(fromString(
