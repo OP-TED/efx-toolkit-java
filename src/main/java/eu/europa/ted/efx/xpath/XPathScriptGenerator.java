@@ -111,7 +111,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
     @Override
     public DurationExpression mapDurationLiteral(String literal) {
-        return new DurationExpression(literal);
+        return new DurationExpression("xs:duration(" + quoted(literal) + ")");
     }
 
     @Override
