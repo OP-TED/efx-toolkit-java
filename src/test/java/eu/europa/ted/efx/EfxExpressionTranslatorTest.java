@@ -137,6 +137,12 @@ public class EfxExpressionTranslatorTest {
                 test("ND-0", "BT-00-Time == time(BT-00-Text)"));
     }
 
+    @Test
+    public void testDurationComparison_OfTwoDurationLiterals() {
+        // FIXME: Test causes exception. Duration literal not recognized ?
+        assertEquals("xs:duration('P1Y') = xs:duration('P12M')",
+                test("BT-00-Text", "P1Y == P12M"));
+    }
 
     @Test
     public void testMultiplicationExpression() {
