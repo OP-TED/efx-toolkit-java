@@ -29,6 +29,16 @@ public class EfxExpressionTranslatorTest {
     /*** Boolean expressions ***/
 
     @Test
+    public void testAlwaysCondition() {
+        assertEquals("true()", test("BT-00-Text", "ALWAYS"));
+    }
+
+    @Test
+    public void testNeverCondition() {
+        assertEquals("false()", test("BT-00-Text", "NEVER"));
+    }
+
+    @Test
     public void testParenthesizedBooleanExpression() {
         assertEquals("(true() or true()) and false()",
                 test("BT-00-Text", "(ALWAYS or TRUE) and NEVER"));
@@ -44,16 +54,27 @@ public class EfxExpressionTranslatorTest {
         assertEquals("true() and 1 + 1 = 2", test("BT-00-Text", "ALWAYS and 1 + 1 == 2"));
     }
 
-
-
     @Test
-    public void testAlwaysCondition() {
-        assertEquals("true()", test("BT-00-Text", "ALWAYS"));
+    public void testInListCondition() {
+        assertEquals("not('x' = ('a','b','c'))", test("BT-00-Text", "'x' not in ('a', 'b', 'c')"));
     }
 
     @Test
-    public void testNeverCondition() {
-        assertEquals("false()", test("BT-00-Text", "NEVER"));
+    public void testEmptinessCondition() {
+        assertEquals("PathNode/TextField/normalize-space(text()) != ''",
+                test("ND-0", "BT-00-Text is not empty"));
+    }
+
+    @Test
+    public void testPresenceCondition() {
+        assertEquals("PathNode/TextField",
+                test("ND-0", "BT-00-Text is present"));
+    }
+
+    @Test
+    public void testLikePatternCondition() {
+        assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
+                test("BT-00-Text", "'123' like '[0-9]*'"));
     }
 
 
@@ -99,28 +120,6 @@ public class EfxExpressionTranslatorTest {
                 test("ND-0", "BT-00-Time == time(BT-00-Text)"));
     }
 
-    @Test
-    public void testInListCondition() {
-        assertEquals("not('x' = ('a','b','c'))", test("BT-00-Text", "'x' not in ('a', 'b', 'c')"));
-    }
-
-    @Test
-    public void testEmptinessCondition() {
-        assertEquals("PathNode/TextField/normalize-space(text()) != ''",
-                test("ND-0", "BT-00-Text is not empty"));
-    }
-
-    @Test
-    public void testPresenceCondition() {
-        assertEquals("PathNode/TextField",
-                test("ND-0", "BT-00-Text is present"));
-    }
-
-    @Test
-    public void testLikePatternCondition() {
-        assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
-                test("BT-00-Text", "'123' like '[0-9]*'"));
-    }
 
     @Test
     public void testMultiplicationExpression() {
