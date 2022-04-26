@@ -26,7 +26,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldAttributeValueReference() {
-        assertEquals("PathNode/TextField/@Attribute = 'text'", test("BT-00-Text", "BT-00-Attribute == 'text'"));
+        assertEquals("PathNode/TextField/@Attribute = 'text'", test("ND-0", "BT-00-Attribute == 'text'"));
     }
 
     @Test
@@ -103,13 +103,13 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testDateComparison_OfTwoDateReferences() {
         assertEquals("PathNode/DateField/xs:date(text()) = PathNode/DateField/xs:date(text())",
-                test("BT-00-Text", "BT-00-Date == BT-00-Date"));
+                test("ND-0", "BT-00-Date == BT-00-Date"));
     }
 
     @Test
     public void testDateComparison_OfDateReferenceAndDateFunction() {
         assertEquals("PathNode/DateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
-                test("BT-00-Text", "BT-00-Date == date(BT-00-Text)"));
+                test("ND-0", "BT-00-Date == date(BT-00-Text)"));
     }
     
     @Test
@@ -121,13 +121,13 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testTimeComparison_OfTwoTimeReferences() {
         assertEquals("PathNode/TimeField/xs:time(text()) = PathNode/TimeField/xs:time(text())",
-                test("BT-00-Text", "BT-00-Time == BT-00-Time"));
+                test("ND-0", "BT-00-Time == BT-00-Time"));
     }
 
     @Test
     public void testTimeComparison_OfTimeReferenceAndTimeFunction() {
         assertEquals("PathNode/TimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
-                test("BT-00-Text", "BT-00-Time == time(BT-00-Text)"));
+                test("ND-0", "BT-00-Time == time(BT-00-Text)"));
     }
 
     @Test
@@ -138,13 +138,13 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testEmptinessCondition() {
         assertEquals("PathNode/TextField/normalize-space(text()) != ''",
-                test("BT-00-Text", "BT-00-Text is not empty"));
+                test("ND-0", "BT-00-Text is not empty"));
     }
 
     @Test
     public void testPresenceCondition() {
         assertEquals("PathNode/TextField",
-                test("BT-00-Text", "BT-00-Text is present"));
+                test("ND-0", "BT-00-Text is present"));
     }
 
     @Test
@@ -297,6 +297,6 @@ public class EfxExpressionTranslatorTest {
     @Test
     public void testPredicate() {
         assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']",
-                test("BT-00-Text", "BT-00-Indicator[BT-00-Code == 'a']"));
+                test("ND-0", "BT-00-Indicator[BT-00-Code == 'a']"));
     }
 }
