@@ -299,4 +299,10 @@ public class EfxExpressionTranslatorTest {
         assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']",
                 test("ND-0", "BT-00-Indicator[BT-00-Code == 'a']"));
     }
+
+    @Test
+    public void testCountWithNodeContextOverride() {
+        assertEquals("count(PathNode/CodeField) = 1",
+                test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
+    }
 }
