@@ -77,11 +77,28 @@ public class EfxExpressionTranslatorTest {
                 test("BT-00-Text", "'123' like '[0-9]*'"));
     }
 
+    @Test
+    public void testFieldValueComparison() {
+        assertEquals("PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
+                test("ND-0", "BT-00-Text == BT-00-Text-Multilingual"));
+    }
 
     @Test
-    public void testComparisonCondition() {
+    public void testBooleanComparison() {
+        assertEquals("false() != true()",
+                test("BT-00-Text", "NEVER != ALWAYS"));
+    }
+
+    @Test
+    public void testNumericComparison() {
         assertEquals("2 > 1 and 3 >= 1 and 1 = 1 and 4 < 5 and 5 <= 5",
                 test("BT-00-Text", "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5"));
+    }
+
+    @Test
+    public void testStringComparison() {
+        assertEquals("'aaa' < 'bbb'",
+                test("BT-00-Text", "'aaa' < 'bbb'"));
     }
 
     @Test
