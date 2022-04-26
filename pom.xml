@@ -79,6 +79,33 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.8</version>
+        <configuration>
+          <excludes>
+            <exclude>**/EfxBaseListener.class</exclude>
+            <exclude>**/EfxLexer.class</exclude>
+            <exclude>**/EfxParser*.class</exclude>
+            <exclude>**/XPath20*.class</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+              <goals>
+                  <goal>prepare-agent</goal>
+              </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
