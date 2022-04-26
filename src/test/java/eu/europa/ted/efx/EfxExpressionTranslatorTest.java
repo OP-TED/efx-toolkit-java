@@ -293,7 +293,6 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testCountWithNodeContextOverride() {
-        // FIXME: Test causes exception
         assertEquals("count(PathNode/CodeField) = 1",
                 test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
     }

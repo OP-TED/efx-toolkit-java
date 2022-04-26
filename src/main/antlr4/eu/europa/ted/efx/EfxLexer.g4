@@ -116,6 +116,7 @@ OpenBracket: '[';
 CloseBracket: ']';
 
 Dash: '-';
+DoubleColon: ColonColon -> type(ColonColon);
 
 /*
  * Curly braces are not used by expressions themselves. So we use them to indicate the start and end

@@ -511,23 +511,29 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void enterFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
         final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.context);
-        this.efxContext.push(new FieldContext(contextFieldId, new PathExpression( ctx.context.getText())));
+        this.efxContext.push(new FieldContext(contextFieldId, this.symbols.absoluteXpathOfField(ctx.context.getText())));
     }
 
     @Override
     public void exitFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
-        this.efxContext.pop();
+        final PathExpression field = this.stack.pop(PathExpression.class);
+        this.stack.pop(PathExpression.class);  // The context field is not needed in the actual expression and must be removed from the stack.
+        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
+        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
     }
 
     @Override
     public void enterFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
-        this.efxContext.push( new NodeContext(contextNodeId, new PathExpression(ctx.context.getText())));
+        this.efxContext.push( new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(ctx.context.getText())));
     }
 
     @Override
     public void exitFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
-        this.efxContext.pop();
+        final PathExpression field = this.stack.pop(PathExpression.class);
+        this.stack.pop(PathExpression.class);   // The context node is not needed in the actual expression and must be removed from the stack.
+        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
+        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
     }
 
     @Override
