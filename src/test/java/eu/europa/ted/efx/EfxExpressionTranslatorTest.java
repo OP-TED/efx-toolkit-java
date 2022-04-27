@@ -245,7 +245,6 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-        // FIXME: Test causes exception: Unknown node identifier 'ND-0[BT-00-Indicator==TRUE]'.
         assertEquals("PathNode/IntegerField",
                 test("BT-00-Text", "ND-0[BT-00-Indicator == TRUE]::BT-00-Integer"));
     }

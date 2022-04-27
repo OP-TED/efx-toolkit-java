@@ -185,10 +185,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
      */
     protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
-        SimpleNodeReferenceContext nodeReferenceContext =
-                ctx.getChild(SimpleNodeReferenceContext.class, 0);
-        if (nodeReferenceContext != null) {
-            return nodeReferenceContext.NodeId().getText();
+        if (ctx instanceof SimpleNodeReferenceContext) {
+            return ((SimpleNodeReferenceContext)ctx).NodeId().getText();
         }
 
         for (ParseTree child : ctx.children) {
@@ -525,7 +523,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void enterFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
-        this.efxContext.push( new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(ctx.context.getText())));
+        this.efxContext.push(new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(contextNodeId)));
     }
 
     @Override
