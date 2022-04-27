@@ -85,6 +85,12 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testFieldValueComparison_WithNumericLiteral() {
+        assertEquals("PathNode/IntegerField > 0",
+                test("ND-0", "BT-00-Integer > 0"));
+    }
+
+    @Test
     public void testBooleanComparison() {
         assertEquals("false() != true()",
                 test("BT-00-Text", "NEVER != ALWAYS"));
@@ -212,9 +218,36 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testFieldReferenceInOtherNotice() {
+        // FIXME: Test causes exception
+        assertEquals("",
+                test("ND-0", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text"));
+    }
+
+    @Test
+    public void testFieldReferenceWithFieldContextOverride() {
+        assertEquals("../../TextField/normalize-space(text())",
+                test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Text"));
+    }
+
+    @Test
+    public void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
+        // FIXME: "/normalize-space(text())" is appended but it shouldn't be
+        assertEquals("../../IntegerField",
+                test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Integer"));
+    }
+
+    @Test
     public void testFieldReferenceWithNodeContextOverride() {
         assertEquals("PathNode/IntegerField",
                 test("BT-00-Text", "ND-0::BT-00-Integer"));
+    }
+
+    @Test
+    public void testFieldReferenceWithNodeContextOverride_WithPredicate() {
+        // FIXME: Test causes exception: Unknown node identifier 'ND-0[BT-00-Indicator==TRUE]'.
+        assertEquals("PathNode/IntegerField",
+                test("BT-00-Text", "ND-0[BT-00-Indicator == TRUE]::BT-00-Integer"));
     }
 
     @Test

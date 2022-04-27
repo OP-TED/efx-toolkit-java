@@ -79,7 +79,9 @@ public class SymbolResolverMock implements SymbolResolver {
                 entry("BT-00-Phone", new SdkField(fromString(
                         "{\"id\":\"BT-00-Phone\",\"type\":\"phone\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/PhoneField\",\"xpathRelative\":\"PathNode/PhoneField\"}}"))),
                 entry("BT-00-Email", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))));
+                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))),
+                entry("BT-01-SubLevel-Text", new SdkField(fromString(
+                        "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))));
 
         this.nodeById = Map.ofEntries(entry("ND-0", new SdkNode("ND-0", null, "/*", "/*", false)));
 
