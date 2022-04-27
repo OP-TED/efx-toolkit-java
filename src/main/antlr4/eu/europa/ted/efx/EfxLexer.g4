@@ -173,6 +173,13 @@ BtId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
 FieldId: BtId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
 NodeId: 'ND' '-' [0-9]+;
 
+/**
+ * Effective order of precedence is the order of declaration. 
+ * Duration tokens must take precedence over Identifier tokens to avoid using delimiters like quotes.
+ * Therefore DurationLiteral must be declared before Identifier. 
+ */
+DurationLiteral: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
+
 CodelistId: Identifier (Dash Identifier)*;
 
 Identifier: LETTER (LETTER | DIGIT)*;
@@ -183,7 +190,6 @@ STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
 UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
 DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
 TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
-DURATION: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
 Multiplication: '*' | '/' | '%';

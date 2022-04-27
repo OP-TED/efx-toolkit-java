@@ -159,7 +159,7 @@ trueBooleanLiteral: Always | True;
 falseBooleanLiteral: Never | False;
 dateLiteral: DATE;
 timeLiteral: TIME;
-durationLiteral: DURATION;
+durationLiteral: DurationLiteral;
 
 
 /*

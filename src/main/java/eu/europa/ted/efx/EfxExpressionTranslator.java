@@ -422,7 +422,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitDurationLiteral(DurationLiteralContext ctx) {
-        this.stack.push(this.script.mapDurationLiteral(ctx.DURATION().getText()));
+        this.stack.push(this.script.mapDurationLiteral(ctx.DurationLiteral().getText()));
     }
 
     @Override
