@@ -74,14 +74,14 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
  * target scripting language.
  * 
- * The target language syntax is not hadcoded into the translator so that this class can be reused
+ * The target language syntax is not hardcoded into the translator so that this class can be reused
  * to translate to several different languages.
  * 
- * Appart from writing expressions that can be translated and evaluated in a target scripting
+ * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
- * can be traslated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
+ * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
  * {@link EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates you
- * need to use the {@link EfxTemplateTranslator} which derrives from this class.
+ * need to use the {@link EfxTemplateTranslator} which derives from this class.
  */
 public class EfxExpressionTranslator extends EfxBaseListener {
 
@@ -155,7 +155,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursivelly searches
+     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
      * for a {@link SimpleFieldReferenceContext} to locate a field identifier.
      */
     protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
@@ -180,8 +180,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursivelly searches
-     * for a {@link SimpleNodeReferenceContext} to locate a field identifier.
+     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
+     * for a {@link SimpleNodeReferenceContext} to locate a node identifier.
      */
     protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
