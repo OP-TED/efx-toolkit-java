@@ -27,7 +27,7 @@ public class Expression extends CallStackObjectBase {
             entry("indicator", BooleanExpression.class), //
             entry("amount", NumericExpression.class), // 
             entry("number", NumericExpression.class), //
-            entry("measure", NumericExpression.class), //
+            entry("measure", DurationExpression.class), //
             entry("code", StringExpression.class),
             entry("internal-code", StringExpression.class), //
             entry("integer", NumericExpression.class), //

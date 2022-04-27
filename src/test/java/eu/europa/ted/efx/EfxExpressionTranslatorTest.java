@@ -267,6 +267,12 @@ public class EfxExpressionTranslatorTest {
                 test("BT-00-Text", "BT-00-Indicator"));
     }
 
+    @Test
+    public void testFieldReference_ForDurationFields() {
+        assertEquals("xs:duration(if (lower-case(PathNode/MeasureField/@unit)='w') then concat('P', PathNode/MeasureField/number() * 7, 'D') else concat('P', PathNode/MeasureField/number(), upper-case(/@unit)))",
+                test("ND-0", "BT-00-Measure"));
+    } 
+
 
     /*** Boolean functions ***/
 

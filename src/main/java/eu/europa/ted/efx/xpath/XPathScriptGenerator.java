@@ -60,6 +60,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
         }
         if (TimeExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/xs:time(text())", type);
+        }        
+        if (DurationExpression.class.isAssignableFrom(type)) {
+            return this.instantiate("xs:duration(if (lower-case(" + fieldReference.script + "/@unit)='w') then concat('P', " + fieldReference.script + "/number() * 7, 'D') else concat('P', " + fieldReference.script + "/number(), upper-case("+"/@unit)))", type);
         }
 
         return instantiate(fieldReference.script, type);

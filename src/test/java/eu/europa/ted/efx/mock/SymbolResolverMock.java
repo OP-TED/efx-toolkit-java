@@ -62,6 +62,8 @@ public class SymbolResolverMock implements SymbolResolver {
                         "{\"id\":\"BT-00-Date\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/DateField\",\"xpathRelative\":\"PathNode/DateField\"}}"))),
                 entry("BT-00-Time", new SdkField(fromString(
                         "{\"id\":\"BT-00-Time\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TimeField\",\"xpathRelative\":\"PathNode/TimeField\"}}"))),
+                entry("BT-00-Measure", new SdkField(fromString(
+                        "{\"id\":\"BT-00-Measure\",\"type\":\"measure\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/MeasureField\",\"xpathRelative\":\"PathNode/MeasureField\"}}"))),
                 entry("BT-00-Integer", new SdkField(fromString(
                         "{\"id\":\"BT-00-Integer\",\"type\":\"integer\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IntegerField\",\"xpathRelative\":\"PathNode/IntegerField\"}}"))),
                 entry("BT-00-Amount", new SdkField(fromString(
