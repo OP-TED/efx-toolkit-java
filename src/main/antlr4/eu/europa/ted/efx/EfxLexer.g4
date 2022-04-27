@@ -115,7 +115,6 @@ CloseParenthesis: ')';
 OpenBracket: '[';
 CloseBracket: ']';
 
-Dash: '-';
 DoubleColon: ColonColon -> type(ColonColon);
 
 /*
@@ -180,20 +179,21 @@ NodeId: 'ND' '-' [0-9]+;
  */
 DurationLiteral: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
-CodelistId: Identifier (Dash Identifier)*;
+CodelistId: Identifier ('-' Identifier)*;
 
 Identifier: LETTER (LETTER | DIGIT)*;
 
 INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;
 STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
-UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
-DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
+UUIDV4: '{' HEX4 HEX4 '-' HEX4 '-' HEX4 '-' HEX4 '-' HEX4 HEX4 HEX4 '}';
+DATE: DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
 
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
 Multiplication: '*' | '/' | '%';
-Addition: '+' | '-';
+Addition: '+';
+Subtraction: '-';
 Comma: ',';
 Slash: '/';
 SlashAt: '/@';

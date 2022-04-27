@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -12,6 +13,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
 import eu.europa.ted.efx.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.EfxParser.CodeListContext;
 import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
@@ -31,12 +33,14 @@ import eu.europa.ted.efx.EfxParser.FieldReferenceWithFieldContextOverrideContext
 import eu.europa.ted.efx.EfxParser.FieldReferenceWithNodeContextOverrideContext;
 import eu.europa.ted.efx.EfxParser.FieldValueComparisonContext;
 import eu.europa.ted.efx.EfxParser.FormatNumberFunctionContext;
+import eu.europa.ted.efx.EfxParser.LeftCalculatedDurationComparisonContext;
 import eu.europa.ted.efx.EfxParser.NodeReferenceWithPredicateContext;
 import eu.europa.ted.efx.EfxParser.NotFunctionContext;
 import eu.europa.ted.efx.EfxParser.NumberFunctionContext;
 import eu.europa.ted.efx.EfxParser.NumericComparisonContext;
 import eu.europa.ted.efx.EfxParser.NumericLiteralContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedNumericExpressionContext;
+import eu.europa.ted.efx.EfxParser.RightCalculatedDurationComparisonContext;
 import eu.europa.ted.efx.EfxParser.SimpleFieldReferenceContext;
 import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
@@ -56,10 +60,10 @@ import eu.europa.ted.efx.EfxParser.UntypedFieldValueReferenceContext;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.ContextStack;
-import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.ContextStack;
+import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -293,6 +297,32 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         DurationExpression right = this.stack.pop(DurationExpression.class);
         DurationExpression left = this.stack.pop(DurationExpression.class);
         this.stack.push(this.script.mapComparisonOperator(left, ctx.operator.getText(), right));
+    }
+
+    /**
+     * This handles an expression of the form "leftDate - rightDate <= duration".
+     * Tokens are pushed in the stack in the order they appear in the expression (and popped in the inverse order).
+     */
+    @Override
+    public void exitLeftCalculatedDurationComparison(LeftCalculatedDurationComparisonContext ctx) {
+        final DurationExpression duration = this.stack.pop(DurationExpression.class);
+        final DateExpression rightDate = this.stack.pop(DateExpression.class);
+        final DateExpression leftDate = this.stack.pop(DateExpression.class);
+        this.stack.push(this.script.mapDateSpanToDurationComparison(leftDate, rightDate, ctx.operator.getText(), duration));
+    }
+
+    /**
+     * This handles and expression of the form "duration >= leftDate - rightDate".
+     * Tokens are pushed in the stack in the order they appear in the expression (and popped in the inverse order).
+     * The operator needs to be inverted before calling the ScriptGenerator.
+     */
+    @Override
+    public void exitRightCalculatedDurationComparison(RightCalculatedDurationComparisonContext ctx) {
+        final DateExpression rightDate = this.stack.pop(DateExpression.class);
+        final DateExpression leftDate = this.stack.pop(DateExpression.class);
+        final DurationExpression duration = this.stack.pop(DurationExpression.class);
+        final String invertedOperator = ctx.operator.getText().replace(">", "X").replace("<", ">").replace("X", "<");
+        this.stack.push(this.script.mapDateSpanToDurationComparison(leftDate, rightDate, invertedOperator, duration));
     }
 
     @Override

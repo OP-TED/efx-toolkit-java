@@ -1,6 +1,6 @@
 grammar Efx;
 
-options { tokenVocab = EfxLexer;}
+options { tokenVocab=EfxLexer;}
 
 /*** Using the lexer's DEFAULT_MODE ***/
 
@@ -105,32 +105,34 @@ contextDeclarationBlock
 expression: numericExpression | stringExpression | booleanExpression | dateExpression | timeExpression | durationExpression;
 
 booleanExpression
-	: OpenParenthesis booleanExpression CloseParenthesis			# parenthesizedBooleanExpression
-	| booleanExpression operator=Or booleanExpression				# logicalOrCondition
-	| booleanExpression operator=And booleanExpression				# logicalAndCondition
-	| stringExpression modifier = Not? In list						# inListCondition
-	| stringExpression Is modifier = Not? Empty						# emptinessCondition
-	| setReference Is modifier = Not? Present						# presenceCondition
-	| stringExpression modifier = Not? Like pattern = STRING		# likePatternCondition
-	| fieldValueReference operator = Comparison fieldValueReference	# fieldValueComparison
-	| booleanExpression operator = Comparison booleanExpression		# booleanComparison
-	| numericExpression operator = Comparison numericExpression		# numericComparison
-	| stringExpression operator = Comparison stringExpression		# stringComparison
-	| dateExpression operator = Comparison dateExpression			# dateComparison
-	| timeExpression operator = Comparison timeExpression			# timeComparison
-	| durationExpression operator = Comparison durationExpression	# durationComparison
-	| booleanLiteral 												# booleanLiteralExpression
-	| booleanFunction 												# booleanFunctionExpression
-	| fieldValueReference 											# booleanReferenceExpression
+	: OpenParenthesis booleanExpression CloseParenthesis									# parenthesizedBooleanExpression
+	| booleanExpression operator=Or booleanExpression										# logicalOrCondition
+	| booleanExpression operator=And booleanExpression										# logicalAndCondition
+	| stringExpression modifier=Not? In list												# inListCondition
+	| stringExpression Is modifier=Not? Empty												# emptinessCondition
+	| setReference Is modifier=Not? Present													# presenceCondition
+	| stringExpression modifier=Not? Like pattern=STRING									# likePatternCondition
+	| fieldValueReference operator=Comparison fieldValueReference							# fieldValueComparison
+	| booleanExpression operator=Comparison booleanExpression								# booleanComparison
+	| numericExpression operator=Comparison numericExpression								# numericComparison
+	| stringExpression operator=Comparison stringExpression									# stringComparison
+	| dateExpression operator=Comparison dateExpression										# dateComparison
+	| timeExpression operator=Comparison timeExpression										# timeComparison
+	| durationExpression operator=Comparison durationExpression								# durationComparison
+	| dateExpression Subtraction dateExpression operator=Comparison durationExpression 		# leftCalculatedDurationComparison 
+	| durationExpression operator=Comparison dateExpression Subtraction dateExpression  	# rightCalculatedDurationComparison 
+	| booleanLiteral 																		# booleanLiteralExpression
+	| booleanFunction 																		# booleanFunctionExpression
+	| fieldValueReference 																	# booleanReferenceExpression
 	;
 	
 numericExpression
-	: numericExpression operator=Multiplication numericExpression	# multiplicationExpression
-	| numericExpression operator=Addition numericExpression			# additionExpression
-	| OpenParenthesis numericExpression CloseParenthesis			# parenthesizedNumericExpression
-	| numericLiteral 												# numericLiteralExpression
-	| numericFunction 												# numericFunctionExpression
-	| fieldValueReference											# numericReferenceExpression
+	: numericExpression operator=Multiplication numericExpression			# multiplicationExpression
+	| numericExpression operator=(Addition | Subtraction) numericExpression	# additionExpression
+	| OpenParenthesis numericExpression CloseParenthesis					# parenthesizedNumericExpression
+	| numericLiteral 														# numericLiteralExpression
+	| numericFunction 														# numericFunctionExpression
+	| fieldValueReference													# numericReferenceExpression
 	;
 
 stringExpression: stringLiteral | stringFunction | fieldValueReference;
@@ -176,8 +178,8 @@ setReference: fieldReference;
 fieldReference
 	: fieldReference OpenBracket predicate CloseBracket					# fieldReferenceWithPredicate
 	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
-	| context = fieldReference ColonColon reference = fieldReference	# fieldReferenceWithFieldContextOverride
-	| context = nodeReference ColonColon reference = fieldReference		# fieldReferenceWithNodeContextOverride
+	| context=fieldReference ColonColon reference=fieldReference	# fieldReferenceWithFieldContextOverride
+	| context=nodeReference ColonColon reference=fieldReference		# fieldReferenceWithNodeContextOverride
 	| FieldId															# simpleFieldReference
 	;
 

@@ -151,6 +151,18 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testLeftCalculatedDurationComparison() {
+        assertEquals("PathNode/DateField/xs:date(text()) < (PathNode/DateField/xs:date(text()) + xs:duration('P3M'))",
+                test("ND-0", "BT-00-Date - BT-00-Date < P3M"));
+    }
+
+    @Test
+    public void testRightCalculatedDurationComparison() {
+        assertEquals("PathNode/DateField/xs:date(text()) < (PathNode/DateField/xs:date(text()) + xs:duration('P3M'))",
+                test("ND-0", "P3M > BT-00-Date - BT-00-Date"));
+    }
+
+    @Test
     public void testBooleanLiteralExpression_Always() {
         assertEquals("true()", test("BT-00-Text", "ALWAYS"));
     }
