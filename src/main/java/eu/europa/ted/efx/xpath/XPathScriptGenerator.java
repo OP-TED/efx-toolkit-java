@@ -55,6 +55,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
         if (StringExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/normalize-space(text())", type);
         }
+        if (NumericExpression.class.isAssignableFrom(type)) {
+            return this.instantiate(fieldReference.script + "/number()", type);
+        }
         if (DateExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/xs:date(text())", type);
         }

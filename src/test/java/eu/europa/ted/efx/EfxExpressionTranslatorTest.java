@@ -244,20 +244,19 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
-        // FIXME: "/normalize-space(text())" is appended but it shouldn't be
-        assertEquals("../../IntegerField",
+        assertEquals("../../IntegerField/number()",
                 test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Integer"));
     }
 
     @Test
     public void testFieldReferenceWithNodeContextOverride() {
-        assertEquals("PathNode/IntegerField",
+        assertEquals("PathNode/IntegerField/number()",
                 test("BT-00-Text", "ND-0::BT-00-Integer"));
     }
 
     @Test
     public void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-        assertEquals("PathNode/IntegerField",
+        assertEquals("PathNode/IntegerField/number()",
                 test("BT-00-Text", "ND-0[BT-00-Indicator == TRUE]::BT-00-Integer"));
     }
 
@@ -347,7 +346,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFormatNumberFunction() {
-        assertEquals("format-number(PathNode/NumberField, '#,##0.00')",
+        assertEquals("format-number(PathNode/NumberField/number(), '#,##0.00')",
                 test("ND-0", "format-number(BT-00-Number, '#,##0.00')"));
     }
 

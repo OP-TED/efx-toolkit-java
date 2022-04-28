@@ -178,8 +178,8 @@ setReference: fieldReference;
 fieldReference
 	: fieldReference OpenBracket predicate CloseBracket					# fieldReferenceWithPredicate
 	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
-	| context=fieldReference ColonColon reference=fieldReference	# fieldReferenceWithFieldContextOverride
-	| context=nodeReference ColonColon reference=fieldReference		# fieldReferenceWithNodeContextOverride
+	| context=fieldReference ColonColon reference=fieldReference		# fieldReferenceWithFieldContextOverride
+	| context=nodeReference ColonColon reference=fieldReference			# fieldReferenceWithNodeContextOverride
 	| FieldId															# simpleFieldReference
 	;
 

@@ -164,6 +164,18 @@ public class EfxExpressionTranslator extends EfxBaseListener {
      */
     protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
+        if (ctx instanceof SimpleFieldReferenceContext) {
+            return ((SimpleFieldReferenceContext)ctx).FieldId().getText();
+        }
+
+        if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
+            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithFieldContextOverrideContext)ctx).reference);
+        }
+
+        if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
+            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithNodeContextOverrideContext)ctx).reference);
+        }
+
         SimpleFieldReferenceContext fieldReferenceContext =
                 ctx.getChild(SimpleFieldReferenceContext.class, 0);
         if (fieldReferenceContext != null) {
