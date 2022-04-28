@@ -58,10 +58,14 @@ public class SymbolResolverMock implements SymbolResolver {
                         "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
                 entry("BT-00-Text-Multilingual", new SdkField(fromString(
                         "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
-                entry("BT-00-Date", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Date\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/DateField\",\"xpathRelative\":\"PathNode/DateField\"}}"))),
-                entry("BT-00-Time", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Time\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TimeField\",\"xpathRelative\":\"PathNode/TimeField\"}}"))),
+                entry("BT-00-StartDate", new SdkField(fromString(
+                        "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),
+                entry("BT-00-EndDate", new SdkField(fromString(
+                        "{\"id\":\"BT-00-EndDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndDateField\",\"xpathRelative\":\"PathNode/EndDateField\"}}"))),
+                entry("BT-00-StartTime", new SdkField(fromString(
+                        "{\"id\":\"BT-00-StartTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartTimeField\",\"xpathRelative\":\"PathNode/StartTimeField\"}}"))),
+                entry("BT-00-EndTime", new SdkField(fromString(
+                        "{\"id\":\"BT-00-EndTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndTimeField\",\"xpathRelative\":\"PathNode/EndTimeField\"}}"))),
                 entry("BT-00-Measure", new SdkField(fromString(
                         "{\"id\":\"BT-00-Measure\",\"type\":\"measure\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/MeasureField\",\"xpathRelative\":\"PathNode/MeasureField\"}}"))),
                 entry("BT-00-Integer", new SdkField(fromString(

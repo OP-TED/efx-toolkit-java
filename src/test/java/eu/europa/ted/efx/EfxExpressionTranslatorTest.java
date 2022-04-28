@@ -116,14 +116,14 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testDateComparison_OfTwoDateReferences() {
-        assertEquals("PathNode/DateField/xs:date(text()) = PathNode/DateField/xs:date(text())",
-                test("ND-0", "BT-00-Date == BT-00-Date"));
+        assertEquals("PathNode/StartDateField/xs:date(text()) = PathNode/EndDateField/xs:date(text())",
+                test("ND-0", "BT-00-StartDate == BT-00-EndDate"));
     }
 
     @Test
     public void testDateComparison_OfDateReferenceAndDateFunction() {
-        assertEquals("PathNode/DateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
-                test("ND-0", "BT-00-Date == date(BT-00-Text)"));
+        assertEquals("PathNode/StartDateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
+                test("ND-0", "BT-00-StartDate == date(BT-00-Text)"));
     }
     
     @Test
@@ -134,32 +134,32 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testTimeComparison_OfTwoTimeReferences() {
-        assertEquals("PathNode/TimeField/xs:time(text()) = PathNode/TimeField/xs:time(text())",
-                test("ND-0", "BT-00-Time == BT-00-Time"));
+        assertEquals("PathNode/StartTimeField/xs:time(text()) = PathNode/EndTimeField/xs:time(text())",
+                test("ND-0", "BT-00-StartTime == BT-00-EndTime"));
     }
 
     @Test
     public void testTimeComparison_OfTimeReferenceAndTimeFunction() {
-        assertEquals("PathNode/TimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
-                test("ND-0", "BT-00-Time == time(BT-00-Text)"));
+        assertEquals("PathNode/StartTimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
+                test("ND-0", "BT-00-StartTime == time(BT-00-Text)"));
     }
 
     @Test
-    public void testDurationComparison_OfTwoDurationLiterals() {
-        assertEquals("xs:duration('P1Y') = xs:duration('P12M')",
+    public void testDurationComparison_UsingYearMOnthDurationLiterals() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P12M')))",
                 test("BT-00-Text", "P1Y == P12M"));
     }
 
     @Test
-    public void testLeftCalculatedDurationComparison() {
-        assertEquals("PathNode/DateField/xs:date(text()) < (PathNode/DateField/xs:date(text()) + xs:duration('P3M'))",
-                test("ND-0", "BT-00-Date - BT-00-Date < P3M"));
+    public void testDurationComparison_UsingDayTimeDurationLiterals() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P21D') > $T + xs:dayTimeDuration('P7D')))",
+                test("BT-00-Text", "P3W > P7D"));
     }
 
     @Test
-    public void testRightCalculatedDurationComparison() {
-        assertEquals("PathNode/DateField/xs:date(text()) < (PathNode/DateField/xs:date(text()) + xs:duration('P3M'))",
-                test("ND-0", "P3M > BT-00-Date - BT-00-Date"));
+    public void testCalculatedDurationComparison() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P3M') > $T + xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text()))))",
+                test("ND-0", "P3M > (BT-00-EndDate - BT-00-StartDate)"));
     }
 
     @Test
@@ -371,27 +371,6 @@ public class EfxExpressionTranslatorTest {
         assertEquals("xs:time(PathNode/TextField/normalize-space(text()))",
                 test("ND-0", "time(BT-00-Text)"));
     }
-
-    /*** Duration functions ***/
-
-    @Test
-    public void testDurationFromDatesFunction_UsingTwoDateFields() {
-        assertEquals("PathNode/DateField/xs:date(text()) - PathNode/DateField/xs:date(text())",
-                test("ND-0", "duration(BT-00-Date, BT-00-Date)"));
-    }
-
-    @Test
-    public void testDurationFromDatesFunction_UsingOneNonDateField() {
-        assertThrows(ParseCancellationException.class,
-                () -> test("ND-0", "duration(BT-00-Date, BT-00-Text)"));
-    }
-
-    @Test
-    public void testDurationFromDatesFunction_UsingTwoDateLiterals() {
-        assertEquals("xs:date('2019-12-01') - xs:date('2021-01-12')",
-                test("ND-0", "duration(2019-12-01, 2021-01-12)"));
-    }
-
 
     /*** Other ***/
 

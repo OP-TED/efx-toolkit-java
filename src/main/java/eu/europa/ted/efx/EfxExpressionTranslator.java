@@ -23,8 +23,8 @@ import eu.europa.ted.efx.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.EfxParser.DateComparisonContext;
 import eu.europa.ted.efx.EfxParser.DateFromStringFunctionContext;
 import eu.europa.ted.efx.EfxParser.DateLiteralContext;
+import eu.europa.ted.efx.EfxParser.DateSubtractionExpressionContext;
 import eu.europa.ted.efx.EfxParser.DurationComparisonContext;
-import eu.europa.ted.efx.EfxParser.DurationFromDatesFunctionContext;
 import eu.europa.ted.efx.EfxParser.DurationLiteralContext;
 import eu.europa.ted.efx.EfxParser.EndsWithFunctionContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
@@ -33,14 +33,12 @@ import eu.europa.ted.efx.EfxParser.FieldReferenceWithFieldContextOverrideContext
 import eu.europa.ted.efx.EfxParser.FieldReferenceWithNodeContextOverrideContext;
 import eu.europa.ted.efx.EfxParser.FieldValueComparisonContext;
 import eu.europa.ted.efx.EfxParser.FormatNumberFunctionContext;
-import eu.europa.ted.efx.EfxParser.LeftCalculatedDurationComparisonContext;
 import eu.europa.ted.efx.EfxParser.NodeReferenceWithPredicateContext;
 import eu.europa.ted.efx.EfxParser.NotFunctionContext;
 import eu.europa.ted.efx.EfxParser.NumberFunctionContext;
 import eu.europa.ted.efx.EfxParser.NumericComparisonContext;
 import eu.europa.ted.efx.EfxParser.NumericLiteralContext;
 import eu.europa.ted.efx.EfxParser.ParenthesizedNumericExpressionContext;
-import eu.europa.ted.efx.EfxParser.RightCalculatedDurationComparisonContext;
 import eu.europa.ted.efx.EfxParser.SimpleFieldReferenceContext;
 import eu.europa.ted.efx.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.EfxParser.SingleExpressionContext;
@@ -311,32 +309,6 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapComparisonOperator(left, ctx.operator.getText(), right));
     }
 
-    /**
-     * This handles an expression of the form "leftDate - rightDate <= duration".
-     * Tokens are pushed in the stack in the order they appear in the expression (and popped in the inverse order).
-     */
-    @Override
-    public void exitLeftCalculatedDurationComparison(LeftCalculatedDurationComparisonContext ctx) {
-        final DurationExpression duration = this.stack.pop(DurationExpression.class);
-        final DateExpression rightDate = this.stack.pop(DateExpression.class);
-        final DateExpression leftDate = this.stack.pop(DateExpression.class);
-        this.stack.push(this.script.mapDateSpanToDurationComparison(leftDate, rightDate, ctx.operator.getText(), duration));
-    }
-
-    /**
-     * This handles and expression of the form "duration >= leftDate - rightDate".
-     * Tokens are pushed in the stack in the order they appear in the expression (and popped in the inverse order).
-     * The operator needs to be inverted before calling the ScriptGenerator.
-     */
-    @Override
-    public void exitRightCalculatedDurationComparison(RightCalculatedDurationComparisonContext ctx) {
-        final DateExpression rightDate = this.stack.pop(DateExpression.class);
-        final DateExpression leftDate = this.stack.pop(DateExpression.class);
-        final DurationExpression duration = this.stack.pop(DurationExpression.class);
-        final String invertedOperator = ctx.operator.getText().replace(">", "X").replace("<", ">").replace("X", "<");
-        this.stack.push(this.script.mapDateSpanToDurationComparison(leftDate, rightDate, invertedOperator, duration));
-    }
-
     @Override
     public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
         StringExpression expression = this.stack.pop(StringExpression.class);
@@ -408,6 +380,15 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                 this.stack.pop(NumericExpression.class), NumericExpression.class));
     }
 
+    /*** Duration Expressions ***/
+
+    @Override
+    public void exitDateSubtractionExpression(DateSubtractionExpressionContext ctx) {
+        final DateExpression startDate = this.stack.pop(DateExpression.class);
+        final DateExpression endDate = this.stack.pop(DateExpression.class);
+        this.stack.push(this.script.mapDurationFromDatesFunction(startDate, endDate));
+    }
+
     @Override
     public void exitCodeList(CodeListContext ctx) {
         if (this.stack.empty()) {
@@ -462,7 +443,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitDurationLiteral(DurationLiteralContext ctx) {
-        this.stack.push(this.script.mapDurationLiteral(ctx.DurationLiteral().getText()));
+        this.stack.push(this.script.mapDurationLiteral(ctx.getText()));
     }
 
     @Override
@@ -693,14 +674,5 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
         this.stack.push(
                 this.script.mapTimeFromStringFunction(this.stack.pop(StringExpression.class)));
-    }
-
-    /*** Duration functions ***/
-
-    @Override
-    public void exitDurationFromDatesFunction(DurationFromDatesFunctionContext ctx) {
-        final DateExpression endDate = this.stack.pop(DateExpression.class);
-        final DateExpression startDate = this.stack.pop(DateExpression.class);
-        this.stack.push(this.script.mapDurationFromDatesFunction(startDate, endDate));
     }
 }
