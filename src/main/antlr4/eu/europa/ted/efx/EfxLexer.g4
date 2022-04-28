@@ -161,7 +161,6 @@ ConcatFunction: 'concat';
 DateFunction: 'date';
 TimeFunction: 'time';
 DateTimeFunction: 'date-time';
-DurationFunction: 'duration';
 AddDaysFunction: 'add-days';
 AddWeeksFunction: 'add-weeks';
 AddMonthsFunction: 'add-months';
@@ -175,9 +174,10 @@ NodeId: 'ND' '-' [0-9]+;
 /**
  * Effective order of precedence is the order of declaration. 
  * Duration tokens must take precedence over Identifier tokens to avoid using delimiters like quotes.
- * Therefore DurationLiteral must be declared before Identifier. 
+ * Therefore duration literals must be declared before Identifier. 
  */
-DurationLiteral: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
+DayTimeDurationLiteral:'P' INTEGER ('W' | 'D');
+YearMonthDurationLiteral: 'P' INTEGER ('Y' | 'M');
 
 CodelistId: Identifier ('-' Identifier)*;
 

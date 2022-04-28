@@ -119,17 +119,15 @@ booleanExpression
 	| dateExpression operator=Comparison dateExpression										# dateComparison
 	| timeExpression operator=Comparison timeExpression										# timeComparison
 	| durationExpression operator=Comparison durationExpression								# durationComparison
-	| dateExpression Subtraction dateExpression operator=Comparison durationExpression 		# leftCalculatedDurationComparison 
-	| durationExpression operator=Comparison dateExpression Subtraction dateExpression  	# rightCalculatedDurationComparison 
 	| booleanLiteral 																		# booleanLiteralExpression
 	| booleanFunction 																		# booleanFunctionExpression
 	| fieldValueReference 																	# booleanReferenceExpression
 	;
 	
 numericExpression
-	: numericExpression operator=Multiplication numericExpression			# multiplicationExpression
+	: OpenParenthesis numericExpression CloseParenthesis					# parenthesizedNumericExpression
+	| numericExpression operator=Multiplication numericExpression			# multiplicationExpression
 	| numericExpression operator=(Addition | Subtraction) numericExpression	# additionExpression
-	| OpenParenthesis numericExpression CloseParenthesis					# parenthesizedNumericExpression
 	| numericLiteral 														# numericLiteralExpression
 	| numericFunction 														# numericFunctionExpression
 	| fieldValueReference													# numericReferenceExpression
@@ -141,7 +139,12 @@ dateExpression: dateLiteral | dateFunction | fieldValueReference;
 
 timeExpression: timeLiteral | timeFunction | fieldValueReference;
 
-durationExpression: durationLiteral | durationFunction | fieldValueReference;
+durationExpression
+	: OpenParenthesis durationExpression CloseParenthesis			# parenthesizedDurationExpression
+	| endDate=dateExpression Subtraction startDate=dateExpression 	# dateSubtractionExpression
+	| durationLiteral 												# durationLiteralExpression
+	| fieldValueReference											# durationReferenceExpression
+	;
 
 list: OpenParenthesis expression (Comma expression)* CloseParenthesis	# explicitList
 	| codelistReference													# codeList
@@ -161,7 +164,7 @@ trueBooleanLiteral: Always | True;
 falseBooleanLiteral: Never | False;
 dateLiteral: DATE;
 timeLiteral: TIME;
-durationLiteral: DurationLiteral;
+durationLiteral: DayTimeDurationLiteral | YearMonthDurationLiteral;
 
 
 /*
@@ -226,9 +229,4 @@ dateFunction
 
 timeFunction
 	: TimeFunction OpenParenthesis stringExpression CloseParenthesis		# timeFromStringFunction
-	;
-
-
-durationFunction
-	: DurationFunction OpenParenthesis start=dateExpression Comma end=dateExpression CloseParenthesis 	# durationFromDatesFunction
 	;
