@@ -11,7 +11,7 @@ public class CallStack extends Stack<CallStackObjectBase> {
         Class<? extends CallStackObjectBase> actualType = peek().getClass();
         if (!expectedType.isAssignableFrom(actualType)) {
             throw new ParseCancellationException(
-                    "Type mistmatch. Expected " + expectedType.getSimpleName() + " instead of "
+                    "Type mismatch. Expected " + expectedType.getSimpleName() + " instead of "
                             + this.peek().getClass().getSimpleName());
         }
         return expectedType.cast(this.pop());

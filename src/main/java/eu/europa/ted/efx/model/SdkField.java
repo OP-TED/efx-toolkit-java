@@ -100,6 +100,6 @@ public class SdkField implements Comparable<SdkField> {
 
   @Override
   public String toString() {
-    return "TedefoField [id=" + id + "]";
+    return "SdkField [id=" + id + "]";
   }
 }

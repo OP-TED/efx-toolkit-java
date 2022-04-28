@@ -10,7 +10,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
  * 
  * This class is declared as abstract because it is only meant to be instantiated through its two
  * subclasses {@link FieldContext} and {@link NodeContext}. This makes instantiation more readable
- * and adds type safety at compilate-time.
+ * and adds type safety at compile-time.
  */
 public abstract class Context {
 
