@@ -179,9 +179,9 @@ NodeId: 'ND' '-' [0-9]+;
  */
 DurationLiteral: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
-CodelistId: Identifier ('-' Identifier)*;
+Identifier: IdentifierPart ('-' IdentifierPart)*;
 
-Identifier: LETTER (LETTER | DIGIT)*;
+IdentifierPart: LETTER (LETTER | DIGIT)*;
 
 INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;
