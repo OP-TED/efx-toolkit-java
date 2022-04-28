@@ -358,7 +358,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(condition);
     }
 
-    /*** Numeric expreessions ***/
+    /*** Numeric expressions ***/
 
     @Override
     public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {

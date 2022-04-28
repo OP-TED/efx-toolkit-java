@@ -103,7 +103,7 @@ public class XPathContextualizer extends XPath20BaseListener {
       // the resulting relativeXpath.
       while (!contextQueue.isEmpty()) {
         if (!contextQueue.poll().isAttributeStep()) { // consume the step
-          relativeXpath = "../" + relativeXpath; // prepend a backstep if the step is
+          relativeXpath = "../" + relativeXpath; // prepend a back-step if the step is
                                                  // not an
                                                  // attribute reference
         }
@@ -123,7 +123,7 @@ public class XPathContextualizer extends XPath20BaseListener {
     }
 
     // As we use a stack we are traversing the lines of xPath pairs in the
-    // reverse order. Therefore we prepend the preciding lines in the result.
+    // reverse order. Therefore we prepend the preceding lines in the result.
     final String toAppend = relativeXpath + (result.length() == 0 ? "" : ("\n" + result));
     result.append(toAppend);
 
@@ -131,8 +131,8 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   /**
-   * Helper method that returns the input text that matched a paresr rule context. It is usefull
-   * because {@link ParserRuleContext#getText()} ommits whitespace and other lexer tokens in the
+   * Helper method that returns the input text that matched a parser rule context. It is useful
+   * because {@link ParserRuleContext#getText()} omits whitespace and other lexer tokens in the
    * HIDDEN channel.
    *
    * @param context
