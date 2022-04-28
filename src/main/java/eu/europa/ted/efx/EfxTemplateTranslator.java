@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -95,57 +96,37 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   public static String renderTemplateFile(final Path pathname, final String sdkVersion,
       final TranslatorDependencyFactory factory) throws IOException {
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromPath(pathname));
-    final CommonTokenStream tokens = new CommonTokenStream(lexer);
-    final EfxParser parser = new EfxParser(tokens);
-
+    
+    CharStream charStream = CharStreams.fromPath(pathname);
     final BaseErrorListener errorListener = factory.createErrorListener();
-    if (errorListener != null) {
-      lexer.removeErrorListeners();
-      lexer.addErrorListener(errorListener);
-      parser.removeErrorListeners();
-      parser.addErrorListener(errorListener);
-    }
-
-    final ParseTree tree = parser.templateFile();
-
-    final ParseTreeWalker walker = new ParseTreeWalker();
     final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
 
-    walker.walk(translator, tree);
-
-    return translator.getTranslatedScript();
+    return renderTemplate(charStream, translator, errorListener);
   }
 
   public static String renderTemplate(final String template, final String sdkVersion,
       final TranslatorDependencyFactory factory) {
 
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
-    final CommonTokenStream tokens = new CommonTokenStream(lexer);
-    final EfxParser parser = new EfxParser(tokens);
-
+    CharStream charStream = CharStreams.fromString(template);
     final BaseErrorListener errorListener = factory.createErrorListener();
-    if (errorListener != null) {
-      lexer.removeErrorListeners();
-      lexer.addErrorListener(errorListener);
-      parser.removeErrorListeners();
-      parser.addErrorListener(errorListener);
-    }
-
-    final ParseTree tree = parser.templateFile();
-
-    final ParseTreeWalker walker = new ParseTreeWalker();
     final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
 
-    walker.walk(translator, tree);
-
-    return translator.getTranslatedScript();
+    return renderTemplate(charStream, translator, errorListener);
   }
 
   public static String renderTemplate(final String template, final SymbolResolver symbols,
       final ScriptGenerator scriptGenerator, final MarkupGenerator markupGenerator, final BaseErrorListener errorListener) {
 
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(template));
+    CharStream charStream = CharStreams.fromString(template);
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, scriptGenerator, markupGenerator);
+
+    return renderTemplate(charStream, translator, errorListener);
+  }
+
+  private static String renderTemplate(final CharStream charStream,
+      final EfxTemplateTranslator translator, final BaseErrorListener errorListener) {
+
+    final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
@@ -159,7 +140,6 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, scriptGenerator, markupGenerator);
     walker.walk(translator, tree);
 
     return translator.getTranslatedScript();
