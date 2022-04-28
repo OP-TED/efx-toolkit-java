@@ -286,7 +286,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
    * as the context.
    * 
    * If the labelType is 'value', then the label depends on the field's value and is rendered
-   * according to the field's type. The assetType is infered from the Field or Node declared as
+   * according to the field's type. The assetType is inferred from the Field or Node declared as
    * context.
    */
   @Override
