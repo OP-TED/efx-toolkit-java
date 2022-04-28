@@ -467,7 +467,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
-        this.stack.push(this.script.mapExternalReference(this.stack.pop(PathExpression.class)));
+        this.stack.push(this.script.mapExternalReference(this.stack.pop(StringExpression.class)));
     }
 
     @Override
@@ -487,7 +487,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
         PathExpression field = this.stack.pop(PathExpression.class);
-        Expression notice = this.stack.pop(Expression.class);
+        PathExpression notice = this.stack.pop(PathExpression.class);
         this.stack.push(this.script.mapFieldInExternalReference(notice, field));
     }
 

@@ -86,7 +86,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldValueComparison_WithNumericLiteral() {
-        assertEquals("PathNode/IntegerField > 0",
+        assertEquals("PathNode/IntegerField/number() > 0",
                 test("ND-0", "BT-00-Integer > 0"));
     }
 
@@ -231,8 +231,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReferenceInOtherNotice() {
-        // FIXME: Test causes exception
-        assertEquals("",
+        assertEquals("fn:doc(concat('http://notice.service/', 'da4d46e9-490b-41ff-a2ae-8166d356a619')')/PathNode/TextField/normalize-space(text())",
                 test("ND-0", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text"));
     }
 

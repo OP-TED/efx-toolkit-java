@@ -190,12 +190,13 @@ UUIDV4: '{' HEX4 HEX4 '-' HEX4 '-' HEX4 '-' HEX4 '-' HEX4 HEX4 HEX4 '}';
 DATE: DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
 
+Slash: '/';
 Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
-Multiplication: '*' | '/' | '%';
+Multiplication: '*' | Slash | '%';
 Addition: '+';
 Subtraction: '-';
 Comma: ',';
-Slash: '/';
+
 SlashAt: '/@';
 Colon: ':';
 

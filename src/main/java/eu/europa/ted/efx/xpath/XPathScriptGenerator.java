@@ -144,16 +144,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public Expression mapExternalReference(Expression externalReference) {
+    public PathExpression mapExternalReference(StringExpression externalReference) {
         // TODO: implement this properly.
-        return new Expression("fn:doc('http://notice.service/" + externalReference.script + "')");
+        return new PathExpression("fn:doc(concat('http://notice.service/', " + externalReference.script + ")')");
     }
 
 
     @Override
-    public Expression mapFieldInExternalReference(Expression externalReference,
+    public PathExpression mapFieldInExternalReference(PathExpression externalReference,
             PathExpression fieldReference) {
-        return new Expression(externalReference.script + "/" + fieldReference.script);
+        return new PathExpression(externalReference.script + "/" + fieldReference.script);
     }
 
 

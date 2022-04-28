@@ -110,14 +110,14 @@ public interface ScriptGenerator {
    * data from the data source. This method should return the target language script that connects
    * to the data source and permits us to subsequently get the data by using a PathExpression.
    */
-  public Expression mapExternalReference(final Expression externalReference);
+  public PathExpression mapExternalReference(final StringExpression externalReference);
 
   /**
    * TODO: Not properly defined yet.
    * 
    * See {@link mapExternalReference} for more details.
    */
-  public Expression mapFieldInExternalReference(final Expression externalReference,
+  public PathExpression mapFieldInExternalReference(final PathExpression externalReference,
       final PathExpression fieldReference);
 
   /**
