@@ -37,7 +37,7 @@ public interface SymbolResolver {
      * @param contextPath The path relative to which we expect to find the return value.
      * @return The path to the given node relative to the given context path.
      */
-    public PathExpression relativeXpathOfNode(final String nodeId,
+    public PathExpression relativePathOfNode(final String nodeId,
             final PathExpression contextPath);
 
     /***
@@ -46,7 +46,7 @@ public interface SymbolResolver {
      * @param fieldId The identifier of the field to look for.
      * @return The absolute path to the field as a PathExpression.
      */
-    public PathExpression absoluteXpathOfField(final String fieldId);
+    public PathExpression absolutePathOfField(final String fieldId);
 
     /**
      * Gets the absolute path the can be used to locate a node in the data source.
@@ -54,7 +54,7 @@ public interface SymbolResolver {
      * @param nodeId The identifier of the node to look for.
      * @return The absolute path to the node as a PathExpression.
      */
-    public PathExpression absoluteXpathOfNode(final String nodeId);
+    public PathExpression absolutePathOfNode(final String nodeId);
 
     /***
      * Gets the type of the given field.

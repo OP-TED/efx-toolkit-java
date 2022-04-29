@@ -30,7 +30,7 @@ public class ContextStack extends Stack<Context> {
      * currently at the top of the stack (or absolute if the stack is empty).
      */
     public FieldContext pushFieldContext(final String fieldId) {
-        PathExpression absolutePath = symbols.absoluteXpathOfField(fieldId);
+        PathExpression absolutePath = symbols.absolutePathOfField(fieldId);
         if (this.isEmpty()) {
             FieldContext context = new FieldContext(fieldId, absolutePath);
             this.push(context);
@@ -48,13 +48,13 @@ public class ContextStack extends Stack<Context> {
      * empty).
      */
     public NodeContext pushNodeContext(final String nodeId) {
-        PathExpression absolutePath = symbols.absoluteXpathOfNode(nodeId);
+        PathExpression absolutePath = symbols.absolutePathOfNode(nodeId);
         if (this.isEmpty()) {
             NodeContext context = new NodeContext(nodeId, absolutePath);
             this.push(context);
             return context;
         }
-        PathExpression relativePath = symbols.relativeXpathOfNode(nodeId, this.peek().absolutePath());
+        PathExpression relativePath = symbols.relativePathOfNode(nodeId, this.peek().absolutePath());
         NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
         this.push(context);
         return context;

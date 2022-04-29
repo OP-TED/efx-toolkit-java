@@ -461,7 +461,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
-        this.stack.push(this.symbols.relativeXpathOfNode(ctx.NodeId().getText(),
+        this.stack.push(this.symbols.relativePathOfNode(ctx.NodeId().getText(),
                 this.efxContext.absolutePath()));
     }
 
@@ -561,7 +561,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
             FieldReferenceWithFieldContextOverrideContext ctx) {
         final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.context);
         this.efxContext.push(new FieldContext(contextFieldId,
-                this.symbols.absoluteXpathOfField(ctx.context.getText())));
+                this.symbols.absolutePathOfField(ctx.context.getText())));
     }
 
     /**
@@ -586,7 +586,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
             FieldReferenceWithNodeContextOverrideContext ctx) {
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
         this.efxContext.push(
-                new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(contextNodeId)));
+                new NodeContext(contextNodeId, this.symbols.absolutePathOfNode(contextNodeId)));
     }
 
     /**
