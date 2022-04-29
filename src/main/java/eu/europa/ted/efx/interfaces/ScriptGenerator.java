@@ -137,8 +137,6 @@ public interface ScriptGenerator {
   public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
       Expression rightOperand);
 
-  public BooleanExpression mapDateSpanToDurationComparison(DateExpression leftDate, DateExpression rightDate, String operator, DurationExpression duration);
-
   /**
    * Given a numeric operation, this method should return the target language script that performs
    * the operation.

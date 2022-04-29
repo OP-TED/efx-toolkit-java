@@ -224,12 +224,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
                 leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
     }
 
-    @Override
-    public BooleanExpression mapDateSpanToDurationComparison(DateExpression leftDate, DateExpression rightDate, String operator,
-            DurationExpression duration) {
-        return new BooleanExpression(leftDate.script + " " + operators.get(operator) + " (" + rightDate.script + " " + operators.get("+") + " " + duration.script + ")");
-    }
-
     /*** Numeric functions ***/
 
     @Override
