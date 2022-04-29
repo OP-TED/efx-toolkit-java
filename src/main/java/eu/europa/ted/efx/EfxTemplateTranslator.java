@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -11,6 +12,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
 import eu.europa.ted.efx.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.EfxParser.ContextDeclarationBlockContext;
@@ -29,19 +31,23 @@ import eu.europa.ted.efx.EfxParser.TemplateLineContext;
 import eu.europa.ted.efx.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
-import eu.europa.ted.efx.interfaces.SymbolResolver;
-import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Markup;
 
+/**
+ * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator} to provide additional
+ * translation capabilities for EFX templates. If has been implemented as an extension to the
+ * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
+ * expressions (like the condition associated with a business rule).
+ */
 public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
@@ -64,71 +70,65 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private static final String ASSET_TYPE_CODE =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
 
-  static final boolean debug = true;
 
+  /**
+   * Used to control the indentation style used in a template
+   */
   private enum Indent {
-    TABS, SPACES, UNSET
+    TABS, SPACES, UNDETERMINED
   };
 
-  private Indent indentWith = Indent.UNSET;
+  private Indent indentWith = Indent.UNDETERMINED;
   private int indentSpaces = -1;
 
+  /**
+   * The MarkupGenerator is called to retrieve markup in the target template language when needed.
+   */
   MarkupGenerator markup;
-
 
   final ContentBlock rootBlock = ContentBlock.newRootBlock();
 
+  /**
+   * The block stack is used to keep track of the indentation of template lines and adjust the EFX
+   * context accordingly. A block is a template line together with the template lines nested
+   * (through indentation) under it. At the top of the blockStack is the template block that is
+   * currently being processed. The next block in the stack is its parent block, and so on.
+   */
   ContentBlockStack blockStack = new ContentBlockStack();
-
 
   public EfxTemplateTranslator(TranslatorDependencyFactory factory, final String sdkVersion) {
     super(factory.createSymbolResolver(sdkVersion), factory.createScriptGenerator());
     this.markup = factory.createMarkupGenerator();
   }
 
-  public EfxTemplateTranslator(final SymbolResolver symbols, final ScriptGenerator scriptGenerator,
-      final MarkupGenerator markupGenerator) {
-    super(symbols, scriptGenerator);
-    this.markup = markupGenerator;
-  }
-
   // Static methods
 
-  public static String renderTemplateFile(final Path pathname, final String sdkVersion,
-      final TranslatorDependencyFactory factory) throws IOException {
-    
-    CharStream charStream = CharStreams.fromPath(pathname);
-    final BaseErrorListener errorListener = factory.createErrorListener();
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
+  /**
+   * Opens the indicated EFX file and translates the EFX template it contains.
+   */
+  public static String renderTemplate(final Path pathname,
+      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
 
-    return renderTemplate(charStream, translator, errorListener);
+    return renderTemplate(CharStreams.fromPath(pathname), factory, sdkVersion);
   }
 
-  public static String renderTemplate(final String template, final String sdkVersion,
-      final TranslatorDependencyFactory factory) {
-
-    CharStream charStream = CharStreams.fromString(template);
-    final BaseErrorListener errorListener = factory.createErrorListener();
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
-
-    return renderTemplate(charStream, translator, errorListener);
-  }
-
-  public static String renderTemplate(final String template, final SymbolResolver symbols,
-      final ScriptGenerator scriptGenerator, final MarkupGenerator markupGenerator, final BaseErrorListener errorListener) {
-
-    CharStream charStream = CharStreams.fromString(template);
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(symbols, scriptGenerator, markupGenerator);
-
-    return renderTemplate(charStream, translator, errorListener);
+  /**
+   * Translates the template contained in the string passed as a parameter.
+   */
+  public static String renderTemplate(final String template,
+      final TranslatorDependencyFactory factory, final String sdkVersion) {
+    return renderTemplate(CharStreams.fromString(template), factory, sdkVersion);
   }
 
   private static String renderTemplate(final CharStream charStream,
-      final EfxTemplateTranslator translator, final BaseErrorListener errorListener) {
+      final TranslatorDependencyFactory factory, final String sdkVersion) {
+
+    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
+    final BaseErrorListener errorListener = factory.createErrorListener();
 
     if (errorListener != null) {
       lexer.removeErrorListeners();
@@ -142,21 +142,26 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(translator, tree);
 
-    return translator.getTranslatedScript();
+    return translator.getTranslatedMarkup();
   }
 
   /**
-   * Call this method to get the translated code after the walker finished its walk.
-   *
+   * Gets the translated code after the walker finished its walk. Every line in the template has now
+   * been translated and a {@link Markup} object is in the stack for each block in the template. The
+   * output template is built from the end towards the top, because the items are removed from the
+   * stack in reverse order.
+   * 
    * @return The translated code, trimmed
    */
-  private String getTranslatedScript() {
+  private String getTranslatedMarkup() {
     final StringBuilder sb = new StringBuilder(64);
     while (!this.stack.empty()) {
-      sb.insert(0,'\n').insert(0, this.stack.pop(Markup.class).script);
+      sb.insert(0, '\n').insert(0, this.stack.pop(Markup.class).script);
     }
     return sb.toString().trim();
   }
+
+  /*** Template File ***/
 
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
@@ -177,55 +182,70 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     this.stack.push(file);
   }
 
+  /*** Source template blocks ***/
+
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
-    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template =
+        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.text() != null ? ctx.text().getText() : "";
     this.stack.push(this.markup.renderFreeText(text).join(template));
   }
 
   @Override
   public void exitLabelTemplate(LabelTemplateContext ctx) {
-    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template =
+        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Markup label = ctx.labelBlock() != null ? this.stack.pop(Markup.class) : Markup.empty();
     this.stack.push(label.join(template));
   }
 
   @Override
   public void exitValueTemplate(ValueTemplateContext ctx) {
-    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template =
+        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
     this.stack.push(this.markup.renderValueReference(expression).join(template));
   }
 
+
+  /*** Label Blocks #{...} ***/
+
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
-    StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
-    StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
-    this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
-        List.of(assetType, this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
+    StringExpression assetId =
+        ctx.assetId() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.mapString("");
+    StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.mapString("");
+    this.stack.push(
+        this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(List.of(assetType,
+            this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
     StringExpression assetId = this.script.mapString(ctx.BtId().getText());
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
-    this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
-        List.of(this.script.mapString(ASSET_TYPE_BT), this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.mapString("");
+    this.stack.push(this.markup.renderLabelFromKey(
+        this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT),
+            this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldId().getText();
-    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.mapString("");
 
     if (labelType.script.equals("value")) {
       this.shorthandFieldValueLabelReference(fieldId);
     } else {
-      this.stack.push(this.markup.renderLabelFromKey(
-          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD), this.script.mapString("|"),
-              labelType, this.script.mapString("|"), this.script.mapString(fieldId)))));
+      this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
+          List.of(this.script.mapString(ASSET_TYPE_FIELD), this.script.mapString("|"), labelType,
+              this.script.mapString("|"), this.script.mapString(fieldId)))));
     }
   }
 
@@ -234,25 +254,28 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     this.shorthandFieldValueLabelReference(ctx.FieldId().getText());
   }
 
-
   private void shorthandFieldValueLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final StringExpression valueReference = this.script.mapFieldValueReference(
-        symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()), StringExpression.class);
+        symbols.relativeXpathOfField(fieldId, currentContext.absolutePath()),
+        StringExpression.class);
     final String fieldType = this.symbols.typeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
-        this.stack.push(
-            this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
-                List.of(this.script.mapString(ASSET_TYPE_INDICATOR), this.script.mapString("|"), this.script.mapString(LABEL_TYPE_VALUE),
-                this.script.mapString("-"), valueReference, this.script.mapString("|"), this.script.mapString(fieldId)))));
+        this.stack
+            .push(this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
+                List.of(this.script.mapString(ASSET_TYPE_INDICATOR), this.script.mapString("|"),
+                    this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("-"),
+                    valueReference, this.script.mapString("|"), this.script.mapString(fieldId)))));
         break;
       case "code":
       case "internal-code":
-        this.stack.push(
-            this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
-                List.of(this.script.mapString(ASSET_TYPE_CODE), this.script.mapString("|"), this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("|"),
-                this.script.mapString(this.symbols.rootCodelistOfField(fieldId)), this.script.mapString("."), valueReference))));
+        this.stack
+            .push(this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
+                List.of(this.script.mapString(ASSET_TYPE_CODE), this.script.mapString("|"),
+                    this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("|"),
+                    this.script.mapString(this.symbols.rootCodelistOfField(fieldId)),
+                    this.script.mapString("."), valueReference))));
         break;
       default:
         throw new ParseCancellationException(String.format(
@@ -276,21 +299,23 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (labelType.equals(LABEL_TYPE_VALUE)) {
         this.shorthandFieldValueLabelReference(this.efxContext.symbol());
       } else {
-        this.stack.push(this.markup.renderLabelFromKey(
-            this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD),
-            this.script.mapString("|"), this.script.mapString(labelType), this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
+        this.stack.push(this.markup.renderLabelFromKey(this.script
+            .mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD),
+                this.script.mapString("|"), this.script.mapString(labelType),
+                this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
       }
     } else if (this.efxContext.isNodeContext()) {
       this.stack.push(this.markup.renderLabelFromKey(
-          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT), this.script.mapString("|"),
-          this.script.mapString(labelType), this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
+          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT),
+              this.script.mapString("|"), this.script.mapString(labelType),
+              this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
     }
   }
 
   /**
    * Handles the #value shorthand syntax which renders the label corresponding to the value of the
-   * the field declared as the context of the current line of the template.
-   * This shorthand syntax is only supported for fields of type 'code' or 'indicator'.
+   * the field declared as the context of the current line of the template. This shorthand syntax is
+   * only supported for fields of type 'code' or 'indicator'.
    */
   @Override
   public void exitShorthandContextFieldLabelReference(
@@ -323,6 +348,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+  /*** Expression Blocks ${...} ***/
+
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
    * class {@link EfxExpressionTranslator}. After the expression is translated, the result is passed
@@ -345,14 +372,17 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
           "The $value shorthand syntax can only be used when a field is declared as the context.");
     }
     this.stack.push(this.script.mapFieldValueReference(
-        symbols.relativeXpathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()), Expression.class));
+        symbols.relativeXpathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()),
+        Expression.class));
   }
+
+  /*** Context Declaration Blocks {...} ***/
 
   /**
    * This method changes the current EFX context.
    * 
-   * The EFX context is always assumed to be either a Field or a Node. Any predicate included in
-   * the EFX context declaration is not relevant and is ignored.
+   * The EFX context is always assumed to be either a Field or a Node. Any predicate included in the
+   * EFX context declaration is not relevant and is ignored.
    */
   @Override
   public void exitContextDeclarationBlock(ContextDeclarationBlockContext ctx) {
@@ -367,13 +397,17 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+
+  /*** Template lines ***/
+
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
-    final Integer outlineNumber = ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
+    final Integer outlineNumber =
+        ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.isEmpty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
@@ -403,13 +437,15 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     }
   }
 
+  /*** Helpers ***/
+
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {
       throw new ParseCancellationException(MIXED_INDENTATION);
     }
-  
+
     if (ctx.Spaces() != null) {
-      if (this.indentWith == Indent.UNSET) {
+      if (this.indentWith == Indent.UNDETERMINED) {
         this.indentWith = Indent.SPACES;
         this.indentSpaces = ctx.Spaces().getText().length();
       } else if (this.indentWith == Indent.TABS) {
@@ -422,7 +458,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       }
       return ctx.Spaces().getText().length() / this.indentSpaces;
     } else if (ctx.Tabs() != null) {
-      if (this.indentWith == Indent.UNSET) {
+      if (this.indentWith == Indent.UNDETERMINED) {
         this.indentWith = Indent.TABS;
       } else if (this.indentWith == Indent.SPACES) {
         throw new ParseCancellationException(MIXED_INDENTATION);
@@ -433,4 +469,3 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     return 0;
   }
 }
-
