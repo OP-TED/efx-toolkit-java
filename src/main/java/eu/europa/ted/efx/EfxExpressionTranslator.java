@@ -73,40 +73,55 @@ import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
- * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
- * target scripting language.
+ * The the goal of the EfxExpressionTranslator is to take an EFX expression and
+ * translate it to a target scripting language.
  * 
- * The target language syntax is not hardcoded into the translator so that this class can be reused
- * to translate to several different languages.
+ * The target language syntax is not hardcoded into the translator so that this
+ * class can be reused to translate to several different languages. Instead a
+ * {@link ScriptGenerator} interface is used to provide specifics on the syntax
+ * of the target scripting language.
  * 
- * Apart from writing expressions that can be translated and evaluated in a target scripting
- * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
- * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates you
- * need to use the {@link EfxTemplateTranslator} which derives from this class.
+ * Apart from writing expressions that can be translated and evaluated in a
+ * target scripting language (e.g. XPath/XQuery, JavaScript etc.), EFX also
+ * allows the definition of templates that can be translated to a target
+ * template markup language (e.g. XSLT, Thymeleaf etc.). The
+ * {@link EfxExpressionTranslator} only focuses on EFX expressions.
+ * To translate EFX templates you need to use the {@link EfxTemplateTranslator}
+ * which derives from this class.
  */
 public class EfxExpressionTranslator extends EfxBaseListener {
 
-    static final boolean debug = false;
+    private static final String NOT_MODIFIER = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
 
     /**
-     * The stack is used by the methods of this listener to pass data to each other as the parse
-     * tree is being walked.
+     *
+     */
+    private static final String TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES = "Type mismatch. Cannot compare values of different types: ";
+
+    /**
+     * The stack is used by the methods of this listener to pass data to each other
+     * as the parse tree is being walked.
      */
     protected CallStack stack = new CallStack();
 
     /**
-     * Symbols are field identifiers and node identifiers. The symbols map is used to resolve these
-     * identifiers to their xPath.
+     * The context stack is used to keep track of context switching in nested
+     * expressions.
+     */
+    protected final ContextStack efxContext;
+
+    /**
+     * Symbols are the field identifiers and node identifiers. The symbols map is
+     * used to resolve them to their location in the data source (typically their
+     * XPath).
      */
     protected final SymbolResolver symbols;
 
-    protected final ScriptGenerator script;
-
     /**
-     * The context stack is used to keep track of xPath contexts for nested conditions.
+     * The ScriptGenerator is called to determine the target language syntax
+     * whenever needed.
      */
-    protected final ContextStack efxContext;
+    protected final ScriptGenerator script;
 
     public EfxExpressionTranslator(final SymbolResolver symbols, final ScriptGenerator scriptGenerator) {
         this.symbols = symbols;
@@ -114,7 +129,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.efxContext = new ContextStack(symbols);
     }
 
-    public static String transpileExpression(final String context, final String expression,
+    public static String translateExpression(final String context, final String expression,
             final SymbolResolver symbols, final ScriptGenerator scriptGenerator,
             final BaseErrorListener errorListener) {
         final EfxLexer lexer = new EfxLexer(
@@ -135,21 +150,18 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
         walker.walk(translator, tree);
 
-        return translator.getTranspiledXPath();
-    }
-
-    public static String transpileExpression(final String context, final String expression,
-            final SymbolResolver symbols, final ScriptGenerator scriptGenerator) {
-        return transpileExpression(context, expression, symbols, scriptGenerator, null);
+        return translator.getTranslatedScript();
     }
 
     /**
-     * Call this method to get the translated code after the walker finished its walk.
+     * Used to get the translated target language script, after the walker finished
+     * its
+     * walk.
      *
      * @return The translated code, trimmed
      */
-    private String getTranspiledXPath() {
-        final StringBuilder sb = new StringBuilder(this.stack.size() * 10);
+    private String getTranslatedScript() {
+        final StringBuilder sb = new StringBuilder(this.stack.size() * 100);
         while (!this.stack.empty()) {
             sb.insert(0, '\n').insert(0, this.stack.pop(Expression.class).script);
         }
@@ -157,33 +169,34 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
+     * Helper method that starts from a given {@link ParserRuleContext} and
+     * recursively searches
      * for a {@link SimpleFieldReferenceContext} to locate a field identifier.
      */
     protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
         if (ctx instanceof SimpleFieldReferenceContext) {
-            return ((SimpleFieldReferenceContext)ctx).FieldId().getText();
+            return ((SimpleFieldReferenceContext) ctx).FieldId().getText();
         }
 
         if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
-            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithFieldContextOverrideContext)ctx).reference);
+            return getFieldIdFromChildSimpleFieldReferenceContext(
+                    ((FieldReferenceWithFieldContextOverrideContext) ctx).reference);
         }
 
         if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
-            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithNodeContextOverrideContext)ctx).reference);
+            return getFieldIdFromChildSimpleFieldReferenceContext(
+                    ((FieldReferenceWithNodeContextOverrideContext) ctx).reference);
         }
 
-        SimpleFieldReferenceContext fieldReferenceContext =
-                ctx.getChild(SimpleFieldReferenceContext.class, 0);
+        SimpleFieldReferenceContext fieldReferenceContext = ctx.getChild(SimpleFieldReferenceContext.class, 0);
         if (fieldReferenceContext != null) {
             return fieldReferenceContext.FieldId().getText();
         }
 
         for (ParseTree child : ctx.children) {
             if (child instanceof ParserRuleContext) {
-                String fieldId =
-                        getFieldIdFromChildSimpleFieldReferenceContext((ParserRuleContext) child);
+                String fieldId = getFieldIdFromChildSimpleFieldReferenceContext((ParserRuleContext) child);
                 if (fieldId != null) {
                     return fieldId;
                 }
@@ -194,19 +207,19 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
+     * Helper method that starts from a given {@link ParserRuleContext} and
+     * recursively searches
      * for a {@link SimpleNodeReferenceContext} to locate a node identifier.
      */
     protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
         if (ctx instanceof SimpleNodeReferenceContext) {
-            return ((SimpleNodeReferenceContext)ctx).NodeId().getText();
+            return ((SimpleNodeReferenceContext) ctx).NodeId().getText();
         }
 
         for (ParseTree child : ctx.children) {
             if (child instanceof ParserRuleContext) {
-                String nodeId =
-                        getNodeIdFromChildSimpleNodeReferenceContext((ParserRuleContext) child);
+                String nodeId = getNodeIdFromChildSimpleNodeReferenceContext((ParserRuleContext) child);
                 if (nodeId != null) {
                     return nodeId;
                 }
@@ -232,14 +245,16 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitSingleExpression(SingleExpressionContext ctx) {
         this.efxContext.pop();
-        if (debug) {
-            System.out.println("[In]: " + ctx.getText());
-            System.out.println("[Out]: " + this.stack.peek());
-            System.out.println();
-        }
     }
 
     /*** Boolean expressions ***/
+
+    @Override
+    public void exitParenthesizedBooleanExpression(
+            EfxParser.ParenthesizedBooleanExpressionContext ctx) {
+        this.stack.push(this.script.mapParenthesizedExpression(
+                this.stack.pop(BooleanExpression.class), BooleanExpression.class));
+    }
 
     @Override
     public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
@@ -255,13 +270,15 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapLogicalOr(left, right));
     }
 
+    /*** Boolean expressions - Comparisons ***/
+
     @Override
     public void exitFieldValueComparison(FieldValueComparisonContext ctx) {
         Expression right = this.stack.pop(Expression.class);
         Expression left = this.stack.pop(Expression.class);
         if (!left.getClass().equals(right.getClass())) {
             throw new ParseCancellationException(
-                    "Type mismatch. Cannot compare values of different types: " + left.getClass()
+                    TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES + left.getClass()
                             + " and " + right.getClass());
         }
         this.stack.push(this.script.mapComparisonOperator(left, ctx.operator.getText(), right));
@@ -309,19 +326,20 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapComparisonOperator(left, ctx.operator.getText(), right));
     }
 
+    /*** Boolean expressions - Conditions ***/
+
     @Override
     public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
         StringExpression expression = this.stack.pop(StringExpression.class);
-        String operator =
-                ctx.modifier != null && ctx.modifier.getText().equals("not") ? "!=" : "==";
-        this.stack.push(
-                this.script.mapComparisonOperator(expression, operator, this.script.mapString("")));
+        String operator = ctx.modifier != null
+                && ctx.modifier.getText().equals(NOT_MODIFIER) ? "!=" : "==";
+        this.stack.push(this.script.mapComparisonOperator(expression, operator, this.script.mapString("")));
     }
 
     @Override
     public void exitPresenceCondition(EfxParser.PresenceConditionContext ctx) {
         PathExpression reference = this.stack.pop(PathExpression.class);
-        if (ctx.modifier != null && ctx.modifier.getText().equals("not")) {
+        if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
             this.stack.push(this.script.mapLogicalNot(this.script.mapExistsExpression(reference)));
         } else {
             this.stack.push(this.script.mapExistsExpression(reference));
@@ -329,19 +347,11 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitParenthesizedBooleanExpression(
-            EfxParser.ParenthesizedBooleanExpressionContext ctx) {
-        this.stack.push(this.script.mapParenthesizedExpression(
-                this.stack.pop(BooleanExpression.class), BooleanExpression.class));
-    }
-
-    @Override
     public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
         StringExpression expression = this.stack.pop(StringExpression.class);
 
-        BooleanExpression condition =
-                this.script.mapMatchesPatternCondition(expression, ctx.pattern.getText());
-        if (ctx.modifier != null && ctx.modifier.getText().equals("not")) {
+        BooleanExpression condition = this.script.mapMatchesPatternCondition(expression, ctx.pattern.getText());
+        if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
             condition = this.script.mapLogicalNot(condition);
         }
         this.stack.push(condition);
@@ -352,7 +362,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         StringListExpression list = this.stack.pop(StringListExpression.class);
         StringExpression expression = this.stack.pop(StringExpression.class);
         BooleanExpression condition = this.script.mapInListCondition(expression, list);
-        if (ctx.modifier != null && ctx.modifier.getText().equals("not")) {
+        if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
             condition = this.script.mapLogicalNot(condition);
         }
         this.stack.push(condition);
@@ -411,6 +421,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapList(list));
     }
 
+    /*** Literals ***/
+
     @Override
     public void exitNumericLiteral(NumericLiteralContext ctx) {
         this.stack.push(this.script.mapNumericLiteral(ctx.getText()));
@@ -446,10 +458,21 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapDurationLiteral(ctx.getText()));
     }
 
+    /*** References ***/
+
     @Override
-    public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
-        this.stack.push(this.script.mapExternalReference(this.stack.pop(StringExpression.class)));
+    public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
+        this.stack.push(this.symbols.relativeXpathOfNode(ctx.NodeId().getText(),
+                this.efxContext.absolutePath()));
     }
+
+    @Override
+    public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
+        this.stack.push(symbols.relativeXpathOfField(ctx.FieldId().getText(),
+                this.efxContext.absolutePath()));
+    }
+
+    /*** References with Predicates ***/
 
     @Override
     public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
@@ -460,9 +483,39 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
-        this.stack.push(this.symbols.relativeXpathOfNode(ctx.NodeId().getText(),
-                this.efxContext.absolutePath()));
+    public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
+        BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
+        PathExpression fieldReference = this.stack.pop(PathExpression.class);
+        this.stack.push(this.script.mapFieldReferenceWithPredicate(fieldReference, predicate,
+                PathExpression.class));
+    }
+
+    /**
+     * Any field references in the predicate must be resolved relative to the field
+     * on which the
+     * predicate is applied. Therefore we need to switch to the field's context
+     * while the predicate
+     * is being parsed.
+     */
+    @Override
+    public void enterPredicate(EfxParser.PredicateContext ctx) {
+        final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.getParent());
+        this.efxContext.pushFieldContext(fieldId);
+    }
+
+    /**
+     * After the predicate is parsed we need to switch back to the previous context.
+     */
+    @Override
+    public void exitPredicate(EfxParser.PredicateContext ctx) {
+        this.efxContext.pop();
+    }
+
+    /*** External References ***/
+
+    @Override
+    public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
+        this.stack.push(this.script.mapExternalReference(this.stack.pop(StringExpression.class)));
     }
 
     @Override
@@ -472,19 +525,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapFieldInExternalReference(notice, field));
     }
 
-    @Override
-    public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-        this.stack.push(symbols.relativeXpathOfField(ctx.FieldId().getText(),
-                this.efxContext.absolutePath()));
-    }
-
-    @Override
-    public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
-        BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
-        PathExpression fieldReference = this.stack.pop(PathExpression.class);
-        this.stack.push(this.script.mapFieldReferenceWithPredicate(fieldReference, predicate,
-                PathExpression.class));
-    }
+    /*** Value References ***/
 
     @Override
     public void exitUntypedFieldValueReference(UntypedFieldValueReferenceContext ctx) {
@@ -510,60 +551,61 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                 ctx.Identifier().getText(), StringExpression.class));
     }
 
-    /**
-     * Any field references in the predicate must be resolved relative to the field on which the
-     * predicate is applied. Therefore we need to switch to the field's context while the predicate
-     * is being parsed.
-     */
-    @Override
-    public void enterPredicate(EfxParser.PredicateContext ctx) {
-        final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.getParent());
-        this.efxContext.pushFieldContext(fieldId);
-    }
+    /*** References with context override ***/
 
     /**
-     * After the predicate is parsed we need to switch back to the previous context.
+     * Handles expressions of the form ContextField::ReferencedField.
+     * Changes the context before the reference is resolved.
      */
-    @Override
-    public void exitPredicate(EfxParser.PredicateContext ctx) {
-        this.efxContext.pop();
-    }
-
     @Override
     public void enterFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
         final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.context);
-        this.efxContext.push(new FieldContext(contextFieldId, this.symbols.absoluteXpathOfField(ctx.context.getText())));
+        this.efxContext
+                .push(new FieldContext(contextFieldId, this.symbols.absoluteXpathOfField(ctx.context.getText())));
     }
 
+    /**
+     * Handles expressions of the form ContextField::ReferencedField.
+     * Restores the context after the reference is resolved.
+     */
     @Override
     public void exitFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
         final PathExpression field = this.stack.pop(PathExpression.class);
-        this.stack.pop(PathExpression.class);  // The context field is not needed in the actual expression and must be removed from the stack.
-        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
-        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
+        this.stack.pop(PathExpression.class); // Discards the context field
+        this.stack.push(field);
+        this.efxContext.pop(); // Restores the previous context
     }
 
+    /**
+     * Handles expressions of the form ContextNode::ReferencedField.
+     * Changes the context before the reference is resolved.
+     */
     @Override
     public void enterFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
         this.efxContext.push(new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(contextNodeId)));
     }
 
+    /**
+     * Handles expressions of the form ContextNode::ReferencedField.
+     * Restores the context after the reference is resolved.
+     */
     @Override
     public void exitFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         final PathExpression field = this.stack.pop(PathExpression.class);
-        this.stack.pop(PathExpression.class);   // The context node is not needed in the actual expression and must be removed from the stack.
-        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
-        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
+        this.stack.pop(PathExpression.class); // Discards the context node
+        this.stack.push(field);
+        this.efxContext.pop(); // Restores the previous context
     }
+
+
+    /*** Other References ***/
 
     @Override
     public void exitCodelistReference(CodelistReferenceContext ctx) {
         this.stack.push(this.script.mapList(this.symbols.expandCodelist(ctx.codeListId.getText())
                 .stream().map(s -> this.script.mapString(s)).collect(Collectors.toList())));
     }
-
-
 
     /*** Boolean functions ***/
 
@@ -593,7 +635,6 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.mapStringEndsWithFunction(text, endsWith));
     }
 
-
     /*** Numeric functions ***/
 
     @Override
@@ -617,13 +658,11 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                 .push(this.script.mapStringLengthFunction(this.stack.pop(StringExpression.class)));
     }
 
-
     /*** String functions ***/
 
     @Override
     public void exitSubstringFunction(SubstringFunctionContext ctx) {
-        final NumericExpression length =
-                ctx.length != null ? this.stack.pop(NumericExpression.class) : null;
+        final NumericExpression length = ctx.length != null ? this.stack.pop(NumericExpression.class) : null;
         final NumericExpression start = this.stack.pop(NumericExpression.class);
         final StringExpression text = this.stack.pop(StringExpression.class);
         if (length != null) {

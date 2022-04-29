@@ -15,7 +15,7 @@ public class EfxExpressionCombinedTest {
     final private String SDK_VERSION = "latest";
 
     private String test(final String context, final String expression) {
-        return EfxExpressionTranslator.transpileExpression(context, expression,
+        return EfxExpressionTranslator.translateExpression(context, expression,
                 SymbolResolverMock.getInstance(SDK_VERSION), new XPathScriptGenerator(),
                 ThrowingErrorListener.INSTANCE);
     }
