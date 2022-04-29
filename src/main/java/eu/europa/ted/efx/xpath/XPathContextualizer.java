@@ -75,15 +75,6 @@ public class XPathContextualizer extends XPath20BaseListener {
 
       // At this point there are no more matching nodes in the two queues.
 
-      if (!pathQueue.isEmpty() && !contextQueue.isEmpty()) {
-        final StepInfo contextStep = contextQueue.peek();
-        final StepInfo pathStep = pathQueue.peek();
-        if (Objects.equals(contextStep.stepText, pathStep.stepText)
-            && !pathStep.isTheSameAs(contextStep)) {
-          // pathStep.predicate = contextStep.predicate + pathStep.predicate;
-        }
-      }
-
       // We start building the resulting relativeXpath by appending any nodes
       // remaining in the
       // pathQueue.
