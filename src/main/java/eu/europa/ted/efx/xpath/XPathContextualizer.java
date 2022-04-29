@@ -61,8 +61,6 @@ public class XPathContextualizer extends XPath20BaseListener {
   private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 
-    final StringBuilder result = new StringBuilder();
-
     // We will store the relative xPath here as we build it.
     String relativeXpath = "";
 
@@ -122,12 +120,7 @@ public class XPathContextualizer extends XPath20BaseListener {
       }
     }
 
-    // As we use a stack we are traversing the lines of xPath pairs in the
-    // reverse order. Therefore we prepend the preceding lines in the result.
-    final String toAppend = relativeXpath + (result.length() == 0 ? "" : ("\n" + result));
-    result.append(toAppend);
-
-    return new PathExpression(result.toString());
+    return new PathExpression(relativeXpath);
   }
 
   /**
