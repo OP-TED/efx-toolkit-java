@@ -26,7 +26,7 @@ public interface SymbolResolver {
      * @param contextPath The path relative to which we expect to find the return value.
      * @return The path to the given field relative to the given context path.
      */
-    public PathExpression relativeXpathOfField(final String fieldId,
+    public PathExpression relativePathOfField(final String fieldId,
             final PathExpression contextPath);
 
     /***

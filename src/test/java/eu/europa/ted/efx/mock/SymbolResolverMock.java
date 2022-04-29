@@ -101,7 +101,7 @@ public class SymbolResolverMock implements SymbolResolver {
     }
 
     @Override
-    public PathExpression relativeXpathOfField(String fieldId, PathExpression contextPath) {
+    public PathExpression relativePathOfField(String fieldId, PathExpression contextPath) {
         return XPathContextualizer.contextualize(contextPath, absolutePathOfField(fieldId));
     }
 

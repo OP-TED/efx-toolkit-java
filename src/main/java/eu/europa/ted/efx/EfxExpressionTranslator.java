@@ -467,7 +467,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-        this.stack.push(symbols.relativeXpathOfField(ctx.FieldId().getText(),
+        this.stack.push(symbols.relativePathOfField(ctx.FieldId().getText(),
                 this.efxContext.absolutePath()));
     }
 
