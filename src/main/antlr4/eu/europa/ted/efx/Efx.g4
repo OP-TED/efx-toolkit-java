@@ -1,6 +1,6 @@
 grammar Efx;
 
-options { tokenVocab = EfxLexer;}
+options { tokenVocab=EfxLexer;}
 
 /*** Using the lexer's DEFAULT_MODE ***/
 
@@ -105,32 +105,32 @@ contextDeclarationBlock
 expression: numericExpression | stringExpression | booleanExpression | dateExpression | timeExpression | durationExpression;
 
 booleanExpression
-	: OpenParenthesis booleanExpression CloseParenthesis			# parenthesizedBooleanExpression
-	| booleanExpression operator=Or booleanExpression				# logicalOrCondition
-	| booleanExpression operator=And booleanExpression				# logicalAndCondition
-	| stringExpression modifier = Not? In list						# inListCondition
-	| stringExpression Is modifier = Not? Empty						# emptinessCondition
-	| setReference Is modifier = Not? Present						# presenceCondition
-	| stringExpression modifier = Not? Like pattern = STRING		# likePatternCondition
-	| fieldValueReference operator = Comparison fieldValueReference	# fieldValueComparison
-	| booleanExpression operator = Comparison booleanExpression		# booleanComparison
-	| numericExpression operator = Comparison numericExpression		# numericComparison
-	| stringExpression operator = Comparison stringExpression		# stringComparison
-	| dateExpression operator = Comparison dateExpression			# dateComparison
-	| timeExpression operator = Comparison timeExpression			# timeComparison
-	| durationExpression operator = Comparison durationExpression	# durationComparison
-	| booleanLiteral 												# booleanLiteralExpression
-	| booleanFunction 												# booleanFunctionExpression
-	| fieldValueReference 											# booleanReferenceExpression
+	: OpenParenthesis booleanExpression CloseParenthesis									# parenthesizedBooleanExpression
+	| booleanExpression operator=Or booleanExpression										# logicalOrCondition
+	| booleanExpression operator=And booleanExpression										# logicalAndCondition
+	| stringExpression modifier=Not? In list												# inListCondition
+	| stringExpression Is modifier=Not? Empty												# emptinessCondition
+	| setReference Is modifier=Not? Present													# presenceCondition
+	| stringExpression modifier=Not? Like pattern=STRING									# likePatternCondition
+	| fieldValueReference operator=Comparison fieldValueReference							# fieldValueComparison
+	| booleanExpression operator=Comparison booleanExpression								# booleanComparison
+	| numericExpression operator=Comparison numericExpression								# numericComparison
+	| stringExpression operator=Comparison stringExpression									# stringComparison
+	| dateExpression operator=Comparison dateExpression										# dateComparison
+	| timeExpression operator=Comparison timeExpression										# timeComparison
+	| durationExpression operator=Comparison durationExpression								# durationComparison
+	| booleanLiteral 																		# booleanLiteralExpression
+	| booleanFunction 																		# booleanFunctionExpression
+	| fieldValueReference 																	# booleanReferenceExpression
 	;
 	
 numericExpression
-	: numericExpression operator=Multiplication numericExpression	# multiplicationExpression
-	| numericExpression operator=Addition numericExpression			# additionExpression
-	| OpenParenthesis numericExpression CloseParenthesis			# parenthesizedNumericExpression
-	| numericLiteral 												# numericLiteralExpression
-	| numericFunction 												# numericFunctionExpression
-	| fieldValueReference											# numericReferenceExpression
+	: OpenParenthesis numericExpression CloseParenthesis					# parenthesizedNumericExpression
+	| numericExpression operator=Multiplication numericExpression			# multiplicationExpression
+	| numericExpression operator=(Addition | Subtraction) numericExpression	# additionExpression
+	| numericLiteral 														# numericLiteralExpression
+	| numericFunction 														# numericFunctionExpression
+	| fieldValueReference													# numericReferenceExpression
 	;
 
 stringExpression: stringLiteral | stringFunction | fieldValueReference;
@@ -139,7 +139,12 @@ dateExpression: dateLiteral | dateFunction | fieldValueReference;
 
 timeExpression: timeLiteral | timeFunction | fieldValueReference;
 
-durationExpression: durationLiteral | durationFunction | fieldValueReference;
+durationExpression
+	: OpenParenthesis durationExpression CloseParenthesis			# parenthesizedDurationExpression
+	| endDate=dateExpression Subtraction startDate=dateExpression 	# dateSubtractionExpression
+	| durationLiteral 												# durationLiteralExpression
+	| fieldValueReference											# durationReferenceExpression
+	;
 
 list: OpenParenthesis expression (Comma expression)* CloseParenthesis	# explicitList
 	| codelistReference													# codeList
@@ -159,7 +164,7 @@ trueBooleanLiteral: Always | True;
 falseBooleanLiteral: Never | False;
 dateLiteral: DATE;
 timeLiteral: TIME;
-durationLiteral: DURATION;
+durationLiteral: DayTimeDurationLiteral | YearMonthDurationLiteral;
 
 
 /*
@@ -176,8 +181,8 @@ setReference: fieldReference;
 fieldReference
 	: fieldReference OpenBracket predicate CloseBracket					# fieldReferenceWithPredicate
 	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
-	| context = fieldReference ColonColon reference = fieldReference	# fieldReferenceWithFieldContextOverride
-	| context = nodeReference ColonColon reference = fieldReference		# fieldReferenceWithNodeContextOverride
+	| context=fieldReference ColonColon reference=fieldReference		# fieldReferenceWithFieldContextOverride
+	| context=nodeReference ColonColon reference=fieldReference			# fieldReferenceWithNodeContextOverride
 	| FieldId															# simpleFieldReference
 	;
 
@@ -224,9 +229,4 @@ dateFunction
 
 timeFunction
 	: TimeFunction OpenParenthesis stringExpression CloseParenthesis		# timeFromStringFunction
-	;
-
-
-durationFunction
-	: DurationFunction OpenParenthesis start=dateExpression Comma end=dateExpression CloseParenthesis 	# durationFromDatesFunction
 	;

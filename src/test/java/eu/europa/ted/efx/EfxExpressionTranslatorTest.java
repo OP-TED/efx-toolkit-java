@@ -1,14 +1,11 @@
 package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.SymbolResolverMock;
-import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 public class EfxExpressionTranslatorTest {
@@ -20,41 +17,6 @@ public class EfxExpressionTranslatorTest {
         return EfxExpressionTranslator.transpileExpression(context, expression,
                 SymbolResolverMock.getInstance(SDK_VERSION), new XPathScriptGenerator(),
                 ThrowingErrorListener.INSTANCE);
-    }
-
-    /*** Value References ***/
-
-    @Test
-    public void testFieldAttributeValueReference() {
-        assertEquals("PathNode/TextField/@Attribute = 'text'", test("BT-00-Text", "BT-00-Attribute == 'text'"));
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithAttribute() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path/@attribute"));
-        assertEquals("/path/path", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithMultipleAttributes() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']/@attribute"));
-        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithoutAttribute() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']"));
-        assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
-        assertNull(locator.getAttribute());
-    }
-
-    @Test
-    public void testXPathAttributeLocator_WithoutPath() {
-        final XPathAttributeLocator locator = XPathAttributeLocator.findAttribute(new PathExpression("@attribute"));
-        assertEquals("", locator.getPath().script);
-        assertEquals("attribute", locator.getAttribute());
     }
 
     /*** Boolean expressions ***/
@@ -75,23 +37,75 @@ public class EfxExpressionTranslatorTest {
         assertEquals("true() and 1 + 1 = 2", test("BT-00-Text", "ALWAYS and 1 + 1 == 2"));
     }
 
-
-
     @Test
-    public void testAlwaysCondition() {
-        assertEquals("true()", test("BT-00-Text", "ALWAYS"));
+    public void testInListCondition() {
+        assertEquals("not('x' = ('a','b','c'))", test("BT-00-Text", "'x' not in ('a', 'b', 'c')"));
     }
 
     @Test
-    public void testNeverCondition() {
-        assertEquals("false()", test("BT-00-Text", "NEVER"));
+    public void testEmptinessCondition() {
+        assertEquals("PathNode/TextField/normalize-space(text()) = ''",
+                test("ND-0", "BT-00-Text is empty"));
     }
 
+    @Test
+    public void testEmptinessCondition_WithNot() {
+        assertEquals("PathNode/TextField/normalize-space(text()) != ''",
+                test("ND-0", "BT-00-Text is not empty"));
+    }
 
     @Test
-    public void testComparisonCondition() {
+    public void testPresenceCondition() {
+        assertEquals("PathNode/TextField",
+                test("ND-0", "BT-00-Text is present"));
+    }
+
+    @Test
+    public void testPresenceCondition_WithNot() {
+        assertEquals("not(PathNode/TextField)",
+                test("ND-0", "BT-00-Text is not present"));
+    }
+
+    @Test
+    public void testLikePatternCondition() {
+        assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
+                test("BT-00-Text", "'123' like '[0-9]*'"));
+    }
+
+    @Test
+    public void testLikePatternCondition_WithNot() {
+        assertEquals("not(fn:matches(normalize-space('123'), '[0-9]*'))",
+                test("BT-00-Text", "'123' not like '[0-9]*'"));
+    }
+
+    @Test
+    public void testFieldValueComparison() {
+        assertEquals("PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
+                test("ND-0", "BT-00-Text == BT-00-Text-Multilingual"));
+    }
+
+    @Test
+    public void testFieldValueComparison_WithNumericLiteral() {
+        assertEquals("PathNode/IntegerField/number() > 0",
+                test("ND-0", "BT-00-Integer > 0"));
+    }
+
+    @Test
+    public void testBooleanComparison() {
+        assertEquals("false() != true()",
+                test("BT-00-Text", "NEVER != ALWAYS"));
+    }
+
+    @Test
+    public void testNumericComparison() {
         assertEquals("2 > 1 and 3 >= 1 and 1 = 1 and 4 < 5 and 5 <= 5",
                 test("BT-00-Text", "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5"));
+    }
+
+    @Test
+    public void testStringComparison() {
+        assertEquals("'aaa' < 'bbb'",
+                test("BT-00-Text", "'aaa' < 'bbb'"));
     }
 
     @Test
@@ -102,14 +116,14 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testDateComparison_OfTwoDateReferences() {
-        assertEquals("PathNode/DateField/xs:date(text()) = PathNode/DateField/xs:date(text())",
-                test("BT-00-Text", "BT-00-Date == BT-00-Date"));
+        assertEquals("PathNode/StartDateField/xs:date(text()) = PathNode/EndDateField/xs:date(text())",
+                test("ND-0", "BT-00-StartDate == BT-00-EndDate"));
     }
 
     @Test
     public void testDateComparison_OfDateReferenceAndDateFunction() {
-        assertEquals("PathNode/DateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
-                test("BT-00-Text", "BT-00-Date == date(BT-00-Text)"));
+        assertEquals("PathNode/StartDateField/xs:date(text()) = xs:date(PathNode/TextField/normalize-space(text()))",
+                test("ND-0", "BT-00-StartDate == date(BT-00-Text)"));
     }
     
     @Test
@@ -120,38 +134,46 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testTimeComparison_OfTwoTimeReferences() {
-        assertEquals("PathNode/TimeField/xs:time(text()) = PathNode/TimeField/xs:time(text())",
-                test("BT-00-Text", "BT-00-Time == BT-00-Time"));
+        assertEquals("PathNode/StartTimeField/xs:time(text()) = PathNode/EndTimeField/xs:time(text())",
+                test("ND-0", "BT-00-StartTime == BT-00-EndTime"));
     }
 
     @Test
     public void testTimeComparison_OfTimeReferenceAndTimeFunction() {
-        assertEquals("PathNode/TimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
-                test("BT-00-Text", "BT-00-Time == time(BT-00-Text)"));
+        assertEquals("PathNode/StartTimeField/xs:time(text()) = xs:time(PathNode/TextField/normalize-space(text()))",
+                test("ND-0", "BT-00-StartTime == time(BT-00-Text)"));
     }
 
     @Test
-    public void testInListCondition() {
-        assertEquals("not('x' = ('a','b','c'))", test("BT-00-Text", "'x' not in ('a', 'b', 'c')"));
+    public void testDurationComparison_UsingYearMOnthDurationLiterals() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P12M')))",
+                test("BT-00-Text", "P1Y == P12M"));
     }
 
     @Test
-    public void testEmptinessCondition() {
-        assertEquals("PathNode/TextField/normalize-space(text()) != ''",
-                test("BT-00-Text", "BT-00-Text is not empty"));
+    public void testDurationComparison_UsingDayTimeDurationLiterals() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P21D') > $T + xs:dayTimeDuration('P7D')))",
+                test("BT-00-Text", "P3W > P7D"));
     }
 
     @Test
-    public void testPresenceCondition() {
-        assertEquals("PathNode/TextField",
-                test("BT-00-Text", "BT-00-Text is present"));
+    public void testCalculatedDurationComparison() {
+        assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P3M') > $T + xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text()))))",
+                test("ND-0", "P3M > (BT-00-EndDate - BT-00-StartDate)"));
     }
 
     @Test
-    public void testLikePatternCondition() {
-        assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
-                test("BT-00-Text", "'123' like '[0-9]*'"));
+    public void testBooleanLiteralExpression_Always() {
+        assertEquals("true()", test("BT-00-Text", "ALWAYS"));
     }
+
+    @Test
+    public void testBooleanLiteralExpression_Never() {
+        assertEquals("false()", test("BT-00-Text", "NEVER"));
+    }
+
+
+    /*** Numeric expressions ***/
 
     @Test
     public void testMultiplicationExpression() {
@@ -164,9 +186,16 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
-    public void testParenthesizedExpression() {
+    public void testParenthesizedNumericExpression() {
         assertEquals("(2 + 2) * 4", test("BT-00-Text", "(2 + 2)*4"));
     }
+
+    @Test
+    public void testNumericLiteralExpression() {
+        assertEquals("3.1415", test("BT-00-Text", "3.1415"));
+    }
+
+   /*** List ***/
 
     @Test
     public void testExplicitList() {
@@ -178,6 +207,69 @@ public class EfxExpressionTranslatorTest {
         assertEquals("'a' = ('code1','code2','code3')",
                 test("BT-00-Text", "'a' in (accessibility)"));
     }
+
+
+    /*** References ***/
+    
+    @Test
+    public void testFieldAttributeValueReference() {
+        assertEquals("PathNode/TextField/@Attribute = 'text'",
+                test("ND-0", "BT-00-Attribute == 'text'"));
+    }
+
+    @Test
+    public void testFieldReferenceWithPredicate() {
+        assertEquals("PathNode/IndicatorField['a' = 'a']",
+                test("ND-0", "BT-00-Indicator['a' == 'a']"));
+    }
+
+    @Test
+    public void testFieldReferenceWithPredicate_WithFieldReferenceInPredicate() {
+        assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']",
+                test("ND-0", "BT-00-Indicator[BT-00-Code == 'a']"));
+    }
+
+    @Test
+    public void testFieldReferenceInOtherNotice() {
+        assertEquals("fn:doc(concat('http://notice.service/', 'da4d46e9-490b-41ff-a2ae-8166d356a619')')/PathNode/TextField/normalize-space(text())",
+                test("ND-0", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text"));
+    }
+
+    @Test
+    public void testFieldReferenceWithFieldContextOverride() {
+        assertEquals("../../TextField/normalize-space(text())",
+                test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Text"));
+    }
+
+    @Test
+    public void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
+        assertEquals("../../IntegerField/number()",
+                test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Integer"));
+    }
+
+    @Test
+    public void testFieldReferenceWithNodeContextOverride() {
+        assertEquals("PathNode/IntegerField/number()",
+                test("BT-00-Text", "ND-0::BT-00-Integer"));
+    }
+
+    @Test
+    public void testFieldReferenceWithNodeContextOverride_WithPredicate() {
+        assertEquals("PathNode/IntegerField/number()",
+                test("BT-00-Text", "ND-0[BT-00-Indicator == TRUE]::BT-00-Integer"));
+    }
+
+    @Test
+    public void testSimpleFieldReference() {
+        assertEquals("../IndicatorField",
+                test("BT-00-Text", "BT-00-Indicator"));
+    }
+
+    @Test
+    public void testFieldReference_ForDurationFields() {
+        assertEquals("xs:duration(if (lower-case(PathNode/MeasureField/@unit)='w') then concat('P', PathNode/MeasureField/number() * 7, 'D') else concat('P', PathNode/MeasureField/number(), upper-case(/@unit)))",
+                test("ND-0", "BT-00-Measure"));
+    } 
 
 
     /*** Boolean functions ***/
@@ -242,7 +334,7 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
-    public void testNumberToStringFunction() {
+    public void testToStringFunction() {
         assertEquals("string(123)", test("ND-0", "string(123)"));
     }
 
@@ -253,7 +345,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFormatNumberFunction() {
-        assertEquals("format-number(PathNode/NumberField, '#,##0.00')",
+        assertEquals("format-number(PathNode/NumberField/number(), '#,##0.00')",
                 test("ND-0", "format-number(BT-00-Number, '#,##0.00')"));
     }
 
@@ -274,29 +366,11 @@ public class EfxExpressionTranslatorTest {
                 test("ND-0", "time(BT-00-Text)"));
     }
 
-    /*** Duration functions ***/
+    /*** Other ***/
 
     @Test
-    public void testDurationFromDatesFunction_UsingTwoDateFields() {
-        assertEquals("PathNode/DateField/xs:date(text()) - PathNode/DateField/xs:date(text())",
-                test("ND-0", "duration(BT-00-Date, BT-00-Date)"));
-    }
-
-    @Test
-    public void testDurationFromDatesFunction_UsingOneNonDateField() {
-        assertThrows(ParseCancellationException.class,
-                () -> test("ND-0", "duration(BT-00-Date, BT-00-Text)"));
-    }
-
-    @Test
-    public void testDurationFromDatesFunction_UsingTwoDateLiterals() {
-        assertEquals("xs:date('2019-12-01') - xs:date('2021-01-12')",
-                test("ND-0", "duration(2019-12-01, 2021-01-12)"));
-    }
-
-    @Test
-    public void testPredicate() {
-        assertEquals("PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']",
-                test("BT-00-Text", "BT-00-Indicator[BT-00-Code == 'a']"));
+    public void testCountWithNodeContextOverride() {
+        assertEquals("count(PathNode/CodeField) = 1",
+                test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
     }
 }

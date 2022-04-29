@@ -46,8 +46,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
   private static final String INDENTATION_LEVEL_SKIPPED = "Indentation level skipped.";
-  private static final String START_INTENDAT_AT_ZERO =
-      "Incorrect intendation. Please do not indent the first level in your template.";
+  private static final String START_INDENT_AT_ZERO =
+      "Incorrect indentation. Please do not indent the first level in your template.";
   private static final String MIXED_INDENTATION =
       "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
@@ -286,7 +286,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
    * as the context.
    * 
    * If the labelType is 'value', then the label depends on the field's value and is rendered
-   * according to the field's type. The assetType is infered from the Field or Node declared as
+   * according to the field's type. The assetType is inferred from the Field or Node declared as
    * context.
    */
   @Override
@@ -308,7 +308,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   }
 
   /**
-   * Handles the #value shorthand syntax which renders the label coresponding to the value of the
+   * Handles the #value shorthand syntax which renders the label corresponding to the value of the
    * the field declared as the context of the current line of the template.
    * This shorthand syntax is only supported for fields of type 'code' or 'indicator'.
    */
@@ -362,7 +362,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       ShorthandContextFieldValueReferenceContext ctx) {
     if (!this.efxContext.isFieldContext()) {
       throw new ParseCancellationException(
-          "The $value shorthand syntax can only be used when a field is declated as the context.");
+          "The $value shorthand syntax can only be used when a field is declared as the context.");
     }
     this.stack.push(this.script.mapFieldValueReference(
         symbols.relativeXpathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()), Expression.class));
@@ -371,7 +371,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   /**
    * This method changes the current EFX context.
    * 
-   * The EFX context is always assummed to be either a Field or a Node. Any predicate included in
+   * The EFX context is always assumed to be either a Field or a Node. Any predicate included in
    * the EFX context declaration is not relevant and is ignored.
    */
   @Override
@@ -400,7 +400,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new ParseCancellationException(START_INTENDAT_AT_ZERO);
+        throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
       this.blockStack.pushChild(outlineNumber, content, lineContext);
     } else if (indentChange < 0) {

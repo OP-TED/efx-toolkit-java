@@ -13,10 +13,12 @@ Rebuild sources after that.
 
 ## Testing
 
-See unit tests.
-See EfxToXpathTranslator.java (translateFile, translateCondition, ...)
+See unit tests under `src/test/java/`.
 
 `mvn clean install` will also run the tests.
+
+After running the unit tests with `mvn test`, you can generate a coverage report with`mvn jacoco:report`.
+The report is available under `target/site/jacoco/`, in HTML, CSV, and XML format.
 
 ## Export of artifact into local m2 repo
 

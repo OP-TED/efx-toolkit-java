@@ -59,7 +59,7 @@ public class EfxTemplateTranslatorTest {
 
 
     @Test
-    public void testSelfLabelReference_WithValueLabelTypeAndIdicatorField() {
+    public void testSelfLabelReference_WithValueLabelTypeAndIndicatorField() {
         assertEquals(
                 "block01 = label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/IndicatorField) { block01(); }",
                 translate("{BT-00-Indicator}  #{value}"));

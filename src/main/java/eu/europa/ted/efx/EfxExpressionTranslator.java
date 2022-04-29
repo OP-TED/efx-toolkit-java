@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -12,6 +13,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
 import eu.europa.ted.efx.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.EfxParser.CodeListContext;
 import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
@@ -21,8 +23,8 @@ import eu.europa.ted.efx.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.EfxParser.DateComparisonContext;
 import eu.europa.ted.efx.EfxParser.DateFromStringFunctionContext;
 import eu.europa.ted.efx.EfxParser.DateLiteralContext;
+import eu.europa.ted.efx.EfxParser.DateSubtractionExpressionContext;
 import eu.europa.ted.efx.EfxParser.DurationComparisonContext;
-import eu.europa.ted.efx.EfxParser.DurationFromDatesFunctionContext;
 import eu.europa.ted.efx.EfxParser.DurationLiteralContext;
 import eu.europa.ted.efx.EfxParser.EndsWithFunctionContext;
 import eu.europa.ted.efx.EfxParser.ExplicitListContext;
@@ -56,10 +58,10 @@ import eu.europa.ted.efx.EfxParser.UntypedFieldValueReferenceContext;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.ContextStack;
-import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.ContextStack;
+import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -74,14 +76,14 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
  * target scripting language.
  * 
- * The target language syntax is not hadcoded into the translator so that this class can be reused
+ * The target language syntax is not hardcoded into the translator so that this class can be reused
  * to translate to several different languages.
  * 
- * Appart from writing expressions that can be translated and evaluated in a target scripting
+ * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
- * can be traslated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
+ * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
  * {@link EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates you
- * need to use the {@link EfxTemplateTranslator} which derrives from this class.
+ * need to use the {@link EfxTemplateTranslator} which derives from this class.
  */
 public class EfxExpressionTranslator extends EfxBaseListener {
 
@@ -155,10 +157,22 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursivelly searches
+     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
      * for a {@link SimpleFieldReferenceContext} to locate a field identifier.
      */
     protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
+
+        if (ctx instanceof SimpleFieldReferenceContext) {
+            return ((SimpleFieldReferenceContext)ctx).FieldId().getText();
+        }
+
+        if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
+            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithFieldContextOverrideContext)ctx).reference);
+        }
+
+        if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
+            return getFieldIdFromChildSimpleFieldReferenceContext(((FieldReferenceWithNodeContextOverrideContext)ctx).reference);
+        }
 
         SimpleFieldReferenceContext fieldReferenceContext =
                 ctx.getChild(SimpleFieldReferenceContext.class, 0);
@@ -180,15 +194,13 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /**
-     * Helper method that starts from a given {@link ParserRuleContext} and recursivelly searches
-     * for a {@link SimpleNodeReferenceContext} to locate a field identifier.
+     * Helper method that starts from a given {@link ParserRuleContext} and recursively searches
+     * for a {@link SimpleNodeReferenceContext} to locate a node identifier.
      */
     protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
-        SimpleNodeReferenceContext nodeReferenceContext =
-                ctx.getChild(SimpleNodeReferenceContext.class, 0);
-        if (nodeReferenceContext != null) {
-            return nodeReferenceContext.NodeId().getText();
+        if (ctx instanceof SimpleNodeReferenceContext) {
+            return ((SimpleNodeReferenceContext)ctx).NodeId().getText();
         }
 
         for (ParseTree child : ctx.children) {
@@ -346,7 +358,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(condition);
     }
 
-    /*** Numeric expreessions ***/
+    /*** Numeric expressions ***/
 
     @Override
     public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
@@ -366,6 +378,15 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitParenthesizedNumericExpression(ParenthesizedNumericExpressionContext ctx) {
         this.stack.push(this.script.mapParenthesizedExpression(
                 this.stack.pop(NumericExpression.class), NumericExpression.class));
+    }
+
+    /*** Duration Expressions ***/
+
+    @Override
+    public void exitDateSubtractionExpression(DateSubtractionExpressionContext ctx) {
+        final DateExpression startDate = this.stack.pop(DateExpression.class);
+        final DateExpression endDate = this.stack.pop(DateExpression.class);
+        this.stack.push(this.script.mapDurationFromDatesFunction(startDate, endDate));
     }
 
     @Override
@@ -422,12 +443,12 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitDurationLiteral(DurationLiteralContext ctx) {
-        this.stack.push(this.script.mapDurationLiteral(ctx.DURATION().getText()));
+        this.stack.push(this.script.mapDurationLiteral(ctx.getText()));
     }
 
     @Override
     public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
-        this.stack.push(this.script.mapExternalReference(this.stack.pop(PathExpression.class)));
+        this.stack.push(this.script.mapExternalReference(this.stack.pop(StringExpression.class)));
     }
 
     @Override
@@ -447,7 +468,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
         PathExpression field = this.stack.pop(PathExpression.class);
-        Expression notice = this.stack.pop(Expression.class);
+        PathExpression notice = this.stack.pop(PathExpression.class);
         this.stack.push(this.script.mapFieldInExternalReference(notice, field));
     }
 
@@ -511,23 +532,29 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void enterFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
         final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.context);
-        this.efxContext.push(new FieldContext(contextFieldId, new PathExpression( ctx.context.getText())));
+        this.efxContext.push(new FieldContext(contextFieldId, this.symbols.absoluteXpathOfField(ctx.context.getText())));
     }
 
     @Override
     public void exitFieldReferenceWithFieldContextOverride(FieldReferenceWithFieldContextOverrideContext ctx) {
-        this.efxContext.pop();
+        final PathExpression field = this.stack.pop(PathExpression.class);
+        this.stack.pop(PathExpression.class);  // The context field is not needed in the actual expression and must be removed from the stack.
+        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
+        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
     }
 
     @Override
     public void enterFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
-        this.efxContext.push( new NodeContext(contextNodeId, new PathExpression(ctx.context.getText())));
+        this.efxContext.push(new NodeContext(contextNodeId, this.symbols.absoluteXpathOfNode(contextNodeId)));
     }
 
     @Override
     public void exitFieldReferenceWithNodeContextOverride(FieldReferenceWithNodeContextOverrideContext ctx) {
-        this.efxContext.pop();
+        final PathExpression field = this.stack.pop(PathExpression.class);
+        this.stack.pop(PathExpression.class);   // The context node is not needed in the actual expression and must be removed from the stack.
+        this.stack.push(field); // The referenced field must be placed back on the stack for further processing of the expression.
+        this.efxContext.pop();  // The temporary context override must also be removed from the context stack.
     }
 
     @Override
@@ -647,14 +674,5 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
         this.stack.push(
                 this.script.mapTimeFromStringFunction(this.stack.pop(StringExpression.class)));
-    }
-
-    /*** Duration functions ***/
-
-    @Override
-    public void exitDurationFromDatesFunction(DurationFromDatesFunctionContext ctx) {
-        final DateExpression endDate = this.stack.pop(DateExpression.class);
-        final DateExpression startDate = this.stack.pop(DateExpression.class);
-        this.stack.push(this.script.mapDurationFromDatesFunction(startDate, endDate));
     }
 }

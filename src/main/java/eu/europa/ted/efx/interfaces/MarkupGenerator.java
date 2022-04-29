@@ -9,7 +9,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 public interface MarkupGenerator {
     
     /**
-     * Given a body (main content) and a set of templates (all in one prerendered string), this
+     * Given a body (main content) and a set of templates (all in one pre-rendered string), this
      * method should return the full content of the target template.
      */
     Markup renderFile(final List<Markup> instructions, final List<Markup> templates);
@@ -50,7 +50,7 @@ public interface MarkupGenerator {
 
     /**
      * Given a template name (identifier), and an evaluation context, this method should return the
-     * code that invokes (calls) the tempalte in the target template.
+     * code that invokes (calls) the template in the target template.
      */
     Markup renderCallTemplate(final String name, final PathExpression context);
 }

@@ -115,7 +115,7 @@ CloseParenthesis: ')';
 OpenBracket: '[';
 CloseBracket: ']';
 
-Dash: '-';
+DoubleColon: ColonColon -> type(ColonColon);
 
 /*
  * Curly braces are not used by expressions themselves. So we use them to indicate the start and end
@@ -161,7 +161,6 @@ ConcatFunction: 'concat';
 DateFunction: 'date';
 TimeFunction: 'time';
 DateTimeFunction: 'date-time';
-DurationFunction: 'duration';
 AddDaysFunction: 'add-days';
 AddWeeksFunction: 'add-weeks';
 AddMonthsFunction: 'add-months';
@@ -172,23 +171,32 @@ BtId: ('BT' | 'OPP' | 'OPT') '-' [0-9]+;
 FieldId: BtId ('(' (('BT' '-' [0-9]+) | [a-z]) ')')? ('-' ([a-zA-Z_] ([a-zA-Z_] | [0-9])*))+;
 NodeId: 'ND' '-' [0-9]+;
 
-CodelistId: Identifier (Dash Identifier)*;
+/**
+ * Effective order of precedence is the order of declaration. 
+ * Duration tokens must take precedence over Identifier tokens to avoid using delimiters like quotes.
+ * Therefore duration literals must be declared before Identifier. 
+ */
+DayTimeDurationLiteral:'P' INTEGER ('W' | 'D');
+YearMonthDurationLiteral: 'P' INTEGER ('Y' | 'M');
+
+CodelistId: Identifier ('-' Identifier)*;
 
 Identifier: LETTER (LETTER | DIGIT)*;
 
 INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;
 STRING: ('"' CHAR_SEQ? '"') | ('\'' CHAR_SEQ? '\'');
-UUIDV4: '{' HEX4 HEX4 Dash HEX4 Dash HEX4 Dash HEX4 Dash HEX4 HEX4 HEX4 '}';
-DATE: DIGIT DIGIT DIGIT DIGIT Dash DIGIT DIGIT Dash DIGIT DIGIT;
+UUIDV4: '{' HEX4 HEX4 '-' HEX4 '-' HEX4 '-' HEX4 '-' HEX4 HEX4 HEX4 '}';
+DATE: DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 TIME: DIGIT DIGIT Colon DIGIT DIGIT Colon DIGIT DIGIT;
-DURATION: 'P' INTEGER ('Y' | 'M' | 'W' | 'D');
 
-Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
-Multiplication: '*' | '/' | '%';
-Addition: '+' | '-';
-Comma: ',';
 Slash: '/';
+Comparison: '==' | '!=' | '>' | '>=' | '<' | '<=';
+Multiplication: '*' | Slash | '%';
+Addition: '+';
+Subtraction: '-';
+Comma: ',';
+
 SlashAt: '/@';
 Colon: ':';
 

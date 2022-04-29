@@ -5,6 +5,8 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -55,11 +57,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
         if (StringExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/normalize-space(text())", type);
         }
+        if (NumericExpression.class.isAssignableFrom(type)) {
+            return this.instantiate(fieldReference.script + "/number()", type);
+        }
         if (DateExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/xs:date(text())", type);
         }
         if (TimeExpression.class.isAssignableFrom(type)) {
             return this.instantiate(fieldReference.script + "/xs:time(text())", type);
+        }
+        if (DurationExpression.class.isAssignableFrom(type)) {
+            return this.instantiate("xs:duration(if (lower-case(" + fieldReference.script + "/@unit)='w') then concat('P', " + fieldReference.script + "/number() * 7, 'D') else concat('P', " + fieldReference.script + "/number(), upper-case(" + "/@unit)))", type);
         }
 
         return instantiate(fieldReference.script, type);
@@ -110,8 +118,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public DurationExpression mapDurationLiteral(String literal) {
-        return new DurationExpression(literal);
+    public DurationExpression mapDurationLiteral(final String literal) {
+        if (literal.contains("M") || literal.contains("Y")) {
+            return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")");
+        }
+        if (literal.contains("W")) {
+            final int weeks = this.getWeeksFromDurationLiteral(literal);
+            return new DurationExpression("xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
+        }
+        return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")");
     }
 
     @Override
@@ -138,16 +153,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public Expression mapExternalReference(Expression externalReference) {
+    public PathExpression mapExternalReference(StringExpression externalReference) {
         // TODO: implement this properly.
-        return new Expression("fn:doc('http://notice.service/" + externalReference.script + "')");
+        return new PathExpression("fn:doc(concat('http://notice.service/', " + externalReference.script + ")')");
     }
 
 
     @Override
-    public Expression mapFieldInExternalReference(Expression externalReference,
+    public PathExpression mapFieldInExternalReference(PathExpression externalReference,
             PathExpression fieldReference) {
-        return new Expression(externalReference.script + "/" + fieldReference.script);
+        return new PathExpression(externalReference.script + "/" + fieldReference.script);
     }
 
 
@@ -202,10 +217,18 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
             Expression rightOperand) {
+        if (DurationExpression.class.isAssignableFrom(leftOperand.getClass())) {
+            return new BooleanExpression("boolean(for $T in (current-date()) return ($T + " + leftOperand.script + " " + operators.get(operator) + " $T + " + rightOperand.script + "))");
+        }
         return new BooleanExpression(
                 leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
     }
 
+    @Override
+    public BooleanExpression mapDateSpanToDurationComparison(DateExpression leftDate, DateExpression rightDate, String operator,
+            DurationExpression duration) {
+        return new BooleanExpression(leftDate.script + " " + operators.get(operator) + " (" + rightDate.script + " " + operators.get("+") + " " + duration.script + ")");
+    }
 
     /*** Numeric functions ***/
 
@@ -295,8 +318,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
             DateExpression endDate) {
-        return new DurationExpression(startDate.script + " - " + endDate.script);
+        return new DurationExpression("xs:dayTimeDuration(" + endDate.script + " " + operators.get("-") + " " + startDate.script + ")");
     }
+
+
+    /*** Helpers ***/
 
     private <T extends Expression> T instantiate(String value, Class<T> type) {
         try {
@@ -309,5 +335,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
     private String quoted(final String text) {
         return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";
+    }
+
+    private int getWeeksFromDurationLiteral(final String literal) {
+        Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
+        return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
     }
 }

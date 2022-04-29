@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
@@ -109,14 +110,14 @@ public interface ScriptGenerator {
    * data from the data source. This method should return the target language script that connects
    * to the data source and permits us to subsequently get the data by using a PathExpression.
    */
-  public Expression mapExternalReference(final Expression externalReference);
+  public PathExpression mapExternalReference(final StringExpression externalReference);
 
   /**
    * TODO: Not properly defined yet.
    * 
    * See {@link mapExternalReference} for more details.
    */
-  public Expression mapFieldInExternalReference(final Expression externalReference,
+  public PathExpression mapFieldInExternalReference(final PathExpression externalReference,
       final PathExpression fieldReference);
 
   /**
@@ -135,6 +136,8 @@ public interface ScriptGenerator {
    */
   public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
       Expression rightOperand);
+
+  public BooleanExpression mapDateSpanToDurationComparison(DateExpression leftDate, DateExpression rightDate, String operator, DurationExpression duration);
 
   /**
    * Given a numeric operation, this method should return the target language script that performs

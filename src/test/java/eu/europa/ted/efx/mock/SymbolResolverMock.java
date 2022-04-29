@@ -49,7 +49,7 @@ public class SymbolResolverMock implements SymbolResolver {
                 entry("BT-00-Text", new SdkField(fromString(
                         "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
                 entry("BT-00-Attribute", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Attributte\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
+                        "{\"id\":\"BT-00-Attribute\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
                 entry("BT-00-Indicator", new SdkField(fromString(
                         "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
                 entry("BT-00-Code", new SdkField(fromString(
@@ -58,10 +58,16 @@ public class SymbolResolverMock implements SymbolResolver {
                         "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
                 entry("BT-00-Text-Multilingual", new SdkField(fromString(
                         "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
-                entry("BT-00-Date", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Date\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/DateField\",\"xpathRelative\":\"PathNode/DateField\"}}"))),
-                entry("BT-00-Time", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Time\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TimeField\",\"xpathRelative\":\"PathNode/TimeField\"}}"))),
+                entry("BT-00-StartDate", new SdkField(fromString(
+                        "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),
+                entry("BT-00-EndDate", new SdkField(fromString(
+                        "{\"id\":\"BT-00-EndDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndDateField\",\"xpathRelative\":\"PathNode/EndDateField\"}}"))),
+                entry("BT-00-StartTime", new SdkField(fromString(
+                        "{\"id\":\"BT-00-StartTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartTimeField\",\"xpathRelative\":\"PathNode/StartTimeField\"}}"))),
+                entry("BT-00-EndTime", new SdkField(fromString(
+                        "{\"id\":\"BT-00-EndTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndTimeField\",\"xpathRelative\":\"PathNode/EndTimeField\"}}"))),
+                entry("BT-00-Measure", new SdkField(fromString(
+                        "{\"id\":\"BT-00-Measure\",\"type\":\"measure\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/MeasureField\",\"xpathRelative\":\"PathNode/MeasureField\"}}"))),
                 entry("BT-00-Integer", new SdkField(fromString(
                         "{\"id\":\"BT-00-Integer\",\"type\":\"integer\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IntegerField\",\"xpathRelative\":\"PathNode/IntegerField\"}}"))),
                 entry("BT-00-Amount", new SdkField(fromString(
@@ -79,7 +85,9 @@ public class SymbolResolverMock implements SymbolResolver {
                 entry("BT-00-Phone", new SdkField(fromString(
                         "{\"id\":\"BT-00-Phone\",\"type\":\"phone\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/PhoneField\",\"xpathRelative\":\"PathNode/PhoneField\"}}"))),
                 entry("BT-00-Email", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))));
+                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))),
+                entry("BT-01-SubLevel-Text", new SdkField(fromString(
+                        "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))));
 
         this.nodeById = Map.ofEntries(entry("ND-0", new SdkNode("ND-0", null, "/*", "/*", false)));
 
