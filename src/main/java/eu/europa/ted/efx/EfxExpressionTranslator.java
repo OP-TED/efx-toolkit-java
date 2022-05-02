@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import eu.europa.ted.efx.EfxParser.AbsoluteFieldReferenceContext;
 import eu.europa.ted.efx.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.EfxParser.CodeListContext;
 import eu.europa.ted.efx.EfxParser.CodelistReferenceContext;
@@ -164,6 +165,10 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
         if (ctx instanceof SimpleFieldReferenceContext) {
             return ((SimpleFieldReferenceContext)ctx).FieldId().getText();
+        }
+
+        if (ctx instanceof AbsoluteFieldReferenceContext) {
+            return ((AbsoluteFieldReferenceContext)ctx).FieldId().getText();
         }
 
         if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
@@ -470,6 +475,11 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         PathExpression field = this.stack.pop(PathExpression.class);
         PathExpression notice = this.stack.pop(PathExpression.class);
         this.stack.push(this.script.mapFieldInExternalReference(notice, field));
+    }
+
+    @Override
+    public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
+        this.stack.push(symbols.absoluteXpathOfField(ctx.FieldId().getText()));
     }
 
     @Override

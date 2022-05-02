@@ -183,6 +183,7 @@ fieldReference
 	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
 	| context=fieldReference ColonColon reference=fieldReference		# fieldReferenceWithFieldContextOverride
 	| context=nodeReference ColonColon reference=fieldReference			# fieldReferenceWithNodeContextOverride
+	| Slash FieldId														# absoluteFieldReference
 	| FieldId															# simpleFieldReference
 	;
 

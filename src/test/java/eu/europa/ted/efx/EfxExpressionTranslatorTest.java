@@ -266,6 +266,12 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testAbsoluteFieldReference() {
+        assertEquals("/*/PathNode/IndicatorField",
+                test("BT-00-Text", "/BT-00-Indicator"));
+    }
+
+    @Test
     public void testSimpleFieldReference() {
         assertEquals("../IndicatorField",
                 test("BT-00-Text", "BT-00-Indicator"));
@@ -370,13 +376,5 @@ public class EfxExpressionTranslatorTest {
     public void testTimeFromStringFunction() {
         assertEquals("xs:time(PathNode/TextField/normalize-space(text()))",
                 test("ND-0", "time(BT-00-Text)"));
-    }
-
-    /*** Other ***/
-
-    @Test
-    public void testCountWithNodeContextOverride() {
-        assertEquals("count(PathNode/CodeField) = 1",
-                test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
     }
 }
