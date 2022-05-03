@@ -105,7 +105,7 @@ OtherAssetId: [a-z]+ ('-' [a-z0-9]*)*;
 /*
  * EXPRESSION mode
  * 
- * This lexer mode is used in efx expression blocks and context expression blocks.
+ * This lexer mode is used in efx expression blocks ${...} and context declaration blocks {...}.
  */
 
 mode EXPRESSION;
