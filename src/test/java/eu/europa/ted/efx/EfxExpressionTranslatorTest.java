@@ -243,25 +243,25 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReferenceWithFieldContextOverride() {
-        assertEquals("../../TextField/normalize-space(text())",
+        assertEquals("../TextField/normalize-space(text())",
                 test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Text"));
     }
 
     @Test
     public void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
-        assertEquals("../../IntegerField/number()",
+        assertEquals("../IntegerField/number()",
                 test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Integer"));
     }
 
     @Test
     public void testFieldReferenceWithNodeContextOverride() {
-        assertEquals("PathNode/IntegerField/number()",
+        assertEquals("../../PathNode/IntegerField/number()",
                 test("BT-00-Text", "ND-0::BT-00-Integer"));
     }
 
     @Test
     public void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-        assertEquals("PathNode/IntegerField/number()",
+        assertEquals("../../PathNode/IntegerField/number()",
                 test("BT-00-Text", "ND-0[BT-00-Indicator == TRUE]::BT-00-Integer"));
     }
 

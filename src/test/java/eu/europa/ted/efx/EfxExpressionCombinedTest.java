@@ -34,7 +34,7 @@ public class EfxExpressionCombinedTest {
 
     @Test
     public void testCountWithNodeContextOverride() {
-        assertEquals("count(PathNode/CodeField) = 1",
+        assertEquals("count(../../PathNode/CodeField) = 1",
                 test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
     }
 
@@ -48,12 +48,5 @@ public class EfxExpressionCombinedTest {
     public void testCountWithAbsoluteFieldReferenceAndPredicate() {
         assertEquals("count(/*/PathNode/CodeField[../IndicatorField = true()]) = 1",
                 test("BT-00-Text", "count(/BT-00-Code[BT-00-Indicator == TRUE]) == 1"));
-    }
-
-    @Test
-    public void testCountWithAbsoluteFieldReferenceAndContextOverride() {
-        // Does this make sense? override on absolute path?
-        assertEquals("count(/*/PathNode/CodeField[../IndicatorField = true()]) = 1",
-                test("BT-00-Text", "count(ND-0::/BT-00-Code[BT-00-Indicator == TRUE]) == 1"));
     }
 }
