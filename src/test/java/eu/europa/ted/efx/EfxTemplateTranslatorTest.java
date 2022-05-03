@@ -2,18 +2,21 @@ package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import java.io.IOException;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
-
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 public class EfxTemplateTranslatorTest {
 
-    final private String SDK_VERSION = "latest";
+    final private String SDK_VERSION = "eforms-sdk-0.6";
 
     private String translate(final String template) {
-        return EfxTemplateTranslator.renderTemplate(template + "\n", new DependencyFactoryMock(), SDK_VERSION);
+        try {
+            return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE, SDK_VERSION);
+        } catch (IOException e) {
+            return e.getMessage();
+        }
     }
 
     private String lines(String... lines) {

@@ -1,7 +1,6 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
-
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
