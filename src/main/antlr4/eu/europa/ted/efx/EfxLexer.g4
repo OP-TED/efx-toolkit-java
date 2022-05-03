@@ -179,9 +179,9 @@ NodeId: 'ND' '-' [0-9]+;
 DayTimeDurationLiteral:'P' INTEGER ('W' | 'D');
 YearMonthDurationLiteral: 'P' INTEGER ('Y' | 'M');
 
-CodelistId: Identifier ('-' Identifier)*;
+Identifier: IdentifierPart ('-' IdentifierPart)*;
 
-Identifier: LETTER (LETTER | DIGIT)*;
+IdentifierPart: LETTER (LETTER | DIGIT)*;
 
 INTEGER: DIGIT+;
 DECIMAL: DIGIT? '.' DIGIT+;

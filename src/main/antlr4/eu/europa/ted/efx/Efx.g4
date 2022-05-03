@@ -194,7 +194,7 @@ nodeReference
 noticeReference: Notice OpenParenthesis noticeId=stringExpression CloseParenthesis;
 
 codelistReference: OpenParenthesis codeListId=codelistId CloseParenthesis;
-codelistId: CodelistId;
+codelistId: Identifier;
 
 
 /*

@@ -218,6 +218,12 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testUntypedAttributeValueReference() {
+        assertEquals("PathNode/CodeField/@listName",
+                test("ND-0", "BT-00-Code/@listName"));
+    }
+
+    @Test
     public void testFieldReferenceWithPredicate() {
         assertEquals("PathNode/IndicatorField['a' = 'a']",
                 test("ND-0", "BT-00-Indicator['a' == 'a']"));
