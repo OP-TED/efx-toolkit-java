@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.xpath;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class XPathContextualizer extends XPath20BaseListener {
     return contextualizer.steps;
   }
 
-  
+
   public static PathExpression contextualize(final PathExpression contextXpath, final PathExpression xpath) {
 
     // If we are asked to contextualise against a null or empty context
@@ -56,6 +57,22 @@ public class XPathContextualizer extends XPath20BaseListener {
     Queue<StepInfo> pathSteps = new LinkedList<StepInfo>(getSteps(xpath));
 
     return getContextualizedXpath(contextSteps, pathSteps);
+  }
+
+  public static PathExpression join(final PathExpression first, final PathExpression second) {
+
+    if (first == null || first.script.trim().isEmpty()) {
+      return second;
+    }
+
+    if (second == null || second.script.trim().isEmpty()) {
+      return first;
+    }
+
+    LinkedList<StepInfo> firstPartSteps = new LinkedList<>(getSteps(first));
+    LinkedList<StepInfo> secondPartSteps = new LinkedList<>(getSteps(second));
+
+    return getJoinedXPath(firstPartSteps, secondPartSteps);
   }
 
   private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
@@ -112,6 +129,18 @@ public class XPathContextualizer extends XPath20BaseListener {
     }
 
     return new PathExpression(relativeXpath);
+  }
+
+
+  private static PathExpression getJoinedXPath(LinkedList<StepInfo> first,
+  final LinkedList<StepInfo> second) {
+    List<String> dotSteps = Arrays.asList("..", ".");
+    while (second.getFirst().stepText.equals("..") && !dotSteps.contains(first.getLast().stepText)) {
+      second.removeFirst();
+      first.removeLast();
+    }
+
+    return new PathExpression(first.stream().map(f -> f.stepText).collect(Collectors.joining("/")) + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
   }
 
   /**

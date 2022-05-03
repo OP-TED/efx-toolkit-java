@@ -57,9 +57,9 @@ whitespace: Whitespace+;
  */
 labelBlock
 	: StartLabel assetType Pipe labelType Pipe assetId EndLabel			# standardLabelReference
-	| StartLabel labelType Pipe BtId EndLabel						# shorthandBtLabelReference
-	| StartLabel labelType Pipe FieldId EndLabel					# shorthandFieldLabelReference
-	| StartLabel FieldId EndLabel									# shorthandFieldValueLabelReference
+	| StartLabel labelType Pipe BtId EndLabel							# shorthandBtLabelReference
+	| StartLabel labelType Pipe FieldId EndLabel						# shorthandFieldLabelReference
+	| StartLabel FieldId EndLabel										# shorthandFieldValueLabelReference
 	| StartLabel LabelType EndLabel										# shorthandContextLabelReference
 	| ShorthandContextFieldLabelReference								# shorthandContextFieldLabelReference
 	;
@@ -178,16 +178,25 @@ fieldValueReference
 
 setReference: fieldReference;
 
-fieldReference
-	: fieldReference OpenBracket predicate CloseBracket					# fieldReferenceWithPredicate
-	| noticeReference Slash fieldReference								# fieldReferenceInOtherNotice
-	| context=fieldReference ColonColon reference=fieldReference		# fieldReferenceWithFieldContextOverride
-	| context=nodeReference ColonColon reference=fieldReference			# fieldReferenceWithNodeContextOverride
-	| FieldId															# simpleFieldReference
-	;
+/*
+ * References of fields
+ * We chose to specify the grammar for field references in a slightly different style to avoid left recursion of grammar rules.
+ * It looks more "complicated" but it is necessary for parsing (see fieldReferenceWithFieldContextOverride). 
+ */
+fieldReference: fieldReferenceWithFieldContextOverride | fieldReferenceInOtherNotice | absoluteFieldReference;
+fieldReferenceInOtherNotice: (noticeReference Slash)? reference=fieldReferenceWithNodeContextOverride;
+fieldReferenceWithNodeContextOverride: (context=nodeContext ColonColon)? reference=fieldReferenceWithFieldContextOverride;
+fieldReferenceWithFieldContextOverride: (context=fieldContext ColonColon)? reference=fieldReferenceWithPredicate;
+fieldContext: context=fieldReferenceWithPredicate;
+absoluteFieldReference: Slash reference=fieldReferenceWithPredicate;
+fieldReferenceWithPredicate: simpleFieldReference (OpenBracket predicate CloseBracket)?;
+simpleFieldReference: FieldId;
+
+nodeContext: nodeReference;
 
 nodeReference
 	: nodeReference OpenBracket predicate CloseBracket		# nodeReferenceWithPredicate
+	| noticeReference Slash nodeReference					# nodeReferenceInOtherNotice
 	| NodeId												# simpleNodeReference
 	;
 

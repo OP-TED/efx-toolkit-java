@@ -31,4 +31,22 @@ public class EfxExpressionCombinedTest {
         assertEquals("not(PathNode/TextField) and not(PathNode/IntegerField)",
                 test("ND-0", "BT-00-Text is not present and BT-00-Integer is not present"));
     }
+
+    @Test
+    public void testCountWithNodeContextOverride() {
+        assertEquals("count(../../PathNode/CodeField) = 1",
+                test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
+    }
+
+    @Test
+    public void testCountWithAbsoluteFieldReference() {
+        assertEquals("count(/*/PathNode/CodeField) = 1",
+                test("BT-00-Text", "count(/BT-00-Code) == 1"));
+    }
+
+    @Test
+    public void testCountWithAbsoluteFieldReferenceAndPredicate() {
+        assertEquals("count(/*/PathNode/CodeField[../IndicatorField = true()]) = 1",
+                test("BT-00-Text", "count(/BT-00-Code[BT-00-Indicator == TRUE]) == 1"));
+    }
 }
