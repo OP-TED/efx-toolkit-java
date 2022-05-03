@@ -166,6 +166,41 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
 
+    @Override
+    public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
+
+        // smart join:
+        return XPathContextualizer.join(first, second);
+
+        // dummy join: 
+        /***
+        if (first == null || first.script.trim().isEmpty()) {
+            return second;
+        }
+
+        if (second == null || second.script.trim().isEmpty()) {
+            return first;
+        }
+        
+        return new PathExpression(first.script + "/" + second.script);
+        ***/
+        
+        // less dummy join: 
+        /*** 
+        StringBuilder sb1 = new StringBuilder(first.script);
+        while (sb1.length() > 0 && sb1.charAt(0) == '/') {
+            sb1.deleteCharAt(0);
+        }
+
+        StringBuilder sb2 = new StringBuilder(second.script);
+        while (sb2.length() > 0 && sb2.charAt(sb2.length() - 1) == '/') {
+            sb2.setLength(sb2.length() - 1);
+        }
+
+        return new PathExpression(sb1.toString() + "/" + sb2.toString());
+        ***/
+    }
+
     /*** BooleanExpressions ***/
 
 

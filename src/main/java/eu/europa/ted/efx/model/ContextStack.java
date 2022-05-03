@@ -36,7 +36,7 @@ public class ContextStack extends Stack<Context> {
             this.push(context);
             return context;
         }
-        PathExpression relativePath = symbols.relativePathOfField(fieldId, this.peek().absolutePath());
+        PathExpression relativePath = symbols.relativePathOfField(fieldId, this.absolutePath());
         FieldContext context = new FieldContext(fieldId, absolutePath, relativePath);
         this.push(context);
         return context;
@@ -54,7 +54,7 @@ public class ContextStack extends Stack<Context> {
             this.push(context);
             return context;
         }
-        PathExpression relativePath = symbols.relativePathOfNode(nodeId, this.peek().absolutePath());
+        PathExpression relativePath = symbols.relativePathOfNode(nodeId, this.absolutePath());
         NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
         this.push(context);
         return context;
