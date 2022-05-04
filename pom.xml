@@ -9,15 +9,19 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
+
+    <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
+
     <antlr4.version>4.9.3</antlr4.version>
+    <eforms.sdk.version>0.6.0</eforms.sdk.version>
+    <dependency.plugin.version>3.3.0</dependency.plugin.version>
   </properties>
 
 
   <dependencies>
-        
-   
     <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -44,6 +48,36 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${dependency.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>unpack-sdk-grammars</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>eu.europa.ted.eforms</groupId>
+              <artifactId>eforms-sdk</artifactId>
+              <version>${eforms.sdk.version}</version>
+              <type>jar</type>
+              <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
+              <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx</outputDirectory>
+              <fileMappers>
+                <!-- Remove the folder prefix from filenames -->
+                <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+              </fileMappers>
+            </artifactItem>
+          </artifactItems>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.antlr</groupId>
@@ -51,7 +85,16 @@
         <version>${antlr4.version}</version>
         <executions>
           <execution>
-            <id>antlr</id>
+            <id>antlr-sdk</id>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${sdk.antlr4.dir}</sourceDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>antlr-efx</id>
             <goals>
               <goal>antlr4</goal>
             </goals>
