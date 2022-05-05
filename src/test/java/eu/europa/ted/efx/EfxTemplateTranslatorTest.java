@@ -15,7 +15,7 @@ public class EfxTemplateTranslatorTest {
         try {
             return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE, SDK_VERSION);
         } catch (IOException e) {
-            return e.getMessage();
+            throw new RuntimeException(e.getMessage());
         }
     }
 
