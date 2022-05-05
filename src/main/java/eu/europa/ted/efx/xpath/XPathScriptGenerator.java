@@ -67,7 +67,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
             return this.instantiate(fieldReference.script + "/xs:time(text())", type);
         }
         if (DurationExpression.class.isAssignableFrom(type)) {
-            return this.instantiate("xs:duration(if (lower-case(" + fieldReference.script + "/@unit)='w') then concat('P', " + fieldReference.script + "/number() * 7, 'D') else concat('P', " + fieldReference.script + "/number(), upper-case(" + "/@unit)))", type);
+            return this.instantiate("(if (lower-case(" + fieldReference.script + "/@unit)='w')" + //
+                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
+                                    " else if (lower-case(" + fieldReference.script + "/@unit)='d')" + //
+                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), upper-case(" + fieldReference.script + "/@unit)))" + //
+                                    " else xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(" + fieldReference.script + "/@unit))))", type);
         }
 
         return instantiate(fieldReference.script, type);
@@ -168,37 +172,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
     @Override
     public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
-
-        // smart join:
         return XPathContextualizer.join(first, second);
-
-        // dummy join: 
-        /***
-        if (first == null || first.script.trim().isEmpty()) {
-            return second;
-        }
-
-        if (second == null || second.script.trim().isEmpty()) {
-            return first;
-        }
-        
-        return new PathExpression(first.script + "/" + second.script);
-        ***/
-        
-        // less dummy join: 
-        /*** 
-        StringBuilder sb1 = new StringBuilder(first.script);
-        while (sb1.length() > 0 && sb1.charAt(0) == '/') {
-            sb1.deleteCharAt(0);
-        }
-
-        StringBuilder sb2 = new StringBuilder(second.script);
-        while (sb2.length() > 0 && sb2.charAt(sb2.length() - 1) == '/') {
-            sb2.setLength(sb2.length() - 1);
-        }
-
-        return new PathExpression(sb1.toString() + "/" + sb2.toString());
-        ***/
     }
 
     /*** BooleanExpressions ***/
@@ -253,6 +227,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
             Expression rightOperand) {
         if (DurationExpression.class.isAssignableFrom(leftOperand.getClass())) {
+            // TODO: Improve this implementation; Check if both are dayTime or yearMonth and compare directly, otherwise, compare by adding to current-date()
             return new BooleanExpression("boolean(for $T in (current-date()) return ($T + " + leftOperand.script + " " + operators.get(operator) + " $T + " + rightOperand.script + "))");
         }
         return new BooleanExpression(
@@ -333,6 +308,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
         return new DateExpression("xs:date(" + date.script + ")");
     }
 
+    @Override
+    public DateExpression mapDatePlusDuration(DateExpression date, DurationExpression duration) {
+        return new DateExpression("(" + date.script + " + " + duration.script + ")");
+    }
+
+    @Override
+    public DateExpression mapDateMinusDuration(DateExpression date, DurationExpression duration) {
+        return new DateExpression("(" + date.script + " - " + duration.script + ")");
+    }
 
     /*** Time functions ***/
 
@@ -350,6 +334,23 @@ public class XPathScriptGenerator implements ScriptGenerator {
         return new DurationExpression("xs:dayTimeDuration(" + endDate.script + " " + operators.get("-") + " " + startDate.script + ")");
     }
 
+    @Override
+    public DurationExpression mapDurationMultiplication(NumericExpression number,
+            DurationExpression duration) {
+        return new DurationExpression("(" + number.script + " * " + duration.script + ")");
+    }
+
+    @Override
+    public DurationExpression mapDurationAddition(DurationExpression left,
+            DurationExpression right) {
+        return new DurationExpression("(" + left.script + " + " + right.script + ")");
+    }
+
+    @Override
+    public DurationExpression mapDurationSubtraction(DurationExpression left,
+            DurationExpression right) {
+        return new DurationExpression("(" + left.script + " - " + right.script + ")");
+    }
 
     /*** Helpers ***/
 

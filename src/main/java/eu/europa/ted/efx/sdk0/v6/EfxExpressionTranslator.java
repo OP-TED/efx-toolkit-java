@@ -15,10 +15,10 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.ContextStack;
-import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.ContextStack;
+import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -38,9 +38,15 @@ import eu.europa.ted.efx.sdk0.v6.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DateComparisonContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DateFromStringFunctionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DateLiteralContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DateMinusMeasureFunctionContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DatePlusMeasureFunctionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DateSubtractionExpressionContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationAdditionExpressionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationComparisonContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationLeftMultiplicationExpressionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationLiteralContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationRightMultiplicationExpressionContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationSubtractionExpressionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.EndsWithFunctionContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.ExplicitListContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.FalseBooleanLiteralContext;
@@ -397,6 +403,36 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     /*** Duration Expressions ***/
+
+    @Override
+    public void exitDurationAdditionExpression(DurationAdditionExpressionContext ctx) {
+        DurationExpression right = this.stack.pop(DurationExpression.class);
+        DurationExpression left = this.stack.pop(DurationExpression.class);
+        this.stack.push(this.script.mapDurationAddition(left, right));
+    }
+
+    @Override
+    public void exitDurationSubtractionExpression(DurationSubtractionExpressionContext ctx) {
+        DurationExpression right = this.stack.pop(DurationExpression.class);
+        DurationExpression left = this.stack.pop(DurationExpression.class);
+        this.stack.push(this.script.mapDurationSubtraction(left, right));
+    }
+
+    @Override
+    public void exitDurationLeftMultiplicationExpression(
+            DurationLeftMultiplicationExpressionContext ctx) {
+        DurationExpression duration = this.stack.pop(DurationExpression.class);
+        NumericExpression number = this.stack.pop(NumericExpression.class);
+        this.stack.push(this.script.mapDurationMultiplication(number, duration));
+    }
+
+    @Override
+    public void exitDurationRightMultiplicationExpression(
+            DurationRightMultiplicationExpressionContext ctx) {
+        NumericExpression number = this.stack.pop(NumericExpression.class);
+        DurationExpression duration = this.stack.pop(DurationExpression.class);
+        this.stack.push(this.script.mapDurationMultiplication(number, duration));
+    }
 
     @Override
     public void exitDateSubtractionExpression(DateSubtractionExpressionContext ctx) {
@@ -759,6 +795,20 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitDateFromStringFunction(DateFromStringFunctionContext ctx) {
         this.stack.push(
                 this.script.mapDateFromStringFunction(this.stack.pop(StringExpression.class)));
+    }
+
+    @Override
+    public void exitDatePlusMeasureFunction(DatePlusMeasureFunctionContext ctx) {
+        DurationExpression right = this.stack.pop(DurationExpression.class);
+        DateExpression left = this.stack.pop(DateExpression.class);
+        this.stack.push(this.script.mapDatePlusDuration(left, right));
+    }
+
+    @Override
+    public void exitDateMinusMeasureFunction(DateMinusMeasureFunctionContext ctx) {
+        DurationExpression right = this.stack.pop(DurationExpression.class);
+        DateExpression left = this.stack.pop(DateExpression.class);
+        this.stack.push(this.script.mapDateMinusDuration(left, right));
     }
 
     /*** Time functions ***/

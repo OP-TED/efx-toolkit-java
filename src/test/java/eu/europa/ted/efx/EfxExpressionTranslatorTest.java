@@ -157,6 +157,37 @@ public class EfxExpressionTranslatorTest {
                 test("ND-0", "P3M > (BT-00-EndDate - BT-00-StartDate)"));
     }
 
+    
+    @Test
+    public void testNegativeDuration_Literal() {
+        assertEquals("xs:yearMonthDuration('-P3M')",
+                test("ND-0", "-P3M"));
+    }
+
+    @Test
+    public void testNegativeDuration_ViaMultiplication() {
+        assertEquals("(-3 * (2 * xs:yearMonthDuration('-P3M')))",
+                test("ND-0", "2 * -P3M * -3"));
+    }
+
+    @Test
+    public void testNegativeDuration_ViaMultiplicationWithField() {
+        assertEquals("(-3 * (2 * (if (lower-case(PathNode/MeasureField/@unit)='w') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (lower-case(PathNode/MeasureField/@unit)='d') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), upper-case(PathNode/MeasureField/@unit))) else xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(PathNode/MeasureField/@unit))))))",
+                test("ND-0", "2 * measure:BT-00-Measure * -3"));
+    }
+
+    @Test
+    public void testDurationAddition() {
+        assertEquals("(xs:dayTimeDuration('P3D') + xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text())))",
+                test("ND-0", "P3D + (BT-00-StartDate - BT-00-EndDate)"));
+    }
+
+    @Test
+    public void testDurationSubtraction() {
+        assertEquals("(xs:dayTimeDuration('P3D') - xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text())))",
+                test("ND-0", "P3D - (BT-00-StartDate - BT-00-EndDate)"));
+    }
+
     @Test
     public void testBooleanLiteralExpression_Always() {
         assertEquals("true()", test("BT-00-Text", "ALWAYS"));
@@ -274,10 +305,9 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReference_ForDurationFields() {
-        assertEquals("xs:duration(if (lower-case(PathNode/MeasureField/@unit)='w') then concat('P', PathNode/MeasureField/number() * 7, 'D') else concat('P', PathNode/MeasureField/number(), upper-case(/@unit)))",
+        assertEquals("(if (lower-case(PathNode/MeasureField/@unit)='w') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (lower-case(PathNode/MeasureField/@unit)='d') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), upper-case(PathNode/MeasureField/@unit))) else xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(PathNode/MeasureField/@unit))))",
                 test("ND-0", "BT-00-Measure"));
     } 
-
 
     /*** Boolean functions ***/
 
