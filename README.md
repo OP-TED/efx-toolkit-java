@@ -27,8 +27,8 @@ You can then add the dependency as usual in pom.xml of your project:
 
 ```
     <dependency>
-      <groupId>eforms-expression-language</groupId>
-      <artifactId>eforms-expression-language</artifactId>
+      <groupId>eu.europa.ted.eforms</groupId>
+      <artifactId>efx-toolkit-java</artifactId>
       <version>0.0.1</version>
     </dependency>
 ```
