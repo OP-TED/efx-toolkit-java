@@ -122,7 +122,8 @@ public interface ScriptGenerator {
 
 
     /**
-     * Joins two given path expressions into one by placing the second after the first and using the proper delimiter.
+     * Joins two given path expressions into one by placing the second after the first and using the
+     * proper delimiter.
      * 
      * @param first The part of the path that goes before the delimiter.
      * @param second The part of the path that goes after the delimiter.
@@ -220,20 +221,36 @@ public interface ScriptGenerator {
 
     public DateExpression mapDateFromStringFunction(StringExpression pop);
 
+    public DateExpression mapDatePlusDuration(final DateExpression date,
+            final DurationExpression duration);
+
+    public DateExpression mapDateMinusDuration(final DateExpression date,
+            final DurationExpression duration);
+
     /*
      * Time Functions
      */
 
     public TimeExpression mapTimeFromStringFunction(StringExpression pop);
 
+
+
     /*
      * Duration Functions
      */
-
 
     public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
             DateExpression endDate);
 
     public StringExpression mapFormatNumberFunction(NumericExpression number,
             StringExpression format);
+
+    public DurationExpression mapDurationMultiplication(final NumericExpression number,
+            final DurationExpression duration);
+
+    public DurationExpression mapDurationAddition(final DurationExpression left,
+            final DurationExpression right);
+
+    public DurationExpression mapDurationSubtraction(final DurationExpression left,
+            final DurationExpression right);
 }
