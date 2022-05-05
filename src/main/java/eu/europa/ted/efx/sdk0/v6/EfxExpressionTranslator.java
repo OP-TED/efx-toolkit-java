@@ -28,6 +28,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AbsoluteFieldReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.AbsoluteNodeReferenceContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.CodeListContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.CodelistReferenceContext;
@@ -479,22 +480,43 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void enterAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
-        this.efxContext.push(null);
+        if (ctx.Slash() != null) {
+            this.efxContext.push(null);
+        }
     }
 
     @Override
     public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
-        this.efxContext.pop();
+        if (ctx.Slash() != null) {
+            this.efxContext.pop();
+        }
     }
+
+    @Override
+    public void enterAbsoluteNodeReference(EfxParser.AbsoluteNodeReferenceContext ctx) {
+        if (ctx.Slash() != null) {
+            this.efxContext.push(null);
+        }
+    }
+
+    @Override
+    public void exitAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
+        if (ctx.Slash() != null) {
+            this.efxContext.pop();
+        }
+    }
+
 
     /*** References with Predicates ***/
 
     @Override
     public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
-        BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
-        PathExpression nodeReference = this.stack.pop(PathExpression.class);
-        this.stack.push(this.script.mapNodeReferenceWithPredicate(nodeReference, predicate,
-                PathExpression.class));
+        if (ctx.predicate() != null) {
+            BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
+            PathExpression nodeReference = this.stack.pop(PathExpression.class);
+            this.stack.push(this.script.mapNodeReferenceWithPredicate(nodeReference, predicate,
+                    PathExpression.class));
+        }
     }
 
     @Override
@@ -580,7 +602,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitFieldContext(FieldContextContext ctx) {
         this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                               // the context field.
-        final String contextFieldId = ctx.context.simpleFieldReference().FieldId().getText();
+        final String contextFieldId = ctx.context.reference.simpleFieldReference().FieldId().getText();
         this.efxContext.push(new FieldContext(contextFieldId,
                 this.symbols.absolutePathOfField(contextFieldId),
                 this.symbols.relativePathOfField(contextFieldId, this.efxContext.absolutePath())));
@@ -610,7 +632,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                               // the context node.
         final String contextNodeId =
-                getNodeIdFromChildSimpleNodeReferenceContext(ctx.nodeReference());
+                getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
         this.efxContext.push(new NodeContext(contextNodeId,
                 this.symbols.absolutePathOfNode(contextNodeId),
                 this.symbols.relativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
