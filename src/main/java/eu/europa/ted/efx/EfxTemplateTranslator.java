@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -12,24 +11,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-
-import eu.europa.ted.efx.EfxParser.AssetIdContext;
-import eu.europa.ted.efx.EfxParser.AssetTypeContext;
-import eu.europa.ted.efx.EfxParser.ContextDeclarationBlockContext;
-import eu.europa.ted.efx.EfxParser.LabelTemplateContext;
-import eu.europa.ted.efx.EfxParser.LabelTypeContext;
-import eu.europa.ted.efx.EfxParser.ShorthandBtLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandContextFieldLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandContextFieldValueReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandContextLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandFieldLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.ShorthandFieldValueLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.StandardExpressionBlockContext;
-import eu.europa.ted.efx.EfxParser.StandardLabelReferenceContext;
-import eu.europa.ted.efx.EfxParser.TemplateFileContext;
-import eu.europa.ted.efx.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.EfxParser.TextTemplateContext;
-import eu.europa.ted.efx.EfxParser.ValueTemplateContext;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.model.ContentBlock;
@@ -41,6 +22,25 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.sdk0.v6.EfxLexer;
+import eu.europa.ted.efx.sdk0.v6.EfxParser;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetIdContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetTypeContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ContextDeclarationBlockContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.LabelTemplateContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandBtLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextFieldLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextFieldValueReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandFieldLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandFieldValueLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.StandardExpressionBlockContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.StandardLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.TemplateFileContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.TemplateLineContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.TextTemplateContext;
+import eu.europa.ted.efx.sdk0.v6.EfxParser.ValueTemplateContext;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator} to provide additional
