@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.sdk0.v6;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,10 +15,10 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.Context.FieldContext;
-import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Context.FieldContext;
+import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -27,9 +27,6 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
-import eu.europa.ted.efx.sdk0.v6.EfxBaseListener;
-import eu.europa.ted.efx.sdk0.v6.EfxLexer;
-import eu.europa.ted.efx.sdk0.v6.EfxParser;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AbsoluteFieldReferenceContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.CodeListContext;

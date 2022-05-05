@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.sdk0.v6;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,14 +16,12 @@ import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
 import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
-import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Markup;
-import eu.europa.ted.efx.sdk0.v6.EfxLexer;
-import eu.europa.ted.efx.sdk0.v6.EfxParser;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.ContextDeclarationBlockContext;

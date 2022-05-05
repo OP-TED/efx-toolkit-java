@@ -4,19 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
-import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
-import eu.europa.ted.efx.mock.SymbolResolverMock;
-import eu.europa.ted.efx.xpath.XPathScriptGenerator;
+import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 public class EfxExpressionTranslatorTest {
 
-    // TODO: Currently handling multiple SDK versions is not implemented.
-    final private String SDK_VERSION = "latest";
+    final private String SDK_VERSION = "eforms-sdk-0.6";
 
     private String test(final String context, final String expression) {
-        return EfxExpressionTranslator.translateExpression(context, expression,
-                SymbolResolverMock.getInstance(SDK_VERSION), new XPathScriptGenerator(),
-                ThrowingErrorListener.INSTANCE);
+        return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE, SDK_VERSION);
     }
 
     /*** Boolean expressions ***/
