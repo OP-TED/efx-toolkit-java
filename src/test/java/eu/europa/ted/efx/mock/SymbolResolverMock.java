@@ -101,17 +101,17 @@ public class SymbolResolverMock implements SymbolResolver {
     }
 
     @Override
-    public PathExpression relativePathOfField(String fieldId, PathExpression contextPath) {
-        return XPathContextualizer.contextualize(contextPath, absolutePathOfField(fieldId));
+    public PathExpression getRelativePathOfField(String fieldId, PathExpression contextPath) {
+        return XPathContextualizer.contextualize(contextPath, getAbsolutePathOfField(fieldId));
     }
 
     @Override
-    public PathExpression relativePathOfNode(String nodeId, PathExpression contextPath) {
-        return XPathContextualizer.contextualize(contextPath, absolutePathOfNode(nodeId));
+    public PathExpression getRelativePathOfNode(String nodeId, PathExpression contextPath) {
+        return XPathContextualizer.contextualize(contextPath, getAbsolutePathOfNode(nodeId));
     }
 
     @Override
-    public String typeOfField(String fieldId) {
+    public String getTypeOfField(String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
             throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
@@ -120,7 +120,7 @@ public class SymbolResolverMock implements SymbolResolver {
     }
 
     @Override
-    public String rootCodelistOfField(String fieldId) {
+    public String getRootCodelistOfField(String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
             throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
@@ -145,7 +145,7 @@ public class SymbolResolverMock implements SymbolResolver {
      * @return The id of the parent node of the given field.
      */
     @Override
-    public String parentNodeOfField(final String fieldId) {
+    public String getParentNodeOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField != null) {
             return sdkField.getParentNodeId();
@@ -158,7 +158,7 @@ public class SymbolResolverMock implements SymbolResolver {
      * @return The xPath of the given field.
      */
     @Override
-    public PathExpression absolutePathOfField(final String fieldId) {
+    public PathExpression getAbsolutePathOfField(final String fieldId) {
         final SdkField sdkField = fieldById.get(fieldId);
         if (sdkField == null) {
             throw new ParseCancellationException(
@@ -172,7 +172,7 @@ public class SymbolResolverMock implements SymbolResolver {
      * @return The xPath of the given node or field.
      */
     @Override
-    public PathExpression absolutePathOfNode(final String nodeId) {
+    public PathExpression getAbsolutePathOfNode(final String nodeId) {
         final SdkNode sdkNode = nodeById.get(nodeId);
         if (sdkNode == null) {
             throw new ParseCancellationException(

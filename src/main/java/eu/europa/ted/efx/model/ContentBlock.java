@@ -94,13 +94,13 @@ public class ContentBlock {
     }
 
     public void renderTemplate(MarkupGenerator markupGenerator, List<Markup> templates) {
-        templates.add(markupGenerator.renderTemplate(this.id, this.getOutlineNumber(), this.renderContent(markupGenerator)));
+        templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(), this.renderContent(markupGenerator)));
         for (ContentBlock child : this.children) {
             child.renderTemplate(markupGenerator, templates);
         }
     }
 
     public Markup renderCallTemplate(MarkupGenerator markupGenerator) {
-        return markupGenerator.renderCallTemplate(this.id, this.context.relativePath());
+        return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath());
     }
 }

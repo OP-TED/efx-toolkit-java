@@ -176,7 +176,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       templateCalls.add(rootBlock.renderCallTemplate(markup));
       rootBlock.renderTemplate(markup, templates);
     }
-    Markup file = this.markup.renderFile(templateCalls, templates);
+    Markup file = this.markup.composeOutputFile(templateCalls, templates);
     this.stack.push(file);
   }
 
@@ -203,7 +203,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
-    this.stack.push(this.markup.renderValueReference(expression).join(template));
+    this.stack.push(this.markup.renderVariableExpression(expression).join(template));
   }
 
 
@@ -211,39 +211,42 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
-    StringExpression assetId =
-        ctx.assetId() != null ? this.stack.pop(StringExpression.class) : this.script.mapString("");
+    StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class)
+        : this.script.getStringLiteralFromUnquotedString("");
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
-        : this.script.mapString("");
+        : this.script.getStringLiteralFromUnquotedString("");
     StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
-        : this.script.mapString("");
-    this.stack.push(
-        this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(List.of(assetType,
-            this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
+        : this.script.getStringLiteralFromUnquotedString("");
+    this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+        List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
+            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    StringExpression assetId = this.script.mapString(ctx.BtId().getText());
+    StringExpression assetId = this.script.getStringLiteralFromUnquotedString(ctx.BtId().getText());
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
-        : this.script.mapString("");
-    this.stack.push(this.markup.renderLabelFromKey(
-        this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT),
-            this.script.mapString("|"), labelType, this.script.mapString("|"), assetId))));
+        : this.script.getStringLiteralFromUnquotedString("");
+    this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+        List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
+            this.script.getStringLiteralFromUnquotedString("|"), labelType,
+            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldId().getText();
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
-        : this.script.mapString("");
+        : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.script.equals("value")) {
       this.shorthandFieldValueLabelReference(fieldId);
     } else {
-      this.stack.push(this.markup.renderLabelFromKey(this.script.mapStringConcatenationFunction(
-          List.of(this.script.mapString(ASSET_TYPE_FIELD), this.script.mapString("|"), labelType,
-              this.script.mapString("|"), this.script.mapString(fieldId)))));
+      this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
+              this.script.getStringLiteralFromUnquotedString("|"), labelType,
+              this.script.getStringLiteralFromUnquotedString("|"),
+              this.script.getStringLiteralFromUnquotedString(fieldId)))));
     }
   }
 
@@ -254,26 +257,32 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   private void shorthandFieldValueLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
-    final StringExpression valueReference = this.script.mapFieldValueReference(
-        symbols.relativePathOfField(fieldId, currentContext.absolutePath()),
+    final StringExpression valueReference = this.script.composeFieldValueReference(
+        symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
         StringExpression.class);
-    final String fieldType = this.symbols.typeOfField(fieldId);
+    final String fieldType = this.symbols.getTypeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
         this.stack
-            .push(this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
-                List.of(this.script.mapString(ASSET_TYPE_INDICATOR), this.script.mapString("|"),
-                    this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("-"),
-                    valueReference, this.script.mapString("|"), this.script.mapString(fieldId)))));
+            .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
+                List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_VALUE),
+                    this.script.getStringLiteralFromUnquotedString("-"), valueReference,
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(fieldId)))));
         break;
       case "code":
       case "internal-code":
         this.stack
-            .push(this.markup.renderLabelFromExpression(this.script.mapStringConcatenationFunction(
-                List.of(this.script.mapString(ASSET_TYPE_CODE), this.script.mapString("|"),
-                    this.script.mapString(LABEL_TYPE_VALUE), this.script.mapString("|"),
-                    this.script.mapString(this.symbols.rootCodelistOfField(fieldId)),
-                    this.script.mapString("."), valueReference))));
+            .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
+                List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_VALUE),
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(
+                        this.symbols.getRootCodelistOfField(fieldId)),
+                    this.script.getStringLiteralFromUnquotedString("."), valueReference))));
         break;
       default:
         throw new ParseCancellationException(String.format(
@@ -297,16 +306,20 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       if (labelType.equals(LABEL_TYPE_VALUE)) {
         this.shorthandFieldValueLabelReference(this.efxContext.symbol());
       } else {
-        this.stack.push(this.markup.renderLabelFromKey(this.script
-            .mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_FIELD),
-                this.script.mapString("|"), this.script.mapString(labelType),
-                this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
+        this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+            List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
+                this.script.getStringLiteralFromUnquotedString("|"),
+                this.script.getStringLiteralFromUnquotedString(labelType),
+                this.script.getStringLiteralFromUnquotedString("|"),
+                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
       }
     } else if (this.efxContext.isNodeContext()) {
-      this.stack.push(this.markup.renderLabelFromKey(
-          this.script.mapStringConcatenationFunction(List.of(this.script.mapString(ASSET_TYPE_BT),
-              this.script.mapString("|"), this.script.mapString(labelType),
-              this.script.mapString("|"), this.script.mapString(this.efxContext.symbol())))));
+      this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
+              this.script.getStringLiteralFromUnquotedString("|"),
+              this.script.getStringLiteralFromUnquotedString(labelType),
+              this.script.getStringLiteralFromUnquotedString("|"),
+              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
     }
   }
 
@@ -328,21 +341,21 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   @Override
   public void exitAssetType(AssetTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.script.mapString(ctx.getText()));
+      this.stack.push(this.script.getStringLiteralFromUnquotedString(ctx.getText()));
     }
   }
 
   @Override
   public void exitLabelType(LabelTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.script.mapString(ctx.getText()));
+      this.stack.push(this.script.getStringLiteralFromUnquotedString(ctx.getText()));
     }
   }
 
   @Override
   public void exitAssetId(AssetIdContext ctx) {
     if (ctx.expressionBlock() == null) {
-      this.stack.push(this.script.mapString(ctx.getText()));
+      this.stack.push(this.script.getStringLiteralFromUnquotedString(ctx.getText()));
     }
   }
 
@@ -369,8 +382,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
       throw new ParseCancellationException(
           "The $value shorthand syntax can only be used when a field is declared as the context.");
     }
-    this.stack.push(this.script.mapFieldValueReference(
-        symbols.relativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()),
+    this.stack.push(this.script.composeFieldValueReference(
+        symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()),
         Expression.class));
   }
 
