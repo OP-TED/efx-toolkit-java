@@ -11,7 +11,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 public class MarkupGeneratorMock implements MarkupGenerator {
 
     @Override
-    public Markup renderValueReference(Expression valueReference) {
+    public Markup renderVariableExpression(Expression valueReference) {
         return new Markup(String.format("eval(%s)", valueReference.script));
     }
 
@@ -31,17 +31,17 @@ public class MarkupGeneratorMock implements MarkupGenerator {
     }
 
     @Override
-    public Markup renderTemplate(String name, String number, Markup content) {
+    public Markup composeFragmentDefinition(String name, String number, Markup content) {
         return new Markup(String.format("%s = %s;", name,  content.script));
     }
 
     @Override
-    public Markup renderCallTemplate(String name, PathExpression context) {
+    public Markup renderFragmentInvocation(String name, PathExpression context) {
         return new Markup(String.format("for-each(%s) { %s(); }", context.script, name));
     }
 
     @Override
-    public Markup renderFile(List<Markup> body, List<Markup> templates) {
+    public Markup composeOutputFile(List<Markup> body, List<Markup> templates) {
         return new Markup(String.format("%s %s", templates.stream().map(t -> t.script).collect(Collectors.joining("\n")), body.stream().map(t -> t.script).collect(Collectors.joining("\n"))));
     }
 }

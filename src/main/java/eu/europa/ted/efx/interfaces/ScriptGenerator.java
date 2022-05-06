@@ -21,7 +21,7 @@ public interface ScriptGenerator {
      * difference between fields and nodes is that fields contain values, while nodes contain other
      * nodes and/or fields.
      */
-    public <T extends Expression> T mapNodeReferenceWithPredicate(
+    public <T extends Expression> T composeNodeReferenceWithPredicate(
             final PathExpression nodeReference, final BooleanExpression predicate, Class<T> type);
 
     /**
@@ -32,73 +32,73 @@ public interface ScriptGenerator {
      * difference between fields and nodes is that fields contain values, while nodes contain other
      * nodes and/or fields.
      */
-    public <T extends Expression> T mapFieldReferenceWithPredicate(
+    public <T extends Expression> T composeFieldReferenceWithPredicate(
             final PathExpression fieldReference, final BooleanExpression predicate, Class<T> type);
 
     /**
      * Given a PathExpression, this method should return the target language script for retrieving
      * the value of the field.
      */
-    public <T extends Expression> T mapFieldValueReference(final PathExpression fieldReference,
+    public <T extends Expression> T composeFieldValueReference(final PathExpression fieldReference,
             Class<T> type);
 
     /**
      * Given a PathExpression and an attribute name, this method should return the target language
      * script for retrieving the value of the attribute.
      */
-    public <T extends Expression> T mapFieldAttributeReference(final PathExpression fieldReference,
+    public <T extends Expression> T composeFieldAttributeReference(final PathExpression fieldReference,
             String attribute, Class<T> type);
 
     /**
      * Takes a list of string expressions and returns the target language script that corresponds to
      * a list of string expressions.
      */
-    public StringListExpression mapList(final List<StringExpression> list);
+    public StringListExpression composeListOfStrings(final List<StringExpression> list);
 
 
     /**
      * Takes a Java Boolean value and returns the corresponding target language script.
      */
-    public BooleanExpression mapBoolean(Boolean value);
+    public BooleanExpression getBooleanEquivalent(boolean value);
 
     /**
      * Returns the target language script for performing a logical AND operation on the two given
      * operands.
      */
-    public BooleanExpression mapLogicalAnd(final BooleanExpression leftOperand,
+    public BooleanExpression composeLogicalAnd(final BooleanExpression leftOperand,
             final BooleanExpression rightOperand);
 
     /**
      * Returns the target language script for performing a logical OR operation on the two given
      * operands.
      */
-    public BooleanExpression mapLogicalOr(final BooleanExpression leftOperand,
+    public BooleanExpression composeLogicalOr(final BooleanExpression leftOperand,
             final BooleanExpression rightOperand);
 
     /**
      * Returns the target language script for performing a logical NOT operation on the given
      * boolean expression.
      */
-    public BooleanExpression mapLogicalNot(BooleanExpression condition);
+    public BooleanExpression composeLogicalNot(BooleanExpression condition);
 
     /**
      * Returns the target language script that checks whether a given list of strings (haystack)
      * contains a given string (needle).
      */
-    public BooleanExpression mapInListCondition(final StringExpression needle,
+    public BooleanExpression composeContainsCondition(final StringExpression needle,
             final StringListExpression haystack);
 
     /**
      * Returns the target language script that checks whether a given string matches the given RegEx
      * pattern.
      */
-    public BooleanExpression mapMatchesPatternCondition(final StringExpression expression,
-            final String pattern);
+    public BooleanExpression composePatternMatchCondition(final StringExpression expression,
+            final String regexPattern);
 
     /**
      * Returns the given expression parenthesized in the target language.
      */
-    public <T extends Expression> T mapParenthesizedExpression(T expression, Class<T> type);
+    public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
     /**
@@ -110,14 +110,14 @@ public interface ScriptGenerator {
      * connects to the data source and permits us to subsequently get the data by using a
      * PathExpression.
      */
-    public PathExpression mapExternalReference(final StringExpression externalReference);
+    public PathExpression composeExternalReference(final StringExpression externalReference);
 
     /**
      * TODO: Not properly defined yet.
      * 
      * See {@link mapExternalReference} for more details.
      */
-    public PathExpression mapFieldInExternalReference(final PathExpression externalReference,
+    public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
             final PathExpression fieldReference);
 
 
@@ -137,7 +137,7 @@ public interface ScriptGenerator {
      * @param value
      * @return
      */
-    public StringExpression mapString(String value);
+    public StringExpression getStringLiteralFromUnquotedString(String value);
 
     /**
      * Returns the target language script that compares the two operands (for equality etc.).
@@ -145,7 +145,7 @@ public interface ScriptGenerator {
      * @param operator The EFX operator that is used to compare the two operands. Do not forget to
      *        translate the operator to the target language equivalent.
      */
-    public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
+    public BooleanExpression composeComparisonOperation(Expression leftOperand, String operator,
             Expression rightOperand);
 
     /**
@@ -155,83 +155,83 @@ public interface ScriptGenerator {
      * @param operator The EFX intended operator. Do not forget to translate the operator to the
      *        target language equivalent.
      */
-    public NumericExpression mapNumericOperator(NumericExpression leftOperand, String operator,
+    public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
             NumericExpression rightOperand);
 
     /**
      * Returns the numeric literal passed in target language script. The passed literal is in EFX.
      */
-    public NumericExpression mapNumericLiteral(final String literal);
+    public NumericExpression getNumericLiteralEquivalent(final String efxLiteral);
 
     /**
      * Returns the string literal in the target language. Note that the string literal passed as a
      * parameter is already between quotes in EFX.
      */
-    public StringExpression mapStringLiteral(final String literal);
+    public StringExpression getStringLiteralEquivalent(final String efxLiteral);
 
-    public DateExpression mapDateLiteral(final String literal);
+    public DateExpression getDateLiteralEquivalent(final String efxLiteral);
 
-    public TimeExpression mapTimeLiteral(final String literal);
+    public TimeExpression getTimeLiteralEquivalent(final String efxLiteral);
 
-    public DurationExpression mapDurationLiteral(final String literal);
+    public DurationExpression getDurationLiteralEquivalent(final String efxLiteral);
 
     /*
      * Numeric Functions
      */
 
-    public NumericExpression mapCountFunction(final PathExpression set);
+    public NumericExpression composeCountOperation(final PathExpression set);
 
-    public NumericExpression mapToNumberFunction(StringExpression text);
+    public NumericExpression composeToNumberConversion(StringExpression text);
 
-    public NumericExpression mapSumFunction(PathExpression setReference);
+    public NumericExpression composeSumOperation(PathExpression setReference);
 
-    public NumericExpression mapStringLengthFunction(StringExpression text);
+    public NumericExpression composeStringLengthCalculation(StringExpression text);
 
     /*
      * String Functions
      */
 
-    public StringExpression mapStringConcatenationFunction(List<StringExpression> list);
+    public StringExpression composeStringConcatenation(List<StringExpression> list);
 
-    public BooleanExpression mapStringEndsWithFunction(StringExpression text,
+    public BooleanExpression composeEndsWithCondition(StringExpression text,
             StringExpression endsWith);
 
-    public BooleanExpression mapStringStartsWithFunction(StringExpression text,
+    public BooleanExpression composeStartsWithCondition(StringExpression text,
             StringExpression startsWith);
 
-    public BooleanExpression mapStringContainsFunction(StringExpression haystack,
+    public BooleanExpression composeContainsCondition(StringExpression haystack,
             StringExpression needle);
 
-    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start);
+    public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start);
 
-    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start,
+    public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
             NumericExpression length);
 
-    public StringExpression mapNumberToStringFunction(NumericExpression number);
+    public StringExpression composeToStringConversion(NumericExpression number);
 
     /*
      * Boolean Functions
      */
 
-    public BooleanExpression mapExistsExpression(PathExpression reference);
+    public BooleanExpression composeExistsCondition(PathExpression reference);
 
     /*
      * Date Functions
      */
 
-    public DateExpression mapDateFromStringFunction(StringExpression pop);
+    public DateExpression composeToDateConversion(StringExpression pop);
 
-    public DateExpression mapDatePlusDuration(final DateExpression date,
+    public DateExpression composeAddition(final DateExpression date,
             final DurationExpression duration);
 
-    public DateExpression mapDateMinusDuration(final DateExpression date,
+    public DateExpression composeSubtraction(final DateExpression date,
             final DurationExpression duration);
 
     /*
      * Time Functions
      */
 
-    public TimeExpression mapTimeFromStringFunction(StringExpression pop);
+    public TimeExpression composeToTimeConversion(StringExpression pop);
 
 
 
@@ -239,18 +239,18 @@ public interface ScriptGenerator {
      * Duration Functions
      */
 
-    public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
+    public DurationExpression composeSubtraction(DateExpression startDate,
             DateExpression endDate);
 
-    public StringExpression mapFormatNumberFunction(NumericExpression number,
+    public StringExpression composeNumberFormatting(NumericExpression number,
             StringExpression format);
 
-    public DurationExpression mapDurationMultiplication(final NumericExpression number,
+    public DurationExpression composeMultiplication(final NumericExpression number,
             final DurationExpression duration);
 
-    public DurationExpression mapDurationAddition(final DurationExpression left,
+    public DurationExpression composeAddition(final DurationExpression left,
             final DurationExpression right);
 
-    public DurationExpression mapDurationSubtraction(final DurationExpression left,
+    public DurationExpression composeSubtraction(final DurationExpression left,
             final DurationExpression right);
 }

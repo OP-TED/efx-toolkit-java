@@ -39,19 +39,19 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
 
     @Override
-    public <T extends Expression> T mapNodeReferenceWithPredicate(PathExpression nodeReference,
+    public <T extends Expression> T composeNodeReferenceWithPredicate(PathExpression nodeReference,
             BooleanExpression predicate, Class<T> type) {
         return instantiate(nodeReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
-    public <T extends Expression> T mapFieldReferenceWithPredicate(PathExpression fieldReference,
+    public <T extends Expression> T composeFieldReferenceWithPredicate(PathExpression fieldReference,
             BooleanExpression predicate, Class<T> type) {
         return instantiate(fieldReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
-    public <T extends Expression> T mapFieldValueReference(PathExpression fieldReference,
+    public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
             Class<T> type) {
 
         if (StringExpression.class.isAssignableFrom(type)) {
@@ -78,13 +78,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public <T extends Expression> T mapFieldAttributeReference(PathExpression fieldReference,
+    public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
             String attribute, Class<T> type) {
         return instantiate(fieldReference.script + "/@" + attribute, type);
     }
 
     @Override
-    public StringListExpression mapList(List<StringExpression> list) {
+    public StringListExpression composeListOfStrings(List<StringExpression> list) {
         if (list == null || list.isEmpty()) {
             return new StringListExpression("()");
         }
@@ -97,32 +97,32 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public NumericExpression mapNumericLiteral(String literal) {
+    public NumericExpression getNumericLiteralEquivalent(String literal) {
         return new NumericExpression(literal);
     }
 
     @Override
-    public StringExpression mapStringLiteral(String literal) {
+    public StringExpression getStringLiteralEquivalent(String literal) {
         return new StringExpression(literal);
     }
 
     @Override
-    public BooleanExpression mapBoolean(Boolean value) {
+    public BooleanExpression getBooleanEquivalent(boolean value) {
         return new BooleanExpression(value ? "true()" : "false()");
     }
 
     @Override
-    public DateExpression mapDateLiteral(String literal) {
+    public DateExpression getDateLiteralEquivalent(String literal) {
         return new DateExpression("xs:date(" + quoted(literal) + ")");
     }
 
     @Override
-    public TimeExpression mapTimeLiteral(String literal) {
+    public TimeExpression getTimeLiteralEquivalent(String literal) {
         return new TimeExpression("xs:time(" + quoted(literal) + ")");
     }
 
     @Override
-    public DurationExpression mapDurationLiteral(final String literal) {
+    public DurationExpression getDurationLiteralEquivalent(final String literal) {
         if (literal.contains("M") || literal.contains("Y")) {
             return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")");
         }
@@ -134,20 +134,20 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public BooleanExpression mapInListCondition(StringExpression expression,
+    public BooleanExpression composeContainsCondition(StringExpression expression,
             StringListExpression list) {
         return new BooleanExpression(String.format("%s = %s", expression.script, list.script));
     }
 
     @Override
-    public BooleanExpression mapMatchesPatternCondition(StringExpression expression,
+    public BooleanExpression composePatternMatchCondition(StringExpression expression,
             String pattern) {
         return new BooleanExpression(
                 String.format("fn:matches(normalize-space(%s), %s)", expression.script, pattern));
     }
 
     @Override
-    public <T extends Expression> T mapParenthesizedExpression(T expression, Class<T> type) {
+    public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
         try {
             Constructor<T> ctor = type.getConstructor(String.class);
             return ctor.newInstance("(" + expression.script + ")");
@@ -157,14 +157,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public PathExpression mapExternalReference(StringExpression externalReference) {
+    public PathExpression composeExternalReference(StringExpression externalReference) {
         // TODO: implement this properly.
         return new PathExpression("fn:doc(concat('http://notice.service/', " + externalReference.script + ")')");
     }
 
 
     @Override
-    public PathExpression mapFieldInExternalReference(PathExpression externalReference,
+    public PathExpression composeFieldInExternalReference(PathExpression externalReference,
             PathExpression fieldReference) {
         return new PathExpression(externalReference.script + "/" + fieldReference.script);
     }
@@ -179,26 +179,26 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
 
     @Override
-    public BooleanExpression mapLogicalAnd(BooleanExpression leftOperand,
+    public BooleanExpression composeLogicalAnd(BooleanExpression leftOperand,
             BooleanExpression rightOperand) {
         return new BooleanExpression(
                 String.format("%s and %s", leftOperand.script, rightOperand.script));
     }
 
     @Override
-    public BooleanExpression mapLogicalOr(BooleanExpression leftOperand,
+    public BooleanExpression composeLogicalOr(BooleanExpression leftOperand,
             BooleanExpression rightOperand) {
         return new BooleanExpression(
                 String.format("%s or %s", leftOperand.script, rightOperand.script));
     }
 
     @Override
-    public BooleanExpression mapLogicalNot(BooleanExpression condition) {
+    public BooleanExpression composeLogicalNot(BooleanExpression condition) {
         return new BooleanExpression(String.format("not(%s)", condition.script));
     }
 
     @Override
-    public BooleanExpression mapExistsExpression(PathExpression reference) {
+    public BooleanExpression composeExistsCondition(PathExpression reference) {
         return new BooleanExpression(reference.script);
     }
 
@@ -206,25 +206,25 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /*** Boolean functions ***/
 
     @Override
-    public BooleanExpression mapStringContainsFunction(StringExpression haystack,
+    public BooleanExpression composeContainsCondition(StringExpression haystack,
             StringExpression needle) {
         return new BooleanExpression("contains(" + haystack.script + ", " + needle.script + ")");
     }
 
     @Override
-    public BooleanExpression mapStringStartsWithFunction(StringExpression text,
+    public BooleanExpression composeStartsWithCondition(StringExpression text,
             StringExpression startsWith) {
         return new BooleanExpression("starts-with(" + text.script + ", " + startsWith.script + ")");
     }
 
     @Override
-    public BooleanExpression mapStringEndsWithFunction(StringExpression text,
+    public BooleanExpression composeEndsWithCondition(StringExpression text,
             StringExpression endsWith) {
         return new BooleanExpression("ends-with(" + text.script + ", " + endsWith.script + ")");
     }
 
     @Override
-    public BooleanExpression mapComparisonOperator(Expression leftOperand, String operator,
+    public BooleanExpression composeComparisonOperation(Expression leftOperand, String operator,
             Expression rightOperand) {
         if (DurationExpression.class.isAssignableFrom(leftOperand.getClass())) {
             // TODO: Improve this implementation; Check if both are dayTime or yearMonth and compare directly, otherwise, compare by adding to current-date()
@@ -237,27 +237,27 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /*** Numeric functions ***/
 
     @Override
-    public NumericExpression mapCountFunction(PathExpression nodeSet) {
+    public NumericExpression composeCountOperation(PathExpression nodeSet) {
         return new NumericExpression("count(" + nodeSet.script + ")");
     }
 
     @Override
-    public NumericExpression mapToNumberFunction(StringExpression text) {
+    public NumericExpression composeToNumberConversion(StringExpression text) {
         return new NumericExpression("number(" + text.script + ")");
     }
 
     @Override
-    public NumericExpression mapSumFunction(PathExpression nodeSet) {
+    public NumericExpression composeSumOperation(PathExpression nodeSet) {
         return new NumericExpression("sum(" + nodeSet.script + ")");
     }
 
     @Override
-    public NumericExpression mapStringLengthFunction(StringExpression text) {
+    public NumericExpression composeStringLengthCalculation(StringExpression text) {
         return new NumericExpression("string-length(" + text.script + ")");
     }
 
     @Override
-    public NumericExpression mapNumericOperator(NumericExpression leftOperand, String operator,
+    public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
             NumericExpression rightOperand) {
         return new NumericExpression(
                 leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
@@ -267,36 +267,36 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /*** String functions ***/
 
     @Override
-    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start,
+    public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
             NumericExpression length) {
         return new StringExpression(
                 "substring(" + text.script + ", " + start.script + ", " + length.script + ")");
     }
 
     @Override
-    public StringExpression mapSubstringFunction(StringExpression text, NumericExpression start) {
+    public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start) {
         return new StringExpression("substring(" + text.script + ", " + start.script + ")");
     }
 
     @Override
-    public StringExpression mapNumberToStringFunction(NumericExpression number) {
+    public StringExpression composeToStringConversion(NumericExpression number) {
         return new StringExpression("string(" + number.script + ")");
     }
 
     @Override
-    public StringExpression mapStringConcatenationFunction(List<StringExpression> list) {
+    public StringExpression composeStringConcatenation(List<StringExpression> list) {
         return new StringExpression("concat("
                 + list.stream().map(i -> i.script).collect(Collectors.joining(", ")) + ")");
     }
 
     @Override
-    public StringExpression mapFormatNumberFunction(NumericExpression number,
+    public StringExpression composeNumberFormatting(NumericExpression number,
             StringExpression format) {
         return new StringExpression("format-number(" + number.script + ", " + format.script + ")");
     }
 
     @Override
-    public StringExpression mapString(String value) {
+    public StringExpression getStringLiteralFromUnquotedString(String value) {
         return new StringExpression("'" + value + "'");
     }
 
@@ -304,24 +304,24 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /*** Date functions ***/
 
     @Override
-    public DateExpression mapDateFromStringFunction(StringExpression date) {
+    public DateExpression composeToDateConversion(StringExpression date) {
         return new DateExpression("xs:date(" + date.script + ")");
     }
 
     @Override
-    public DateExpression mapDatePlusDuration(DateExpression date, DurationExpression duration) {
+    public DateExpression composeAddition(DateExpression date, DurationExpression duration) {
         return new DateExpression("(" + date.script + " + " + duration.script + ")");
     }
 
     @Override
-    public DateExpression mapDateMinusDuration(DateExpression date, DurationExpression duration) {
+    public DateExpression composeSubtraction(DateExpression date, DurationExpression duration) {
         return new DateExpression("(" + date.script + " - " + duration.script + ")");
     }
 
     /*** Time functions ***/
 
     @Override
-    public TimeExpression mapTimeFromStringFunction(StringExpression time) {
+    public TimeExpression composeToTimeConversion(StringExpression time) {
         return new TimeExpression("xs:time(" + time.script + ")");
     }
 
@@ -329,25 +329,25 @@ public class XPathScriptGenerator implements ScriptGenerator {
     /*** Duration functions ***/
 
     @Override
-    public DurationExpression mapDurationFromDatesFunction(DateExpression startDate,
+    public DurationExpression composeSubtraction(DateExpression startDate,
             DateExpression endDate) {
         return new DurationExpression("xs:dayTimeDuration(" + endDate.script + " " + operators.get("-") + " " + startDate.script + ")");
     }
 
     @Override
-    public DurationExpression mapDurationMultiplication(NumericExpression number,
+    public DurationExpression composeMultiplication(NumericExpression number,
             DurationExpression duration) {
         return new DurationExpression("(" + number.script + " * " + duration.script + ")");
     }
 
     @Override
-    public DurationExpression mapDurationAddition(DurationExpression left,
+    public DurationExpression composeAddition(DurationExpression left,
             DurationExpression right) {
         return new DurationExpression("(" + left.script + " + " + right.script + ")");
     }
 
     @Override
-    public DurationExpression mapDurationSubtraction(DurationExpression left,
+    public DurationExpression composeSubtraction(DurationExpression left,
             DurationExpression right) {
         return new DurationExpression("(" + left.script + " - " + right.script + ")");
     }
