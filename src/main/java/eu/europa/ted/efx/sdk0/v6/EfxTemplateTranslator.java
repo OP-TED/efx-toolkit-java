@@ -258,9 +258,9 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   private void shorthandFieldValueLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final StringExpression valueReference = this.script.composeFieldValueReference(
-        symbols.relativePathOfField(fieldId, currentContext.absolutePath()),
+        symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
         StringExpression.class);
-    final String fieldType = this.symbols.typeOfField(fieldId);
+    final String fieldType = this.symbols.getTypeOfField(fieldId);
     switch (fieldType) {
       case "indicator":
         this.stack
@@ -281,7 +281,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
                     this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_VALUE),
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(
-                        this.symbols.rootCodelistOfField(fieldId)),
+                        this.symbols.getRootCodelistOfField(fieldId)),
                     this.script.getStringLiteralFromUnquotedString("."), valueReference))));
         break;
       default:
@@ -383,7 +383,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
           "The $value shorthand syntax can only be used when a field is declared as the context.");
     }
     this.stack.push(this.script.composeFieldValueReference(
-        symbols.relativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()),
+        symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath()),
         Expression.class));
   }
 

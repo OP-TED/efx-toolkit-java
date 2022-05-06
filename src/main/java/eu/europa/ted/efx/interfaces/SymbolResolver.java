@@ -17,7 +17,7 @@ public interface SymbolResolver {
      * @param fieldId The identifier of the field to look for.
      * @return The identifier of the parent node of the given field.
      */
-    public String parentNodeOfField(final String fieldId);
+    public String getParentNodeOfField(final String fieldId);
 
     /**
      * Gets the path that can be used to locate the give field in the data source, relative to
@@ -27,7 +27,7 @@ public interface SymbolResolver {
      * @param contextPath The path relative to which we expect to find the return value.
      * @return The path to the given field relative to the given context path.
      */
-    public PathExpression relativePathOfField(final String fieldId,
+    public PathExpression getRelativePathOfField(final String fieldId,
             final PathExpression contextPath);
 
     /**
@@ -38,7 +38,7 @@ public interface SymbolResolver {
      * @param contextPath The path relative to which we expect to find the return value.
      * @return The path to the given node relative to the given context path.
      */
-    public PathExpression relativePathOfNode(final String nodeId, final PathExpression contextPath);
+    public PathExpression getRelativePathOfNode(final String nodeId, final PathExpression contextPath);
 
     /**
      * Gets the absolute path that can be used to locate a field in the data source.
@@ -46,7 +46,7 @@ public interface SymbolResolver {
      * @param fieldId The identifier of the field to look for.
      * @return The absolute path to the field as a PathExpression.
      */
-    public PathExpression absolutePathOfField(final String fieldId);
+    public PathExpression getAbsolutePathOfField(final String fieldId);
 
     /**
      * Gets the absolute path the can be used to locate a node in the data source.
@@ -54,7 +54,7 @@ public interface SymbolResolver {
      * @param nodeId The identifier of the node to look for.
      * @return The absolute path to the node as a PathExpression.
      */
-    public PathExpression absolutePathOfNode(final String nodeId);
+    public PathExpression getAbsolutePathOfNode(final String nodeId);
 
     /**
      * Gets the type of the given field.
@@ -62,7 +62,7 @@ public interface SymbolResolver {
      * @param fieldId The identifier of the field to look for.
      * @return The type of the field as a string.
      */
-    public String typeOfField(final String fieldId);
+    public String getTypeOfField(final String fieldId);
 
     /**
      * Gets the codelist associated with the given field. If the codelist is a tailored codelist the
@@ -71,7 +71,7 @@ public interface SymbolResolver {
      * @param fieldId The identifier of the field to look for.
      * @return The "root" codelist associated ith the given field.
      */
-    public String rootCodelistOfField(final String fieldId);
+    public String getRootCodelistOfField(final String fieldId);
 
     /**
      * Gets the list of all codes in a given codelist as a list of strings.

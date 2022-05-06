@@ -512,13 +512,13 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
-        this.stack.push(this.symbols.relativePathOfNode(ctx.NodeId().getText(),
+        this.stack.push(this.symbols.getRelativePathOfNode(ctx.NodeId().getText(),
                 this.efxContext.absolutePath()));
     }
 
     @Override
     public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
-        this.stack.push(symbols.relativePathOfField(ctx.FieldId().getText(),
+        this.stack.push(symbols.getRelativePathOfField(ctx.FieldId().getText(),
                 this.efxContext.absolutePath()));
     }
 
@@ -625,7 +625,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                     parsedPath.getAttribute(), StringExpression.class));
         } else if (fieldId != null) {
             this.stack.push(this.script.composeFieldValueReference(path,
-                    Expression.types.get(this.symbols.typeOfField(fieldId))));
+                    Expression.types.get(this.symbols.getTypeOfField(fieldId))));
         } else {
             this.stack.push(this.script.composeFieldValueReference(path, PathExpression.class));
         }
@@ -651,8 +651,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         final String contextFieldId =
                 ctx.context.reference.simpleFieldReference().FieldId().getText();
         this.efxContext.push(new FieldContext(contextFieldId,
-                this.symbols.absolutePathOfField(contextFieldId),
-                this.symbols.relativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+                this.symbols.getAbsolutePathOfField(contextFieldId),
+                this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
     }
 
 
@@ -680,8 +680,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                                               // the context node.
         final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
         this.efxContext.push(new NodeContext(contextNodeId,
-                this.symbols.absolutePathOfNode(contextNodeId),
-                this.symbols.relativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+                this.symbols.getAbsolutePathOfNode(contextNodeId),
+                this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
     }
 
     /**
