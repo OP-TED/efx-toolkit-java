@@ -2,10 +2,9 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator;
+import eu.europa.ted.efx.model.Markup;
 
 /**
  * The role of this interface is to allow the reuse of the {@link EfxTemplateTranslator} to generate
