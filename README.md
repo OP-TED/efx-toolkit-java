@@ -8,7 +8,9 @@ The documentation is available at: https://docs.ted.europa.eu/eforms/latest/efx-
 
 ## Using the EFX toolkit
 
-The EFX toolkit is available as a Maven package in our GitHub repository. So you can use it by adding the following dependency:
+The EFX toolkit requires Java 11 or later.
+
+It is available as a Maven package in our GitHub repository. So you can use it by adding the following dependency:
 
 ```
 <dependencies>
