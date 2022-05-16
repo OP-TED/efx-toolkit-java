@@ -1,6 +1,7 @@
 package eu.europa.ted.efx;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 
@@ -37,11 +38,23 @@ public class EfxTranslator {
   }
 
   public static String translateTemplate(final String template,
-      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
+      final TranslatorDependencyFactory factory, final String sdkVersion) {
 
     switch (normalizeVersion(sdkVersion)) {
       case SDK_0_6:
         return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(template, factory,
+            sdkVersion);
+      default:
+        throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
+    }
+  }
+
+  public static String translateTemplate(final InputStream stream,
+      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
+
+    switch (normalizeVersion(sdkVersion)) {
+      case SDK_0_6:
+        return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(stream, factory,
             sdkVersion);
       default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
