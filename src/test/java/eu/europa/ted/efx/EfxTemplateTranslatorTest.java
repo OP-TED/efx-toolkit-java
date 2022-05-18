@@ -199,8 +199,8 @@ public class EfxTemplateTranslatorTest {
     public void testShorthandContextLabelReference_WithNodeContext() {
         // TODO: Check if Node -> business_term is intended
         assertEquals(
-                "block01 = label(concat('business_term', '|', 'name', '|', 'ND-0')); for-each(/*) { block01(); }",
-                translate("{ND-0}  #{name}"));
+                "block01 = label(concat('business_term', '|', 'name', '|', 'ND-Root')); for-each(/*) { block01(); }",
+                translate("{ND-Root}  #{name}"));
     }
 
     @Test
@@ -213,7 +213,7 @@ public class EfxTemplateTranslatorTest {
     @Test
     public void testShorthandContextFieldLabelReference_WithNodeContext() {
         assertThrows(ParseCancellationException.class,
-                () -> translate("{ND-0} #value"));
+                () -> translate("{ND-Root} #value"));
     }
 
 
@@ -236,7 +236,7 @@ public class EfxTemplateTranslatorTest {
     @Test
     public void testShorthandContextFieldValueReference_WithNodeContext() {
         assertThrows(ParseCancellationException.class,
-                () -> translate("{ND-0} $value"));
+                () -> translate("{ND-Root} $value"));
     }
 
 
