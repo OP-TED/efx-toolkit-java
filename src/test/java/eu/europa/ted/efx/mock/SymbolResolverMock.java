@@ -47,49 +47,49 @@ public class SymbolResolverMock implements SymbolResolver {
     public void loadMapData() throws JsonMappingException, JsonProcessingException {
         this.fieldById = Map.ofEntries(//
                 entry("BT-00-Text", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
+                        "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
                 entry("BT-00-Attribute", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Attribute\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
+                        "{\"id\":\"BT-00-Attribute\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
                 entry("BT-00-Indicator", new SdkField(fromString(
-                        "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
+                        "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
                 entry("BT-00-Code", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Code\",\"type\":\"code\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/CodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+                        "{\"id\":\"BT-00-Code\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
                 entry("BT-00-Internal-Code", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+                        "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
                 entry("BT-00-Text-Multilingual", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
+                        "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
                 entry("BT-00-StartDate", new SdkField(fromString(
-                        "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),
+                        "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),
                 entry("BT-00-EndDate", new SdkField(fromString(
-                        "{\"id\":\"BT-00-EndDate\",\"type\":\"date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndDateField\",\"xpathRelative\":\"PathNode/EndDateField\"}}"))),
+                        "{\"id\":\"BT-00-EndDate\",\"type\":\"date\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/EndDateField\",\"xpathRelative\":\"PathNode/EndDateField\"}}"))),
                 entry("BT-00-StartTime", new SdkField(fromString(
-                        "{\"id\":\"BT-00-StartTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/StartTimeField\",\"xpathRelative\":\"PathNode/StartTimeField\"}}"))),
+                        "{\"id\":\"BT-00-StartTime\",\"type\":\"time\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/StartTimeField\",\"xpathRelative\":\"PathNode/StartTimeField\"}}"))),
                 entry("BT-00-EndTime", new SdkField(fromString(
-                        "{\"id\":\"BT-00-EndTime\",\"type\":\"time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EndTimeField\",\"xpathRelative\":\"PathNode/EndTimeField\"}}"))),
+                        "{\"id\":\"BT-00-EndTime\",\"type\":\"time\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/EndTimeField\",\"xpathRelative\":\"PathNode/EndTimeField\"}}"))),
                 entry("BT-00-Measure", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Measure\",\"type\":\"measure\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/MeasureField\",\"xpathRelative\":\"PathNode/MeasureField\"}}"))),
+                        "{\"id\":\"BT-00-Measure\",\"type\":\"measure\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/MeasureField\",\"xpathRelative\":\"PathNode/MeasureField\"}}"))),
                 entry("BT-00-Integer", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Integer\",\"type\":\"integer\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IntegerField\",\"xpathRelative\":\"PathNode/IntegerField\"}}"))),
+                        "{\"id\":\"BT-00-Integer\",\"type\":\"integer\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/IntegerField\",\"xpathRelative\":\"PathNode/IntegerField\"}}"))),
                 entry("BT-00-Amount", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Amount\",\"type\":\"amount\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/AmountField\",\"xpathRelative\":\"PathNode/AmountField\"}}"))),
+                        "{\"id\":\"BT-00-Amount\",\"type\":\"amount\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/AmountField\",\"xpathRelative\":\"PathNode/AmountField\"}}"))),
                 entry("BT-00-Url", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Url\",\"type\":\"url\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/UrlField\",\"xpathRelative\":\"PathNode/UrlField\"}}"))),
+                        "{\"id\":\"BT-00-Url\",\"type\":\"url\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/UrlField\",\"xpathRelative\":\"PathNode/UrlField\"}}"))),
                 entry("BT-00-Zoned-Date", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Zoned-Date\",\"type\":\"zoned-date\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/ZonedDateField\",\"xpathRelative\":\"PathNode/ZonedDateField\"}}"))),
+                        "{\"id\":\"BT-00-Zoned-Date\",\"type\":\"zoned-date\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/ZonedDateField\",\"xpathRelative\":\"PathNode/ZonedDateField\"}}"))),
                 entry("BT-00-Zoned-Time", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Zoned-Time\",\"type\":\"zoned-time\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/ZonedTimeField\",\"xpathRelative\":\"PathNode/ZonedTimeField\"}}"))),
+                        "{\"id\":\"BT-00-Zoned-Time\",\"type\":\"zoned-time\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/ZonedTimeField\",\"xpathRelative\":\"PathNode/ZonedTimeField\"}}"))),
                 entry("BT-00-Id-Ref", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Id-Ref\",\"type\":\"id-ref\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/IdRefField\",\"xpathRelative\":\"PathNode/IdRefField\"}}"))),
+                        "{\"id\":\"BT-00-Id-Ref\",\"type\":\"id-ref\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/IdRefField\",\"xpathRelative\":\"PathNode/IdRefField\"}}"))),
                 entry("BT-00-Number", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Number\",\"type\":\"number\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/NumberField\",\"xpathRelative\":\"PathNode/NumberField\"}}"))),
+                        "{\"id\":\"BT-00-Number\",\"type\":\"number\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/NumberField\",\"xpathRelative\":\"PathNode/NumberField\"}}"))),
                 entry("BT-00-Phone", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Phone\",\"type\":\"phone\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/PhoneField\",\"xpathRelative\":\"PathNode/PhoneField\"}}"))),
+                        "{\"id\":\"BT-00-Phone\",\"type\":\"phone\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/PhoneField\",\"xpathRelative\":\"PathNode/PhoneField\"}}"))),
                 entry("BT-00-Email", new SdkField(fromString(
-                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))),
+                        "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))),
                 entry("BT-01-SubLevel-Text", new SdkField(fromString(
-                        "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-0\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))));
+                        "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))));
 
-        this.nodeById = Map.ofEntries(entry("ND-0", new SdkNode("ND-0", null, "/*", "/*", false)));
+        this.nodeById = Map.ofEntries(entry("ND-Root", new SdkNode("ND-Root", null, "/*", "/*", false)));
 
         this.codelistById =
                 new HashMap<>(Map.ofEntries(entry("accessibility", new SdkCodelist("accessibility",
