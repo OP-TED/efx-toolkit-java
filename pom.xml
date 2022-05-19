@@ -107,7 +107,7 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>0.6.1</version>
+              <version>0.6.2</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk0/v6</outputDirectory>
