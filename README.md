@@ -1,36 +1,57 @@
-# eForms Expression Language (EFX)
+# Java toolkit for the eForms Expression Language (EFX)
 
-This project uses ANTLR: https://www.antlr.org
+A Java library for the [eForms Expression Language (EFX)](https://docs.ted.europa.eu/eforms/latest/efx)
 
-ANTLR grammars, see .g4 files
+The EFX Toolkit for Java developers is a library that enables the transpilation of EFX expressions and templates to different target languages. It also provides an implementation that turns an EFX expression into XPath.
 
-## IDE setup
+The documentation is available at: https://docs.ted.europa.eu/eforms/latest/efx-toolkit
 
-`mvn clean install` always do this first to ensure everything is OK outside the IDE.
+## Using the EFX toolkit
 
-Build and add "target/generated-source/antlr4" to the build path.
-Rebuild sources after that.
+The EFX toolkit requires Java 11 or later.
+
+It is available as a Maven package in our GitHub repository. So you can use it by adding the following dependency:
+
+```
+<dependencies>
+  ...
+  <dependency>
+    <groupId>eu.europa.ted.eforms</groupId>
+    <artifactId>efx-toolkit-java</artifactId>
+    <version>${efx-toolkit.version}</version>
+  </dependency>
+  ...
+</dependencies>
+```
+
+Replace `${efx-toolkit.version}` with the latest version available, or define the corresponding property in your `pom.xml`.
+
+In order to access our packages on GitHub, you need to define the repository in your Maven settings or your `pom.xml`:
+
+```
+<repositories>
+  ...
+  <repository>
+    <id>github-public</id>
+    <name>Github Packages</name>
+    <url>https://public:&#103;hp_fkKwOmLCctdXETIEqjul8vX7EFw6HE12kl4t@maven.pkg.github.com/OP-TED/*</url>
+  </repository>
+</repositories>
+```
+
+We are working on making packages available via the Maven Central Repository.
+
+The [documentation](https://docs.ted.europa.eu/eforms/latest/efx-toolkit) describes the capabilities of the library, and the interfaces you might need to implement.
+
+## Building
+
+You can build this project as usual using Maven.
+
+The build process uses the grammar files provided in the [eForms SDK](https://github.com/OP-TED/eForms-SDK) to generate a parser, using [ANTLR](https://www.antlr.org).
 
 ## Testing
 
-See unit tests under `src/test/java/`.
-
-`mvn clean install` will also run the tests.
+Unit tests are available under `src/test/java/`. They show in particular a variety of EFX expressions and the corresponding XPath expression.
 
 After running the unit tests with `mvn test`, you can generate a coverage report with`mvn jacoco:report`.
 The report is available under `target/site/jacoco/`, in HTML, CSV, and XML format.
-
-## Export of artifact into local m2 repo
-
-`mvn clean install` copies the JAR and pom file to your local maven repository.
-You can then add the dependency as usual in pom.xml of your project:
-
-```
-    <dependency>
-      <groupId>eu.europa.ted.eforms</groupId>
-      <artifactId>efx-toolkit-java</artifactId>
-      <version>0.1.0</version>
-    </dependency>
-```
-
-Make sure to update the version number to the latest version available.
