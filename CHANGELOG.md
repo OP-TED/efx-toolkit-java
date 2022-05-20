@@ -1,3 +1,7 @@
+# EFX Toolkit 0.1.1 Release Notes
+
+EFX Toolkit 0.1.1 fixes an issue that we overlooked with 0.1.0 that was preventing us from publishing the EFX Toolkit to Maven Central.
+
 # EFX Toolkit 0.1.0 Release Notes
 
 This is the first release of the EFX toolkit, a Java library for the [eForms Expression Language (EFX)](https://docs.ted.europa.eu/eforms/latest/efx)
