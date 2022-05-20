@@ -17,7 +17,7 @@ public interface ScriptGenerator {
      * Given a PathExpression and a predicate, this method should return the target language script
      * for matching the subset of nodes in the PathExpression that match the predicate.
      * 
-     * Similar to {@link mapFieldReferenceWithPredicate} but for nodes. Quick reminder: the
+     * Similar to {@link #composeFieldReferenceWithPredicate} but for nodes. Quick reminder: the
      * difference between fields and nodes is that fields contain values, while nodes contain other
      * nodes and/or fields.
      */
@@ -28,7 +28,7 @@ public interface ScriptGenerator {
      * Given a PathExpression and a predicate, this method should return the target language script
      * for matching the subset of nodes in the PathExpression that match the predicate.
      * 
-     * Similar to {@link mapNodeReferenceWithPredicate} but for fields. Quick reminder: the
+     * Similar to {@link #composeNodeReferenceWithPredicate} but for fields. Quick reminder: the
      * difference between fields and nodes is that fields contain values, while nodes contain other
      * nodes and/or fields.
      */
@@ -115,7 +115,7 @@ public interface ScriptGenerator {
     /**
      * TODO: Not properly defined yet.
      * 
-     * See {@link mapExternalReference} for more details.
+     * See {@link #composeExternalReference} for more details.
      */
     public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
             final PathExpression fieldReference);

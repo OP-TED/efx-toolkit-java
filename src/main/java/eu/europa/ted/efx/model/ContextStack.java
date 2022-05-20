@@ -7,7 +7,7 @@ import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 
 /**
- * Used to keep trak of the current evaluation context. Extends Stack<Context> to provide helper
+ * Used to keep trak of the current evaluation context. Extends Stack&lt;Context&gt; to provide helper
  * methods for pushing directly using a fieldId or a nodeId. The point is to make it easier to use a
  * context stack and reduce the possibility of coding mistakes.
  */
