@@ -6,4 +6,4 @@ The EFX Toolkit for Java developers is a library that enables the transpilation 
 
 The documentation is available at: https://docs.ted.europa.eu/eforms/latest/efx-toolkit
 
-This version depends on the eForms SDK version 0.6.0, and uses the EFX grammar that it provides.
+This version depends on the eForms SDK version 0.6.2, and uses the EFX grammar that it provides.
