@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>eu.europa.ted.eforms</groupId>
   <artifactId>efx-toolkit-java</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>EFX Toolkit for Java</name>
@@ -31,6 +31,11 @@
     </developer>
   </developers>
 
+  <scm>
+    <connection>scm:git:git://github.com/OP-TED/efx-toolkit-java.git</connection>
+    <url>https://github.com/OP-TED/efx-toolkit-java.git</url>
+  </scm>
+
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -53,7 +58,6 @@
     <antlr4.version>4.9.3</antlr4.version>
     <dependency.plugin.version>3.3.0</dependency.plugin.version>
   </properties>
-
 
   <dependencies>
     <dependency>
@@ -250,3 +254,4 @@
     </profile>
   </profiles>
 </project>
+
