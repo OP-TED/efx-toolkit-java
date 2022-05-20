@@ -24,13 +24,13 @@ public class EfxExpressionCombinedTest {
     @Test
     public void testNotPresentAndNotPresent() {
         assertEquals("not(PathNode/TextField) and not(PathNode/IntegerField)",
-                test("ND-0", "BT-00-Text is not present and BT-00-Integer is not present"));
+                test("ND-Root", "BT-00-Text is not present and BT-00-Integer is not present"));
     }
 
     @Test
     public void testCountWithNodeContextOverride() {
         assertEquals("count(../../PathNode/CodeField) = 1",
-                test("BT-00-Text", "count(ND-0::BT-00-Code) == 1"));
+                test("BT-00-Text", "count(ND-Root::BT-00-Code) == 1"));
     }
 
     @Test
