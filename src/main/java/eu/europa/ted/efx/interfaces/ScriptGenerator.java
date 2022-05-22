@@ -50,6 +50,12 @@ public interface ScriptGenerator {
             String attribute, Class<T> type);
 
     /**
+     * Given a variable name this method should return script to dereference the variable.
+     * The returned Expression should be of the indicated type. 
+     */
+    public <T extends Expression> T composeVariableReference(String variableName, Class<T> type);
+
+    /**
      * Takes a list of string expressions and returns the target language script that corresponds to
      * a list of string expressions.
      */
@@ -100,6 +106,12 @@ public interface ScriptGenerator {
      */
     public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
+
+    public BooleanExpression composeAllSatisfy(StringListExpression list, String variableName,
+            BooleanExpression booleanExpression);
+
+    public BooleanExpression composeAnySatisfies(StringListExpression list, String variableName,
+            BooleanExpression booleanExpression);
 
     /**
      * TODO: Not properly defined yet.

@@ -8,7 +8,7 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 public class EfxExpressionTranslatorTest {
 
-    final private String SDK_VERSION = "eforms-sdk-0.6";
+    final private String SDK_VERSION = "eforms-sdk-0.7";
 
     private String test(final String context, final String expression) {
         return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE, SDK_VERSION);
@@ -198,6 +198,10 @@ public class EfxExpressionTranslatorTest {
         assertEquals("false()", test("BT-00-Text", "NEVER"));
     }
 
+    @Test
+    public void testQuantifiedExpression() {
+        assertEquals("every $x in ('a','b','c') satisfies $x <= 'a'", test("BT-00-Text", "every $x in ('a', 'b', 'c') satisfies $x <= 'a'"));
+    }
 
     /*** Numeric expressions ***/
 

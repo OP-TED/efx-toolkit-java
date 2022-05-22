@@ -84,6 +84,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
+    public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
+        return instantiate(variableName, type); 
+    }
+
+    @Override
     public StringListExpression composeListOfStrings(List<StringExpression> list) {
         if (list == null || list.isEmpty()) {
             return new StringListExpression("()");
@@ -144,6 +149,20 @@ public class XPathScriptGenerator implements ScriptGenerator {
             String pattern) {
         return new BooleanExpression(
                 String.format("fn:matches(normalize-space(%s), %s)", expression.script, pattern));
+    }
+
+    @Override
+    public BooleanExpression composeAllSatisfy(StringListExpression list, String variableName,
+            BooleanExpression booleanExpression) {
+        return new BooleanExpression(
+                "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+    }
+
+    @Override
+    public BooleanExpression composeAnySatisfies(StringListExpression list, String variableName,
+            BooleanExpression booleanExpression) {
+        return new BooleanExpression(
+            "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
     }
 
     @Override
