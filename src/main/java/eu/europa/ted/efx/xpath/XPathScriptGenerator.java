@@ -165,6 +165,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
             "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
     }
 
+    
+    @Override
+    public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
+            T whenTrue, T whenFalse, Class<T> type) {
+            return instantiate("(if " + condition.script + " then " + whenTrue.script + " else " + whenFalse.script + ")", type);
+    }
+
     @Override
     public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
         try {

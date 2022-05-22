@@ -113,6 +113,10 @@ public interface ScriptGenerator {
     public BooleanExpression composeAnySatisfies(StringListExpression list, String variableName,
             BooleanExpression booleanExpression);
 
+            
+    public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
+    T whenTrue, T whenFalse, Class<T> type);
+
     /**
      * TODO: Not properly defined yet.
      * 

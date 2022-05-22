@@ -33,6 +33,12 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanComparisonContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CodeListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CodelistReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ConcatFunctionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalBooleanExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalDateExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalDurationExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalNumericExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalStringExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ConditionalTimeExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ContainsFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateComparisonContext;
@@ -486,6 +492,57 @@ public class EfxExpressionTranslator extends EfxBaseListener {
             list.add(0, this.stack.pop(StringExpression.class));
         }
         this.stack.push(this.script.composeListOfStrings(list));
+    }
+
+    
+    /*** Conditional Expressions ***/
+
+    @Override
+    public void exitConditionalBooleanExpression(ConditionalBooleanExpressionContext ctx) {
+        BooleanExpression whenFalse = this.stack.pop(BooleanExpression.class);
+        BooleanExpression whenTrue = this.stack.pop(BooleanExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, BooleanExpression.class));
+    }
+
+    @Override
+    public void exitConditionalNumericExpression(ConditionalNumericExpressionContext ctx) {
+        NumericExpression whenFalse = this.stack.pop(NumericExpression.class);
+        NumericExpression whenTrue = this.stack.pop(NumericExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, NumericExpression.class));
+    }
+
+    @Override
+    public void exitConditionalStringExpression(ConditionalStringExpressionContext ctx) {
+        StringExpression whenFalse = this.stack.pop(StringExpression.class);
+        StringExpression whenTrue = this.stack.pop(StringExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, StringExpression.class));
+    }
+
+    @Override
+    public void exitConditionalDateExpression(ConditionalDateExpressionContext ctx) {
+        DateExpression whenFalse = this.stack.pop(DateExpression.class);
+        DateExpression whenTrue = this.stack.pop(DateExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, DateExpression.class));
+    }
+
+    @Override
+    public void exitConditionalTimeExpression(ConditionalTimeExpressionContext ctx) {
+        TimeExpression whenFalse = this.stack.pop(TimeExpression.class);
+        TimeExpression whenTrue = this.stack.pop(TimeExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, TimeExpression.class));
+    }
+
+    @Override
+    public void exitConditionalDurationExpression(ConditionalDurationExpressionContext ctx) {
+        DurationExpression whenFalse = this.stack.pop(DurationExpression.class);
+        DurationExpression whenTrue = this.stack.pop(DurationExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, DurationExpression.class));
     }
 
     /*** Literals ***/

@@ -203,6 +203,11 @@ public class EfxExpressionTranslatorTest {
         assertEquals("every $x in ('a','b','c') satisfies $x <= 'a'", test("BT-00-Text", "every $x in ('a', 'b', 'c') satisfies $x <= 'a'"));
     }
 
+    @Test
+    public void testConditionalExpression() {
+        assertEquals("(if 1 > 2 then 'a' else 'b')", test("BT-00-Text", "if 1 > 2 then 'a' else 'b'"));
+    }
+
     /*** Numeric expressions ***/
 
     @Test
