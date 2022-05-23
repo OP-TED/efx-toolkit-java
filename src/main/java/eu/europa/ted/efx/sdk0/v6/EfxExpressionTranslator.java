@@ -452,7 +452,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitCodeList(CodeListContext ctx) {
         if (this.stack.empty()) {
-            this.stack.push(this.script.composeListOfStrings(Collections.emptyList()));
+            this.stack.push(this.script.composeList(Collections.emptyList(), StringListExpression.class));
             return;
         }
     }
@@ -460,7 +460,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitExplicitList(ExplicitListContext ctx) {
         if (this.stack.empty() || ctx.expression().size() == 0) {
-            this.stack.push(this.script.composeListOfStrings(Collections.emptyList()));
+            this.stack.push(this.script.composeList(Collections.emptyList(),StringListExpression.class));
             return;
         }
 
@@ -468,7 +468,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         for (int i = 0; i < ctx.expression().size(); i++) {
             list.add(0, this.stack.pop(StringExpression.class));
         }
-        this.stack.push(this.script.composeListOfStrings(list));
+        this.stack.push(this.script.composeList(list,StringListExpression.class));
     }
 
     /*** Literals ***/
@@ -703,9 +703,9 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitCodelistReference(CodelistReferenceContext ctx) {
         this.stack.push(this.script
-                .composeListOfStrings(this.symbols.expandCodelist(ctx.codeListId.getText()).stream()
+                .composeList(this.symbols.expandCodelist(ctx.codeListId.getText()).stream()
                         .map(s -> this.script.getStringLiteralFromUnquotedString(s))
-                        .collect(Collectors.toList())));
+                        .collect(Collectors.toList()), StringListExpression.class));
     }
 
     /*** Boolean functions ***/

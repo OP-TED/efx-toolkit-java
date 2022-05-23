@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -20,16 +21,26 @@ import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
+import eu.europa.ted.efx.model.Expression.BooleanListExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.DurationListExpression;
+import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.model.Expression.TimeListExpression;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.AbsoluteFieldReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.AbsoluteNodeReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanComparisonContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanInListConditionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanListContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanQuantifiedExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.BooleanVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CodeListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CodelistReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ConcatFunctionContext;
@@ -43,20 +54,26 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.ContainsFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.CountFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateComparisonContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateFromStringFunctionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DateInListConditionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DateListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateLiteralContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateMinusMeasureFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DatePlusMeasureFunctionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DateQuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateSubtractionExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DateVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationAdditionExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationComparisonContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationInListConditionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationLeftMultiplicationExpressionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationLiteralContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationQuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationRightMultiplicationExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationSubtractionExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.DurationVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.EndsWithFunctionContext;
-import eu.europa.ted.efx.sdk0.v7.EfxParser.ExplicitListContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ExplicitStringListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.FalseBooleanLiteralContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.FieldContextContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.FieldReferenceWithFieldContextOverrideContext;
@@ -67,11 +84,13 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.NodeContextContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NodeReferenceWithPredicateContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NotFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NumberFunctionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.NumberInListConditionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NumericComparisonContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.NumericListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NumericLiteralContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.NumericQuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.NumericVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ParenthesizedNumericExpressionContext;
-import eu.europa.ted.efx.sdk0.v7.EfxParser.QuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.SimpleFieldReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.SimpleNodeReferenceContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.SingleExpressionContext;
@@ -79,12 +98,16 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.StartsWithFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.StringComparisonContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.StringLengthFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.StringLiteralContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.StringQuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.StringVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.SubstringFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.SumFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeComparisonContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeFromStringFunctionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeInListConditionContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeListContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeLiteralContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeQuantifiedExpressionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.TimeVariableContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ToStringFunctionContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.TrueBooleanLiteralContext;
@@ -389,25 +412,88 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(condition);
     }
 
+    /*** Boolean expressions - List membership conditions ***/
+
     @Override
-    public void exitInListCondition(EfxParser.InListConditionContext ctx) {
-        StringListExpression list = this.stack.pop(StringListExpression.class);
-        StringExpression expression = this.stack.pop(StringExpression.class);
+    public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanInListCondition(BooleanInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumberInListCondition(NumberInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateInListCondition(DateInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitTimeInListCondition(TimeInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitDurationInListCondition(DurationInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitInListCondition(Token modifier, Class<T> expressionType, Class<L> listType) {
+        ListExpression<T> list = this.stack.pop(listType);
+        T expression = this.stack.pop(expressionType);
         BooleanExpression condition = this.script.composeContainsCondition(expression, list);
-        if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+        if (modifier != null && modifier.getText().equals(NOT_MODIFIER)) {
             condition = this.script.composeLogicalNot(condition);
         }
         this.stack.push(condition);
     }
 
+    /*** Quantified expressions ***/
+
     @Override
-    public void exitQuantifiedExpression(QuantifiedExpressionContext ctx) {
+    public void exitStringQuantifiedExpression(StringQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanQuantifiedExpression(BooleanQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumericQuantifiedExpression(NumericQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateQuantifiedExpression(DateQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, DateExpression.class, DateListExpression.class);
+    }
+    
+    @Override
+    public void exitTimeQuantifiedExpression(TimeQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, TimeExpression.class, TimeListExpression.class);
+    }
+    
+    @Override
+    public void exitDurationQuantifiedExpression(DurationQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitQuantifiedExpression(boolean every, Class<T> expressionType, Class<L> listType) {
         BooleanExpression booleanExpression = this.stack.pop(BooleanExpression.class);
-        StringListExpression list = this.stack.pop(StringListExpression.class);
-        if (ctx.Every() != null) {
-            this.stack.push(this.script.composeAllSatisfy(list, ctx.Variable().getText(), booleanExpression));
-        } else if (ctx.Some() != null) {
-            this.stack.push(this.script.composeAnySatisfies(list, ctx.Variable().getText(), booleanExpression));
+        L list = this.stack.pop(listType);
+        T variable = this.stack.pop(expressionType);
+        if (every) {
+            this.stack.push(this.script.composeAllSatisfy(list, variable.script, booleanExpression));
+        } else {
+            this.stack.push(this.script.composeAnySatisfies(list, variable.script, booleanExpression));
         }
     }
 
@@ -475,26 +561,55 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitCodeList(CodeListContext ctx) {
         if (this.stack.empty()) {
-            this.stack.push(this.script.composeListOfStrings(Collections.emptyList()));
+            this.stack.push(this.script.composeList(Collections.emptyList(), StringListExpression.class));
             return;
         }
     }
 
     @Override
-    public void exitExplicitList(ExplicitListContext ctx) {
-        if (this.stack.empty() || ctx.expression().size() == 0) {
-            this.stack.push(this.script.composeListOfStrings(Collections.emptyList()));
+    public void exitExplicitStringList(ExplicitStringListContext ctx) {
+        this.exitList(ctx.stringExpression().size(), StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanList(BooleanListContext ctx) {
+        this.exitList(ctx.booleanExpression().size(), BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumericList(NumericListContext ctx) {
+        this.exitList(ctx.numericExpression().size(), NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateList(DateListContext ctx) {
+        this.exitList(ctx.dateExpression().size(), DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitTimeList(TimeListContext ctx) {
+        this.exitList(ctx.timeExpression().size(), TimeExpression.class, TimeListExpression.class);
+    }
+
+
+    @Override
+    public void exitDurationList(DurationListContext ctx) {
+        this.exitList(ctx.durationExpression().size(), DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitList(int listSize, Class<T> expressionType, Class<L> listType) {
+        if (this.stack.empty() || listSize == 0) {
+            this.stack.push(this.script.composeList(Collections.emptyList(), listType));
             return;
         }
 
-        List<StringExpression> list = new ArrayList<>();
-        for (int i = 0; i < ctx.expression().size(); i++) {
-            list.add(0, this.stack.pop(StringExpression.class));
+        List<T> list = new ArrayList<>();
+        for (int i = 0; i < listSize; i++) {
+            list.add(0, this.stack.pop(expressionType));
         }
-        this.stack.push(this.script.composeListOfStrings(list));
+        this.stack.push(this.script.composeList(list, listType));
     }
 
-    
     /*** Conditional Expressions ***/
 
     @Override
@@ -777,9 +892,9 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     @Override
     public void exitCodelistReference(CodelistReferenceContext ctx) {
         this.stack.push(this.script
-                .composeListOfStrings(this.symbols.expandCodelist(ctx.codeListId.getText()).stream()
+                .composeList(this.symbols.expandCodelist(ctx.codeListId.getText()).stream()
                         .map(s -> this.script.getStringLiteralFromUnquotedString(s))
-                        .collect(Collectors.toList())));
+                        .collect(Collectors.toList()), StringListExpression.class));
     }
 
     @Override
@@ -787,6 +902,11 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
     }
 
+    @Override
+    public void exitBooleanVariable(BooleanVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
+    }
+    
     @Override
     public void exitNumericVariable(NumericVariableContext ctx) {
         this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));

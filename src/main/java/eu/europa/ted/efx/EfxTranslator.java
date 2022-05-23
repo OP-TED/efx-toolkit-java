@@ -51,7 +51,10 @@ public class EfxTranslator {
       case SDK_0_6:
         return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(template, factory,
             sdkVersion);
-      default:
+      case SDK_0_7:
+            return eu.europa.ted.efx.sdk0.v7.EfxTemplateTranslator.renderTemplate(template, factory,
+                sdkVersion);
+          default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
     }
   }
@@ -63,7 +66,10 @@ public class EfxTranslator {
       case SDK_0_6:
         return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(stream, factory,
             sdkVersion);
-      default:
+      case SDK_0_7:
+            return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(stream, factory,
+                sdkVersion);
+          default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
     }
   }

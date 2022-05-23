@@ -14,6 +14,7 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
@@ -89,16 +90,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public StringListExpression composeListOfStrings(List<StringExpression> list) {
+    public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list, Class<L> type) {
         if (list == null || list.isEmpty()) {
-            return new StringListExpression("()");
+            return instantiate("()", type);
         }
 
         final StringJoiner joiner = new StringJoiner(",", "(", ")");
-        for (final StringExpression item : list) {
+        for (final T item : list) {
             joiner.add(item.script);
         }
-        return new StringListExpression(joiner.toString());
+        return instantiate(joiner.toString(), type);
     }
 
     @Override
@@ -139,9 +140,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public BooleanExpression composeContainsCondition(StringExpression expression,
-            StringListExpression list) {
-        return new BooleanExpression(String.format("%s = %s", expression.script, list.script));
+    public <T extends Expression, L extends ListExpression<T>> BooleanExpression composeContainsCondition(T needle, L haystack) {
+        return new BooleanExpression(String.format("%s = %s", needle.script, haystack.script));
     }
 
     @Override
@@ -152,20 +152,19 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
-    public BooleanExpression composeAllSatisfy(StringListExpression list, String variableName,
-            BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-                "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
+            String variableName, BooleanExpression booleanExpression) {
+                return new BooleanExpression(
+                    "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+        }
 
     @Override
-    public BooleanExpression composeAnySatisfies(StringListExpression list, String variableName,
-            BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-            "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
+            String variableName, BooleanExpression booleanExpression) {
+                return new BooleanExpression(
+                    "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+            }
 
-    
     @Override
     public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
             T whenTrue, T whenFalse, Class<T> type) {
@@ -397,4 +396,5 @@ public class XPathScriptGenerator implements ScriptGenerator {
         Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
         return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
     }
+
 }
