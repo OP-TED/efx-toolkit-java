@@ -68,11 +68,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
             return this.instantiate(fieldReference.script + "/xs:time(text())", type);
         }
         if (DurationExpression.class.isAssignableFrom(type)) {
-            return this.instantiate("(if (lower-case(" + fieldReference.script + "/@unit)='w')" + //
+            return this.instantiate("(if (" + fieldReference.script + "/@unitCode='WEEK')" + //
                                     " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
-                                    " else if (lower-case(" + fieldReference.script + "/@unit)='d')" + //
-                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), upper-case(" + fieldReference.script + "/@unit)))" + //
-                                    " else xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(" + fieldReference.script + "/@unit))))", type);
+                                    " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
+                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
+                                    " else xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1)))))", type);
         }
 
         return instantiate(fieldReference.script, type);
