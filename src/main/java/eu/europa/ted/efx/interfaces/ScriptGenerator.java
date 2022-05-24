@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+import eu.europa.ted.efx.model.CallStackObjectBase;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
@@ -116,6 +117,8 @@ public interface ScriptGenerator {
             
     public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
     T whenTrue, T whenFalse, Class<T> type);
+    
+    public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
     /**
      * TODO: Not properly defined yet.

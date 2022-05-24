@@ -208,6 +208,11 @@ public class EfxExpressionTranslatorTest {
         assertEquals("(if 1 > 2 then 'a' else 'b')", test("BT-00-Text", "if 1 > 2 then 'a' else 'b'"));
     }
 
+    @Test
+    public void testIterationExpression() {
+        assertEquals("3 = (for $x in (1,2) return 1 + $x)", test("ND-Root", " 3 in (for $x in (1, 2) return 1 + $x)"));
+    }
+
     /*** Numeric expressions ***/
 
     @Test

@@ -170,6 +170,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
             T whenTrue, T whenFalse, Class<T> type) {
             return instantiate("(if " + condition.script + " then " + whenTrue.script + " else " + whenFalse.script + ")", type);
     }
+    
+    @Override
+    public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+            String variableName, L1 sourceList, T2 expression, Class<L2> targetListType) {
+        return instantiate("for " + variableName + " in " + sourceList.script + " return " + expression.script, targetListType);
+    }
 
     @Override
     public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
