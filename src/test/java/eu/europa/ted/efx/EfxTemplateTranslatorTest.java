@@ -8,7 +8,7 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 public class EfxTemplateTranslatorTest {
 
-    final private String SDK_VERSION = "eforms-sdk-0.6";
+    final private String SDK_VERSION = "eforms-sdk-0.7";
 
     private String translate(final String template) {
         return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE, SDK_VERSION);

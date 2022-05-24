@@ -1,10 +1,12 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+import eu.europa.ted.efx.model.CallStackObjectBase;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
@@ -50,12 +52,17 @@ public interface ScriptGenerator {
             String attribute, Class<T> type);
 
     /**
+     * Given a variable name this method should return script to dereference the variable.
+     * The returned Expression should be of the indicated type. 
+     */
+    public <T extends Expression> T composeVariableReference(String variableName, Class<T> type);
+
+    /**
      * Takes a list of string expressions and returns the target language script that corresponds to
      * a list of string expressions.
      */
-    public StringListExpression composeListOfStrings(final List<StringExpression> list);
-
-
+    public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list, Class<L> type);
+    
     /**
      * Takes a Java Boolean value and returns the corresponding target language script.
      */
@@ -82,11 +89,11 @@ public interface ScriptGenerator {
     public BooleanExpression composeLogicalNot(BooleanExpression condition);
 
     /**
-     * Returns the target language script that checks whether a given list of strings (haystack)
-     * contains a given string (needle).
+     * Returns the target language script that checks whether a given list of values (haystack)
+     * contains a given value (needle).
      */
-    public BooleanExpression composeContainsCondition(final StringExpression needle,
-            final StringListExpression haystack);
+    public <T extends Expression, L extends ListExpression<T>> BooleanExpression composeContainsCondition(final T needle,
+            final L haystack);
 
     /**
      * Returns the target language script that checks whether a given string matches the given RegEx
@@ -100,6 +107,18 @@ public interface ScriptGenerator {
      */
     public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
+
+    public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list, String variableName,
+            BooleanExpression booleanExpression);
+
+    public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list, String variableName,
+            BooleanExpression booleanExpression);
+
+            
+    public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
+    T whenTrue, T whenFalse, Class<T> type);
+    
+    public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
     /**
      * TODO: Not properly defined yet.

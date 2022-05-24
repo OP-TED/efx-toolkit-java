@@ -8,7 +8,7 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 public class EfxExpressionTranslatorTest {
 
-    final private String SDK_VERSION = "eforms-sdk-0.6";
+    final private String SDK_VERSION = "eforms-sdk-0.7";
 
     private String test(final String context, final String expression) {
         return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE, SDK_VERSION);
@@ -198,6 +198,20 @@ public class EfxExpressionTranslatorTest {
         assertEquals("false()", test("BT-00-Text", "NEVER"));
     }
 
+    @Test
+    public void testQuantifiedExpression() {
+        assertEquals("every $x in ('a','b','c') satisfies $x <= 'a'", test("BT-00-Text", "every $x in ('a', 'b', 'c') satisfies $x <= 'a'"));
+    }
+
+    @Test
+    public void testConditionalExpression() {
+        assertEquals("(if 1 > 2 then 'a' else 'b')", test("BT-00-Text", "if 1 > 2 then 'a' else 'b'"));
+    }
+
+    @Test
+    public void testIterationExpression() {
+        assertEquals("3 = (for $x in (1,2) return 1 + $x)", test("ND-Root", " 3 in (for $x in (1, 2) return 1 + $x)"));
+    }
 
     /*** Numeric expressions ***/
 
@@ -224,8 +238,50 @@ public class EfxExpressionTranslatorTest {
    /*** List ***/
 
     @Test
-    public void testExplicitList() {
+    public void testStringList() {
         assertEquals("'a' = ('a','b','c')", test("BT-00-Text", "'a' in ('a', 'b', 'c')"));
+    }
+
+    @Test
+    public void testNumericList_UsingNumericLiterals() {
+        assertEquals("4 = (1,2,3)", test("BT-00-Text", "4 in (1, 2, 3)"));
+    }
+
+    @Test
+    public void testNumericList_UsingNumericField() {
+        assertEquals("4 = (1,../NumberField/number(),3)", test("BT-00-Text", "4 in (1, BT-00-Number, 3)"));
+    }
+
+    @Test
+    public void testNumericList_UsingTextField() {
+        assertThrows(ParseCancellationException.class, () -> test("BT-00-Text", "4 in (1, BT-00-Text, 3)"));
+    }
+
+    @Test
+    public void testBooleanList() {
+        assertEquals("false() = (true(),PathNode/IndicatorField,true())", test("ND-Root", "NEVER in (TRUE, BT-00-Indicator, ALWAYS)"));
+    }
+
+    @Test
+    public void testDateList() {
+        assertEquals("xs:date('2022-01-01') = (xs:date('2022-01-02'),PathNode/StartDateField/xs:date(text()),xs:date('2022-02-02'))", test("ND-Root", "2022-01-01 in (2022-01-02, BT-00-StartDate, 2022-02-02)"));
+    }
+
+    @Test
+    public void testTimeList() {
+        assertEquals("xs:time('12:20:21') = (xs:time('12:30:00'),PathNode/StartTimeField/xs:time(text()),xs:time('13:40:00'))", test("ND-Root", "12:20:21 in (12:30:00, BT-00-StartTime, 13:40:00)"));
+    }
+
+    @Test
+    public void testDurationList_UsingDurationLiterals() {
+        assertEquals("xs:yearMonthDuration('P3M') = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))", test("BT-00-Text", "P3M in (P1M, P3M, P6M)"));
+    }
+
+
+
+    @Test
+    public void testDurationList_UsingDurationField() {
+        assertEquals("(if (lower-case(../MeasureField/@unit)='w') then xs:dayTimeDuration(concat('P', ../MeasureField/number() * 7, 'D')) else if (lower-case(../MeasureField/@unit)='d') then xs:dayTimeDuration(concat('P', ../MeasureField/number(), upper-case(../MeasureField/@unit))) else xs:yearMonthDuration(concat('P', ../MeasureField/number(), upper-case(../MeasureField/@unit)))) = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))", test("BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)"));
     }
 
     @Test

@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.sdk0.v6;
+package eu.europa.ted.efx.sdk0.v7;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -20,64 +21,20 @@ import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
+import eu.europa.ted.efx.model.Expression.BooleanListExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.DurationListExpression;
+import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.AbsoluteFieldReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.AbsoluteNodeReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.BooleanComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.CodeListContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.CodelistReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ConcatFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ContainsFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.CountFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DateComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DateFromStringFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DateLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DateMinusMeasureFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DatePlusMeasureFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DateSubtractionExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationAdditionExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationLeftMultiplicationExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationRightMultiplicationExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.DurationSubtractionExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.EndsWithFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ExplicitListContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FalseBooleanLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FieldContextContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FieldReferenceWithFieldContextOverrideContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FieldReferenceWithNodeContextOverrideContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FieldValueComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.FormatNumberFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NodeContextContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NodeReferenceWithPredicateContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NotFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NumberFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NumericComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.NumericLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ParenthesizedNumericExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.SimpleFieldReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.SimpleNodeReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.SingleExpressionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StartsWithFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StringComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StringLengthFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StringLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.SubstringFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.SumFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TimeComparisonContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TimeFromStringFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TimeLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ToStringFunctionContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TrueBooleanLiteralContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.UntypedAttributeValueReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.UntypedFieldValueReferenceContext;
+import eu.europa.ted.efx.model.Expression.TimeListExpression;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
@@ -377,15 +334,89 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         this.stack.push(condition);
     }
 
+    /*** Boolean expressions - List membership conditions ***/
+
     @Override
-    public void exitInListCondition(EfxParser.InListConditionContext ctx) {
-        StringListExpression list = this.stack.pop(StringListExpression.class);
-        StringExpression expression = this.stack.pop(StringExpression.class);
+    public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanInListCondition(BooleanInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumberInListCondition(NumberInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateInListCondition(DateInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitTimeInListCondition(TimeInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitDurationInListCondition(DurationInListConditionContext ctx) {
+        this.exitInListCondition(ctx.modifier, DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitInListCondition(Token modifier, Class<T> expressionType, Class<L> listType) {
+        ListExpression<T> list = this.stack.pop(listType);
+        T expression = this.stack.pop(expressionType);
         BooleanExpression condition = this.script.composeContainsCondition(expression, list);
-        if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+        if (modifier != null && modifier.getText().equals(NOT_MODIFIER)) {
             condition = this.script.composeLogicalNot(condition);
         }
         this.stack.push(condition);
+    }
+
+    /*** Quantified expressions ***/
+
+    @Override
+    public void exitStringQuantifiedExpression(StringQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanQuantifiedExpression(BooleanQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumericQuantifiedExpression(NumericQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateQuantifiedExpression(DateQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, DateExpression.class, DateListExpression.class);
+    }
+    
+    @Override
+    public void exitTimeQuantifiedExpression(TimeQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, TimeExpression.class, TimeListExpression.class);
+    }
+    
+    @Override
+    public void exitDurationQuantifiedExpression(DurationQuantifiedExpressionContext ctx) {
+        this.exitQuantifiedExpression(ctx.Every() != null, DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitQuantifiedExpression(boolean every, Class<T> expressionType, Class<L> listType) {
+        BooleanExpression booleanExpression = this.stack.pop(BooleanExpression.class);
+        L list = this.stack.pop(listType);
+        T variable = this.stack.pop(expressionType);
+        if (every) {
+            this.stack.push(this.script.composeAllSatisfy(list, variable.script, booleanExpression));
+        } else {
+            this.stack.push(this.script.composeAnySatisfies(list, variable.script, booleanExpression));
+        }
     }
 
     /*** Numeric expressions ***/
@@ -458,17 +489,324 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitExplicitList(ExplicitListContext ctx) {
-        if (this.stack.empty() || ctx.expression().size() == 0) {
-            this.stack.push(this.script.composeList(Collections.emptyList(),StringListExpression.class));
+    public void exitStringList(StringListContext ctx) {
+        this.exitList(ctx.stringExpression().size(), StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleanList(BooleanListContext ctx) {
+        this.exitList(ctx.booleanExpression().size(), BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumericList(NumericListContext ctx) {
+        this.exitList(ctx.numericExpression().size(), NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitDateList(DateListContext ctx) {
+        this.exitList(ctx.dateExpression().size(), DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitTimeList(TimeListContext ctx) {
+        this.exitList(ctx.timeExpression().size(), TimeExpression.class, TimeListExpression.class);
+    }
+
+
+    @Override
+    public void exitDurationList(DurationListContext ctx) {
+        this.exitList(ctx.durationExpression().size(), DurationExpression.class, DurationListExpression.class);
+    }
+
+    private <T extends Expression, L extends ListExpression<T>> void exitList(int listSize, Class<T> expressionType, Class<L> listType) {
+        if (this.stack.empty() || listSize == 0) {
+            this.stack.push(this.script.composeList(Collections.emptyList(), listType));
             return;
         }
 
-        List<StringExpression> list = new ArrayList<>();
-        for (int i = 0; i < ctx.expression().size(); i++) {
-            list.add(0, this.stack.pop(StringExpression.class));
+        List<T> list = new ArrayList<>();
+        for (int i = 0; i < listSize; i++) {
+            list.add(0, this.stack.pop(expressionType));
         }
-        this.stack.push(this.script.composeList(list,StringListExpression.class));
+        this.stack.push(this.script.composeList(list, listType));
+    }
+
+    /*** Conditional Expressions ***/
+
+    @Override
+    public void exitConditionalBooleanExpression(ConditionalBooleanExpressionContext ctx) {
+        BooleanExpression whenFalse = this.stack.pop(BooleanExpression.class);
+        BooleanExpression whenTrue = this.stack.pop(BooleanExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, BooleanExpression.class));
+    }
+
+    @Override
+    public void exitConditionalNumericExpression(ConditionalNumericExpressionContext ctx) {
+        NumericExpression whenFalse = this.stack.pop(NumericExpression.class);
+        NumericExpression whenTrue = this.stack.pop(NumericExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, NumericExpression.class));
+    }
+
+    @Override
+    public void exitConditionalStringExpression(ConditionalStringExpressionContext ctx) {
+        StringExpression whenFalse = this.stack.pop(StringExpression.class);
+        StringExpression whenTrue = this.stack.pop(StringExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, StringExpression.class));
+    }
+
+    @Override
+    public void exitConditionalDateExpression(ConditionalDateExpressionContext ctx) {
+        DateExpression whenFalse = this.stack.pop(DateExpression.class);
+        DateExpression whenTrue = this.stack.pop(DateExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, DateExpression.class));
+    }
+
+    @Override
+    public void exitConditionalTimeExpression(ConditionalTimeExpressionContext ctx) {
+        TimeExpression whenFalse = this.stack.pop(TimeExpression.class);
+        TimeExpression whenTrue = this.stack.pop(TimeExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, TimeExpression.class));
+    }
+
+    @Override
+    public void exitConditionalDurationExpression(ConditionalDurationExpressionContext ctx) {
+        DurationExpression whenFalse = this.stack.pop(DurationExpression.class);
+        DurationExpression whenTrue = this.stack.pop(DurationExpression.class);
+        BooleanExpression condition = this.stack.pop(BooleanExpression.class);
+        this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, DurationExpression.class));
+    }
+
+    /*** Iteration expressions ***/
+
+    @Override
+    public void exitParenthesizedStringsFromIteration(
+            ParenthesizedStringsFromIterationContext ctx) {
+        this.stack.push(this.script.composeParenthesizedExpression(this.stack.pop(StringListExpression.class), StringListExpression.class));
+    }
+    
+    @Override
+    public void exitParenthesizedNumbersFromIteration(
+            ParenthesizedNumbersFromIterationContext ctx) {
+                this.stack.push(this.script.composeParenthesizedExpression(this.stack.pop(NumericListExpression.class), NumericListExpression.class));
+    }
+
+    @Override
+    public void exitParenthesizedBooleansFromIteration(
+            ParenthesizedBooleansFromIterationContext ctx) {
+        this.stack.push(this.script.composeParenthesizedExpression(
+                this.stack.pop(BooleanListExpression.class), BooleanListExpression.class));
+    }
+
+    @Override
+    public void exitParenthesizedDatesFromIteration(ParenthesizedDatesFromIterationContext ctx) {
+        this.stack.push(this.script.composeParenthesizedExpression(
+                this.stack.pop(DateListExpression.class), DateListExpression.class));
+    }
+
+    @Override
+    public void exitParenthesizedTimesFromIteration(ParenthesizedTimesFromIterationContext ctx) {
+        this.stack.push(this.script.composeParenthesizedExpression(
+                this.stack.pop(TimeListExpression.class), TimeListExpression.class));
+    }
+
+    @Override
+    public void exitParenthesizedDurationsFromITeration(
+            ParenthesizedDurationsFromITerationContext ctx) {
+        this.stack.push(this.script.composeParenthesizedExpression(
+                this.stack.pop(DurationListExpression.class), DurationListExpression.class));
+    }
+    @Override
+    public void exitStringsFromStringIteration(StringsFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitStringsFromBooleanIteration(StringsFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitStringsFromNumericIteration(StringsFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitStringsFromDateIteration(StringsFromDateIterationContext ctx) {
+            this.exitIterationExpression(DateExpression.class, DateListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitStringsFromTimeIteration(StringsFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitStringsFromDurationIteration(StringsFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, StringExpression.class, StringListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromStringIteration(BooleansFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromBooleanIteration(BooleansFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromNumericIteration(BooleansFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromDateIteration(BooleansFromDateIterationContext ctx) {
+            this.exitIterationExpression(DateExpression.class, DateListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromTimeIteration(BooleansFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitBooleansFromDurationIteration(BooleansFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, BooleanExpression.class, BooleanListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromStringIteration(NumbersFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromBooleanIteration(NumbersFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromNumericIteration(NumbersFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromDateIteration(NumbersFromDateIterationContext ctx) {
+            this.exitIterationExpression(DateExpression.class, DateListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromTimeIteration(NumbersFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+    @Override
+    public void exitNumbersFromDurationIteration(NumbersFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, NumericExpression.class, NumericListExpression.class);
+    }
+
+
+    @Override
+    public void exitDatesFromStringIteration(DatesFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitDatesFromBooleanIteration(DatesFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitDatesFromNumericIteration(DatesFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitDatesFromDateIteration(DatesFromDateIterationContext ctx) {
+            this.exitIterationExpression(DateExpression.class, DateListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitDatesFromTimeIteration(DatesFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitDatesFromDurationIteration(DatesFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, DateExpression.class, DateListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromStringIteration(TimesFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromBooleanIteration(TimesFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromNumericIteration(TimesFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromDateIteration(TimesFromDateIterationContext ctx) {
+            this.exitIterationExpression(DateExpression.class, DateListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromTimeIteration(TimesFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitTimesFromDurationIteration(TimesFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, TimeExpression.class, TimeListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromStringIteration(DurationsFromStringIterationContext ctx) {
+        this.exitIterationExpression(StringExpression.class, StringListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromBooleanIteration(DurationsFromBooleanIterationContext ctx) {
+        this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromNumericIteration(DurationsFromNumericIterationContext ctx) {
+        this.exitIterationExpression(NumericExpression.class, NumericListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromDateIteration(DurationsFromDateIterationContext ctx) {
+        this.exitIterationExpression(DateExpression.class, DateListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromTimeIteration(DurationsFromTimeIterationContext ctx) {
+        this.exitIterationExpression(TimeExpression.class, TimeListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    @Override
+    public void exitDurationsFromDurationIteration(DurationsFromDurationIterationContext ctx) {
+        this.exitIterationExpression(DurationExpression.class, DurationListExpression.class, DurationExpression.class, DurationListExpression.class);
+    }
+
+    public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> void exitIterationExpression(Class<T1> variableType, Class<L1> sourceListType, Class<T2> expressionType, Class<L2> targetListType) {
+        T2 expression = this.stack.pop(expressionType);
+        L1 list = this.stack.pop(sourceListType);
+        T1 variable = this.stack.pop(variableType);
+        this.stack.push(this.script.composeForExpression(variable.script, list, expression, targetListType));
     }
 
     /*** Literals ***/
@@ -651,8 +989,8 @@ public class EfxExpressionTranslator extends EfxBaseListener {
         final String contextFieldId =
                 ctx.context.reference.simpleFieldReference().FieldId().getText();
         this.efxContext.push(new FieldContext(contextFieldId,
-                this.symbols.getAbsolutePathOfField(contextFieldId),
-                this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+                this.symbols.getAbsolutePathOfField(contextFieldId), this.symbols
+                        .getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
     }
 
 
@@ -706,6 +1044,36 @@ public class EfxExpressionTranslator extends EfxBaseListener {
                 .composeList(this.symbols.expandCodelist(ctx.codeListId.getText()).stream()
                         .map(s -> this.script.getStringLiteralFromUnquotedString(s))
                         .collect(Collectors.toList()), StringListExpression.class));
+    }
+
+    @Override
+    public void exitStringVariable(StringVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    }
+
+    @Override
+    public void exitBooleanVariable(BooleanVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
+    }
+    
+    @Override
+    public void exitNumericVariable(NumericVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+    }
+
+    @Override
+    public void exitDateVariable(DateVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
+    }
+
+    @Override
+    public void exitTimeVariable(TimeVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+    }
+
+    @Override
+    public void exitDurationVariable(DurationVariableContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
     }
 
     /*** Boolean functions ***/

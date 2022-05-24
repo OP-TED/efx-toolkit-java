@@ -121,7 +121,10 @@ public class Expression extends CallStackObjectBase {
         }
     }
 
-    public static class ListExpression extends Expression {
+    /**
+     * Used to represent a list of strings in the target language.
+     */
+    public static class ListExpression<T extends Expression> extends Expression {
 
         public ListExpression(final String script) {
             super(script);
@@ -131,10 +134,62 @@ public class Expression extends CallStackObjectBase {
     /**
      * Used to represent a list of strings in the target language.
      */
-    public static class StringListExpression extends ListExpression {
+    public static class StringListExpression extends ListExpression<StringExpression> {
 
         public StringListExpression(final String script) {
             super(script);
         }
     }
+
+    /**
+     * Used to represent a list of numbers in the target language.
+     */
+    public static class NumericListExpression extends ListExpression<NumericExpression> {
+
+        public NumericListExpression(final String script) {
+            super(script);
+        }
+    }
+
+    /**
+     * Used to represent a list of dates in the target language.
+     */
+    public static class DateListExpression extends ListExpression<DateExpression> {
+
+        public DateListExpression(final String script) {
+            super(script);
+        }
+    }
+
+    /**
+     * Used to represent a list of times in the target language.
+     */
+    public static class TimeListExpression extends ListExpression<TimeExpression> {
+
+        public TimeListExpression(final String script) {
+            super(script);
+        }
+    }
+
+    /**
+     * Used to represent a list of durations in the target language.
+     */
+    public static class DurationListExpression extends ListExpression<DurationExpression> {
+
+        public DurationListExpression(final String script) {
+            super(script);
+        }
+    }
+
+
+    /**
+     * Used to represent a list of booleans in the target language.
+     */
+    public static class BooleanListExpression extends ListExpression<BooleanExpression> {
+
+        public BooleanListExpression(final String script) {
+            super(script);
+        }
+    }
+    
 }

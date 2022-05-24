@@ -9,7 +9,7 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
  */
 public class EfxExpressionCombinedTest {
 
-    final private String SDK_VERSION = "eforms-sdk-0.6";
+    final private String SDK_VERSION = "eforms-sdk-0.7";
 
     private String test(final String context, final String expression) {
         return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE, SDK_VERSION);
