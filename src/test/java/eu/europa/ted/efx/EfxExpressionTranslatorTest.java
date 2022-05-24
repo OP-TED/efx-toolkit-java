@@ -172,7 +172,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testNegativeDuration_ViaMultiplicationWithField() {
-        assertEquals("(-3 * (2 * (if (PathNode/MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (PathNode/MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), 'D')) else xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(substring(PathNode/MeasureField/@unitCode, 1, 1)))))))",
+        assertEquals("(-3 * (2 * (if (PathNode/MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (PathNode/MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), 'D')) else if (PathNode/MeasureField) then xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(substring(PathNode/MeasureField/@unitCode, 1, 1)))) else ())))",
                 test("ND-Root", "2 * measure:BT-00-Measure * -3"));
     }
 
@@ -281,7 +281,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testDurationList_UsingDurationField() {
-        assertEquals("(if (../MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', ../MeasureField/number() * 7, 'D')) else if (../MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', ../MeasureField/number(), 'D')) else xs:yearMonthDuration(concat('P', ../MeasureField/number(), upper-case(substring(../MeasureField/@unitCode, 1, 1))))) = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))", test("BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)"));
+        assertEquals("(if (../MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', ../MeasureField/number() * 7, 'D')) else if (../MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', ../MeasureField/number(), 'D')) else if (../MeasureField) then xs:yearMonthDuration(concat('P', ../MeasureField/number(), upper-case(substring(../MeasureField/@unitCode, 1, 1)))) else ()) = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))", test("BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)"));
     }
 
     @Test
@@ -361,7 +361,7 @@ public class EfxExpressionTranslatorTest {
 
     @Test
     public void testFieldReference_ForDurationFields() {
-        assertEquals("(if (PathNode/MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (PathNode/MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), 'D')) else xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(substring(PathNode/MeasureField/@unitCode, 1, 1)))))",
+        assertEquals("(if (PathNode/MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (PathNode/MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), 'D')) else if (PathNode/MeasureField) then xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(substring(PathNode/MeasureField/@unitCode, 1, 1)))) else ())",
                 test("ND-Root", "BT-00-Measure"));
     } 
 

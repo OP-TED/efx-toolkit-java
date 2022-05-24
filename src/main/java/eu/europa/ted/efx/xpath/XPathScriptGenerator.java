@@ -72,7 +72,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
                                     " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
                                     " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
                                     " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
-                                    " else xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1)))))", type);
+                                    " else if (" + fieldReference.script + ")" + //
+                                    " then xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1))))" + //
+                                    " else ())", type);
         }
 
         return instantiate(fieldReference.script, type);
