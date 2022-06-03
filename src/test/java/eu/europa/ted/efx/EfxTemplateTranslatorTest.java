@@ -114,6 +114,13 @@ public class EfxTemplateTranslatorTest {
     }
 
     @Test
+    public void testStandardLabelReference_UsingLabelTypeAsAssetId() {
+        assertEquals(
+                "block01 = label(concat('decoration', '|', 'name', '|', 'value')); for-each(/*/PathNode/TextField) { block01(); }",
+                translate("{BT-00-Text}  #{decoration|name|value}"));
+    }
+
+    @Test
     public void testShorthandBtLabelReference() {
         assertEquals(
                 "block01 = label(concat('business_term', '|', 'name', '|', 'BT-00')); for-each(/*/PathNode/TextField) { block01(); }",
