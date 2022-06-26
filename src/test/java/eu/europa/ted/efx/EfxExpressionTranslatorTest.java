@@ -128,6 +128,12 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
+    public void testZonedTimeComparison_OfTwoTimeLiterals() {
+        assertEquals("xs:time('13:00:10+01:00') > xs:time('21:20:30+02:00')",
+                test("BT-00-Text", "13:00:10+01:00 > 21:20:30+02:00"));
+    }
+
+    @Test
     public void testTimeComparison_OfTwoTimeReferences() {
         assertEquals("PathNode/StartTimeField/xs:time(text()) = PathNode/EndTimeField/xs:time(text())",
                 test("ND-Root", "BT-00-StartTime == BT-00-EndTime"));
