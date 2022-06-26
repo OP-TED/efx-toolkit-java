@@ -198,14 +198,136 @@ public class EfxExpressionTranslatorTest {
         assertEquals("false()", test("BT-00-Text", "NEVER"));
     }
 
+    /*** Quantified expressions ***/
+
     @Test
-    public void testQuantifiedExpression() {
-        assertEquals("every $x in ('a','b','c') satisfies $x <= 'a'", test("BT-00-Text", "every $x in ('a', 'b', 'c') satisfies $x <= 'a'"));
+    public void testStringQuantifiedExpression_UsingLiterals() {
+        assertEquals("every $x in ('a','b','c') satisfies $x <= 'a'",
+                test("ND-Root", "every $x in ('a', 'b', 'c') satisfies $x <= 'a'"));
     }
 
     @Test
+    public void testStringQuantifiedExpression_UsingFieldReference() {
+        assertEquals("every $x in PathNode/TextField satisfies $x <= 'a'",
+                test("ND-Root", "every $x in text:BT-00-Text satisfies $x <= 'a'"));
+    }
+
+    @Test
+    public void testBooleanQuantifiedExpression_UsingLiterals() {
+        assertEquals("every $x in (true(),false(),true()) satisfies $x",
+                test("ND-Root", "every $x in (TRUE, FALSE, ALWAYS) satisfies $x"));
+    }
+
+    @Test
+    public void testBooleanQuantifiedExpression_UsingFieldReference() {
+        assertEquals("every $x in PathNode/IndicatorField satisfies $x",
+                test("ND-Root", "every $x in indicator:BT-00-Indicator satisfies $x"));
+    }
+    
+    @Test
+    public void testNumericQuantifiedExpression_UsingLiterals() {
+        assertEquals("every $x in (1,2,3) satisfies $x <= 1",
+                test("ND-Root", "every $x in (1, 2, 3) satisfies $x <= 1"));
+    }
+
+    @Test
+    public void testNumericQuantifiedExpression_UsingFieldReference() {
+        assertEquals("every $x in PathNode/NumberField satisfies $x <= 1",
+                test("ND-Root", "every $x in number:BT-00-Number satisfies $x <= 1"));
+    }
+
+    @Test
+    public void testDateQuantifiedExpression_UsingLiterals() {
+        assertEquals(
+                "every $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) satisfies $x <= xs:date('2012-01-01')",
+                test("ND-Root",
+                        "every $x in (2012-01-01, 2012-01-02, 2012-01-03) satisfies $x <= 2012-01-01"));
+    }
+
+    @Test
+    public void testDateQuantifiedExpression_UsingFieldReference() {
+        assertEquals(
+                "every $x in PathNode/StartDateField satisfies $x <= xs:date('2012-01-01')",
+                test("ND-Root",
+                        "every $x in date:BT-00-StartDate satisfies $x <= 2012-01-01"));
+    }
+
+    @Test
+    public void testTimeQuantifiedExpression_UsingLiterals() {
+        assertEquals(
+                "every $x in (xs:time('00:00:00'),xs:time('00:00:01'),xs:time('00:00:02')) satisfies $x <= xs:time('00:00:00')",
+                test("ND-Root",
+                        "every $x in (00:00:00, 00:00:01, 00:00:02) satisfies $x <= 00:00:00"));
+    }
+
+    @Test
+    public void testTimeQuantifiedExpression_UsingFieldReference() {
+        assertEquals(
+                "every $x in PathNode/StartTimeField satisfies $x <= xs:time('00:00:00')",
+                test("ND-Root",
+                        "every $x in time:BT-00-StartTime satisfies $x <= 00:00:00"));
+    }
+
+    @Test
+    public void testDurationQuantifiedExpression_UsingLiterals() {
+        assertEquals(
+                "every $x in (xs:dayTimeDuration('P1D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P3D')) satisfies boolean(for $T in (current-date()) return ($T + $x <= $T + xs:dayTimeDuration('P1D')))",
+                test("ND-Root",
+                        "every $x in (P1D, P2D, P3D) satisfies $x <= P1D"));
+    }
+
+    @Test
+    public void testDurationQuantifiedExpression_UsingFieldReference() {
+        assertEquals(
+                "every $x in PathNode/MeasureField satisfies boolean(for $T in (current-date()) return ($T + $x <= $T + xs:dayTimeDuration('P1D')))",
+                test("ND-Root",
+                        "every $x in measure:BT-00-Measure satisfies $x <= P1D"));
+    }
+
+    /*** Conditional expressions ***/
+
+    @Test
     public void testConditionalExpression() {
-        assertEquals("(if 1 > 2 then 'a' else 'b')", test("BT-00-Text", "if 1 > 2 then 'a' else 'b'"));
+        assertEquals("(if 1 > 2 then 'a' else 'b')",
+                test("ND-Root", "if 1 > 2 then 'a' else 'b'"));
+    }
+
+    @Test
+    public void testConditionalStringExpression() {
+        assertEquals("(if 'a' > 'b' then 'a' else 'b')",
+                test("ND-Root", "if 'a' > 'b' then 'a' else 'b'"));
+    }
+
+    @Test
+    public void testConditionalBooleanExpression() {
+        assertEquals("(if PathNode/IndicatorField then true() else false())",
+                test("ND-Root", "if BT-00-Indicator then TRUE else FALSE"));
+    }
+
+    @Test
+    public void testConditionalNumericExpression() {
+        assertEquals("(if 1 > 2 then 1 else PathNode/NumberField/number())", test("ND-Root", "if 1 > 2 then 1 else BT-00-Number"));
+    }
+
+    @Test
+    public void testConditionalDateExpression() {
+        assertEquals(
+                "(if xs:date('2012-01-01') > PathNode/EndDateField/xs:date(text()) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02'))",
+                test("ND-Root", "if 2012-01-01 > BT-00-EndDate then BT-00-StartDate else 2012-01-02"));
+    }
+
+    @Test
+    public void testConditionalTimeExpression() {
+        assertEquals(
+                "(if PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01') then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01'))",
+                test("ND-Root", "if BT-00-EndTime > 00:00:01 then BT-00-StartTime else 00:00:01"));
+    }
+
+    @Test
+    public void testConditionalDurationExpression() {
+        assertEquals(
+                "(if boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + xs:dayTimeDuration('P2D'))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
+                test("ND-Root", "if P1D > P2D then P1D else P2D"));
     }
 
     /*** Iteration expressions ***/
