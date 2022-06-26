@@ -950,8 +950,14 @@ public class EfxExpressionTranslatorTest {
     /*** Numeric functions ***/
 
     @Test
-    public void testCountFunction() {
+    public void testCountFunction_UsingFieldReference() {
         assertEquals("count(PathNode/TextField)", test("ND-Root", "count(BT-00-Text)"));
+    }
+
+    @Test
+    public void testCountFunction_UsingSequenceFromIteration() {
+        assertEquals("count(for $x in PathNode/TextField return concat($x, '-xyz'))",
+                test("ND-Root", "count(for $x in text:BT-00-Text return concat($x, '-xyz'))"));
     }
 
     @Test
@@ -961,8 +967,14 @@ public class EfxExpressionTranslatorTest {
     }
 
     @Test
-    public void testSumFunction() {
-        assertEquals("sum(PathNode/NumberField)", test("ND-Root", "sum(BT-00-Number)"));
+    public void testSumFunction_UsingFieldReference() {
+        assertEquals("sum(PathNode/NumberField)", test("ND-Root", "sum(number:BT-00-Number)"));
+    }
+
+    @Test
+    public void testSumFunction_UsingNumericSequenceFromIteration() {
+        assertEquals("sum(for $v in PathNode/NumberField return $v + 1)",
+                test("ND-Root", "sum(for $v in number:BT-00-Number return $v +1)"));
     }
 
     @Test

@@ -1127,7 +1127,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitCountFunction(CountFunctionContext ctx) {
-        this.stack.push(this.script.composeCountOperation(this.stack.pop(PathExpression.class)));
+        this.stack.push(this.script.composeCountOperation(this.stack.pop(ListExpression.class)));
     }
 
     @Override
@@ -1138,7 +1138,7 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
     @Override
     public void exitSumFunction(SumFunctionContext ctx) {
-        this.stack.push(this.script.composeSumOperation(this.stack.pop(PathExpression.class)));
+        this.stack.push(this.script.composeSumOperation(this.stack.pop(NumericListExpression.class)));
     }
 
     @Override

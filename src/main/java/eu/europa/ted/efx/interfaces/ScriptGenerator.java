@@ -1,16 +1,16 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
-import eu.europa.ted.efx.model.CallStackObjectBase;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
+import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 public interface ScriptGenerator {
@@ -198,11 +198,21 @@ public interface ScriptGenerator {
      * Numeric Functions
      */
 
+    /***
+     * @deprecated Used only by SDK 0.6.x
+     */
     public NumericExpression composeCountOperation(final PathExpression set);
+
+    public NumericExpression  composeCountOperation(final ListExpressionBase list);
 
     public NumericExpression composeToNumberConversion(StringExpression text);
 
-    public NumericExpression composeSumOperation(PathExpression setReference);
+    /***
+     * @deprecated Used only by SDK 0.6.x
+     */
+    public NumericExpression composeSumOperation(PathExpression set);
+
+    public NumericExpression composeSumOperation(NumericListExpression list);
 
     public NumericExpression composeStringLengthCalculation(StringExpression text);
 

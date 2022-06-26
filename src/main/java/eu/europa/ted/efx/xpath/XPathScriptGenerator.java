@@ -15,10 +15,11 @@ import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
+import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
+import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 public class XPathScriptGenerator implements ScriptGenerator {
@@ -275,12 +276,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
 
     @Override
+    public NumericExpression composeCountOperation(ListExpressionBase list) {
+        return new NumericExpression("count(" + list.script + ")");
+    }
+
+    @Override
     public NumericExpression composeToNumberConversion(StringExpression text) {
         return new NumericExpression("number(" + text.script + ")");
     }
 
     @Override
     public NumericExpression composeSumOperation(PathExpression nodeSet) {
+        return new NumericExpression("sum(" + nodeSet.script + ")");
+    }
+
+    @Override
+    public NumericExpression composeSumOperation(NumericListExpression nodeSet) {
         return new NumericExpression("sum(" + nodeSet.script + ")");
     }
 

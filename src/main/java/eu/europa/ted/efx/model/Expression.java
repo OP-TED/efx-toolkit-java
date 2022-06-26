@@ -144,10 +144,17 @@ public class Expression extends CallStackObjectBase {
         }
     }
 
+    public static class ListExpressionBase extends Expression {
+
+        public ListExpressionBase(final String script) {
+            super(script);
+        }
+    }
+
     /**
      * Used to represent a list of strings in the target language.
      */
-    public static class ListExpression<T extends Expression> extends Expression {
+    public static class ListExpression<T extends Expression> extends ListExpressionBase {
 
         public ListExpression(final String script) {
             super(script);
