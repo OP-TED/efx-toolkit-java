@@ -960,10 +960,29 @@ public class EfxExpressionTranslator extends EfxBaseListener {
 
         if (parsedPath.hasAttribute()) {
             this.stack.push(this.script.composeFieldAttributeReference(parsedPath.getPath(),
-                    parsedPath.getAttribute(), StringExpression.class));
+                    parsedPath.getAttribute(), Expression.types.get(this.symbols.getTypeOfField(fieldId))));
         } else if (fieldId != null) {
             this.stack.push(this.script.composeFieldValueReference(path,
                     Expression.types.get(this.symbols.getTypeOfField(fieldId))));
+        } else {
+            this.stack.push(this.script.composeFieldValueReference(path, PathExpression.class));
+        }
+    }
+
+    @Override
+    public void exitUntypedFieldValueSequence(UntypedFieldValueSequenceContext ctx) {
+        PathExpression path = this.stack.pop(PathExpression.class);
+        String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+        // TODO: Use an interface for locating attributes. A PathExpression is not necessarily an
+        // XPath in every implementation.
+        XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
+
+        if (parsedPath.hasAttribute()) {
+            this.stack.push(this.script.composeFieldAttributeReference(parsedPath.getPath(),
+                    parsedPath.getAttribute(), Expression.listTypes.get(this.symbols.getTypeOfField(fieldId))));
+        } else if (fieldId != null) {
+            this.stack.push(this.script.composeFieldValueReference(path,
+                    Expression.listTypes.get(this.symbols.getTypeOfField(fieldId))));
         } else {
             this.stack.push(this.script.composeFieldValueReference(path, PathExpression.class));
         }

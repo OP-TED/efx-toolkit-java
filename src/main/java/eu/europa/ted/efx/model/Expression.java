@@ -40,6 +40,29 @@ public class Expression extends CallStackObjectBase {
             entry("email", StringExpression.class));
 
     /**
+     * ListExpression types equivalent to eFroms types.
+     */
+    public static final Map<String, Class<? extends Expression>> listTypes = Map.ofEntries(
+        entry("id", StringListExpression.class), //
+        entry("id-ref", StringListExpression.class), //
+        entry("text", StringListExpression.class), //
+        entry("text-multilingual", StringListExpression.class), //
+        entry("indicator", BooleanListExpression.class), //
+        entry("amount", NumericListExpression.class), // 
+        entry("number", NumericListExpression.class), //
+        entry("measure", DurationListExpression.class), //
+        entry("code", StringListExpression.class),
+        entry("internal-code", StringListExpression.class), //
+        entry("integer", NumericListExpression.class), //
+        entry("date", DateListExpression.class), //
+        entry("zoned-date", DateExpression.class), //
+        entry("time", TimeListExpression.class), //
+        entry("zoned-time", TimeListExpression.class), //
+        entry("url", StringListExpression.class), //
+        entry("phone", StringListExpression.class), //
+        entry("email", StringListExpression.class));
+
+    /**
      * Stores the expression represented in the target language.
      */
     public final String script;
