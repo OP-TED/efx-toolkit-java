@@ -1066,8 +1066,17 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
+    public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    }
+    @Override
     public void exitStringVariable(StringVariableContext ctx) {
         this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    }
+
+    @Override
+    public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
     }
 
     @Override
@@ -1076,8 +1085,18 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
     
     @Override
+    public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+    }
+
+    @Override
     public void exitNumericVariable(NumericVariableContext ctx) {
         this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+    }
+
+    @Override
+    public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
     }
 
     @Override
@@ -1086,8 +1105,18 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
+    public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+    }
+
+    @Override
     public void exitTimeVariable(TimeVariableContext ctx) {
         this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+    }
+
+    @Override
+    public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
+        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
     }
 
     @Override
