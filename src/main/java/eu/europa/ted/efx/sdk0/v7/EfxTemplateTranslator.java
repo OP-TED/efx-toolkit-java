@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.sdk0.v7;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +117,11 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
   public static String renderTemplate(final String template,
       final TranslatorDependencyFactory factory, final String sdkVersion) {
     return renderTemplate(CharStreams.fromString(template), factory, sdkVersion);
+  }
+
+  public static String renderTemplate(final InputStream stream,
+      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
+    return renderTemplate(CharStreams.fromStream(stream), factory, sdkVersion);
   }
 
   private static String renderTemplate(final CharStream charStream,
