@@ -268,6 +268,10 @@ public interface ScriptGenerator {
      * Duration Functions
      */
 
+    public DurationExpression composeToDayTimeDurationConversion(StringExpression text);
+
+    public DurationExpression composeToYearMonthDurationConversion(StringExpression text);
+
     public DurationExpression composeSubtraction(DateExpression startDate,
             DateExpression endDate);
 

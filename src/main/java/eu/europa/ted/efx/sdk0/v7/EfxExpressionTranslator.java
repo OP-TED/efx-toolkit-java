@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
+import eu.europa.ted.efx.model.CallStackObjectBase;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
@@ -535,47 +536,91 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     /*** Conditional Expressions ***/
 
     @Override
+    public void exitUntypedConditonalExpression(UntypedConditonalExpressionContext ctx) {
+        Class<? extends CallStackObjectBase> typeWhenFalse = this.stack.peek().getClass();
+        if (typeWhenFalse == BooleanExpression.class) {
+            this.exitConditionalBooleanExpression();
+        } else if (typeWhenFalse == NumericExpression.class) {
+            this.exitConditionalNumericExpression();
+        } else if (typeWhenFalse == StringExpression.class) {
+            this.exitConditionalStringExpression();
+        } else if (typeWhenFalse == DateExpression.class) {
+            this.exitConditionalDateExpression();
+        } else if (typeWhenFalse == TimeExpression.class) {
+            this.exitConditionalTimeExpression();
+        } else if (typeWhenFalse == DurationExpression.class) {
+            this.exitConditionalDurationExpression();
+        } else {
+            throw new IllegalStateException("Unknown type " + typeWhenFalse);
+        }
+    }
+
+    @Override
     public void exitConditionalBooleanExpression(ConditionalBooleanExpressionContext ctx) {
+        this.exitConditionalBooleanExpression();
+    }
+
+    @Override
+    public void exitConditionalNumericExpression(ConditionalNumericExpressionContext ctx) {
+        this.exitConditionalNumericExpression();
+    }
+
+    @Override
+    public void exitConditionalStringExpression(ConditionalStringExpressionContext ctx) {
+        this.exitConditionalStringExpression();
+    }
+
+    @Override
+    public void exitConditionalDateExpression(ConditionalDateExpressionContext ctx) {
+        this.exitConditionalDateExpression();
+    }
+
+    @Override
+    public void exitConditionalTimeExpression(ConditionalTimeExpressionContext ctx) {
+        this.exitConditionalTimeExpression();
+    }
+
+    @Override
+    public void exitConditionalDurationExpression(ConditionalDurationExpressionContext ctx) {
+        this.exitConditionalDurationExpression();
+    }
+
+    private void exitConditionalBooleanExpression() {
         BooleanExpression whenFalse = this.stack.pop(BooleanExpression.class);
         BooleanExpression whenTrue = this.stack.pop(BooleanExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
         this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, BooleanExpression.class));
     }
 
-    @Override
-    public void exitConditionalNumericExpression(ConditionalNumericExpressionContext ctx) {
+    private void exitConditionalNumericExpression() {
         NumericExpression whenFalse = this.stack.pop(NumericExpression.class);
         NumericExpression whenTrue = this.stack.pop(NumericExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
         this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, NumericExpression.class));
     }
 
-    @Override
-    public void exitConditionalStringExpression(ConditionalStringExpressionContext ctx) {
+    private void exitConditionalStringExpression() {
         StringExpression whenFalse = this.stack.pop(StringExpression.class);
         StringExpression whenTrue = this.stack.pop(StringExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
         this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, StringExpression.class));
     }
 
-    @Override
-    public void exitConditionalDateExpression(ConditionalDateExpressionContext ctx) {
+    private void exitConditionalDateExpression() {
         DateExpression whenFalse = this.stack.pop(DateExpression.class);
         DateExpression whenTrue = this.stack.pop(DateExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
         this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, DateExpression.class));
     }
 
-    @Override
-    public void exitConditionalTimeExpression(ConditionalTimeExpressionContext ctx) {
+    private void exitConditionalTimeExpression() {
         TimeExpression whenFalse = this.stack.pop(TimeExpression.class);
         TimeExpression whenTrue = this.stack.pop(TimeExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
         this.stack.push(this.script.composeConditionalExpression(condition, whenTrue, whenFalse, TimeExpression.class));
     }
 
-    @Override
-    public void exitConditionalDurationExpression(ConditionalDurationExpressionContext ctx) {
+    private void exitConditionalDurationExpression() {
         DurationExpression whenFalse = this.stack.pop(DurationExpression.class);
         DurationExpression whenTrue = this.stack.pop(DurationExpression.class);
         BooleanExpression condition = this.stack.pop(BooleanExpression.class);
@@ -1066,63 +1111,40 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     }
 
     @Override
-    public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    public void exitUntypedVariable(UntypedVariableContext ctx) {
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), Expression.class));
     }
+
     @Override
-    public void exitStringVariable(StringVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
     }
 
     @Override
     public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
     }
 
-    @Override
-    public void exitBooleanVariable(BooleanVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
-    }
-    
     @Override
     public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
-    }
-
-    @Override
-    public void exitNumericVariable(NumericVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
     }
 
     @Override
     public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
-    }
-
-    @Override
-    public void exitDateVariable(DateVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
     }
 
     @Override
     public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
-    }
-
-    @Override
-    public void exitTimeVariable(TimeVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
     }
 
     @Override
     public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
+        this.stack.pushVariable(this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
     }
 
-    @Override
-    public void exitDurationVariable(DurationVariableContext ctx) {
-        this.stack.push(this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
-    }
 
     /*** Boolean functions ***/
 
@@ -1246,5 +1268,18 @@ public class EfxExpressionTranslator extends EfxBaseListener {
     public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
         this.stack
                 .push(this.script.composeToTimeConversion(this.stack.pop(StringExpression.class)));
+    }
+
+    /*** Duration Functions ***/
+
+    @Override
+    public void exitDayTimeDurationFromStringFunction(DayTimeDurationFromStringFunctionContext ctx) {
+        this.stack
+                .push(this.script.composeToDayTimeDurationConversion(this.stack.pop(StringExpression.class)));
+    }
+    @Override
+    public void exitYearMonthDurationFromStringFunction(YearMonthDurationFromStringFunctionContext ctx) {
+        this.stack
+                .push(this.script.composeToYearMonthDurationConversion(this.stack.pop(StringExpression.class)));
     }
 }

@@ -43,13 +43,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public <T extends Expression> T composeNodeReferenceWithPredicate(PathExpression nodeReference,
             BooleanExpression predicate, Class<T> type) {
-        return instantiate(nodeReference.script + '[' + predicate.script + ']', type);
+        return Expression.instantiate(nodeReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
     public <T extends Expression> T composeFieldReferenceWithPredicate(PathExpression fieldReference,
             BooleanExpression predicate, Class<T> type) {
-        return instantiate(fieldReference.script + '[' + predicate.script + ']', type);
+        return Expression.instantiate(fieldReference.script + '[' + predicate.script + ']', type);
     }
 
     @Override
@@ -57,52 +57,52 @@ public class XPathScriptGenerator implements ScriptGenerator {
             Class<T> type) {
 
         if (StringExpression.class.isAssignableFrom(type)) {
-            return this.instantiate(fieldReference.script + "/normalize-space(text())", type);
+            return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
         }
         if (NumericExpression.class.isAssignableFrom(type)) {
-            return this.instantiate(fieldReference.script + "/number()", type);
+            return Expression.instantiate(fieldReference.script + "/number()", type);
         }
         if (DateExpression.class.isAssignableFrom(type)) {
-            return this.instantiate(fieldReference.script + "/xs:date(text())", type);
+            return Expression.instantiate(fieldReference.script + "/xs:date(text())", type);
         }
         if (TimeExpression.class.isAssignableFrom(type)) {
-            return this.instantiate(fieldReference.script + "/xs:time(text())", type);
+            return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
         }
         if (DurationExpression.class.isAssignableFrom(type)) {
-            return this.instantiate("(if (" + fieldReference.script + "/@unitCode='WEEK')" + //
-                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
-                                    " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
-                                    " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
-                                    " else if (" + fieldReference.script + ")" + //
-                                    " then xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1))))" + //
-                                    " else ())", type);
+            return Expression.instantiate("(if (" + fieldReference.script + "/@unitCode='WEEK')" + //
+                                          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
+                                          " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
+                                          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
+                                          " else if (" + fieldReference.script + ")" + //
+                                          " then xs:yearMonthDuration(concat('P', " + fieldReference.script + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1))))" + //
+                                          " else ())", type);
         }
 
-        return instantiate(fieldReference.script, type);
+        return Expression.instantiate(fieldReference.script, type);
     }
 
     @Override
     public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
             String attribute, Class<T> type) {
-        return instantiate(fieldReference.script + "/@" + attribute, type);
+        return Expression.instantiate(fieldReference.script + "/@" + attribute, type);
     }
 
     @Override
     public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
-        return instantiate(variableName, type); 
+        return Expression.instantiate(variableName, type); 
     }
 
     @Override
     public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list, Class<L> type) {
         if (list == null || list.isEmpty()) {
-            return instantiate("()", type);
+            return Expression.instantiate("()", type);
         }
 
         final StringJoiner joiner = new StringJoiner(",", "(", ")");
         for (final T item : list) {
             joiner.add(item.script);
         }
-        return instantiate(joiner.toString(), type);
+        return Expression.instantiate(joiner.toString(), type);
     }
 
     @Override
@@ -171,13 +171,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
     @Override
     public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
             T whenTrue, T whenFalse, Class<T> type) {
-            return instantiate("(if " + condition.script + " then " + whenTrue.script + " else " + whenFalse.script + ")", type);
+            return Expression.instantiate("(if " + condition.script + " then " + whenTrue.script + " else " + whenFalse.script + ")", type);
     }
     
     @Override
     public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
             String variableName, L1 sourceList, T2 expression, Class<L2> targetListType) {
-        return instantiate("for " + variableName + " in " + sourceList.script + " return " + expression.script, targetListType);
+        return Expression.instantiate("for " + variableName + " in " + sourceList.script + " return " + expression.script, targetListType);
     }
 
     @Override
@@ -372,6 +372,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
     /*** Duration functions ***/
 
+    @Override 
+    public DurationExpression composeToDayTimeDurationConversion(StringExpression text) {
+        return new DurationExpression("xs:dayTimeDuration(" + text.script + ")");
+    }
+
+    @Override
+    public DurationExpression composeToYearMonthDurationConversion(StringExpression text) {
+        return new DurationExpression("xs:yearMonthDuration(" + text.script + ")");
+    }
+
     @Override
     public DurationExpression composeSubtraction(DateExpression startDate,
             DateExpression endDate) {
@@ -398,14 +408,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
     /*** Helpers ***/
 
-    private <T extends Expression> T instantiate(String value, Class<T> type) {
-        try {
-            Constructor<T> constructor = type.getConstructor(String.class);
-            return constructor.newInstance(value);
-        } catch (Exception e) {
-            throw new ParseCancellationException(e);
-        }
-    }
 
     private String quoted(final String text) {
         return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";

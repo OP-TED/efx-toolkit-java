@@ -1,7 +1,9 @@
 package eu.europa.ted.efx.model;
 
 import static java.util.Map.entry;
+import java.lang.reflect.Constructor;
 import java.util.Map;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 /**
  * This class represents an expression in the target scripting language.
@@ -69,6 +71,28 @@ public class Expression extends CallStackObjectBase {
 
     public Expression(final String script) {
         this.script = script;
+    }
+
+    public static <T extends Expression> T instantiate(String value, Class<T> type) {
+        try {
+            Constructor<T> constructor = type.getConstructor(String.class);
+            return constructor.newInstance(value);
+        } catch (Exception e) {
+            throw new ParseCancellationException(e);
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (Expression.class.isAssignableFrom(obj.getClass())) {
+            return this.script.equals(((Expression) obj).script);
+        }
+
+        return false;
     }
 
     /**
