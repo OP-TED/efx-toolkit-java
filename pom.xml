@@ -55,9 +55,30 @@
 
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
+    <!-- Third-party libraries -->
     <antlr4.version>4.9.3</antlr4.version>
+    <classindex.version>3.11</classindex.version>
+    <logback.version>1.2.11</logback.version>
+
+    <!-- Plugins -->
+    <compiler.plugin.version>3.10.1</compiler.plugin.version>
     <dependency.plugin.version>3.3.0</dependency.plugin.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.atteo.classindex</groupId>
+        <artifactId>classindex</artifactId>
+        <version>${classindex.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -77,6 +98,11 @@
       <artifactId>jackson-databind</artifactId>
       <version>2.13.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.atteo.classindex</groupId>
+      <artifactId>classindex</artifactId>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>
@@ -87,6 +113,20 @@
           <version>2.5.2</version>
           <configuration>
             <createChecksum>true</createChecksum>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler.plugin.version}</version>
+          <configuration>
+            <annotationProcessorPaths>
+              <annotationProcessorPath>
+                <groupId>org.atteo.classindex</groupId>
+                <artifactId>classindex</artifactId>
+                <version>${classindex.version}</version>
+              </annotationProcessorPath>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
       </plugins>
@@ -117,7 +157,7 @@
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk0/v7</outputDirectory>
               <fileMappers>
                 <!-- Remove the folder prefix from filenames -->
-                <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+                <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper />
               </fileMappers>
             </artifactItem>
             <artifactItem>
@@ -211,6 +251,7 @@
 
   <profiles>
     <profile>
+      <!-- Profile "release" caters to the requirements for releasing to Maven Central -->
       <id>release</id>
       <build>
         <plugins>
