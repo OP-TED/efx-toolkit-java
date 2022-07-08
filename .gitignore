@@ -3,6 +3,7 @@
 .settings
 .project
 .classpath
+.factorypath
 .vscode/
 *.code-workspace
 /bin/

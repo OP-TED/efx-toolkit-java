@@ -14,75 +14,78 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
  */
 public abstract class Context {
 
-    /**
-     * Instantiate this class to create a context from a field identifier.
-     */
-    public static class FieldContext extends Context {
+  /**
+   * Instantiate this class to create a context from a field identifier.
+   */
+  public static class FieldContext extends Context {
 
-        public FieldContext(final String fieldId, final PathExpression absolutePath, final PathExpression relativePath) {
-            super(fieldId, absolutePath, relativePath);
-        }
-
-        public FieldContext(final String fieldId, final PathExpression absolutePath) {
-            super(fieldId, absolutePath);
-        }
+    public FieldContext(final String fieldId, final PathExpression absolutePath,
+        final PathExpression relativePath) {
+      super(fieldId, absolutePath, relativePath);
     }
 
-    /**
-     * Instantiate this class to create a context from a node identifier.
-     */
-    public static class NodeContext extends Context {
+    public FieldContext(final String fieldId, final PathExpression absolutePath) {
+      super(fieldId, absolutePath);
+    }
+  }
 
-        public NodeContext(final String nodeId, final PathExpression absolutePath, final PathExpression relativePath) {
-            super(nodeId, absolutePath, relativePath);
-        }
+  /**
+   * Instantiate this class to create a context from a node identifier.
+   */
+  public static class NodeContext extends Context {
 
-        public NodeContext(final String nodeId, final PathExpression absolutePath) {
-            super(nodeId, absolutePath);
-        }
+    public NodeContext(final String nodeId, final PathExpression absolutePath,
+        final PathExpression relativePath) {
+      super(nodeId, absolutePath, relativePath);
     }
 
-    private final String symbol;
-    private final PathExpression absolutePath;
-    private final PathExpression relativePath;
-
-    protected Context(final String symbol, final PathExpression absolutePath, final PathExpression relativePath) {
-        this.symbol = symbol;
-        this.absolutePath = absolutePath;
-        this.relativePath = relativePath == null ? absolutePath : relativePath;
+    public NodeContext(final String nodeId, final PathExpression absolutePath) {
+      super(nodeId, absolutePath);
     }
+  }
 
-    protected Context(final String symbol, final PathExpression absolutePath) {
-        this(symbol, absolutePath, absolutePath);
-    }
+  private final String symbol;
+  private final PathExpression absolutePath;
+  private final PathExpression relativePath;
 
-    public Boolean isFieldContext() {
-        return this.getClass().equals(FieldContext.class);
-    }
+  protected Context(final String symbol, final PathExpression absolutePath,
+      final PathExpression relativePath) {
+    this.symbol = symbol;
+    this.absolutePath = absolutePath;
+    this.relativePath = relativePath == null ? absolutePath : relativePath;
+  }
 
-    public Boolean isNodeContext() {
-        return this.getClass().equals(NodeContext.class);
-    }
+  protected Context(final String symbol, final PathExpression absolutePath) {
+    this(symbol, absolutePath, absolutePath);
+  }
 
-    /**
-     * Returns the [field or node] identifier that was used to create this context.
-     */
-    public String symbol() {
-        return symbol;
-    }
+  public Boolean isFieldContext() {
+    return this.getClass().equals(FieldContext.class);
+  }
 
-    /**
-     * The absolute path of the context is needed when we want to create a new context relative to
-     * this one.
-     */
-    public PathExpression absolutePath() {
-        return absolutePath;
-    }
+  public Boolean isNodeContext() {
+    return this.getClass().equals(NodeContext.class);
+  }
 
-    /**
-     * Returns the relative path of the context.
-     */
-    public PathExpression relativePath() {
-        return relativePath;
-    }
+  /**
+   * Returns the [field or node] identifier that was used to create this context.
+   */
+  public String symbol() {
+    return symbol;
+  }
+
+  /**
+   * The absolute path of the context is needed when we want to create a new context relative to
+   * this one.
+   */
+  public PathExpression absolutePath() {
+    return absolutePath;
+  }
+
+  /**
+   * Returns the relative path of the context.
+   */
+  public PathExpression relativePath() {
+    return relativePath;
+  }
 }

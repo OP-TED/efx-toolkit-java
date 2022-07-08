@@ -23,72 +23,72 @@ import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
  */
 public class XPathAttributeLocator extends XPath20BaseListener {
 
-    private int inPredicate = 0;
-    private int splitPosition = -1;
-    private PathExpression path;
-    private String attribute;
+  private int inPredicate = 0;
+  private int splitPosition = -1;
+  private PathExpression path;
+  private String attribute;
 
-    public PathExpression getPath() {
-        return path;
+  public PathExpression getPath() {
+    return path;
+  }
+
+  public String getAttribute() {
+    return attribute;
+  }
+
+  public Boolean hasAttribute() {
+    return attribute != null;
+  }
+
+  @Override
+  public void enterPredicate(PredicateContext ctx) {
+    this.inPredicate++;
+  }
+
+  @Override
+  public void exitPredicate(PredicateContext ctx) {
+    this.inPredicate--;
+  }
+
+  @Override
+  public void exitAbbrevforwardstep(AbbrevforwardstepContext ctx) {
+    if (this.inPredicate == 0 && ctx.AT() != null) {
+      this.splitPosition = ctx.AT().getSymbol().getCharPositionInLine();
+      this.attribute = ctx.nodetest().getText();
+    }
+  }
+
+  public static XPathAttributeLocator findAttribute(final PathExpression xpath) {
+
+    final XPathAttributeLocator locator = new XPathAttributeLocator();
+
+    if (!xpath.script.contains("@")) {
+      locator.path = xpath;
+      locator.attribute = null;
+      return locator;
     }
 
-    public String getAttribute() {
-        return attribute;
+    final CharStream inputStream = CharStreams.fromString(xpath.script);
+    final XPath20Lexer lexer = new XPath20Lexer(inputStream);
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final XPath20Parser parser = new XPath20Parser(tokens);
+    final ParseTree tree = parser.xpath();
+    final ParseTreeWalker walker = new ParseTreeWalker();
+
+    walker.walk(locator, tree);
+
+    if (locator.splitPosition > -1) {
+      // The attribute we are looking for is at splitPosition
+      String path = xpath.script.substring(0, locator.splitPosition);
+      while (path.endsWith("/")) {
+        path = path.substring(0, path.length() - 1);
+      }
+      locator.path = new PathExpression(path);
+    } else {
+      // the XPAth does not point to an attribute
+      locator.path = xpath;
     }
 
-    public Boolean hasAttribute() {
-        return attribute != null;
-    }
-
-    @Override
-    public void enterPredicate(PredicateContext ctx) {
-        this.inPredicate++;
-    }
-
-    @Override
-    public void exitPredicate(PredicateContext ctx) {
-        this.inPredicate--;
-    }
-
-    @Override
-    public void exitAbbrevforwardstep(AbbrevforwardstepContext ctx) {
-        if (this.inPredicate == 0 && ctx.AT() != null) {
-            this.splitPosition = ctx.AT().getSymbol().getCharPositionInLine();
-            this.attribute = ctx.nodetest().getText();
-        }
-    }
-
-    public static XPathAttributeLocator findAttribute(final PathExpression xpath) {
-
-        final XPathAttributeLocator locator = new XPathAttributeLocator();
-
-        if (!xpath.script.contains("@")) {
-            locator.path = xpath;
-            locator.attribute = null;
-            return locator;
-        }
-
-        final CharStream inputStream = CharStreams.fromString(xpath.script);
-        final XPath20Lexer lexer = new XPath20Lexer(inputStream);
-        final CommonTokenStream tokens = new CommonTokenStream(lexer);
-        final XPath20Parser parser = new XPath20Parser(tokens);
-        final ParseTree tree = parser.xpath();
-        final ParseTreeWalker walker = new ParseTreeWalker();
-
-        walker.walk(locator, tree);
-
-        if (locator.splitPosition > -1) {
-            // The attribute we are looking for is at splitPosition
-            String path = xpath.script.substring(0, locator.splitPosition);
-            while (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
-            }
-            locator.path = new PathExpression(path);
-        } else {
-            // the XPAth does not point to an attribute
-            locator.path = xpath;
-        }
-
-        return locator;
-    }
+    return locator;
+  }
 }

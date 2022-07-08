@@ -45,14 +45,15 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
 
-  public static PathExpression contextualize(final PathExpression contextXpath, final PathExpression xpath) {
+  public static PathExpression contextualize(final PathExpression contextXpath,
+      final PathExpression xpath) {
 
     // If we are asked to contextualise against a null or empty context
     // then we must return the original xpath (instead of throwing an exception).
     if (contextXpath == null || contextXpath.script.isEmpty()) {
       return xpath;
     }
-    
+
     Queue<StepInfo> contextSteps = new LinkedList<StepInfo>(getSteps(contextXpath));
     Queue<StepInfo> pathSteps = new LinkedList<StepInfo>(getSteps(xpath));
 
@@ -133,14 +134,16 @@ public class XPathContextualizer extends XPath20BaseListener {
 
 
   private static PathExpression getJoinedXPath(LinkedList<StepInfo> first,
-  final LinkedList<StepInfo> second) {
+      final LinkedList<StepInfo> second) {
     List<String> dotSteps = Arrays.asList("..", ".");
-    while (second.getFirst().stepText.equals("..") && !dotSteps.contains(first.getLast().stepText)) {
+    while (second.getFirst().stepText.equals("..")
+        && !dotSteps.contains(first.getLast().stepText)) {
       second.removeFirst();
       first.removeLast();
     }
 
-    return new PathExpression(first.stream().map(f -> f.stepText).collect(Collectors.joining("/")) + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return new PathExpression(first.stream().map(f -> f.stepText).collect(Collectors.joining("/"))
+        + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
   }
 
   /**

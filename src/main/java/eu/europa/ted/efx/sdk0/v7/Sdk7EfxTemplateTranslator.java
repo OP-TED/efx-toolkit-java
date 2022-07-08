@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.sdk0.v6;
+package eu.europa.ted.efx.sdk0.v7;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,42 +12,48 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.EfxTemplateProcessor;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
-import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
+import eu.europa.ted.efx.interfaces.ScriptGenerator;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetIdContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetTypeContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ContextDeclarationBlockContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.LabelTemplateContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.LabelTypeContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandBtLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextFieldLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextFieldValueReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandContextLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandFieldLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ShorthandFieldValueLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StandardExpressionBlockContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.StandardLabelReferenceContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TemplateFileContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.TextTemplateContext;
-import eu.europa.ted.efx.sdk0.v6.EfxParser.ValueTemplateContext;
+import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.AssetIdContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.AssetTypeContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ContextDeclarationBlockContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.LabelTemplateContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandBtLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandContextFieldLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandContextFieldValueReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandContextLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandFieldLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ShorthandFieldValueLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.StandardExpressionBlockContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.StandardLabelReferenceContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TemplateFileContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TemplateLineContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.TextTemplateContext;
+import eu.europa.ted.efx.sdk0.v7.EfxParser.ValueTemplateContext;
 
 /**
- * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator} to provide additional
+ * The EfxTemplateTranslator extends the {@link Sdk7EfxExpressionTranslator} to provide additional
  * translation capabilities for EFX templates. If has been implemented as an extension to the
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-public class EfxTemplateTranslator extends EfxExpressionTranslator {
+@SdkComponent(versions = {"0.7"}, componentType = SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR)
+public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
+    implements EfxTemplateProcessor {
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
@@ -75,7 +81,7 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
    */
   private enum Indent {
     TABS, SPACES, UNDETERMINED
-  };
+  }
 
   private Indent indentWith = Indent.UNDETERMINED;
   private int indentSpaces = -1;
@@ -95,44 +101,46 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
    */
   ContentBlockStack blockStack = new ContentBlockStack();
 
-  public EfxTemplateTranslator(TranslatorDependencyFactory factory, final String sdkVersion) {
-    super(factory.createSymbolResolver(sdkVersion), factory.createScriptGenerator());
-    this.markup = factory.createMarkupGenerator();
-  }
+  public Sdk7EfxTemplateTranslator() {}
 
-  // Static methods
+  @Override
+  public Sdk7EfxTemplateTranslator init(MarkupGenerator markupGenerator,
+      SymbolResolver symbolResolver, ScriptGenerator scriptGenerator,
+      BaseErrorListener errorListener) {
+    this.markup = markupGenerator;
+
+    super.init(symbolResolver, scriptGenerator, errorListener);
+
+    return this;
+  }
 
   /**
    * Opens the indicated EFX file and translates the EFX template it contains.
    */
-  public static String renderTemplate(final Path pathname,
-      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
+  @Override
+  public String renderTemplate(final Path pathname) throws IOException {
 
-    return renderTemplate(CharStreams.fromPath(pathname), factory, sdkVersion);
+    return renderTemplate(CharStreams.fromPath(pathname));
   }
 
   /**
    * Translates the template contained in the string passed as a parameter.
    */
-  public static String renderTemplate(final String template,
-      final TranslatorDependencyFactory factory, final String sdkVersion) {
-    return renderTemplate(CharStreams.fromString(template), factory, sdkVersion);
+  @Override
+  public String renderTemplate(final String template) {
+    return renderTemplate(CharStreams.fromString(template));
   }
 
-  public static String renderTemplate(final InputStream stream,
-      final TranslatorDependencyFactory factory, final String sdkVersion) throws IOException {
-    return renderTemplate(CharStreams.fromStream(stream), factory, sdkVersion);
+  @Override
+  public String renderTemplate(final InputStream stream) throws IOException {
+    return renderTemplate(CharStreams.fromStream(stream));
   }
 
-  private static String renderTemplate(final CharStream charStream,
-      final TranslatorDependencyFactory factory, final String sdkVersion) {
-
-    final EfxTemplateTranslator translator = new EfxTemplateTranslator(factory, sdkVersion);
+  private String renderTemplate(final CharStream charStream) {
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
-    final BaseErrorListener errorListener = factory.createErrorListener();
 
     if (errorListener != null) {
       lexer.removeErrorListeners();
@@ -144,9 +152,9 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
     final ParseTree tree = parser.templateFile();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(translator, tree);
+    walker.walk(this, tree);
 
-    return translator.getTranslatedMarkup();
+    return getTranslatedMarkup();
   }
 
   /**
@@ -369,8 +377,8 @@ public class EfxTemplateTranslator extends EfxExpressionTranslator {
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class {@link EfxExpressionTranslator}. After the expression is translated, the result is passed
-   * through the renderer.
+   * class Sdk7EfxExpressionTranslator. After the expression is translated, the result is
+   * passed through the renderer.
    */
   @Override
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {

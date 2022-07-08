@@ -39,7 +39,8 @@ public class SdkField implements Comparable<SdkField> {
         return null;
       }
 
-      final String parentCodelistId = valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
+      final String parentCodelistId =
+          valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
       return parentCodelistId == null ? valueNode.get("id").asText(null) : parentCodelistId;
     };
 

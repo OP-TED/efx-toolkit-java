@@ -27,7 +27,8 @@ public class SdkNode implements Comparable<SdkNode> {
     this.parentId = node.has("parentId") ? node.get("parentId").asText(null) : null;
     this.xpathAbsolute = node.get("xpathAbsolute").asText(null);
     this.xpathRelative = node.get("xpathRelative").asText(null);
-    this.repeatable = node.hasNonNull("repeatable") ? node.get("repeatable").asBoolean(false) : false;
+    this.repeatable =
+        node.hasNonNull("repeatable") ? node.get("repeatable").asBoolean(false) : false;
   }
 
   public String getId() {

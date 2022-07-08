@@ -59,7 +59,7 @@ public class SdkCodelist implements Comparable<SdkCodelist> {
   public String toString() {
     return codelistId + "-" + codelistVersion;
   }
-  
+
   @Override
   public int compareTo(final SdkCodelist cl) {
     return Objects.compare(this.getCodelistId() + this.getVersion(),
