@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.EfxTemplateProcessor;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -377,8 +378,8 @@ public class Sdk6EfxTemplateTranslator extends Sdk6EfxExpressionTranslator
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class {@link Sdk6EfxExpressionTranslator}. After the expression is translated, the result is
-   * passed through the renderer.
+   * class {@link Sdk6EfxExpressionTranslator}. After the expression is translated, the result is passed
+   * through the renderer.
    */
   @Override
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {

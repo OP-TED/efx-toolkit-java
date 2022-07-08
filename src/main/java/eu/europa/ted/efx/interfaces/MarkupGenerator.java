@@ -7,7 +7,7 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
 
 /**
- * The role of this interface is to allow the reuse of the {@link Sdk6EfxTemplateTranslator} to generate
+ * The role of this interface is to allow the reuse of the Sdk6EfxTemplateTranslator to generate
  * markup for any target template language,
  * 
  * The methods provided by this interface cover two needs: a) Take an {@link Expression} as a

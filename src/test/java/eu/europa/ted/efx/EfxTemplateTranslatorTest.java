@@ -8,11 +8,15 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.translator.EfxTranslator;
 
 class EfxTemplateTranslatorTest {
-  final private String SDK_VERSION = "0.7";
+  final private String SDK_VERSION = "eforms-sdk-0.7";
 
-  private String translate(final String template) throws InstantiationException {
-    return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE,
-        SDK_VERSION);
+  private String translate(final String template) {
+    try {
+      return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE,
+          SDK_VERSION);
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private String lines(String... lines) {
@@ -22,13 +26,13 @@ class EfxTemplateTranslatorTest {
   /*** Template line ***/
 
   @Test
-  void testTemplateLineNoIdent() throws InstantiationException {
+  void testTemplateLineNoIdent() {
     assertEquals("block01 = text('foo'); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text} foo"));
   }
 
   @Test
-  void testTemplateLineOutline() throws InstantiationException {
+  void testTemplateLineOutline() {
     // Outline is ignored if the line has no children
     assertEquals(
         lines("block02 = text('foo')", "for-each(/*/PathNode/TextField) { block0201(); };",
@@ -37,12 +41,12 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testTemplateLineFirstIndented() throws InstantiationException {
+  void testTemplateLineFirstIndented() {
     assertThrows(ParseCancellationException.class, () -> translate("  {BT-00-Text} foo"));
   }
 
   @Test
-  void testTemplateLineIdentTab() throws InstantiationException {
+  void testTemplateLineIdentTab() {
     assertEquals(
         lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
             "block0101 = text('bar'); for-each(/*/PathNode/TextField) { block01(); }"),
@@ -50,7 +54,7 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testTemplateLineIdentSpaces() throws InstantiationException {
+  void testTemplateLineIdentSpaces() {
     assertEquals(
         lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
             "block0101 = text('bar'); for-each(/*/PathNode/TextField) { block01(); }"),
@@ -58,19 +62,19 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testTemplateLineIdentMixed() throws InstantiationException {
+  void testTemplateLineIdentMixed() {
     assertThrows(ParseCancellationException.class,
         () -> translate(lines("{BT-00-Text} foo", "\t  {BT-00-Text} bar")));
   }
 
   @Test
-  void testTemplateLineIdentMixedSpaceThenTab() throws InstantiationException {
+  void testTemplateLineIdentMixedSpaceThenTab() {
     assertThrows(ParseCancellationException.class,
         () -> translate(lines("{BT-00-Text} foo", "  \t{BT-00-Text} bar")));
   }
 
   @Test
-  void testTemplateLineIdentLower() throws InstantiationException {
+  void testTemplateLineIdentLower() {
     assertEquals(
         lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
             "block0101 = text('bar');",
@@ -80,7 +84,7 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testTemplateLineIdentUnexpected() throws InstantiationException {
+  void testTemplateLineIdentUnexpected() {
     assertThrows(ParseCancellationException.class,
         () -> translate(lines("{BT-00-Text} foo", "\t\t{BT-00-Text} bar")));
   }
@@ -89,100 +93,97 @@ class EfxTemplateTranslatorTest {
   /*** Labels ***/
 
   @Test
-  void testStandardLabelReference() throws InstantiationException {
+  void testStandardLabelReference() {
     assertEquals(
         "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{field|name|BT-00-Text}"));
   }
 
   @Test
-  void testStandardLabelReference_UsingLabelTypeAsAssetId() throws InstantiationException {
+  void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
         "block01 = label(concat('decoration', '|', 'name', '|', 'value')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{decoration|name|value}"));
   }
 
   @Test
-  void testShorthandBtLabelReference() throws InstantiationException {
+  void testShorthandBtLabelReference() {
     assertEquals(
         "block01 = label(concat('business_term', '|', 'name', '|', 'BT-00')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{name|BT-00}"));
   }
 
   @Test
-  void testShorthandFieldLabelReference() throws InstantiationException {
+  void testShorthandFieldLabelReference() {
     assertEquals(
         "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{name|BT-00-Text}"));
   }
 
   @Test
-  void testShorthandBtLabelReference_MissingLabelType() throws InstantiationException {
+  void testShorthandBtLabelReference_MissingLabelType() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-01}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForIndicator() throws InstantiationException {
+  void testShorthandFieldValueLabelReferenceForIndicator() {
     assertEquals(
         "block01 = label(concat('indicator', '|', 'value', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForCode() throws InstantiationException {
+  void testShorthandFieldValueLabelReferenceForCode() {
     assertEquals(
         "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForInternalCode() throws InstantiationException {
+  void testShorthandFieldValueLabelReferenceForInternalCode() {
     assertEquals(
         "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForText() throws InstantiationException {
+  void testShorthandFieldValueLabelReferenceForText() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-01-Text}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndIndicatorField()
-      throws InstantiationException {
+  void testShorthandContextLabelReference_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
         "block01 = label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/IndicatorField) { block01(); }",
         translate("{BT-00-Indicator}  #{value}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndCodeField()
-      throws InstantiationException {
+  void testShorthandContextLabelReference_WithValueLabelTypeAndCodeField() {
     assertEquals(
         "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
         translate("{BT-00-Code}  #{value}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndTextField()
-      throws InstantiationException {
+  void testShorthandContextLabelReference_WithValueLabelTypeAndTextField() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{value}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithOtherLabelType() throws InstantiationException {
+  void testShorthandContextLabelReference_WithOtherLabelType() {
     assertEquals(
         "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{name}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithUnknownLabelType() throws InstantiationException {
+  void testShorthandContextLabelReference_WithUnknownLabelType() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{whatever}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithNodeContext() throws InstantiationException {
+  void testShorthandContextLabelReference_WithNodeContext() {
     // TODO: Check if Node -> business_term is intended
     assertEquals(
         "block01 = label(concat('business_term', '|', 'name', '|', 'ND-Root')); for-each(/*) { block01(); }",
@@ -190,14 +191,14 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testShorthandContextFieldLabelReference() throws InstantiationException {
+  void testShorthandContextFieldLabelReference() {
     assertEquals(
         "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
         translate("{BT-00-Code} #value"));
   }
 
   @Test
-  void testShorthandContextFieldLabelReference_WithNodeContext() throws InstantiationException {
+  void testShorthandContextFieldLabelReference_WithNodeContext() {
     assertThrows(ParseCancellationException.class, () -> translate("{ND-Root} #value"));
   }
 
@@ -205,20 +206,20 @@ class EfxTemplateTranslatorTest {
   /*** Expression block ***/
 
   @Test
-  void testShorthandContextFieldValueReference() throws InstantiationException {
+  void testShorthandContextFieldValueReference() {
     assertEquals("block01 = eval(.); for-each(/*/PathNode/CodeField) { block01(); }",
         translate("{BT-00-Code} $value"));
   }
 
   @Test
-  void testShorthandContextFieldValueReference_WithText() throws InstantiationException {
+  void testShorthandContextFieldValueReference_WithText() {
     assertEquals(
         "block01 = text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah'); for-each(/*/PathNode/CodeField) { block01(); }",
         translate("{BT-00-Code} blah #value blah $value blah"));
   }
 
   @Test
-  void testShorthandContextFieldValueReference_WithNodeContext() throws InstantiationException {
+  void testShorthandContextFieldValueReference_WithNodeContext() {
     assertThrows(ParseCancellationException.class, () -> translate("{ND-Root} $value"));
   }
 
@@ -226,7 +227,7 @@ class EfxTemplateTranslatorTest {
   /*** Other ***/
 
   @Test
-  void testNestedExpression() throws InstantiationException {
+  void testNestedExpression() {
     assertEquals(
         "block01 = label(concat('field', '|', 'name', '|', ./normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
         translate("{BT-00-Text}  #{field|name|${BT-00-Text}}"));

@@ -31,21 +31,21 @@ public class EfxTranslator {
   public static String translateTemplate(final Path pathname,
       final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
       throws IOException, InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
+    return EfxTranslatorFactory.getEfxTemplateTranslator(normalizeVersion(sdkVersion).getName(), dependencyFactory)
         .renderTemplate(pathname);
   }
 
   public static String translateTemplate(final String template,
       final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
       throws InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
+    return EfxTranslatorFactory.getEfxTemplateTranslator(normalizeVersion(sdkVersion).getName(), dependencyFactory)
         .renderTemplate(template);
   }
 
   public static String translateTemplate(final InputStream stream,
       final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
       throws IOException, InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
+    return EfxTranslatorFactory.getEfxTemplateTranslator(normalizeVersion(sdkVersion).getName(), dependencyFactory)
         .renderTemplate(stream);
   }
 

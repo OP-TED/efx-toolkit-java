@@ -377,7 +377,7 @@ public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class {@link Sdk7EfxExpressionTranslator}. After the expression is translated, the result is
+   * class Sdk7EfxExpressionTranslator. After the expression is translated, the result is
    * passed through the renderer.
    */
   @Override

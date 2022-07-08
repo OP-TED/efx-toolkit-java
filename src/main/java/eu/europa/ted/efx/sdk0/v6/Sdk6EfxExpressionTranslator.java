@@ -97,7 +97,7 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * {@link Sdk6EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates
  * you need to use the {@link Sdk6EfxTemplateTranslator} which derives from this class.
  */
-@SdkComponent(versions= {"0.6"}, componentType = SdkComponentTypeEnum.EFX_EXPRESSION_TRANSLATOR)
+@SdkComponent(versions = {"0.6"}, componentType = SdkComponentTypeEnum.EFX_EXPRESSION_TRANSLATOR)
 public class Sdk6EfxExpressionTranslator extends EfxBaseListener
     implements EfxExpressionTranslator {
 
@@ -137,8 +137,8 @@ public class Sdk6EfxExpressionTranslator extends EfxBaseListener
   public Sdk6EfxExpressionTranslator() {}
 
   @Override
-  public Sdk6EfxExpressionTranslator init(final SymbolResolver symbolResolver,
-      final ScriptGenerator scriptGenerator, BaseErrorListener errorListener) {
+  public EfxExpressionTranslator init(final SymbolResolver symbolResolver,
+      final ScriptGenerator scriptGenerator, final BaseErrorListener errorListener) {
     this.symbols = symbolResolver;
     this.script = scriptGenerator;
     this.errorListener = errorListener;

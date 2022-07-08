@@ -96,7 +96,7 @@ public class Sdk7EfxExpressionTranslator extends EfxBaseListener
 
   @Override
   public Sdk7EfxExpressionTranslator init(final SymbolResolver symbolResolver,
-      final ScriptGenerator scriptGenerator, BaseErrorListener errorListener) {
+      final ScriptGenerator scriptGenerator, final BaseErrorListener errorListener) {
     this.symbols = symbolResolver;
     this.script = scriptGenerator;
     this.errorListener = errorListener;
