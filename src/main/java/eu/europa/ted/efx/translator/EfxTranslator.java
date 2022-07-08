@@ -1,4 +1,4 @@
-package eu.europa.ted.efx;
+package eu.europa.ted.efx.translator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,11 +17,11 @@ public class EfxTranslator {
       final TranslatorDependencyFactory dependencyFactory, final String sdkVersion) {
     switch (normalizeVersion(sdkVersion)) {
       case SDK_0_6:
-        return eu.europa.ted.efx.sdk0.v6.EfxExpressionTranslator.translateExpression(context,
+        return eu.europa.ted.efx.sdk0.v6.Sdk6EfxExpressionTranslator.translateExpression(context,
             expression, dependencyFactory.createSymbolResolver(sdkVersion),
             dependencyFactory.createScriptGenerator(), dependencyFactory.createErrorListener());
       case SDK_0_7:
-        return eu.europa.ted.efx.sdk0.v7.EfxExpressionTranslator.translateExpression(context,
+        return eu.europa.ted.efx.sdk0.v7.Sdk7EfxExpressionTranslator.translateExpression(context,
             expression, dependencyFactory.createSymbolResolver(sdkVersion),
             dependencyFactory.createScriptGenerator(), dependencyFactory.createErrorListener());
       default:
@@ -34,10 +34,10 @@ public class EfxTranslator {
 
     switch (normalizeVersion(sdkVersion)) {
       case SDK_0_6:
-        return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(pathname, factory,
+        return eu.europa.ted.efx.sdk0.v6.Sdk6EfxTemplateTranslator.renderTemplate(pathname, factory,
             sdkVersion);
       case SDK_0_7:
-        return eu.europa.ted.efx.sdk0.v7.EfxTemplateTranslator.renderTemplate(pathname, factory,
+        return eu.europa.ted.efx.sdk0.v7.Sdk7EfxTemplateTranslator.renderTemplate(pathname, factory,
             sdkVersion);
       default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
@@ -49,10 +49,10 @@ public class EfxTranslator {
 
     switch (normalizeVersion(sdkVersion)) {
       case SDK_0_6:
-        return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(template, factory,
+        return eu.europa.ted.efx.sdk0.v6.Sdk6EfxTemplateTranslator.renderTemplate(template, factory,
             sdkVersion);
       case SDK_0_7:
-        return eu.europa.ted.efx.sdk0.v7.EfxTemplateTranslator.renderTemplate(template, factory,
+        return eu.europa.ted.efx.sdk0.v7.Sdk7EfxTemplateTranslator.renderTemplate(template, factory,
             sdkVersion);
       default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
@@ -64,10 +64,10 @@ public class EfxTranslator {
 
     switch (normalizeVersion(sdkVersion)) {
       case SDK_0_6:
-        return eu.europa.ted.efx.sdk0.v6.EfxTemplateTranslator.renderTemplate(stream, factory,
+        return eu.europa.ted.efx.sdk0.v6.Sdk6EfxTemplateTranslator.renderTemplate(stream, factory,
             sdkVersion);
       case SDK_0_7:
-        return eu.europa.ted.efx.sdk0.v7.EfxTemplateTranslator.renderTemplate(stream, factory,
+        return eu.europa.ted.efx.sdk0.v7.Sdk7EfxTemplateTranslator.renderTemplate(stream, factory,
             sdkVersion);
       default:
         throw new RuntimeException(String.format(SDK_VERSION_V_NOT_SUPPORTED, sdkVersion));
