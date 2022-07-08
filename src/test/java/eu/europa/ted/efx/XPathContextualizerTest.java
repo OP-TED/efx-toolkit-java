@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-public class XPathContextualizerTest {
+class XPathContextualizerTest {
 
   private String contextualize(final String context, final String xpath) {
     return XPathContextualizer.contextualize(new PathExpression(context),
@@ -13,123 +13,123 @@ public class XPathContextualizerTest {
   }
 
   @Test
-  public void testIdentical() {
+  void testIdentical() {
     assertEquals(".", contextualize("/a/b/c", "/a/b/c"));
   }
 
   @Test
-  public void testContextEmpty() {
+  void testContextEmpty() {
     assertEquals("/a/b/c", contextualize("", "/a/b/c"));
   }
 
   @Test
-  public void testUnderContext() {
+  void testUnderContext() {
     assertEquals("c", contextualize("/a/b", "/a/b/c"));
   }
 
   @Test
-  public void testAboveContext() {
+  void testAboveContext() {
     assertEquals("..", contextualize("/a/b/c", "/a/b"));
   }
 
   @Test
-  public void testSibling() {
+  void testSibling() {
     assertEquals("../d", contextualize("/a/b/c", "/a/b/d"));
   }
 
   @Test
-  public void testTwoLevelsDifferent() {
+  void testTwoLevelsDifferent() {
     assertEquals("../../x/y", contextualize("/a/b/c/d", "/a/b/x/y"));
   }
 
   @Test
-  public void testAllDifferent() {
+  void testAllDifferent() {
     assertEquals("../../../x/y/z", contextualize("/a/b/c/d", "/a/x/y/z"));
   }
 
   @Test
-  public void testDifferentRoot() {
+  void testDifferentRoot() {
     // Not realistic, as XML has a single root, but a valid result
     assertEquals("../../../x/y/z", contextualize("/a/b/c", "/x/y/z"));
   }
 
   @Test
-  public void testAttributeInXpath() {
+  void testAttributeInXpath() {
     assertEquals("../c/@attribute", contextualize("/a/b", "/a/c/@attribute"));
   }
 
   @Test
-  public void testAttributeInContext() {
+  void testAttributeInContext() {
     assertEquals("../c/d", contextualize("/a/b/@attribute", "/a/b/c/d"));
   }
 
   @Test
-  public void testAttributeInBoth() {
+  void testAttributeInBoth() {
     assertEquals("../@x", contextualize("/a/b/c/@d", "/a/b/c/@x"));
   }
 
   @Test
-  public void testAttributeInBothSame() {
+  void testAttributeInBothSame() {
     assertEquals(".", contextualize("/a/b/c/@d", "/a/b/c/@d"));
   }
 
   @Test
-  public void testPredicateInXpathLeaf() {
+  void testPredicateInXpathLeaf() {
     assertEquals("../d[x/y = 'z']", contextualize("/a/b/c", "/a/b/d[x/y = 'z']"));
   }
 
   @Test
-  public void testPredicateInContextLeaf() {
+  void testPredicateInContextLeaf() {
     assertEquals("../d", contextualize("/a/b/c[e/f = 'z']", "/a/b/d"));
   }
 
   @Test
-  public void testPredicateInBothLeaf() {
+  void testPredicateInBothLeaf() {
     assertEquals("../d[x = 'y']", contextualize("/a/b/c[e = 'f']", "/a/b/d[x = 'y']"));
   }
 
   @Test
-  public void testPredicateInXpathMiddle() {
+  void testPredicateInXpathMiddle() {
     assertEquals("../../b[x/y = 'z']/d", contextualize("/a/b/c", "/a/b[x/y = 'z']/d"));
   }
 
   @Test
-  public void testPredicateInContextMiddle() {
+  void testPredicateInContextMiddle() {
     assertEquals("../d", contextualize("/a/b[e/f = 'z']/c", "/a/b/d"));
   }
 
   @Test
-  public void testPredicateSameInBoth() {
+  void testPredicateSameInBoth() {
     assertEquals("../d", contextualize("/a/b[e/f = 'z']/c", "/a/b[e/f = 'z']/d"));
   }
 
   @Test
-  public void testPredicateDifferentOnSameElement() {
+  void testPredicateDifferentOnSameElement() {
     assertEquals("../../b[x = 'y']/d", contextualize("/a/b[e = 'f']/c", "/a/b[x = 'y']/d"));
   }
 
   @Test
-  public void testPredicateDifferent() {
+  void testPredicateDifferent() {
     assertEquals("../c[x = 'y']/d", contextualize("/a/b[e = 'f']/c", "/a/b/c[x = 'y']/d"));
   }
 
   @Test
-  public void testPredicateMoreInXpath() {
+  void testPredicateMoreInXpath() {
     assertEquals("../../b[e][f]/c/d", contextualize("/a/b[e]/c", "/a/b[e][f]/c/d"));
   }
 
   @Test
-  public void testPredicateMoreInContext() {
+  void testPredicateMoreInContext() {
     assertEquals("d", contextualize("/a/b[e][f]/c", "/a/b[e]/c/d"));
   }
 
   @Test
-  public void testSeveralPredicatesIdentical() {
+  void testSeveralPredicatesIdentical() {
     assertEquals("d", contextualize("/a/b[e][f]/c", "/a/b[e][f]/c/d"));
   }
 
   @Test
-  public void testSeveralPredicatesOneDifferent() {
+  void testSeveralPredicatesOneDifferent() {
     assertEquals("../../b[e][x]/c/d", contextualize("/a/b[e][f]/c", "/a/b[e][x]/c/d"));
   }
 }

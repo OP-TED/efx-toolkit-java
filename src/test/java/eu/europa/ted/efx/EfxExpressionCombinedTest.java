@@ -8,8 +8,7 @@ import eu.europa.ted.efx.translator.EfxTranslator;
 /**
  * Test for EFX expressions that combine several aspects of the language.
  */
-public class EfxExpressionCombinedTest {
-
+class EfxExpressionCombinedTest {
   final private String SDK_VERSION = "eforms-sdk-0.7";
 
   private String test(final String context, final String expression) {
@@ -18,29 +17,29 @@ public class EfxExpressionCombinedTest {
   }
 
   @Test
-  public void testNotAnd() {
+  void testNotAnd() {
     assertEquals("not(1 = 2) and (2 = 2)", test("BT-00-Text", "not(1 == 2) and (2 == 2)"));
   }
 
   @Test
-  public void testNotPresentAndNotPresent() {
+  void testNotPresentAndNotPresent() {
     assertEquals("not(PathNode/TextField) and not(PathNode/IntegerField)",
         test("ND-Root", "BT-00-Text is not present and BT-00-Integer is not present"));
   }
 
   @Test
-  public void testCountWithNodeContextOverride() {
+  void testCountWithNodeContextOverride() {
     assertEquals("count(../../PathNode/CodeField) = 1",
         test("BT-00-Text", "count(ND-Root::BT-00-Code) == 1"));
   }
 
   @Test
-  public void testCountWithAbsoluteFieldReference() {
+  void testCountWithAbsoluteFieldReference() {
     assertEquals("count(/*/PathNode/CodeField) = 1", test("BT-00-Text", "count(/BT-00-Code) == 1"));
   }
 
   @Test
-  public void testCountWithAbsoluteFieldReferenceAndPredicate() {
+  void testCountWithAbsoluteFieldReferenceAndPredicate() {
     assertEquals("count(/*/PathNode/CodeField[../IndicatorField = true()]) = 1",
         test("BT-00-Text", "count(/BT-00-Code[BT-00-Indicator == TRUE]) == 1"));
   }
