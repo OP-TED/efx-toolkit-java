@@ -59,6 +59,7 @@
     <antlr4.version>4.9.3</antlr4.version>
     <classindex.version>3.11</classindex.version>
     <logback.version>1.2.11</logback.version>
+    <slf4j.version>1.7.36</slf4j.version>
 
     <!-- Plugins -->
     <compiler.plugin.version>3.10.1</compiler.plugin.version>
@@ -71,6 +72,11 @@
         <groupId>org.atteo.classindex</groupId>
         <artifactId>classindex</artifactId>
         <version>${classindex.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -102,6 +108,15 @@
       <groupId>org.atteo.classindex</groupId>
       <artifactId>classindex</artifactId>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
