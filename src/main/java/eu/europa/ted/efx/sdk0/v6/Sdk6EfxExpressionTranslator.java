@@ -12,6 +12,9 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
@@ -91,10 +94,12 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
  * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link Sdk6EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates you
- * need to use the {@link Sdk6EfxTemplateTranslator} which derives from this class.
+ * {@link Sdk6EfxExpressionTranslator} only focuses on EFX expressions. To translate EFX templates
+ * you need to use the {@link Sdk6EfxTemplateTranslator} which derives from this class.
  */
-public class Sdk6EfxExpressionTranslator extends EfxBaseListener {
+@SdkComponent(versions= {"0.6"}, componentType = SdkComponentTypeEnum.EFX_EXPRESSION_TRANSLATOR)
+public class Sdk6EfxExpressionTranslator extends EfxBaseListener
+    implements EfxExpressionTranslator {
 
   private static final String NOT_MODIFIER =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
@@ -114,29 +119,37 @@ public class Sdk6EfxExpressionTranslator extends EfxBaseListener {
   /**
    * The context stack is used to keep track of context switching in nested expressions.
    */
-  protected final ContextStack efxContext;
+  protected ContextStack efxContext;
 
   /**
    * Symbols are the field identifiers and node identifiers. The symbols map is used to resolve them
    * to their location in the data source (typically their XPath).
    */
-  protected final SymbolResolver symbols;
+  protected SymbolResolver symbols;
 
   /**
    * The ScriptGenerator is called to determine the target language syntax whenever needed.
    */
-  protected final ScriptGenerator script;
+  protected ScriptGenerator script;
 
-  public Sdk6EfxExpressionTranslator(final SymbolResolver symbols,
-      final ScriptGenerator scriptGenerator) {
-    this.symbols = symbols;
+  protected BaseErrorListener errorListener;
+
+  public Sdk6EfxExpressionTranslator() {}
+
+  @Override
+  public Sdk6EfxExpressionTranslator init(final SymbolResolver symbolResolver,
+      final ScriptGenerator scriptGenerator, BaseErrorListener errorListener) {
+    this.symbols = symbolResolver;
     this.script = scriptGenerator;
+    this.errorListener = errorListener;
+
     this.efxContext = new ContextStack(symbols);
+
+    return this;
   }
 
-  public static String translateExpression(final String context, final String expression,
-      final SymbolResolver symbols, final ScriptGenerator scriptGenerator,
-      final BaseErrorListener errorListener) {
+  @Override
+  public String translateExpression(final String context, final String expression) {
     final EfxLexer lexer =
         new EfxLexer(CharStreams.fromString(String.format("%s::${%s}", context, expression)));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -151,12 +164,10 @@ public class Sdk6EfxExpressionTranslator extends EfxBaseListener {
 
     final ParseTree tree = parser.singleExpression();
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final Sdk6EfxExpressionTranslator translator =
-        new Sdk6EfxExpressionTranslator(symbols, scriptGenerator);
 
-    walker.walk(translator, tree);
+    walker.walk(this, tree);
 
-    return translator.getTranslatedScript();
+    return getTranslatedScript();
   }
 
   /**
@@ -442,7 +453,6 @@ public class Sdk6EfxExpressionTranslator extends EfxBaseListener {
   public void exitCodeList(CodeListContext ctx) {
     if (this.stack.empty()) {
       this.stack.push(this.script.composeList(Collections.emptyList(), StringListExpression.class));
-      return;
     }
   }
 
