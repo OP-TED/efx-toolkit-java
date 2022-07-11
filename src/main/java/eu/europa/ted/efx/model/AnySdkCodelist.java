@@ -2,15 +2,17 @@ package eu.europa.ted.efx.model;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.StringJoiner;
+import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.SdkCodelist;
 
 /**
  * Representation of an SdkCodelist for usage in the symbols map.
  *
  * @author rouschr
  */
-public class SdkCodelist implements Comparable<SdkCodelist> {
-
+@SdkComponent(componentType = SdkComponentTypeEnum.CODELIST)
+public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
   private final String codelistId;
 
   /**
@@ -20,6 +22,11 @@ public class SdkCodelist implements Comparable<SdkCodelist> {
 
   private final List<String> codes;
 
+  @SuppressWarnings("unused")
+  private AnySdkCodelist() {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * @param codelistId The identifier, not really unique as the version also matters, see .gc
    *        LongName tag. Inside the same SDK we should not have different versions of the same
@@ -27,32 +34,26 @@ public class SdkCodelist implements Comparable<SdkCodelist> {
    * @param codelistVersion The codelist version string, see Version tag in .gc files. This is NOT
    *        the SDK version. It can be useful for debug purposes and to avoid conflicts.
    */
-  public SdkCodelist(final String codelistId, final String codelistVersion,
+  public AnySdkCodelist(final String codelistId, final String codelistVersion,
       final List<String> codes) {
     this.codelistId = codelistId;
     this.codelistVersion = codelistVersion;
     this.codes = codes;
   }
 
+  @Override
   public String getCodelistId() {
     return codelistId;
   }
 
+  @Override
   public String getVersion() {
     return codelistVersion;
   }
 
+  @Override
   public List<String> getCodes() {
     return codes;
-  }
-
-  public String toString(CharSequence delimiter, CharSequence prefix, CharSequence suffix,
-      Character quote) {
-    final StringJoiner joiner = new StringJoiner(delimiter, prefix, suffix);
-    for (final String code : codes) {
-      joiner.add(quote + code + quote);
-    }
-    return joiner.toString();
   }
 
   @Override
@@ -61,7 +62,7 @@ public class SdkCodelist implements Comparable<SdkCodelist> {
   }
 
   @Override
-  public int compareTo(final SdkCodelist cl) {
+  public int compareTo(final AnySdkCodelist cl) {
     return Objects.compare(this.getCodelistId() + this.getVersion(),
         cl.getCodelistId() + cl.getVersion(), String::compareTo);
   }
@@ -77,7 +78,7 @@ public class SdkCodelist implements Comparable<SdkCodelist> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    final SdkCodelist other = (SdkCodelist) obj;
+    final AnySdkCodelist other = (AnySdkCodelist) obj;
     return Objects.equals(codelistId, other.codelistId)
         && Objects.equals(codelistVersion, other.codelistVersion);
   }

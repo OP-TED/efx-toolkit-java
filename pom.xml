@@ -114,7 +114,6 @@
     <dependency>
       <groupId>org.atteo.classindex</groupId>
       <artifactId>classindex</artifactId>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -337,4 +336,3 @@
     </profile>
   </profiles>
 </project>
-
