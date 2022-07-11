@@ -16,16 +16,16 @@ public class EfxTranslatorFactory extends AbstractSdkObjectFactory {
   public static EfxExpressionTranslator getEfxExpressionTranslator(final String sdkVersion,
       final TranslatorDependencyFactory factory) throws InstantiationException {
     return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
-        SdkComponentTypeEnum.EFX_EXPRESSION_TRANSLATOR, EfxExpressionTranslator.class)
-        .init(factory.createSymbolResolver(sdkVersion), factory.createScriptGenerator(),
-            factory.createErrorListener());
+        SdkComponentTypeEnum.EFX_EXPRESSION_TRANSLATOR, EfxExpressionTranslator.class,
+        factory.createSymbolResolver(sdkVersion), factory.createScriptGenerator(),
+        factory.createErrorListener());
   }
 
   public static EfxTemplateProcessor getEfxTemplateTranslator(final String sdkVersion,
       final TranslatorDependencyFactory factory) throws InstantiationException {
     return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
-        SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR, EfxTemplateProcessor.class)
-        .init(factory.createMarkupGenerator(), factory.createSymbolResolver(sdkVersion),
-            factory.createScriptGenerator(), factory.createErrorListener());
+        SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR, EfxTemplateProcessor.class,
+        factory.createMarkupGenerator(), factory.createSymbolResolver(sdkVersion),
+        factory.createScriptGenerator(), factory.createErrorListener());
   }
 }

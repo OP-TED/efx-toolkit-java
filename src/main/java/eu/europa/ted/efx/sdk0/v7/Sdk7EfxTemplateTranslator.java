@@ -101,17 +101,17 @@ public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
    */
   ContentBlockStack blockStack = new ContentBlockStack();
 
-  public Sdk7EfxTemplateTranslator() {}
+  @SuppressWarnings("unused")
+  private Sdk7EfxTemplateTranslator() {
+    super();
+  }
 
-  @Override
-  public Sdk7EfxTemplateTranslator init(MarkupGenerator markupGenerator,
-      SymbolResolver symbolResolver, ScriptGenerator scriptGenerator,
-      BaseErrorListener errorListener) {
+  public Sdk7EfxTemplateTranslator(final MarkupGenerator markupGenerator,
+      final SymbolResolver symbolResolver, final ScriptGenerator scriptGenerator,
+      final BaseErrorListener errorListener) {
+    super(symbolResolver, scriptGenerator, errorListener);
+
     this.markup = markupGenerator;
-
-    super.init(symbolResolver, scriptGenerator, errorListener);
-
-    return this;
   }
 
   /**
@@ -377,8 +377,8 @@ public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class Sdk7EfxExpressionTranslator. After the expression is translated, the result is
-   * passed through the renderer.
+   * class Sdk7EfxExpressionTranslator. After the expression is translated, the result is passed
+   * through the renderer.
    */
   @Override
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {

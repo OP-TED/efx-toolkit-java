@@ -134,18 +134,17 @@ public class Sdk6EfxExpressionTranslator extends EfxBaseListener
 
   protected BaseErrorListener errorListener;
 
-  public Sdk6EfxExpressionTranslator() {}
+  protected Sdk6EfxExpressionTranslator() {
+    throw new UnsupportedOperationException();
+  }
 
-  @Override
-  public EfxExpressionTranslator init(final SymbolResolver symbolResolver,
+  public Sdk6EfxExpressionTranslator(final SymbolResolver symbolResolver,
       final ScriptGenerator scriptGenerator, final BaseErrorListener errorListener) {
     this.symbols = symbolResolver;
     this.script = scriptGenerator;
     this.errorListener = errorListener;
 
     this.efxContext = new ContextStack(symbols);
-
-    return this;
   }
 
   @Override
