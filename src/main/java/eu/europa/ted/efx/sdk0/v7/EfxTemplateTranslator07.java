@@ -12,9 +12,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
-import eu.europa.ted.efx.interfaces.EfxTemplateProcessor;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
+import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -46,14 +46,14 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.sdk0.v7.EfxParser.ValueTemplateContext;
 
 /**
- * The EfxTemplateTranslator extends the {@link Sdk7EfxExpressionTranslator} to provide additional
+ * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator07} to provide additional
  * translation capabilities for EFX templates. If has been implemented as an extension to the
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@SdkComponent(versions = {"0.7"}, componentType = SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR)
-public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
-    implements EfxTemplateProcessor {
+@SdkComponent(versions = {"0.7"}, componentType = SdkComponentType.EFX_TEMPLATE_TRANSLATOR)
+public class EfxTemplateTranslator07 extends EfxExpressionTranslator07
+    implements EfxTemplateTranslator {
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
@@ -102,11 +102,11 @@ public class Sdk7EfxTemplateTranslator extends Sdk7EfxExpressionTranslator
   ContentBlockStack blockStack = new ContentBlockStack();
 
   @SuppressWarnings("unused")
-  private Sdk7EfxTemplateTranslator() {
+  private EfxTemplateTranslator07() {
     super();
   }
 
-  public Sdk7EfxTemplateTranslator(final MarkupGenerator markupGenerator,
+  public EfxTemplateTranslator07(final MarkupGenerator markupGenerator,
       final SymbolResolver symbolResolver, final ScriptGenerator scriptGenerator,
       final BaseErrorListener errorListener) {
     super(symbolResolver, scriptGenerator, errorListener);

@@ -1,14 +1,10 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
-import eu.europa.ted.efx.interfaces.SdkField;
 
-@SdkComponent(componentType = SdkComponentTypeEnum.FIELD)
-public class AnySdkField implements Comparable<AnySdkField>, SdkField {
+public abstract class SdkField implements Comparable<SdkField> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
@@ -17,11 +13,11 @@ public class AnySdkField implements Comparable<AnySdkField>, SdkField {
   private final String rootCodelistId;
 
   @SuppressWarnings("unused")
-  private AnySdkField() {
+  private SdkField() {
     throw new UnsupportedOperationException();
   }
 
-  public AnySdkField(final String id, final String type, final String parentNodeId,
+  public SdkField(final String id, final String type, final String parentNodeId,
       final String xpathAbsolute, final String xpathRelative, final String rootCodelistId) {
     this.id = id;
     this.parentNodeId = parentNodeId;
@@ -31,7 +27,7 @@ public class AnySdkField implements Comparable<AnySdkField>, SdkField {
     this.rootCodelistId = rootCodelistId;
   }
 
-  public AnySdkField(JsonNode field) {
+  public SdkField(JsonNode field) {
     this.id = field.get("id").asText(null);
     this.parentNodeId = field.get("parentNodeId").asText(null);
     this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
@@ -89,7 +85,7 @@ public class AnySdkField implements Comparable<AnySdkField>, SdkField {
    * Helps with hash maps collisions. Should be consistent with equals.
    */
   @Override
-  public int compareTo(AnySdkField o) {
+  public int compareTo(SdkField o) {
     return this.getId().compareTo(o.getId());
   }
 
@@ -104,7 +100,7 @@ public class AnySdkField implements Comparable<AnySdkField>, SdkField {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    AnySdkField other = (AnySdkField) obj;
+    SdkField other = (SdkField) obj;
     return Objects.equals(id, other.id);
   }
 

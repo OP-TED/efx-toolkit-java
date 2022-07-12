@@ -1,18 +1,14 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.List;
 import java.util.Objects;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
-import eu.europa.ted.efx.interfaces.SdkCodelist;
 
 /**
  * Representation of an SdkCodelist for usage in the symbols map.
  *
  * @author rouschr
  */
-@SdkComponent(componentType = SdkComponentTypeEnum.CODELIST)
-public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
+public abstract class SdkCodelist implements Comparable<SdkCodelist> {
   private final String codelistId;
 
   /**
@@ -23,7 +19,7 @@ public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
   private final List<String> codes;
 
   @SuppressWarnings("unused")
-  private AnySdkCodelist() {
+  private SdkCodelist() {
     throw new UnsupportedOperationException();
   }
 
@@ -34,24 +30,21 @@ public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
    * @param codelistVersion The codelist version string, see Version tag in .gc files. This is NOT
    *        the SDK version. It can be useful for debug purposes and to avoid conflicts.
    */
-  public AnySdkCodelist(final String codelistId, final String codelistVersion,
+  public SdkCodelist(final String codelistId, final String codelistVersion,
       final List<String> codes) {
     this.codelistId = codelistId;
     this.codelistVersion = codelistVersion;
     this.codes = codes;
   }
 
-  @Override
   public String getCodelistId() {
     return codelistId;
   }
 
-  @Override
   public String getVersion() {
     return codelistVersion;
   }
 
-  @Override
   public List<String> getCodes() {
     return codes;
   }
@@ -62,7 +55,7 @@ public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
   }
 
   @Override
-  public int compareTo(final AnySdkCodelist cl) {
+  public int compareTo(final SdkCodelist cl) {
     return Objects.compare(this.getCodelistId() + this.getVersion(),
         cl.getCodelistId() + cl.getVersion(), String::compareTo);
   }
@@ -78,7 +71,7 @@ public class AnySdkCodelist implements Comparable<AnySdkCodelist>, SdkCodelist {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    final AnySdkCodelist other = (AnySdkCodelist) obj;
+    final SdkCodelist other = (SdkCodelist) obj;
     return Objects.equals(codelistId, other.codelistId)
         && Objects.equals(codelistVersion, other.codelistVersion);
   }

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
-import eu.europa.ted.efx.translator.EfxTranslator;
 
 class EfxExpressionTranslatorTest {
   final private String SDK_VERSION = "eforms-sdk-0.7";
