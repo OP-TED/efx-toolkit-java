@@ -61,7 +61,7 @@ public abstract class AbstractSdkObjectFactory {
 
   @SuppressWarnings("unchecked")
   protected <T> T getComponentImpl(String sdkVersion, final SdkComponentTypeEnum componentType,
-      final Class<T> intf) throws InstantiationException {
+      final Class<T> intf, Object... initArgs) throws InstantiationException {
     SdkComponentDescriptor<T> descriptor =
         (SdkComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(sdkVersion))
             .orElseGet(Collections::emptyMap).get(componentType);
@@ -84,6 +84,6 @@ public abstract class AbstractSdkObjectFactory {
       }
     }
 
-    return descriptor.createInstance();
+    return descriptor.createInstance(initArgs);
   }
 }

@@ -92,18 +92,15 @@ public class Sdk7EfxExpressionTranslator extends EfxBaseListener
    */
   protected ScriptGenerator script;
 
-  public Sdk7EfxExpressionTranslator() {}
+  protected Sdk7EfxExpressionTranslator() {}
 
-  @Override
-  public Sdk7EfxExpressionTranslator init(final SymbolResolver symbolResolver,
+  public Sdk7EfxExpressionTranslator(final SymbolResolver symbolResolver,
       final ScriptGenerator scriptGenerator, final BaseErrorListener errorListener) {
     this.symbols = symbolResolver;
     this.script = scriptGenerator;
     this.errorListener = errorListener;
 
     this.efxContext = new ContextStack(symbols);
-
-    return this;
   }
 
   @Override

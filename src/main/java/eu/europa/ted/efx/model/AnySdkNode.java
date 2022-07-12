@@ -2,18 +2,22 @@ package eu.europa.ted.efx.model;
 
 import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;
+import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.SdkNode;
 
 /**
  * A node is something like a section. Nodes can be parents of other nodes or parents of fields.
  */
-public class SdkNode implements Comparable<SdkNode> {
+@SdkComponent(componentType = SdkComponentTypeEnum.NODE)
+public class AnySdkNode implements Comparable<AnySdkNode>, SdkNode {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
   private final String parentId;
   private final boolean repeatable;
 
-  public SdkNode(final String id, final String parentId, final String xpathAbsolute,
+  public AnySdkNode(final String id, final String parentId, final String xpathAbsolute,
       final String xpathRelative, final boolean repeatable) {
     this.id = id;
     this.parentId = parentId;
@@ -22,7 +26,7 @@ public class SdkNode implements Comparable<SdkNode> {
     this.repeatable = repeatable;
   }
 
-  public SdkNode(JsonNode node) {
+  public AnySdkNode(JsonNode node) {
     this.id = node.get("id").asText(null);
     this.parentId = node.has("parentId") ? node.get("parentId").asText(null) : null;
     this.xpathAbsolute = node.get("xpathAbsolute").asText(null);
@@ -52,7 +56,7 @@ public class SdkNode implements Comparable<SdkNode> {
   }
 
   @Override
-  public int compareTo(SdkNode o) {
+  public int compareTo(AnySdkNode o) {
     return o.getId().compareTo(o.getId());
   }
 
@@ -67,7 +71,7 @@ public class SdkNode implements Comparable<SdkNode> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    SdkNode other = (SdkNode) obj;
+    AnySdkNode other = (AnySdkNode) obj;
     return Objects.equals(id, other.id);
   }
 
