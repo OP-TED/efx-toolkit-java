@@ -1,16 +1,21 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class SdkField implements Comparable<SdkField> {
+public abstract class SdkField implements Comparable<SdkField> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
   private final String parentNodeId;
   private final String type;
   private final String rootCodelistId;
+
+  @SuppressWarnings("unused")
+  private SdkField() {
+    throw new UnsupportedOperationException();
+  }
 
   public SdkField(final String id, final String type, final String parentNodeId,
       final String xpathAbsolute, final String xpathRelative, final String rootCodelistId) {
@@ -28,6 +33,11 @@ public class SdkField implements Comparable<SdkField> {
     this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
     this.xpathRelative = field.get("xpathRelative").asText(null);
     this.type = field.get("type").asText(null);
+
+    this.rootCodelistId = createCodelistId(field);
+  }
+
+  private String createCodelistId(JsonNode field) {
     Supplier<String> rootCodelistIdSupplier = () -> {
       final JsonNode codelistNode = field.get("codeList");
       if (codelistNode == null) {
@@ -39,11 +49,12 @@ public class SdkField implements Comparable<SdkField> {
         return null;
       }
 
-      final String parentCodelistId = valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
+      final String parentCodelistId =
+          valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
       return parentCodelistId == null ? valueNode.get("id").asText(null) : parentCodelistId;
     };
 
-    this.rootCodelistId = rootCodelistIdSupplier.get();
+    return rootCodelistIdSupplier.get();
   }
 
   public String getId() {

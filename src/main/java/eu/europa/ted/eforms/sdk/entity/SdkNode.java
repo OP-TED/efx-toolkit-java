@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * A node is something like a section. Nodes can be parents of other nodes or parents of fields.
  */
-public class SdkNode implements Comparable<SdkNode> {
+public abstract class SdkNode implements Comparable<SdkNode> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
@@ -27,7 +27,8 @@ public class SdkNode implements Comparable<SdkNode> {
     this.parentId = node.has("parentId") ? node.get("parentId").asText(null) : null;
     this.xpathAbsolute = node.get("xpathAbsolute").asText(null);
     this.xpathRelative = node.get("xpathRelative").asText(null);
-    this.repeatable = node.hasNonNull("repeatable") ? node.get("repeatable").asBoolean(false) : false;
+    this.repeatable =
+        node.hasNonNull("repeatable") ? node.get("repeatable").asBoolean(false) : false;
   }
 
   public String getId() {
