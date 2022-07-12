@@ -4,9 +4,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
 import eu.europa.ted.eforms.sdk.factory.AbstractSdkObjectFactory;
-import eu.europa.ted.efx.interfaces.SdkCodelist;
-import eu.europa.ted.efx.interfaces.SdkField;
-import eu.europa.ted.efx.interfaces.SdkNode;
 
 public class EfxEntityFactory extends AbstractSdkObjectFactory {
   public static final EfxEntityFactory INSTANCE = new EfxEntityFactory();
