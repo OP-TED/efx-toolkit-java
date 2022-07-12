@@ -10,14 +10,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.europa.ted.efx.interfaces.SdkCodelist;
-import eu.europa.ted.efx.interfaces.SdkField;
-import eu.europa.ted.efx.interfaces.SdkNode;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.SdkCodelist;
+import eu.europa.ted.efx.model.SdkField;
+import eu.europa.ted.efx.model.SdkNode;
+import eu.europa.ted.efx.sdk0.v7.model.SdkCodelist07;
 import eu.europa.ted.efx.sdk0.v7.model.SdkField07;
 import eu.europa.ted.efx.sdk0.v7.model.SdkNode07;
-import eu.europa.ted.efx.sdk0.v7.model.SdkCodelist07;
-import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class SymbolResolverMock implements SymbolResolver {

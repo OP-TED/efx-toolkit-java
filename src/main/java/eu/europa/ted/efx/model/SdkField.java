@@ -3,9 +3,8 @@ package eu.europa.ted.efx.model;
 import java.util.Objects;
 import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
-import eu.europa.ted.efx.interfaces.SdkField;
 
-public abstract class SdkFieldBase implements Comparable<SdkFieldBase>, SdkField {
+public abstract class SdkField implements Comparable<SdkField> {
   private final String id;
   private final String xpathAbsolute;
   private final String xpathRelative;
@@ -14,11 +13,11 @@ public abstract class SdkFieldBase implements Comparable<SdkFieldBase>, SdkField
   private final String rootCodelistId;
 
   @SuppressWarnings("unused")
-  private SdkFieldBase() {
+  private SdkField() {
     throw new UnsupportedOperationException();
   }
 
-  public SdkFieldBase(final String id, final String type, final String parentNodeId,
+  public SdkField(final String id, final String type, final String parentNodeId,
       final String xpathAbsolute, final String xpathRelative, final String rootCodelistId) {
     this.id = id;
     this.parentNodeId = parentNodeId;
@@ -28,7 +27,7 @@ public abstract class SdkFieldBase implements Comparable<SdkFieldBase>, SdkField
     this.rootCodelistId = rootCodelistId;
   }
 
-  public SdkFieldBase(JsonNode field) {
+  public SdkField(JsonNode field) {
     this.id = field.get("id").asText(null);
     this.parentNodeId = field.get("parentNodeId").asText(null);
     this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
@@ -86,7 +85,7 @@ public abstract class SdkFieldBase implements Comparable<SdkFieldBase>, SdkField
    * Helps with hash maps collisions. Should be consistent with equals.
    */
   @Override
-  public int compareTo(SdkFieldBase o) {
+  public int compareTo(SdkField o) {
     return this.getId().compareTo(o.getId());
   }
 
@@ -101,7 +100,7 @@ public abstract class SdkFieldBase implements Comparable<SdkFieldBase>, SdkField
     if (getClass() != obj.getClass()) {
       return false;
     }
-    SdkFieldBase other = (SdkFieldBase) obj;
+    SdkField other = (SdkField) obj;
     return Objects.equals(id, other.id);
   }
 

@@ -2,14 +2,13 @@ package eu.europa.ted.efx.model;
 
 import java.util.List;
 import java.util.Objects;
-import eu.europa.ted.efx.interfaces.SdkCodelist;
 
 /**
  * Representation of an SdkCodelist for usage in the symbols map.
  *
  * @author rouschr
  */
-public abstract class SdkCodelistBase implements Comparable<SdkCodelistBase>, SdkCodelist {
+public abstract class SdkCodelist implements Comparable<SdkCodelist> {
   private final String codelistId;
 
   /**
@@ -20,7 +19,7 @@ public abstract class SdkCodelistBase implements Comparable<SdkCodelistBase>, Sd
   private final List<String> codes;
 
   @SuppressWarnings("unused")
-  private SdkCodelistBase() {
+  private SdkCodelist() {
     throw new UnsupportedOperationException();
   }
 
@@ -31,24 +30,21 @@ public abstract class SdkCodelistBase implements Comparable<SdkCodelistBase>, Sd
    * @param codelistVersion The codelist version string, see Version tag in .gc files. This is NOT
    *        the SDK version. It can be useful for debug purposes and to avoid conflicts.
    */
-  public SdkCodelistBase(final String codelistId, final String codelistVersion,
+  public SdkCodelist(final String codelistId, final String codelistVersion,
       final List<String> codes) {
     this.codelistId = codelistId;
     this.codelistVersion = codelistVersion;
     this.codes = codes;
   }
 
-  @Override
   public String getCodelistId() {
     return codelistId;
   }
 
-  @Override
   public String getVersion() {
     return codelistVersion;
   }
 
-  @Override
   public List<String> getCodes() {
     return codes;
   }
@@ -59,7 +55,7 @@ public abstract class SdkCodelistBase implements Comparable<SdkCodelistBase>, Sd
   }
 
   @Override
-  public int compareTo(final SdkCodelistBase cl) {
+  public int compareTo(final SdkCodelist cl) {
     return Objects.compare(this.getCodelistId() + this.getVersion(),
         cl.getCodelistId() + cl.getVersion(), String::compareTo);
   }
@@ -75,7 +71,7 @@ public abstract class SdkCodelistBase implements Comparable<SdkCodelistBase>, Sd
     if (getClass() != obj.getClass()) {
       return false;
     }
-    final SdkCodelistBase other = (SdkCodelistBase) obj;
+    final SdkCodelist other = (SdkCodelist) obj;
     return Objects.equals(codelistId, other.codelistId)
         && Objects.equals(codelistVersion, other.codelistVersion);
   }
