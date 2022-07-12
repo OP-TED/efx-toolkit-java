@@ -1,13 +1,13 @@
-# EFX Toolkit 0.1.1 Release Notes
+# EFX Toolkit 0.2.0 Release Notes
 
-EFX Toolkit 0.1.1 fixes an issue that we overlooked with 0.1.0 that was preventing us from publishing the EFX Toolkit to Maven Central.
+The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also provides an implementation that turns an EFX expression into XPath.
 
-# EFX Toolkit 0.1.0 Release Notes
+In this release we added support for the new EFX language features that were introduced with eForms SDK 0.7.0.
 
-This is the first release of the EFX toolkit, a Java library for the [eForms Expression Language (EFX)](https://docs.ted.europa.eu/eforms/latest/efx)
+We also reorganized the code of the toolkit so that it can function with multiple versions of the SDK. You can use our approach as an example on how you can handle several incompatible versions of the SDK from one application that needs to read them.
 
-The EFX Toolkit for Java developers is a library that enables the transpilation of EFX expressions and templates to different target languages. It also provides an implementation that turns an EFX expression into XPath.
+Documentation for the EFX Toolkit is available at: https://docs.ted.europa.eu/eforms/latest/efx-toolkit
 
-The documentation is available at: https://docs.ted.europa.eu/eforms/latest/efx-toolkit
-
-This version depends on the eForms SDK version 0.6.2, and uses the EFX grammar that it provides.
+This version of the EFX Toolkit has a compile-time dependency on the following versions of eForms SDK versions and uses the EFX grammar that each version provides:
+- eForms SDK 0.6.x
+- eForms SDK 0.7.x
