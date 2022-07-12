@@ -30,21 +30,24 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
    * @param codelistVersion The codelist version string, see Version tag in .gc files. This is NOT
    *        the SDK version. It can be useful for debug purposes and to avoid conflicts.
    */
-  public SdkCodelist(final String codelistId, final String codelistVersion,
+  public AnySdkCodelist(final String codelistId, final String codelistVersion,
       final List<String> codes) {
     this.codelistId = codelistId;
     this.codelistVersion = codelistVersion;
     this.codes = codes;
   }
 
+  @Override
   public String getCodelistId() {
     return codelistId;
   }
 
+  @Override
   public String getVersion() {
     return codelistVersion;
   }
 
+  @Override
   public List<String> getCodes() {
     return codes;
   }
@@ -55,7 +58,7 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
   }
 
   @Override
-  public int compareTo(final SdkCodelist cl) {
+  public int compareTo(final AnySdkCodelist cl) {
     return Objects.compare(this.getCodelistId() + this.getVersion(),
         cl.getCodelistId() + cl.getVersion(), String::compareTo);
   }
@@ -71,7 +74,7 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    final SdkCodelist other = (SdkCodelist) obj;
+    final AnySdkCodelist other = (AnySdkCodelist) obj;
     return Objects.equals(codelistId, other.codelistId)
         && Objects.equals(codelistVersion, other.codelistVersion);
   }

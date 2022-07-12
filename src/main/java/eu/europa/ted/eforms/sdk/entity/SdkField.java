@@ -3,6 +3,9 @@ package eu.europa.ted.eforms.sdk.entity;
 import java.util.Objects;
 import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
+import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.efx.interfaces.SdkField;
 
 public abstract class SdkField implements Comparable<SdkField> {
   private final String id;
@@ -27,7 +30,7 @@ public abstract class SdkField implements Comparable<SdkField> {
     this.rootCodelistId = rootCodelistId;
   }
 
-  public SdkField(JsonNode field) {
+  public AnySdkField(JsonNode field) {
     this.id = field.get("id").asText(null);
     this.parentNodeId = field.get("parentNodeId").asText(null);
     this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
@@ -85,7 +88,7 @@ public abstract class SdkField implements Comparable<SdkField> {
    * Helps with hash maps collisions. Should be consistent with equals.
    */
   @Override
-  public int compareTo(SdkField o) {
+  public int compareTo(AnySdkField o) {
     return this.getId().compareTo(o.getId());
   }
 
@@ -100,7 +103,7 @@ public abstract class SdkField implements Comparable<SdkField> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    SdkField other = (SdkField) obj;
+    AnySdkField other = (AnySdkField) obj;
     return Objects.equals(id, other.id);
   }
 
