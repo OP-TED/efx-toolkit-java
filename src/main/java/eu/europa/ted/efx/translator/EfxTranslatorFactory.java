@@ -3,7 +3,7 @@ package eu.europa.ted.efx.translator;
 import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
 import eu.europa.ted.eforms.sdk.factory.AbstractSdkObjectFactory;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
-import eu.europa.ted.efx.interfaces.EfxTemplateProcessor;
+import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 
 public class EfxTranslatorFactory extends AbstractSdkObjectFactory {
@@ -21,10 +21,10 @@ public class EfxTranslatorFactory extends AbstractSdkObjectFactory {
         factory.createErrorListener());
   }
 
-  public static EfxTemplateProcessor getEfxTemplateTranslator(final String sdkVersion,
+  public static EfxTemplateTranslator getEfxTemplateTranslator(final String sdkVersion,
       final TranslatorDependencyFactory factory) throws InstantiationException {
     return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
-        SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR, EfxTemplateProcessor.class,
+        SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR, EfxTemplateTranslator.class,
         factory.createMarkupGenerator(), factory.createSymbolResolver(sdkVersion),
         factory.createScriptGenerator(), factory.createErrorListener());
   }
