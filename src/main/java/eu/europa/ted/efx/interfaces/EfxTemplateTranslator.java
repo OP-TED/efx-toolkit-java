@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-public interface EfxTemplateProcessor extends EfxExpressionTranslator {
+public interface EfxTemplateTranslator extends EfxExpressionTranslator {
   /**
    * Opens the indicated EFX file and translates the EFX template it contains.
    */
