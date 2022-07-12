@@ -1,11 +1,11 @@
-package eu.europa.ted.efx.sdk0.v6.model;
+package eu.europa.ted.efx.sdk0.v6.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
-import eu.europa.ted.efx.model.SdkField;
+import eu.europa.ted.eforms.sdk.entity.SdkField;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
 
-@SdkComponent(versions = {"0.6"}, componentType = SdkComponentTypeEnum.FIELD)
+@SdkComponent(versions = {"0.6"}, componentType = SdkComponentType.FIELD)
 public class SdkField06 extends SdkField {
 
   public SdkField06(String id, String type, String parentNodeId, String xpathAbsolute,

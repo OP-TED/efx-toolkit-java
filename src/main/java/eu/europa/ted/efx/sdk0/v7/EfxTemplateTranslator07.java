@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -51,7 +51,7 @@ import eu.europa.ted.efx.sdk0.v7.EfxParser.ValueTemplateContext;
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@SdkComponent(versions = {"0.7"}, componentType = SdkComponentTypeEnum.EFX_TEMPLATE_TRANSLATOR)
+@SdkComponent(versions = {"0.7"}, componentType = SdkComponentType.EFX_TEMPLATE_TRANSLATOR)
 public class EfxTemplateTranslator07 extends EfxExpressionTranslator07
     implements EfxTemplateTranslator {
 

@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;

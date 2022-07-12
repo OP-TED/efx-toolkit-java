@@ -1,4 +1,4 @@
-package eu.europa.ted.eforms.sdk.factory;
+package eu.europa.ted.eforms.sdk.selector.component;
 
 import java.text.MessageFormat;
 import java.util.Collections;
@@ -8,18 +8,15 @@ import java.util.Optional;
 import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import eu.europa.ted.eforms.sdk.annotation.SdkComponent;
-import eu.europa.ted.eforms.sdk.component.SdkComponentDescriptor;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
 
-public abstract class AbstractSdkObjectFactory {
+public abstract class SdkComponentFactory {
   private static final String FALLBACK_SDK_VERSION = SdkComponent.ANY;
 
-  private static final Logger log = LoggerFactory.getLogger(AbstractSdkObjectFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(SdkComponentFactory.class);
 
-  private Map<String, Map<SdkComponentTypeEnum, SdkComponentDescriptor<?>>> componentsMap;
+  private Map<String, Map<SdkComponentType, SdkComponentDescriptor<?>>> componentsMap;
 
-  protected AbstractSdkObjectFactory() {
+  protected SdkComponentFactory() {
     populateComponents();
   }
 
@@ -32,10 +29,10 @@ public abstract class AbstractSdkObjectFactory {
       SdkComponent annotation = clazz.getAnnotation(SdkComponent.class);
 
       String[] supportedSdkVersions = annotation.versions();
-      SdkComponentTypeEnum componentType = annotation.componentType();
+      SdkComponentType componentType = annotation.componentType();
 
       for (String sdkVersion : supportedSdkVersions) {
-        Map<SdkComponentTypeEnum, SdkComponentDescriptor<?>> components =
+        Map<SdkComponentType, SdkComponentDescriptor<?>> components =
             componentsMap.get(sdkVersion);
 
         if (components == null) {
@@ -60,7 +57,7 @@ public abstract class AbstractSdkObjectFactory {
   }
 
   @SuppressWarnings("unchecked")
-  protected <T> T getComponentImpl(String sdkVersion, final SdkComponentTypeEnum componentType,
+  protected <T> T getComponentImpl(String sdkVersion, final SdkComponentType componentType,
       final Class<T> intf, Object... initArgs) throws InstantiationException {
     SdkComponentDescriptor<T> descriptor =
         (SdkComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(sdkVersion))
