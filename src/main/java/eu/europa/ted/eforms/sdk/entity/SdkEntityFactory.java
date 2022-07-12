@@ -1,31 +1,31 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
-import eu.europa.ted.eforms.sdk.component.SdkComponentTypeEnum;
-import eu.europa.ted.eforms.sdk.factory.AbstractSdkObjectFactory;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponentFactory;
+import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
 
-public class EfxEntityFactory extends AbstractSdkObjectFactory {
-  public static final EfxEntityFactory INSTANCE = new EfxEntityFactory();
+public class SdkEntityFactory extends SdkComponentFactory {
+  public static final SdkEntityFactory INSTANCE = new SdkEntityFactory();
 
-  private EfxEntityFactory() {
+  private SdkEntityFactory() {
     super();
   }
 
   public static SdkCodelist getSdkCodelist(final String sdkVersion, final String codelistId,
       final String codelistVersion, final List<String> codes) throws InstantiationException {
-    return EfxEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentTypeEnum.CODELIST,
+    return SdkEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentType.CODELIST,
         SdkCodelist.class, codelistId, codelistVersion, codes);
   }
 
   public static SdkField getSdkField(String sdkVersion, JsonNode field)
       throws InstantiationException {
-    return EfxEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentTypeEnum.FIELD,
+    return SdkEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentType.FIELD,
         SdkField.class, field);
   }
 
   public static SdkNode getSdkNode(String sdkVersion, JsonNode node) throws InstantiationException {
-    return EfxEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentTypeEnum.NODE,
+    return SdkEntityFactory.INSTANCE.getComponentImpl(sdkVersion, SdkComponentType.NODE,
         SdkNode.class, node);
   }
 }

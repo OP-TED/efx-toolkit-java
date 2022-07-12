@@ -1,4 +1,4 @@
-package eu.europa.ted.eforms.sdk.component;
+package eu.europa.ted.eforms.sdk.selector.component;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
@@ -18,11 +18,11 @@ public class SdkComponentDescriptor<T> implements Serializable {
 
   private String sdkVersion;
 
-  private SdkComponentTypeEnum componentType;
+  private SdkComponentType componentType;
 
   private Class<T> implType;
 
-  public SdkComponentDescriptor(String sdkVersion, SdkComponentTypeEnum componentType,
+  public SdkComponentDescriptor(String sdkVersion, SdkComponentType componentType,
       Class<T> implType) {
     this.sdkVersion = sdkVersion;
     this.componentType = componentType;

@@ -10,14 +10,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
+import eu.europa.ted.eforms.sdk.entity.SdkField;
+import eu.europa.ted.eforms.sdk.entity.SdkNode;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.model.SdkCodelist;
-import eu.europa.ted.efx.model.SdkField;
-import eu.europa.ted.efx.model.SdkNode;
-import eu.europa.ted.efx.sdk0.v7.model.SdkCodelist07;
-import eu.europa.ted.efx.sdk0.v7.model.SdkField07;
-import eu.europa.ted.efx.sdk0.v7.model.SdkNode07;
+import eu.europa.ted.efx.sdk0.v7.entity.SdkCodelist07;
+import eu.europa.ted.efx.sdk0.v7.entity.SdkField07;
+import eu.europa.ted.efx.sdk0.v7.entity.SdkNode07;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class SymbolResolverMock implements SymbolResolver {
@@ -51,7 +51,7 @@ public class SymbolResolverMock implements SymbolResolver {
     this.fieldById = Map.ofEntries(//
         entry("BT-00-Text", new SdkField07(fromString(
             "{\"id\":\"BT-00-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextField\",\"xpathRelative\":\"PathNode/TextField\"}"))),
-        entry("BT-00-Attribute", new eu.europa.ted.efx.sdk0.v7.model.SdkField07(fromString(
+        entry("BT-00-Attribute", new eu.europa.ted.efx.sdk0.v7.entity.SdkField07(fromString(
             "{\"id\":\"BT-00-Attribute\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextField/@Attribute\",\"xpathRelative\":\"PathNode/TextField/@Attribute\"}"))),
         entry("BT-00-Indicator", new SdkField07(fromString(
             "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
