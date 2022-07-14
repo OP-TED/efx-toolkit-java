@@ -8,7 +8,7 @@ import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
 public class EfxTranslator {
   enum KnownSdkVersions {
-    SDK_0_6("0.6"), SDK_0_7("0.7"), UNSUPPORTED("N/A");
+    SDK_0_6("0.6"), SDK_0_7("0.7"), SDK_0_8("0.8"), UNSUPPORTED("N/A");
 
     private String name;
 
