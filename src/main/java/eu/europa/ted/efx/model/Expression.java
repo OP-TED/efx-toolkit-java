@@ -41,7 +41,7 @@ public class Expression extends CallStackObjectBase {
           entry("email", StringExpression.class));
 
   /**
-   * ListExpression types equivalent to eFroms types.
+   * ListExpression types equivalent to eForms types.
    */
   public static final Map<String, Class<? extends Expression>> listTypes = Map.ofEntries(
       entry("id", StringListExpression.class), //
@@ -55,7 +55,7 @@ public class Expression extends CallStackObjectBase {
       entry("code", StringListExpression.class), entry("internal-code", StringListExpression.class), //
       entry("integer", NumericListExpression.class), //
       entry("date", DateListExpression.class), //
-      entry("zoned-date", DateExpression.class), //
+      entry("zoned-date", DateListExpression.class), //
       entry("time", TimeListExpression.class), //
       entry("zoned-time", TimeListExpression.class), //
       entry("url", StringListExpression.class), //
