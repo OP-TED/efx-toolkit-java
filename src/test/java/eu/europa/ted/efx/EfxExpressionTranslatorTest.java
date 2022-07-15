@@ -327,6 +327,12 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
+  void testDateQuantifiedExpression_UsingMultipleIterators() {
+    assertEquals("every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01')",
+        test("ND-Root", "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01"));
+  }
+
+  @Test
   void testTimeQuantifiedExpression_UsingLiterals() {
     assertEquals(
         "every $x in (xs:time('00:00:00'),xs:time('00:00:01'),xs:time('00:00:02')) satisfies $x <= xs:time('00:00:00')",
@@ -439,6 +445,12 @@ class EfxExpressionTranslatorTest {
   void testStringsFromStringIteration_UsingLiterals() {
     assertEquals("'a' = (for $x in ('a','b','c') return concat($x, 'text'))",
         test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c') return concat($x, 'text'))"));
+  }
+
+  @Test
+  void testStringsSequenceFromIteration_UsingMultipleIterators() {
+    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
+        test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
 
   @Test

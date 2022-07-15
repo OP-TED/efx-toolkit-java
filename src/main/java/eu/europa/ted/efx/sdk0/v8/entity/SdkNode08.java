@@ -8,7 +8,7 @@ import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
 /**
  * A node is something like a section. Nodes can be parents of other nodes or parents of fields.
  */
-@SdkComponent(versions = {"0.7"}, componentType = SdkComponentType.NODE)
+@SdkComponent(versions = {"0.8"}, componentType = SdkComponentType.NODE)
 public class SdkNode08 extends SdkNode {
 
     public SdkNode08(String id, String parentId, String xpathAbsolute, String xpathRelative,

@@ -244,4 +244,23 @@ public class Expression extends CallStackObjectBase {
     }
   }
 
+  /**
+   * Used to represent iterators (for traversing a list using a variable) 
+   */
+  public static class IteratorExpression extends Expression {
+
+    public IteratorExpression(final String script) {
+      super(script);
+    }
+  }
+
+  /**
+   * Used to represent a collection of {@link IteratorExpression}.
+   */
+  public static class IteratorListExpression extends ListExpression<IteratorExpression> {
+
+    public IteratorListExpression(final String script) {
+      super(script);
+    }
+  }
 }

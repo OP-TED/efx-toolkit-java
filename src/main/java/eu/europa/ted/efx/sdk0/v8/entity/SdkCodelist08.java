@@ -10,7 +10,7 @@ import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
  *
  * @author rouschr
  */
-@SdkComponent(versions = {"0.7"}, componentType = SdkComponentType.CODELIST)
+@SdkComponent(versions = {"0.8"}, componentType = SdkComponentType.CODELIST)
 public class SdkCodelist08 extends SdkCodelist {
 
     public SdkCodelist08(String codelistId, String codelistVersion, List<String> codes) {

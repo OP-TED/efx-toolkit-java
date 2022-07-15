@@ -14,6 +14,8 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
@@ -161,15 +163,27 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
+    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
+  }
+
+  @Override
+  public <T extends Expression> BooleanExpression composeAllSatisfy(
+      IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+        "every " + iterators.script + " satisfies " + booleanExpression.script);
   }
 
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
+    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
+  }
+
+  @Override
+  public <T extends Expression> BooleanExpression composeAnySatisfies(
+      IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+        "some " + iterators.script + " satisfies " + booleanExpression.script);
   }
 
   @Override
@@ -183,11 +197,28 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType) {
-    return Expression.instantiate(
-        "for " + variableName + " in " + sourceList.script + " return " + expression.script,
+    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
+  }
+
+  @Override
+  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+      IteratorListExpression iterators, T2 expression, Class<L2> targetListType) {
+    return Expression.instantiate("for " + iterators.script + " return " + expression.script,
         targetListType);
   }
 
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
+      String variableName, L sourceList) {
+    return new IteratorExpression(variableName + " in " + sourceList.script);
+  }
+
+  @Override
+  public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators) {
+    return new IteratorListExpression(
+        iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));
+  }
+  
   @Override
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
     try {

@@ -5,6 +5,8 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
@@ -109,19 +111,41 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
+  /*
+   * @deprecated Used only up to SDK 0.7.x
+   */
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAllSatisfy(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
+  
+  /*
+   * @deprecated Used only up to SDK 0.7.x
+   */
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAnySatisfies(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
 
   public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
+  /*
+   * @deprecated Used only up to SDK 0.7.x
+   */
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
+  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+      IteratorListExpression iterators, T2 expression, Class<L2> targetListType);
+
+  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
+      String variableName, L sourceList);
+
+  public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
+  
   /**
    * TODO: Not properly defined yet.
    * 

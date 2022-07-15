@@ -30,6 +30,8 @@ import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
 import eu.europa.ted.efx.model.Expression.DurationListExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
@@ -378,50 +380,14 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   /*** Quantified expressions ***/
 
   @Override
-  public void exitStringQuantifiedExpression(StringQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, StringExpression.class,
-        StringListExpression.class);
-  }
-
-  @Override
-  public void exitBooleanQuantifiedExpression(BooleanQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, BooleanExpression.class,
-        BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitNumericQuantifiedExpression(NumericQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, NumericExpression.class,
-        NumericListExpression.class);
-  }
-
-  @Override
-  public void exitDateQuantifiedExpression(DateQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, DateExpression.class,
-        DateListExpression.class);
-  }
-
-  @Override
-  public void exitTimeQuantifiedExpression(TimeQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, TimeExpression.class,
-        TimeListExpression.class);
-  }
-
-  @Override
-  public void exitDurationQuantifiedExpression(DurationQuantifiedExpressionContext ctx) {
-    this.exitQuantifiedExpression(ctx.Every() != null, DurationExpression.class,
-        DurationListExpression.class);
-  }
-
-  private <T extends Expression, L extends ListExpression<T>> void exitQuantifiedExpression(
-      boolean every, Class<T> expressionType, Class<L> listType) {
+  public void exitQuantifiedExpression(QuantifiedExpressionContext ctx) {
     BooleanExpression booleanExpression = this.stack.pop(BooleanExpression.class);
-    L list = this.stack.pop(listType);
-    T variable = this.stack.pop(expressionType);
-    if (every) {
-      this.stack.push(this.script.composeAllSatisfy(list, variable.script, booleanExpression));
+    if (ctx.Every() != null) {
+      this.stack.push(this.script.composeAllSatisfy(this.stack.pop(IteratorListExpression.class),
+          booleanExpression));
     } else {
-      this.stack.push(this.script.composeAnySatisfies(list, variable.script, booleanExpression));
+      this.stack.push(this.script.composeAnySatisfies(this.stack.pop(IteratorListExpression.class),
+          booleanExpression));
     }
   }
 
@@ -645,6 +611,45 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   /*** Iteration expressions ***/
 
   @Override
+  public void exitStringIteratorExpression(StringIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(StringExpression.class, StringListExpression.class);
+  }
+
+  @Override
+  public void exitBooleanIteratorExpression(BooleanIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(BooleanExpression.class, BooleanListExpression.class);
+  }
+
+  @Override
+  public void exitNumericIteratorExpression(NumericIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(NumericExpression.class, NumericListExpression.class);
+  }
+
+  @Override
+  public void exitDateIteratorExpression(DateIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(DateExpression.class, DateListExpression.class);
+  }
+
+  @Override
+  public void exitTimeIteratorExpression(TimeIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(TimeExpression.class, TimeListExpression.class);
+  }
+
+  @Override
+  public void exitIteratorList(IteratorListContext ctx) {
+    List<IteratorExpression> iterators = new ArrayList<>();
+    for (int i = 0; i < ctx.iteratorExpression().size(); i++) {
+      iterators.add(0, this.stack.pop(IteratorExpression.class));
+    }
+    this.stack.push(this.script.composeIteratorList(iterators));
+ }
+  
+  @Override
+  public void exitDurationIteratorExpression(DurationIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(DurationExpression.class, DurationListExpression.class);
+  }
+
+  @Override
   public void exitParenthesizedStringsFromIteration(ParenthesizedStringsFromIterationContext ctx) {
     this.stack.push(this.script.composeParenthesizedExpression(
         this.stack.pop(StringListExpression.class), StringListExpression.class));
@@ -683,230 +688,48 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   @Override
-  public void exitStringsFromStringIteration(StringsFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(StringExpression.class, StringListExpression.class);
   }
 
   @Override
-  public void exitStringsFromBooleanIteration(StringsFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitNumericSequenceFromIteration(NumericSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class);
   }
 
   @Override
-  public void exitStringsFromNumericIteration(StringsFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class);
   }
 
   @Override
-  public void exitStringsFromDateIteration(StringsFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitDateSequenceFromIteration(DateSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(DateExpression.class, DateListExpression.class);
   }
 
   @Override
-  public void exitStringsFromTimeIteration(StringsFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class);
   }
 
   @Override
-  public void exitStringsFromDurationIteration(StringsFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        StringExpression.class, StringListExpression.class);
+  public void exitDurationSequenceFromIteration(DurationSequenceFromIterationContext ctx) {
+    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class);
   }
 
-  @Override
-  public void exitBooleansFromStringIteration(BooleansFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
+  public <T extends Expression, L extends ListExpression<T>> void exitIteratorExpression(
+      Class<T> variableType, Class<L> listType) {
+    L list = this.stack.pop(listType);
+    T variable = this.stack.pop(variableType);
+    this.stack.push(this.script.composeIteratorExpression(variable.script, list));
   }
 
-  @Override
-  public void exitBooleansFromBooleanIteration(BooleansFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitBooleansFromNumericIteration(BooleansFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitBooleansFromDateIteration(BooleansFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitBooleansFromTimeIteration(BooleansFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitBooleansFromDurationIteration(BooleansFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        BooleanExpression.class, BooleanListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromStringIteration(NumbersFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromBooleanIteration(NumbersFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromNumericIteration(NumbersFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromDateIteration(NumbersFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromTimeIteration(NumbersFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-  @Override
-  public void exitNumbersFromDurationIteration(NumbersFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        NumericExpression.class, NumericListExpression.class);
-  }
-
-
-  @Override
-  public void exitDatesFromStringIteration(DatesFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitDatesFromBooleanIteration(DatesFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitDatesFromNumericIteration(DatesFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitDatesFromDateIteration(DatesFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitDatesFromTimeIteration(DatesFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitDatesFromDurationIteration(DatesFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        DateExpression.class, DateListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromStringIteration(TimesFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromBooleanIteration(TimesFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromNumericIteration(TimesFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromDateIteration(TimesFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromTimeIteration(TimesFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitTimesFromDurationIteration(TimesFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        TimeExpression.class, TimeListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromStringIteration(DurationsFromStringIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromBooleanIteration(DurationsFromBooleanIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromNumericIteration(DurationsFromNumericIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromDateIteration(DurationsFromDateIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromTimeIteration(DurationsFromTimeIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  @Override
-  public void exitDurationsFromDurationIteration(DurationsFromDurationIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationListExpression.class,
-        DurationExpression.class, DurationListExpression.class);
-  }
-
-  public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> void exitIterationExpression(
-      Class<T1> variableType, Class<L1> sourceListType, Class<T2> expressionType,
-      Class<L2> targetListType) {
-    T2 expression = this.stack.pop(expressionType);
-    L1 list = this.stack.pop(sourceListType);
-    T1 variable = this.stack.pop(variableType);
+  public <T extends Expression, L extends ListExpression<T>> void exitIterationExpression(Class<T> expressionType,
+      Class<L> targetListType) {
+    T expression = this.stack.pop(expressionType);
+    IteratorListExpression iterators = this.stack.pop(IteratorListExpression.class);
     this.stack
-        .push(this.script.composeForExpression(variable.script, list, expression, targetListType));
+        .push(this.script.composeForExpression(iterators, expression, targetListType));
   }
 
   /*** Literals ***/
