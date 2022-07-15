@@ -163,8 +163,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
-  }
+        return new BooleanExpression(
+          "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+    }
 
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(
@@ -176,8 +177,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
-  }
+        return new BooleanExpression(
+          "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+    }
 
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(
@@ -197,7 +199,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType) {
-    throw new UnsupportedOperationException("Deprecated in SDK 0.8.0");
+    return Expression.instantiate(
+        "for " + variableName + " in " + sourceList.script + " return " + expression.script,
+        targetListType);
   }
 
   @Override

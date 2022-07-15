@@ -111,18 +111,14 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
-  /*
-   * @deprecated Used only up to SDK 0.7.x
-   */
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
   public <T extends Expression> BooleanExpression composeAllSatisfy(
       IteratorListExpression iterators, BooleanExpression booleanExpression);
-  
-  /*
-   * @deprecated Used only up to SDK 0.7.x
-   */
+
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
@@ -132,9 +128,7 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
-  /*
-   * @deprecated Used only up to SDK 0.7.x
-   */
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
@@ -223,18 +217,14 @@ public interface ScriptGenerator {
    * Numeric Functions
    */
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeCountOperation(final PathExpression set);
 
   public NumericExpression composeCountOperation(final ListExpressionBase list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeSumOperation(PathExpression set);
 
   public NumericExpression composeSumOperation(NumericListExpression list);
