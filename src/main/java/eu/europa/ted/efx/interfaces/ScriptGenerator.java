@@ -5,6 +5,8 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
@@ -109,19 +111,35 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAllSatisfy(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
+
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAnySatisfies(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
 
   public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
+  @Deprecated(since = "0.8.0", forRemoval = true)
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
+  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+      IteratorListExpression iterators, T2 expression, Class<L2> targetListType);
+
+  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
+      String variableName, L sourceList);
+
+  public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
+  
   /**
    * TODO: Not properly defined yet.
    * 
@@ -199,18 +217,14 @@ public interface ScriptGenerator {
    * Numeric Functions
    */
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeCountOperation(final PathExpression set);
 
   public NumericExpression composeCountOperation(final ListExpressionBase list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeSumOperation(PathExpression set);
 
   public NumericExpression composeSumOperation(NumericListExpression list);

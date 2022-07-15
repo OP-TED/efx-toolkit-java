@@ -8,7 +8,7 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
  * Test for EFX expressions that combine several aspects of the language.
  */
 class EfxExpressionCombinedTest {
-  final private String SDK_VERSION = "eforms-sdk-0.7";
+  final private String SDK_VERSION = "eforms-sdk-0.8";
 
   private String test(final String context, final String expression) {
     try {
