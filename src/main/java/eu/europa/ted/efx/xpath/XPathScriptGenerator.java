@@ -218,6 +218,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public IteratorExpression composeIteratorExpression(
+      String variableName, PathExpression pathExpression) {
+    return new IteratorExpression(variableName + " in " + pathExpression.script);
+  }
+
+  @Override
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators) {
     return new IteratorListExpression(
         iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));

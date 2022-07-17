@@ -137,7 +137,7 @@ public class XPathContextualizer extends XPath20BaseListener {
       final LinkedList<StepInfo> second) {
     List<String> dotSteps = Arrays.asList("..", ".");
     while (second.getFirst().stepText.equals("..")
-        && !dotSteps.contains(first.getLast().stepText)) {
+        && !dotSteps.contains(first.getLast().stepText) && !first.getLast().isVariableStep()) {
       second.removeFirst();
       first.removeLast();
     }
@@ -194,6 +194,10 @@ public class XPathContextualizer extends XPath20BaseListener {
 
     public Boolean isAttributeStep() {
       return this.stepText.startsWith("/@");
+    }
+
+    public Boolean isVariableStep() {
+      return this.stepText.startsWith("$");
     }
 
     public String getPredicateText() {

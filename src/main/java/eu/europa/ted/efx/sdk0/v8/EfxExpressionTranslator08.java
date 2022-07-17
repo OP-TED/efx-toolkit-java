@@ -20,12 +20,14 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
 import eu.europa.ted.efx.model.CallStackObjectBase;
+import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.BooleanListExpression;
+import eu.europa.ted.efx.model.Expression.ContextExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
@@ -511,7 +513,7 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   /*** Conditional Expressions ***/
 
   @Override
-  public void exitUntypedConditonalExpression(UntypedConditonalExpressionContext ctx) {
+  public void exitUntypedConditionalExpression(UntypedConditionalExpressionContext ctx) {
     Class<? extends CallStackObjectBase> typeWhenFalse = this.stack.peek().getClass();
     if (typeWhenFalse == BooleanExpression.class) {
       this.exitConditionalBooleanExpression();
@@ -608,7 +610,7 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
         DurationExpression.class));
   }
 
-  /*** Iteration expressions ***/
+  /*** Iterators ***/
 
   @Override
   public void exitStringIteratorExpression(StringIteratorExpressionContext ctx) {
@@ -634,6 +636,32 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   public void exitTimeIteratorExpression(TimeIteratorExpressionContext ctx) {
     this.exitIteratorExpression(TimeExpression.class, TimeListExpression.class);
   }
+  
+  @Override
+  public void exitDurationIteratorExpression(DurationIteratorExpressionContext ctx) {
+    this.exitIteratorExpression(DurationExpression.class, DurationListExpression.class);
+  }
+
+  @Override
+  public void exitContextIteratorExpression(ContextIteratorExpressionContext ctx) {
+    PathExpression path = this.stack.pop(PathExpression.class);
+    ContextExpression variable = this.stack.pop(ContextExpression.class);
+    this.stack.push(this.script.composeIteratorExpression(variable.script, path));
+    if (ctx.fieldContext() != null) {
+      final String contextFieldId =
+          getFieldIdFromChildSimpleFieldReferenceContext(ctx.fieldContext());
+      this.efxContext.declareContextVariable(variable.script,
+          new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
+              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+
+    } else if (ctx.nodeContext() != null) {
+      final String contextNodeId =
+          getNodeIdFromChildSimpleNodeReferenceContext(ctx.nodeContext());
+      this.efxContext.declareContextVariable(variable.script,
+          new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
+              this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+    }
+  }
 
   @Override
   public void exitIteratorList(IteratorListContext ctx) {
@@ -643,11 +671,6 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
     }
     this.stack.push(this.script.composeIteratorList(iterators));
  }
-  
-  @Override
-  public void exitDurationIteratorExpression(DurationIteratorExpressionContext ctx) {
-    this.exitIteratorExpression(DurationExpression.class, DurationListExpression.class);
-  }
 
   @Override
   public void exitParenthesizedStringsFromIteration(ParenthesizedStringsFromIterationContext ctx) {
@@ -924,10 +947,10 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
    * reference is resolved.
    */
   @Override
-  public void exitFieldContext(FieldContextContext ctx) {
+  public void exitContextFieldSpecifier(ContextFieldSpecifierContext ctx) {
     this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                           // the context field.
-    final String contextFieldId = ctx.context.reference.simpleFieldReference().FieldId().getText();
+    final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.field);
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
             this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
@@ -941,7 +964,7 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   @Override
   public void exitFieldReferenceWithFieldContextOverride(
       FieldReferenceWithFieldContextOverrideContext ctx) {
-    if (ctx.context != null) {
+    if (ctx.contextFieldSpecifier() != null) {
       final PathExpression field = this.stack.pop(PathExpression.class);
       this.stack.push(this.script.joinPaths(this.efxContext.relativePath(), field));
       this.efxContext.pop(); // Restores the previous context
@@ -953,10 +976,10 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
    * reference is resolved.
    */
   @Override
-  public void exitNodeContext(NodeContextContext ctx) {
+  public void exitContextNodeSpecifier(ContextNodeSpecifierContext ctx) {
     this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                           // the context node.
-    final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.context);
+    final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
             this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
@@ -969,9 +992,38 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   @Override
   public void exitFieldReferenceWithNodeContextOverride(
       FieldReferenceWithNodeContextOverrideContext ctx) {
-    if (ctx.context != null) {
+    if (ctx.contextNodeSpecifier() != null) {
       final PathExpression field = this.stack.pop(PathExpression.class);
       this.stack.push(this.script.joinPaths(this.efxContext.relativePath(), field));
+      this.efxContext.pop(); // Restores the previous context
+    }
+  }
+
+  @Override
+  public void exitContextVariableSpecifier(ContextVariableSpecifierContext ctx) {
+    ContextExpression variableName = this.stack.pop(ContextExpression.class);
+    Context variableContext = this.efxContext.getContextFromVariable(variableName.script);
+    if (variableContext.isFieldContext()) {
+      this.efxContext.push(new FieldContext(variableContext.symbol(),
+          this.symbols.getAbsolutePathOfField(variableContext.symbol()), this.symbols
+              .getRelativePathOfField(variableContext.symbol(), this.efxContext.absolutePath())));
+    } else if (variableContext.isNodeContext()) {
+      this.efxContext.push(new NodeContext(variableContext.symbol(),
+          this.symbols.getAbsolutePathOfNode(variableContext.symbol()), this.symbols
+              .getRelativePathOfNode(variableContext.symbol(), this.efxContext.absolutePath())));
+    } else {
+      throw new IllegalStateException("Variable context is neither a field nor a node context.");
+    }
+    this.stack.push(variableName);
+  }
+
+  @Override
+  public void exitFieldReferenceWithVariableContextOverride(
+      FieldReferenceWithVariableContextOverrideContext ctx) {
+    if (ctx.contextVariableSpecifier() != null) {
+      final PathExpression field = this.stack.pop(PathExpression.class);
+      final ContextExpression variableName = this.stack.pop(ContextExpression.class);
+      this.stack.push(this.script.joinPaths(new PathExpression(variableName.script), field));
       this.efxContext.pop(); // Restores the previous context
     }
   }
@@ -986,10 +1038,12 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   @Override
-  public void exitUntypedVariable(UntypedVariableContext ctx) {
+  public void exitVariableReference(VariableReferenceContext ctx) {
     this.stack.pushVariable(
         this.script.composeVariableReference(ctx.Variable().getText(), Expression.class));
   }
+
+  /*** Variable Declarations ***/
 
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
@@ -1027,6 +1081,11 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
         this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
   }
 
+  @Override
+  public void exitContextVariableDeclaration(ContextVariableDeclarationContext ctx) {
+    this.stack.pushVariable(
+        this.script.composeVariableReference(ctx.Variable().getText(), ContextExpression.class));
+  }
 
   /*** Boolean functions ***/
 

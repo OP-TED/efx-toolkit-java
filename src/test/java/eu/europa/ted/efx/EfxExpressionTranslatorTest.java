@@ -452,6 +452,12 @@ class EfxExpressionTranslatorTest {
     assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
         test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
+  
+  @Test
+  void testStringsSequenceFromIteration_UsingObjectVariable() {
+    assertEquals("for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField return 'text'",
+        test("ND-Root", "for context:$n in BT-00-Text[BT-00-Number is present], date:$d in $n::BT-00-StartDate return 'text'"));
+  }
 
   @Test
   void testStringsFromStringIteration_UsingFieldReference() {
