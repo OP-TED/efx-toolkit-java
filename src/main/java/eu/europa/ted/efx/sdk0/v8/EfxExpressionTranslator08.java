@@ -895,7 +895,7 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   /*** Value References ***/
 
   @Override
-  public void exitUntypedFieldValueReference(UntypedFieldValueReferenceContext ctx) {
+  public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
 
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
@@ -915,7 +915,7 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   @Override
-  public void exitUntypedFieldValueSequence(UntypedFieldValueSequenceContext ctx) {
+  public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
     // TODO: Use an interface for locating attributes. A PathExpression is not necessarily an
@@ -935,9 +935,9 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   @Override
-  public void exitUntypedAttributeValueReference(UntypedAttributeValueReferenceContext ctx) {
+  public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.Identifier().getText(), StringExpression.class));
+        ctx.attributeReference().Identifier().getText(), StringExpression.class));
   }
 
   /*** References with context override ***/

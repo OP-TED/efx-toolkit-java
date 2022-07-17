@@ -970,7 +970,7 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
-  void testUntypedAttributeValueReference() {
+  void testScalarFromAttributeReference() {
     assertEquals("PathNode/CodeField/@listName", test("ND-Root", "BT-00-Code/@listName"));
   }
 
