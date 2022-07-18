@@ -153,18 +153,18 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
     }
 
     if (ctx instanceof AbsoluteFieldReferenceContext) {
-      return ((AbsoluteFieldReferenceContext) ctx).reference.simpleFieldReference().FieldId()
+      return ((AbsoluteFieldReferenceContext) ctx).reference.reference.simpleFieldReference().FieldId()
           .getText();
     }
 
     if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
-      return ((FieldReferenceWithFieldContextOverrideContext) ctx).reference.simpleFieldReference()
+      return ((FieldReferenceWithFieldContextOverrideContext) ctx).reference.reference.simpleFieldReference()
           .FieldId().getText();
     }
 
     if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
-      return ((FieldReferenceWithNodeContextOverrideContext) ctx).reference
-          .fieldReferenceWithPredicate().simpleFieldReference().FieldId().getText();
+      return ((FieldReferenceWithNodeContextOverrideContext) ctx).reference.reference
+          .reference.simpleFieldReference().FieldId().getText();
     }
 
     SimpleFieldReferenceContext fieldReferenceContext =
@@ -874,6 +874,14 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   @Override
   public void exitPredicate(EfxParser.PredicateContext ctx) {
     this.efxContext.pop();
+  }
+
+  @Override
+  public void exitFieldReferenceWithAxis(FieldReferenceWithAxisContext ctx) {
+    if (ctx.axis() != null) {
+      this.stack.push(this.script.composeFieldReferenceWithAxis(
+          this.stack.pop(PathExpression.class), ctx.axis().Axis().getText(), PathExpression.class));
+    }
   }
 
   /*** External References ***/

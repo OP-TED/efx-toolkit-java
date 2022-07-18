@@ -1034,6 +1034,12 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "BT-00-Measure"));
   }
 
+  @Test
+  void testFieldReference_WithAxis() {
+    assertEquals("./preceding::PathNode/IntegerField/number()",
+        test("ND-Root", "ND-Root::preceding::BT-00-Integer"));
+  }
+
   /*** Boolean functions ***/
 
   @Test
