@@ -858,14 +858,19 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   /**
-   * Any field references in the predicate must be resolved relative to the field on which the
-   * predicate is applied. Therefore we need to switch to the field's context while the predicate is
+   * Any field references in the predicate must be resolved relative to the node or field on which
+   * the predicate is applied. Therefore we need to switch to that context while the predicate is
    * being parsed.
    */
   @Override
   public void enterPredicate(EfxParser.PredicateContext ctx) {
-    final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.getParent());
-    this.efxContext.pushFieldContext(fieldId);
+    final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.getParent());
+    if (nodeId != null) {
+      this.efxContext.pushNodeContext(nodeId);
+    } else {
+      final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.getParent());
+      this.efxContext.pushFieldContext(fieldId);
+    }
   }
 
   /**

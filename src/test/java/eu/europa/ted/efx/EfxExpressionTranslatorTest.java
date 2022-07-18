@@ -460,6 +460,12 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
+  void testStringsSequenceFromIteration_UsingNodeContextVariable() {
+    assertEquals("for $n in .[PathNode/TextField/normalize-space(text()) = 'a'] return 'text'",
+        test("ND-Root", "for context:$n in ND-Root[BT-00-Text == 'a'] return 'text'"));
+  }
+
+  @Test
   void testStringsFromStringIteration_UsingFieldReference() {
     assertEquals("'a' = (for $x in PathNode/TextField return concat($x, 'text'))",
         test("ND-Root", "'a' in (for text:$x in BT-00-Text return concat($x, 'text'))"));
