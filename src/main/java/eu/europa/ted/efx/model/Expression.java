@@ -71,10 +71,10 @@ public class Expression extends CallStackObjectBase {
     this.script = script;
   }
 
-  public static <T extends Expression> T instantiate(String value, Class<T> type) {
+  public static <T extends Expression> T instantiate(String script, Class<T> type) {
     try {
       Constructor<T> constructor = type.getConstructor(String.class);
-      return constructor.newInstance(value);
+      return constructor.newInstance(script);
     } catch (Exception e) {
       throw new ParseCancellationException(e);
     }
@@ -102,6 +102,13 @@ public class Expression extends CallStackObjectBase {
   public static class PathExpression extends Expression {
 
     public PathExpression(final String script) {
+      super(script);
+    }
+  }
+
+  public static class ContextExpression extends Expression {
+
+    public ContextExpression(final String script) {
       super(script);
     }
   }

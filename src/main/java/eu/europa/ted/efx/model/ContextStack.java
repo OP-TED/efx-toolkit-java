@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Context.FieldContext;
@@ -14,6 +16,8 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 public class ContextStack extends Stack<Context> {
 
   private final SymbolResolver symbols;
+
+  private final Map<String, Context> variables = new HashMap<>();
 
   /**
    * Creates a new ContextStack.
@@ -57,6 +61,14 @@ public class ContextStack extends Stack<Context> {
     NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
     this.push(context);
     return context;
+  }
+
+  public void declareContextVariable(final String variableName, final Context variableValue) {
+    this.variables.put(variableName, variableValue);
+  }
+
+  public Context getContextFromVariable(final String variableName) {
+    return this.variables.get(variableName);
   }
 
   /**

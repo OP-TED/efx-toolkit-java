@@ -88,10 +88,13 @@ public class SymbolResolverMock implements SymbolResolver {
         entry("BT-00-Email", new SdkField08(fromString(
             "{\"id\":\"BT-00-Email\",\"type\":\"email\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/EmailField\",\"xpathRelative\":\"PathNode/EmailField\"}}"))),
         entry("BT-01-SubLevel-Text", new SdkField08(fromString(
-            "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))));
+            "{\"id\":\"BT-01-SubLevel-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/ChildNode/SubLevelTextField\",\"xpathRelative\":\"PathNode/ChildNode/SubLevelTextField\"}}"))),
+        entry("BT-01-SubNode-Text", new SdkField08(fromString(
+            "{\"id\":\"BT-01-SubNode-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-SubNode\",\"xpathAbsolute\":\"/*/SubNode/SubTextField\",\"xpathRelative\":\"SubTextField\"}}"))));
 
-    this.nodeById =
-        Map.ofEntries(entry("ND-Root", new SdkNode08("ND-Root", null, "/*", "/*", false)));
+    this.nodeById =Map.ofEntries(//
+        entry("ND-Root", new SdkNode08("ND-Root", null, "/*", "/*", false)),
+        entry("ND-SubNode", new SdkNode08("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false)));
 
     this.codelistById = new HashMap<>(Map.ofEntries(entry("accessibility",
         new SdkCodelist08("accessibility", "0.0.1", Arrays.asList("code1", "code2", "code3")))));

@@ -138,6 +138,9 @@ public interface ScriptGenerator {
   public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
       String variableName, L sourceList);
 
+  public IteratorExpression composeIteratorExpression(
+          String variableName, PathExpression pathExpression);
+  
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
   
   /**
