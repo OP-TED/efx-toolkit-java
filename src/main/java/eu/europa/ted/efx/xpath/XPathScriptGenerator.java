@@ -292,6 +292,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.script);
   }
 
+  @Override
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  }
 
   /*** Boolean functions ***/
 

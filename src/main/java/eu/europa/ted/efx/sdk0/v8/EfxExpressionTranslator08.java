@@ -325,6 +325,19 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
   }
 
   @Override
+  public void exitUniqueValueCondition(EfxParser.UniqueValueConditionContext ctx) {
+    PathExpression haystack = this.stack.pop(PathExpression.class);
+    PathExpression needle = this.stack.pop(PathExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
   public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
 

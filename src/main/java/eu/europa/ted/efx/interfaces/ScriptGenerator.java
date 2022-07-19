@@ -266,6 +266,8 @@ public interface ScriptGenerator {
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack);
+
   /*
    * Date Functions
    */

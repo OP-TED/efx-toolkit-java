@@ -64,6 +64,17 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
+  void testUniqueValueCondition() {
+    assertEquals("count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1", test("ND-Root", "BT-00-Text is unique in /BT-00-Text"));
+  }
+
+  @Test
+  void testUniqueValueCondition_WithNot() {
+    assertEquals("not(count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1)", test("ND-Root", "BT-00-Text is not unique in /BT-00-Text"));
+  }
+
+
+  @Test
   void testLikePatternCondition() {
     assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
         test("BT-00-Text", "'123' like '[0-9]*'"));
