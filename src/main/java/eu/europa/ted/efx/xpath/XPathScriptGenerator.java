@@ -55,6 +55,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis, Class<T> type) {
+        return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
+  }
+
+  @Override
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
 
@@ -286,6 +292,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.script);
   }
 
+  @Override
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  }
 
   /*** Boolean functions ***/
 

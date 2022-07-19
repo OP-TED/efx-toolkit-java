@@ -76,6 +76,16 @@ public class XPathContextualizer extends XPath20BaseListener {
     return getJoinedXPath(firstPartSteps, secondPartSteps);
   }
 
+  public static PathExpression addAxis(String axis, PathExpression path) {
+    LinkedList<StepInfo> steps = new LinkedList<>(getSteps(path));
+
+    while (steps.getFirst().stepText.equals("..")) {
+      steps.removeFirst();
+    }
+
+    return new PathExpression(axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+  }
+
   private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 

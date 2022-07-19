@@ -64,6 +64,17 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
+  void testUniqueValueCondition() {
+    assertEquals("count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1", test("ND-Root", "BT-00-Text is unique in /BT-00-Text"));
+  }
+
+  @Test
+  void testUniqueValueCondition_WithNot() {
+    assertEquals("not(count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1)", test("ND-Root", "BT-00-Text is not unique in /BT-00-Text"));
+  }
+
+
+  @Test
   void testLikePatternCondition() {
     assertEquals("fn:matches(normalize-space('123'), '[0-9]*')",
         test("BT-00-Text", "'123' like '[0-9]*'"));
@@ -1038,6 +1049,12 @@ class EfxExpressionTranslatorTest {
     assertEquals(
         "(if (PathNode/MeasureField/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number() * 7, 'D')) else if (PathNode/MeasureField/@unitCode='DAY') then xs:dayTimeDuration(concat('P', PathNode/MeasureField/number(), 'D')) else if (PathNode/MeasureField) then xs:yearMonthDuration(concat('P', PathNode/MeasureField/number(), upper-case(substring(PathNode/MeasureField/@unitCode, 1, 1)))) else ())",
         test("ND-Root", "BT-00-Measure"));
+  }
+
+  @Test
+  void testFieldReference_WithAxis() {
+    assertEquals("./preceding::PathNode/IntegerField/number()",
+        test("ND-Root", "ND-Root::preceding::BT-00-Integer"));
   }
 
   /*** Boolean functions ***/

@@ -39,6 +39,9 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeFieldReferenceWithPredicate(
       final PathExpression fieldReference, final BooleanExpression predicate, Class<T> type);
 
+  public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis, Class<T> type);
+
   /**
    * Given a PathExpression, this method should return the target language script for retrieving the
    * value of the field.
@@ -262,6 +265,8 @@ public interface ScriptGenerator {
    */
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
+
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack);
 
   /*
    * Date Functions
