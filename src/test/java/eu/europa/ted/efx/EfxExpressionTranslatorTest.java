@@ -138,14 +138,14 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testFieldValueComparison_WithDateLiteral() {
-    assertEquals("xs:date('2022-01-01') > PathNode/StartDateField/xs:date(text())",
-        test("ND-Root", "2022-01-01 > BT-00-StartDate"));
+    assertEquals("xs:date('2022-01-01Z') > PathNode/StartDateField/xs:date(text())",
+        test("ND-Root", "2022-01-01Z > BT-00-StartDate"));
   }
 
   @Test
   void testFieldValueComparison_WithTimeLiteral() {
-    assertEquals("xs:time('00:01:00') > PathNode/EndTimeField/xs:time(text())",
-        test("ND-Root", "00:01:00 > BT-00-EndTime"));
+    assertEquals("xs:time('00:01:00Z') > PathNode/EndTimeField/xs:time(text())",
+        test("ND-Root", "00:01:00Z > BT-00-EndTime"));
   }
 
   @Test
@@ -180,8 +180,8 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testDateComparison_OfTwoDateLiterals() {
-    assertEquals("xs:date('2018-01-01') > xs:date('2018-01-01')",
-        test("BT-00-Text", "2018-01-01 > 2018-01-01"));
+    assertEquals("xs:date('2018-01-01Z') > xs:date('2018-01-01Z')",
+        test("BT-00-Text", "2018-01-01Z > 2018-01-01Z"));
   }
 
   @Test
@@ -199,8 +199,8 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testTimeComparison_OfTwoTimeLiterals() {
-    assertEquals("xs:time('13:00:10') > xs:time('21:20:30')",
-        test("BT-00-Text", "13:00:10 > 21:20:30"));
+    assertEquals("xs:time('13:00:10Z') > xs:time('21:20:30Z')",
+        test("BT-00-Text", "13:00:10Z > 21:20:30Z"));
   }
 
   @Test
@@ -326,35 +326,35 @@ class EfxExpressionTranslatorTest {
   @Test
   void testDateQuantifiedExpression_UsingLiterals() {
     assertEquals(
-        "every $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) satisfies $x <= xs:date('2012-01-01')",
+        "every $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) satisfies $x <= xs:date('2012-01-01Z')",
         test("ND-Root",
-            "every date:$x in (2012-01-01, 2012-01-02, 2012-01-03) satisfies $x <= 2012-01-01"));
+            "every date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) satisfies $x <= 2012-01-01Z"));
   }
 
   @Test
   void testDateQuantifiedExpression_UsingFieldReference() {
-    assertEquals("every $x in PathNode/StartDateField satisfies $x <= xs:date('2012-01-01')",
-        test("ND-Root", "every date:$x in BT-00-StartDate satisfies $x <= 2012-01-01"));
+    assertEquals("every $x in PathNode/StartDateField satisfies $x <= xs:date('2012-01-01Z')",
+        test("ND-Root", "every date:$x in BT-00-StartDate satisfies $x <= 2012-01-01Z"));
   }
 
   @Test
   void testDateQuantifiedExpression_UsingMultipleIterators() {
-    assertEquals("every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01')",
-        test("ND-Root", "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01"));
+    assertEquals("every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
+        test("ND-Root", "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02Z), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01Z"));
   }
 
   @Test
   void testTimeQuantifiedExpression_UsingLiterals() {
     assertEquals(
-        "every $x in (xs:time('00:00:00'),xs:time('00:00:01'),xs:time('00:00:02')) satisfies $x <= xs:time('00:00:00')",
+        "every $x in (xs:time('00:00:00Z'),xs:time('00:00:01Z'),xs:time('00:00:02Z')) satisfies $x <= xs:time('00:00:00Z')",
         test("ND-Root",
-            "every time:$x in (00:00:00, 00:00:01, 00:00:02) satisfies $x <= 00:00:00"));
+            "every time:$x in (00:00:00Z, 00:00:01Z, 00:00:02Z) satisfies $x <= 00:00:00Z"));
   }
 
   @Test
   void testTimeQuantifiedExpression_UsingFieldReference() {
-    assertEquals("every $x in PathNode/StartTimeField satisfies $x <= xs:time('00:00:00')",
-        test("ND-Root", "every time:$x in BT-00-StartTime satisfies $x <= 00:00:00"));
+    assertEquals("every $x in PathNode/StartTimeField satisfies $x <= xs:time('00:00:00Z')",
+        test("ND-Root", "every time:$x in BT-00-StartTime satisfies $x <= 00:00:00Z"));
   }
 
   @Test
@@ -430,15 +430,15 @@ class EfxExpressionTranslatorTest {
   @Test
   void testConditionalDateExpression() {
     assertEquals(
-        "(if xs:date('2012-01-01') > PathNode/EndDateField/xs:date(text()) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02'))",
-        test("ND-Root", "if 2012-01-01 > BT-00-EndDate then BT-00-StartDate else 2012-01-02"));
+        "(if xs:date('2012-01-01Z') > PathNode/EndDateField/xs:date(text()) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02Z'))",
+        test("ND-Root", "if 2012-01-01Z > BT-00-EndDate then BT-00-StartDate else 2012-01-02Z"));
   }
 
   @Test
   void testConditionalTimeExpression() {
     assertEquals(
-        "(if PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01') then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01'))",
-        test("ND-Root", "if BT-00-EndTime > 00:00:01 then BT-00-StartTime else 00:00:01"));
+        "(if PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01Z') then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01Z'))",
+        test("ND-Root", "if BT-00-EndTime > 00:00:01Z then BT-00-StartTime else 00:00:01Z"));
   }
 
   @Test
@@ -511,8 +511,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testStringsFromDateIteration_UsingLiterals() {
     assertEquals(
-        "'a' = (for $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) return 'y')",
-        test("ND-Root", "'a' in (for date:$x in (2012-01-01, 2012-01-02, 2012-01-03) return 'y')"));
+        "'a' = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 'y')",
+        test("ND-Root", "'a' in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 'y')"));
   }
 
   @Test
@@ -524,8 +524,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testStringsFromTimeIteration_UsingLiterals() {
     assertEquals(
-        "'a' = (for $x in (xs:time('12:00:00'),xs:time('12:00:01'),xs:time('12:00:02')) return 'y')",
-        test("ND-Root", "'a' in (for time:$x in (12:00:00, 12:00:01, 12:00:02) return 'y')"));
+        "'a' = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return 'y')",
+        test("ND-Root", "'a' in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 'y')"));
   }
 
   @Test
@@ -591,8 +591,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testNumbersFromDateIteration_UsingLiterals() {
     assertEquals(
-        "123 = (for $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) return 0)",
-        test("ND-Root", "123 in (for date:$x in (2012-01-01, 2012-01-02, 2012-01-03) return 0)"));
+        "123 = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 0)",
+        test("ND-Root", "123 in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 0)"));
   }
 
   @Test
@@ -604,8 +604,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testNumbersFromTimeIteration_UsingLiterals() {
     assertEquals(
-        "123 = (for $x in (xs:time('12:00:00'),xs:time('12:00:01'),xs:time('12:00:02')) return 0)",
-        test("ND-Root", "123 in (for time:$x in (12:00:00, 12:00:01, 12:00:02) return 0)"));
+        "123 = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return 0)",
+        test("ND-Root", "123 in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 0)"));
   }
 
   @Test
@@ -632,175 +632,175 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testDatesFromStringIteration_UsingLiterals() {
-    assertEquals("xs:date('2022-01-01') = (for $x in ('a','b','c') return xs:date($x))",
-        test("ND-Root", "2022-01-01 in (for text:$x in ('a', 'b', 'c') return date($x))"));
+    assertEquals("xs:date('2022-01-01Z') = (for $x in ('a','b','c') return xs:date($x))",
+        test("ND-Root", "2022-01-01Z in (for text:$x in ('a', 'b', 'c') return date($x))"));
   }
 
   @Test
   void testDatesFromStringIteration_UsingFieldReference() {
-    assertEquals("xs:date('2022-01-01') = (for $x in PathNode/TextField return xs:date($x))",
-        test("ND-Root", "2022-01-01 in (for text:$x in BT-00-Text return date($x))"));
+    assertEquals("xs:date('2022-01-01Z') = (for $x in PathNode/TextField return xs:date($x))",
+        test("ND-Root", "2022-01-01Z in (for text:$x in BT-00-Text return date($x))"));
   }
 
 
   @Test
   void testDatesFromBooleanIteration_UsingLiterals() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in (true(),false()) return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for indicator:$x in (TRUE, FALSE) return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in (true(),false()) return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for indicator:$x in (TRUE, FALSE) return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromBooleanIteration_UsingFieldReference() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in PathNode/IndicatorField return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for indicator:$x in BT-00-Indicator return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in PathNode/IndicatorField return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for indicator:$x in BT-00-Indicator return 2022-01-01Z)"));
   }
 
 
   @Test
   void testDatesFromNumericIteration_UsingLiterals() {
-    assertEquals("xs:date('2022-01-01') = (for $x in (1,2,3) return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for number:$x in (1, 2, 3) return 2022-01-01)"));
+    assertEquals("xs:date('2022-01-01Z') = (for $x in (1,2,3) return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for number:$x in (1, 2, 3) return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromNumericIteration_UsingFieldReference() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in PathNode/NumberField return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for number:$x in BT-00-Number return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in PathNode/NumberField return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for number:$x in BT-00-Number return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromDateIteration_UsingLiterals() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) return xs:date('2022-01-01'))",
+        "xs:date('2022-01-01Z') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:date('2022-01-01Z'))",
         test("ND-Root",
-            "2022-01-01 in (for date:$x in (2012-01-01, 2012-01-02, 2012-01-03) return 2022-01-01)"));
+            "2022-01-01Z in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromDateIteration_UsingFieldReference() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in PathNode/StartDateField return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for date:$x in BT-00-StartDate return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in PathNode/StartDateField return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for date:$x in BT-00-StartDate return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromTimeIteration_UsingLiterals() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in (xs:time('12:00:00'),xs:time('12:00:01'),xs:time('12:00:02')) return xs:date('2022-01-01'))",
+        "xs:date('2022-01-01Z') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:date('2022-01-01Z'))",
         test("ND-Root",
-            "2022-01-01 in (for time:$x in (12:00:00, 12:00:01, 12:00:02) return 2022-01-01)"));
+            "2022-01-01Z in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromTimeIteration_UsingFieldReference() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in PathNode/StartTimeField return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for time:$x in BT-00-StartTime return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in PathNode/StartTimeField return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for time:$x in BT-00-StartTime return 2022-01-01Z)"));
   }
 
   @Test
   void testDatesFromDurationIteration_UsingLiterals() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for measure:$x in (P1D, P1Y, P2M) return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for measure:$x in (P1D, P1Y, P2M) return 2022-01-01Z)"));
   }
 
 
   @Test
   void testDatesFromDurationIteration_UsingFieldReference() {
     assertEquals(
-        "xs:date('2022-01-01') = (for $x in PathNode/MeasureField return xs:date('2022-01-01'))",
-        test("ND-Root", "2022-01-01 in (for measure:$x in BT-00-Measure return 2022-01-01)"));
+        "xs:date('2022-01-01Z') = (for $x in PathNode/MeasureField return xs:date('2022-01-01Z'))",
+        test("ND-Root", "2022-01-01Z in (for measure:$x in BT-00-Measure return 2022-01-01Z)"));
   }
 
   // Times from iteration ---------------------------------------------------
 
   @Test
   void testTimesFromStringIteration_UsingLiterals() {
-    assertEquals("xs:time('12:00:00') = (for $x in ('a','b','c') return xs:time($x))",
-        test("ND-Root", "12:00:00 in (for text:$x in ('a', 'b', 'c') return time($x))"));
+    assertEquals("xs:time('12:00:00Z') = (for $x in ('a','b','c') return xs:time($x))",
+        test("ND-Root", "12:00:00Z in (for text:$x in ('a', 'b', 'c') return time($x))"));
   }
 
   @Test
   void testTimesFromStringIteration_UsingFieldReference() {
-    assertEquals("xs:time('12:00:00') = (for $x in PathNode/TextField return xs:time($x))",
-        test("ND-Root", "12:00:00 in (for text:$x in BT-00-Text return time($x))"));
+    assertEquals("xs:time('12:00:00Z') = (for $x in PathNode/TextField return xs:time($x))",
+        test("ND-Root", "12:00:00Z in (for text:$x in BT-00-Text return time($x))"));
   }
 
 
   @Test
   void testTimesFromBooleanIteration_UsingLiterals() {
-    assertEquals("xs:time('12:00:00') = (for $x in (true(),false()) return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for indicator:$x in (TRUE, FALSE) return 12:00:00)"));
+    assertEquals("xs:time('12:00:00Z') = (for $x in (true(),false()) return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for indicator:$x in (TRUE, FALSE) return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromBooleanIteration_UsingFieldReference() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in PathNode/IndicatorField return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for indicator:$x in BT-00-Indicator return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in PathNode/IndicatorField return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for indicator:$x in BT-00-Indicator return 12:00:00Z)"));
   }
 
 
   @Test
   void testTimesFromNumericIteration_UsingLiterals() {
-    assertEquals("xs:time('12:00:00') = (for $x in (1,2,3) return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for number:$x in (1, 2, 3) return 12:00:00)"));
+    assertEquals("xs:time('12:00:00Z') = (for $x in (1,2,3) return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for number:$x in (1, 2, 3) return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromNumericIteration_UsingFieldReference() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in PathNode/NumberField return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for number:$x in BT-00-Number return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in PathNode/NumberField return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for number:$x in BT-00-Number return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromDateIteration_UsingLiterals() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) return xs:time('12:00:00'))",
+        "xs:time('12:00:00Z') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:time('12:00:00Z'))",
         test("ND-Root",
-            "12:00:00 in (for date:$x in (2012-01-01, 2012-01-02, 2012-01-03) return 12:00:00)"));
+            "12:00:00Z in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromDateIteration_UsingFieldReference() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in PathNode/StartDateField return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for date:$x in BT-00-StartDate return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in PathNode/StartDateField return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for date:$x in BT-00-StartDate return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromTimeIteration_UsingLiterals() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in (xs:time('12:00:00'),xs:time('12:00:01'),xs:time('12:00:02')) return xs:time('12:00:00'))",
+        "xs:time('12:00:00Z') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:time('12:00:00Z'))",
         test("ND-Root",
-            "12:00:00 in (for time:$x in (12:00:00, 12:00:01, 12:00:02) return 12:00:00)"));
+            "12:00:00Z in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromTimeIteration_UsingFieldReference() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in PathNode/StartTimeField return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for time:$x in BT-00-StartTime return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in PathNode/StartTimeField return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for time:$x in BT-00-StartTime return 12:00:00Z)"));
   }
 
   @Test
   void testTimesFromDurationIteration_UsingLiterals() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for measure:$x in (P1D, P1Y, P2M) return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for measure:$x in (P1D, P1Y, P2M) return 12:00:00Z)"));
   }
 
 
   @Test
   void testTimesFromDurationIteration_UsingFieldReference() {
     assertEquals(
-        "xs:time('12:00:00') = (for $x in PathNode/MeasureField return xs:time('12:00:00'))",
-        test("ND-Root", "12:00:00 in (for measure:$x in BT-00-Measure return 12:00:00)"));
+        "xs:time('12:00:00Z') = (for $x in PathNode/MeasureField return xs:time('12:00:00Z'))",
+        test("ND-Root", "12:00:00Z in (for measure:$x in BT-00-Measure return 12:00:00Z)"));
   }
 
   // Durations from iteration ---------------------------------------------------
@@ -851,8 +851,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testDurationsFromDateIteration_UsingLiterals() {
     assertEquals(
-        "xs:dayTimeDuration('P1D') = (for $x in (xs:date('2012-01-01'),xs:date('2012-01-02'),xs:date('2012-01-03')) return xs:dayTimeDuration('P1D'))",
-        test("ND-Root", "P1D in (for date:$x in (2012-01-01, 2012-01-02, 2012-01-03) return P1D)"));
+        "xs:dayTimeDuration('P1D') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:dayTimeDuration('P1D'))",
+        test("ND-Root", "P1D in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return P1D)"));
   }
 
   @Test
@@ -865,8 +865,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testDurationsFromTimeIteration_UsingLiterals() {
     assertEquals(
-        "xs:dayTimeDuration('P1D') = (for $x in (xs:time('12:00:00'),xs:time('12:00:01'),xs:time('12:00:02')) return xs:dayTimeDuration('P1D'))",
-        test("ND-Root", "P1D in (for time:$x in (12:00:00, 12:00:01, 12:00:02) return P1D)"));
+        "xs:dayTimeDuration('P1D') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:dayTimeDuration('P1D'))",
+        test("ND-Root", "P1D in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return P1D)"));
   }
 
   @Test
@@ -945,15 +945,15 @@ class EfxExpressionTranslatorTest {
   @Test
   void testDateList() {
     assertEquals(
-        "xs:date('2022-01-01') = (xs:date('2022-01-02'),PathNode/StartDateField/xs:date(text()),xs:date('2022-02-02'))",
-        test("ND-Root", "2022-01-01 in (2022-01-02, BT-00-StartDate, 2022-02-02)"));
+        "xs:date('2022-01-01Z') = (xs:date('2022-01-02Z'),PathNode/StartDateField/xs:date(text()),xs:date('2022-02-02Z'))",
+        test("ND-Root", "2022-01-01Z in (2022-01-02Z, BT-00-StartDate, 2022-02-02Z)"));
   }
 
   @Test
   void testTimeList() {
     assertEquals(
-        "xs:time('12:20:21') = (xs:time('12:30:00'),PathNode/StartTimeField/xs:time(text()),xs:time('13:40:00'))",
-        test("ND-Root", "12:20:21 in (12:30:00, BT-00-StartTime, 13:40:00)"));
+        "xs:time('12:20:21Z') = (xs:time('12:30:00Z'),PathNode/StartTimeField/xs:time(text()),xs:time('13:40:00Z'))",
+        test("ND-Root", "12:20:21Z in (12:30:00Z, BT-00-StartTime, 13:40:00Z)"));
   }
 
   @Test
