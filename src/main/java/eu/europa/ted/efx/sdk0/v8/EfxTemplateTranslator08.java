@@ -361,7 +361,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class Sdk7EfxExpressionTranslator. After the expression is translated, the result is passed
+   * class EfxExpressionTranslator. After the expression is translated, the result is passed
    * through the renderer.
    */
   @Override
@@ -404,6 +404,16 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
       assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
       this.efxContext.push(new NodeContext(nodeId, this.stack.pop(PathExpression.class)));
     }
+
+    // final PathExpression absolutePath = this.stack.pop(PathExpression.class);
+    // final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+    // if (filedId != null) {
+    //   this.efxContext.push(new FieldContext(filedId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
+    // } else {
+    //   final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
+    //   assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
+    //   this.efxContext.push(new NodeContext(nodeId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
+    // }
   }
 
 
@@ -425,7 +435,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, lineContext);
+      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()));
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -434,16 +444,33 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, lineContext);
+      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, lineContext));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext())));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, lineContext);
+        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
       }
     }
+  }
+
+  private Context relativizeContext(Context childContext, Context parentContext) {
+    if (parentContext == null) {
+      return childContext;
+    }
+
+    if (FieldContext.class.isAssignableFrom(childContext.getClass())) {
+      return new FieldContext(childContext.symbol(), childContext.absolutePath(),
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+    }
+
+    assert NodeContext.class.isAssignableFrom(
+        childContext.getClass()) : "Child context should be either a FieldContext NodeContext.";
+
+    return new NodeContext(childContext.symbol(), childContext.absolutePath(),
+        this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
   }
 
   /*** Helpers ***/

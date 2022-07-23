@@ -41,6 +41,8 @@ public interface SymbolResolver {
   public PathExpression getRelativePathOfNode(final String nodeId,
       final PathExpression contextPath);
 
+  public PathExpression getRelativePath(PathExpression absolutePath, PathExpression contextPath);
+
   /**
    * Gets the absolute path that can be used to locate a field in the data source.
    * 

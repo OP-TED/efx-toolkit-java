@@ -26,17 +26,18 @@ class EfxTemplateTranslatorTest {
 
   @Test
   void testTemplateLineNoIdent() {
-    assertEquals("block01 = text('foo'); for-each(/*/PathNode/TextField) { block01(); }",
+    assertEquals("declare block01 = { text('foo') }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text} foo"));
   }
 
   @Test
   void testTemplateLineOutline() {
     // Outline is ignored if the line has no children
-    assertEquals(
-        lines("block02 = text('foo')", "for-each(/*/PathNode/TextField) { block0201(); };",
-            "block0201 = text('bar'); for-each(/*/PathNode/TextField) { block02(); }"),
-        translate(lines("2 {BT-00-Text} foo", "\t{BT-00-Text} bar")));
+    assertEquals(lines("declare block02 = { text('foo')", "for-each(../..).call(block0201) }", //
+        "declare block0201 = { text('bar')", "for-each(PathNode/NumberField).call(block020101) }", //
+        "declare block020101 = { text('foo') }", //
+        "for-each(/*/PathNode/TextField).call(block02)"), //
+        translate(lines("2 {BT-00-Text} foo", "\t{ND-Root} bar", "\t\t{BT-00-Number} foo")));
   }
 
   @Test
@@ -47,16 +48,18 @@ class EfxTemplateTranslatorTest {
   @Test
   void testTemplateLineIdentTab() {
     assertEquals(
-        lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
-            "block0101 = text('bar'); for-each(/*/PathNode/TextField) { block01(); }"),
+        lines("declare block01 = { text('foo')", "for-each(.).call(block0101) }", //
+        "declare block0101 = { text('bar') }", //
+        "for-each(/*/PathNode/TextField).call(block01)"),//
         translate(lines("{BT-00-Text} foo", "\t{BT-00-Text} bar")));
   }
 
   @Test
   void testTemplateLineIdentSpaces() {
     assertEquals(
-        lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
-            "block0101 = text('bar'); for-each(/*/PathNode/TextField) { block01(); }"),
+        lines("declare block01 = { text('foo')", "for-each(.).call(block0101) }", //
+        "declare block0101 = { text('bar') }", //
+        "for-each(/*/PathNode/TextField).call(block01)"),//
         translate(lines("{BT-00-Text} foo", "    {BT-00-Text} bar")));
   }
 
@@ -75,10 +78,11 @@ class EfxTemplateTranslatorTest {
   @Test
   void testTemplateLineIdentLower() {
     assertEquals(
-        lines("block01 = text('foo')", "for-each(/*/PathNode/TextField) { block0101(); };",
-            "block0101 = text('bar');",
-            "block02 = text('code'); for-each(/*/PathNode/TextField) { block01(); }",
-            "for-each(/*/PathNode/CodeField) { block02(); }"),
+        lines("declare block01 = { text('foo')", "for-each(.).call(block0101) }", 
+        "declare block0101 = { text('bar') }", 
+        "declare block02 = { text('code') }", 
+        "for-each(/*/PathNode/TextField).call(block01)", 
+        "for-each(/*/PathNode/CodeField).call(block02)"),
         translate(lines("{BT-00-Text} foo", "\t{BT-00-Text} bar", "{BT-00-Code} code")));
   }
 
@@ -94,28 +98,28 @@ class EfxTemplateTranslatorTest {
   @Test
   void testStandardLabelReference() {
     assertEquals(
-        "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{field|name|BT-00-Text}"));
   }
 
   @Test
   void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
-        "block01 = label(concat('decoration', '|', 'name', '|', 'value')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('decoration', '|', 'name', '|', 'value')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{decoration|name|value}"));
   }
 
   @Test
   void testShorthandBtLabelReference() {
     assertEquals(
-        "block01 = label(concat('business_term', '|', 'name', '|', 'BT-00')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('business_term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{name|BT-00}"));
   }
 
   @Test
   void testShorthandFieldLabelReference() {
     assertEquals(
-        "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{name|BT-00-Text}"));
   }
 
@@ -127,21 +131,21 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandFieldValueLabelReferenceForIndicator() {
     assertEquals(
-        "block01 = label(concat('indicator', '|', 'value', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('indicator', '|', 'value', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
   void testShorthandFieldValueLabelReferenceForCode() {
     assertEquals(
-        "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testShorthandFieldValueLabelReferenceForInternalCode() {
     assertEquals(
-        "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
@@ -153,14 +157,14 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandContextLabelReference_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
-        "block01 = label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')); for-each(/*/PathNode/IndicatorField) { block01(); }",
+        "declare block01 = { label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/IndicatorField).call(block01)",
         translate("{BT-00-Indicator}  #{value}"));
   }
 
   @Test
   void testShorthandContextLabelReference_WithValueLabelTypeAndCodeField() {
     assertEquals(
-        "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
+        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code}  #{value}"));
   }
 
@@ -172,7 +176,7 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandContextLabelReference_WithOtherLabelType() {
     assertEquals(
-        "block01 = label(concat('field', '|', 'name', '|', 'BT-00-Text')); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{name}"));
   }
 
@@ -185,14 +189,14 @@ class EfxTemplateTranslatorTest {
   void testShorthandContextLabelReference_WithNodeContext() {
     // TODO: Check if Node -> business_term is intended
     assertEquals(
-        "block01 = label(concat('business_term', '|', 'name', '|', 'ND-Root')); for-each(/*) { block01(); }",
+        "declare block01 = { label(concat('business_term', '|', 'name', '|', 'ND-Root')) }\nfor-each(/*).call(block01)",
         translate("{ND-Root}  #{name}"));
   }
 
   @Test
   void testShorthandContextFieldLabelReference() {
     assertEquals(
-        "block01 = label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))); for-each(/*/PathNode/CodeField) { block01(); }",
+        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} #value"));
   }
 
@@ -206,14 +210,14 @@ class EfxTemplateTranslatorTest {
 
   @Test
   void testShorthandContextFieldValueReference() {
-    assertEquals("block01 = eval(.); for-each(/*/PathNode/CodeField) { block01(); }",
+    assertEquals("declare block01 = { eval(.) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} $value"));
   }
 
   @Test
   void testShorthandContextFieldValueReference_WithText() {
     assertEquals(
-        "block01 = text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah'); for-each(/*/PathNode/CodeField) { block01(); }",
+        "declare block01 = { text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} blah #value blah $value blah"));
   }
 
@@ -228,7 +232,7 @@ class EfxTemplateTranslatorTest {
   @Test
   void testNestedExpression() {
     assertEquals(
-        "block01 = label(concat('field', '|', 'name', '|', ./normalize-space(text()))); for-each(/*/PathNode/TextField) { block01(); }",
+        "declare block01 = { label(concat('field', '|', 'name', '|', ./normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{field|name|${BT-00-Text}}"));
   }
 }

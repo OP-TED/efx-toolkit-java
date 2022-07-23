@@ -41,4 +41,18 @@ public class ContentBlockStack extends Stack<ContentBlock> {
     }
     return this.peek().getIndentationLevel();
   }
+
+  public Context currentContext() {
+    if (this.isEmpty()) {
+      return null;
+    }
+    return this.peek().getContext();
+  }
+
+  public Context parentContext() {
+    if (this.isEmpty()) {
+      return null;
+    }
+    return this.peek().getParentContext();
+  }
 }
