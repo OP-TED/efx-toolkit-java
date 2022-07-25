@@ -85,6 +85,17 @@ public class ContentBlock {
     return this.indentationLevel;
   }
 
+  public Context getContext() {
+    return this.context;
+  }
+
+  public Context getParentContext() {
+    if (this.parent == null) {
+      return null;
+    }
+    return this.parent.getContext();
+  }
+
   public Markup renderContent(MarkupGenerator markupGenerator) {
     StringBuilder sb = new StringBuilder();
     sb.append(this.content.script);

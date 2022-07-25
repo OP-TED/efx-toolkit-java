@@ -32,17 +32,17 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
   @Override
   public Markup composeFragmentDefinition(String name, String number, Markup content) {
-    return new Markup(String.format("%s = %s;", name, content.script));
+    return new Markup(String.format("declare %s = { %s }", name, content.script));
   }
 
   @Override
   public Markup renderFragmentInvocation(String name, PathExpression context) {
-    return new Markup(String.format("for-each(%s) { %s(); }", context.script, name));
+    return new Markup(String.format("for-each(%s).call(%s)", context.script, name));
   }
 
   @Override
   public Markup composeOutputFile(List<Markup> body, List<Markup> templates) {
-    return new Markup(String.format("%s %s",
+    return new Markup(String.format("%s\n%s",
         templates.stream().map(t -> t.script).collect(Collectors.joining("\n")),
         body.stream().map(t -> t.script).collect(Collectors.joining("\n"))));
   }
