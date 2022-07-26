@@ -9,14 +9,14 @@ import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class SdkComponentFactory {
-  private static final String FALLBACK_SDK_VERSION = SdkComponent.ANY;
+public abstract class VersionDependentComponentFactory {
+  private static final String FALLBACK_SDK_VERSION = VersionDependentComponent.ANY_VERSION;
 
-  private static final Logger log = LoggerFactory.getLogger(SdkComponentFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(VersionDependentComponentFactory.class);
 
-  private Map<String, Map<SdkComponentType, SdkComponentDescriptor<?>>> componentsMap;
+  private Map<String, Map<VersionDependentComponentType, VersionDependentComponentDescriptor<?>>> componentsMap;
 
-  protected SdkComponentFactory() {
+  protected VersionDependentComponentFactory() {
     populateComponents();
   }
 
@@ -25,14 +25,14 @@ public abstract class SdkComponentFactory {
       componentsMap = new HashMap<>();
     }
 
-    ClassIndex.getAnnotated(SdkComponent.class).forEach((Class<?> clazz) -> {
-      SdkComponent annotation = clazz.getAnnotation(SdkComponent.class);
+    ClassIndex.getAnnotated(VersionDependentComponent.class).forEach((Class<?> clazz) -> {
+      VersionDependentComponent annotation = clazz.getAnnotation(VersionDependentComponent.class);
 
       String[] supportedSdkVersions = annotation.versions();
-      SdkComponentType componentType = annotation.componentType();
+      VersionDependentComponentType componentType = annotation.componentType();
 
       for (String sdkVersion : supportedSdkVersions) {
-        Map<SdkComponentType, SdkComponentDescriptor<?>> components =
+        Map<VersionDependentComponentType, VersionDependentComponentDescriptor<?>> components =
             componentsMap.get(sdkVersion);
 
         if (components == null) {
@@ -40,9 +40,9 @@ public abstract class SdkComponentFactory {
           componentsMap.put(sdkVersion, components);
         }
 
-        SdkComponentDescriptor<?> component =
-            new SdkComponentDescriptor<>(sdkVersion, componentType, clazz);
-        SdkComponentDescriptor<?> existingComponent = components.get(componentType);
+        VersionDependentComponentDescriptor<?> component =
+            new VersionDependentComponentDescriptor<>(sdkVersion, componentType, clazz);
+        VersionDependentComponentDescriptor<?> existingComponent = components.get(componentType);
 
         if (existingComponent != null && !existingComponent.equals(component)) {
           throw new IllegalArgumentException(MessageFormat.format(
@@ -57,10 +57,10 @@ public abstract class SdkComponentFactory {
   }
 
   @SuppressWarnings("unchecked")
-  protected <T> T getComponentImpl(String sdkVersion, final SdkComponentType componentType,
+  protected <T> T getComponentImpl(String sdkVersion, final VersionDependentComponentType componentType,
       final Class<T> intf, Object... initArgs) throws InstantiationException {
-    SdkComponentDescriptor<T> descriptor =
-        (SdkComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(sdkVersion))
+    VersionDependentComponentDescriptor<T> descriptor =
+        (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(sdkVersion))
             .orElseGet(Collections::emptyMap).get(componentType);
 
     if (descriptor == null) {
@@ -71,7 +71,7 @@ public abstract class SdkComponentFactory {
           componentType, sdkVersion, fallbackSdkVersion);
 
       descriptor =
-          (SdkComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(fallbackSdkVersion))
+          (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(fallbackSdkVersion))
               .orElseGet(Collections::emptyMap).get(componentType);
 
       if (descriptor == null) {

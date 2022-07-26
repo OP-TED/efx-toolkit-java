@@ -105,14 +105,14 @@ class EfxTemplateTranslatorTest {
   @Test
   void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
-        "declare block01 = { label(concat('decoration', '|', 'name', '|', 'value')) }\nfor-each(/*/PathNode/TextField).call(block01)",
-        translate("{BT-00-Text}  #{decoration|name|value}"));
+        "declare block01 = { label(concat('auxiliary', '|', 'text', '|', 'value')) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        translate("{BT-00-Text}  #{auxiliary|text|value}"));
   }
 
   @Test
   void testShorthandBtLabelReference() {
     assertEquals(
-        "declare block01 = { label(concat('business_term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(concat('business-term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{name|BT-00}"));
   }
 
@@ -131,21 +131,21 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandFieldValueLabelReferenceForIndicator() {
     assertEquals(
-        "declare block01 = { label(concat('indicator', '|', 'value', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(concat('indicator', '|', 'when', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
   void testShorthandFieldValueLabelReferenceForCode() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testShorthandFieldValueLabelReferenceForInternalCode() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
@@ -157,15 +157,15 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandContextLabelReference_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
-        "declare block01 = { label(concat('indicator', '|', 'value', '-', ./normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/IndicatorField).call(block01)",
-        translate("{BT-00-Indicator}  #{value}"));
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/IndicatorField).call(block01)",
+        translate("{BT-00-Indicator}  #{name}"));
   }
 
   @Test
   void testShorthandContextLabelReference_WithValueLabelTypeAndCodeField() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
-        translate("{BT-00-Code}  #{value}"));
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Code')) }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        translate("{BT-00-Code}  #{name}"));
   }
 
   @Test
@@ -187,16 +187,16 @@ class EfxTemplateTranslatorTest {
 
   @Test
   void testShorthandContextLabelReference_WithNodeContext() {
-    // TODO: Check if Node -> business_term is intended
+    // TODO: Check if Node -> business-term is intended
     assertEquals(
-        "declare block01 = { label(concat('business_term', '|', 'name', '|', 'ND-Root')) }\nfor-each(/*).call(block01)",
+        "declare block01 = { label(concat('node', '|', 'name', '|', 'ND-Root')) }\nfor-each(/*).call(block01)",
         translate("{ND-Root}  #{name}"));
   }
 
   @Test
   void testShorthandContextFieldLabelReference() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} #value"));
   }
 
@@ -217,7 +217,7 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandContextFieldValueReference_WithText() {
     assertEquals(
-        "declare block01 = { text('blah ')label(concat('code', '|', 'value', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        "declare block01 = { text('blah ')label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} blah #value blah $value blah"));
   }
 
