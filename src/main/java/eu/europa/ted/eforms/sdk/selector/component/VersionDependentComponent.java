@@ -9,10 +9,10 @@ import org.atteo.classindex.IndexAnnotated;
 @IndexAnnotated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface SdkComponent {
-  public static final String ANY = "any";
+public @interface VersionDependentComponent {
+  public static final String ANY_VERSION = "any";
 
-  public String[] versions() default {ANY};
+  public String[] versions() default {ANY_VERSION};
 
-  public SdkComponentType componentType();
+  public VersionDependentComponentType componentType();
 }

@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import eu.europa.ted.eforms.sdk.selector.component.SdkComponent;
-import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -35,7 +35,7 @@ import eu.europa.ted.efx.sdk0.v8.EfxParser.*;
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@SdkComponent(versions = {"0.8"}, componentType = SdkComponentType.EFX_TEMPLATE_TRANSLATOR)
+@VersionDependentComponent(versions = {"0.8"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
 public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
     implements EfxTemplateTranslator {
 
@@ -48,16 +48,23 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
       "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
-  private static final String LABEL_TYPE_VALUE =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_VALUE).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_INDICATOR =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_BT =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_FIELD =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_CODE =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
+  private static final String LABEL_TYPE_NAME = "name";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_NAME).replaceAll("^'|'$", "");
+  private static final String LABEL_TYPE_WHEN = "when";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_WHEN_TRUE).replaceAll("^'|'$", "").replace("-true", "");
+  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = "value";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ShorthandContextFieldLabelReference)
+      //     .replaceAll("^'|'$", "").replace("#", "");
+  private static final String ASSET_TYPE_INDICATOR = "indicator";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_BT = "business-term";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_FIELD = "field";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_NODE = "node";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_NODE).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_CODE = "code";
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
 
 
   /**
@@ -265,7 +272,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
             .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                     this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_VALUE),
+                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
                     this.script.getStringLiteralFromUnquotedString("-"), valueReference,
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(fieldId)))));
@@ -276,7 +283,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
             .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
                     this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_VALUE),
+                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(
                         this.symbols.getRootCodelistOfField(fieldId)),
@@ -301,7 +308,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
   public void exitShorthandContextLabelReference(ShorthandContextLabelReferenceContext ctx) {
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
-      if (labelType.equals(LABEL_TYPE_VALUE)) {
+      if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
         this.shorthandFieldValueLabelReference(this.efxContext.symbol());
       } else {
         this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
@@ -313,7 +320,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
       }
     } else if (this.efxContext.isNodeContext()) {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
-          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
+          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_NODE),
               this.script.getStringLiteralFromUnquotedString("|"),
               this.script.getStringLiteralFromUnquotedString(labelType),
               this.script.getStringLiteralFromUnquotedString("|"),
