@@ -1,5 +1,6 @@
 package eu.europa.ted.efx.model;
 
+import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,10 +41,11 @@ public class ContentBlock {
   }
 
   public ContentBlock addChild(final int number, final Markup content, final Context context) {
-    final int resolvedNumber = number > 0 ? number
+    final int outlineNumber = number > 0 ? number
         : children.stream().map(b -> b.number).max(Comparator.naturalOrder()).orElse(0) + 1;
-    String newBlockId = String.format("%s%02d", this.id, resolvedNumber);
-    ContentBlock newBlock = new ContentBlock(this, newBlockId, resolvedNumber, content, context);
+
+    String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
+    ContentBlock newBlock = new ContentBlock(this, newBlockId, outlineNumber, content, context);
     this.children.add(newBlock);
     return newBlock;
   }
