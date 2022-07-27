@@ -471,6 +471,32 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new DurationExpression("(" + left.script + " - " + right.script + ")");
   }
 
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
+      L listOne, L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + ", " + listTwo.script + ")", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + ", " + listTwo.script + ")", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + "[. = " + listTwo.script + "])", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+  }
+
+
   /*** Helpers ***/
 
 

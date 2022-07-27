@@ -1247,4 +1247,120 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
     this.stack.push(
         this.script.composeToYearMonthDurationConversion(this.stack.pop(StringExpression.class)));
   }
+
+  /*** Sequence Functions ***/
+
+  @Override
+  public void exitDistinctValuesFunction(DistinctValuesFunctionContext ctx) {
+    final Class<?> sequenceType = this.stack.peek().getClass();
+    if (StringListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(StringListExpression.class);
+    } else if (NumericListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(NumericListExpression.class);
+    } else if (BooleanListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(BooleanListExpression.class);
+    } else if (DateListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(DateListExpression.class);
+    } else if (TimeListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(TimeListExpression.class);
+    } else if (DurationListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitDistinctValuesFunction(DurationListExpression.class);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported sequence type: " + sequenceType.getSimpleName());
+    }
+  }
+
+  private <T extends Expression, L extends ListExpression<T>> void exitDistinctValuesFunction(
+      Class<L> listType) {
+    final L two = this.stack.pop(listType);
+    final L one = this.stack.pop(listType);
+    this.stack.push(this.script.composeDistinctValuesFunction(one, two, listType));
+  }
+
+  @Override
+  public void exitUnionFunction(UnionFunctionContext ctx) {
+    final Class<?> sequenceType = this.stack.peek().getClass();
+    if (StringListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(StringListExpression.class);
+    } else if (NumericListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(NumericListExpression.class);
+    } else if (BooleanListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(BooleanListExpression.class);
+    } else if (DateListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(DateListExpression.class);
+    } else if (TimeListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(TimeListExpression.class);
+    } else if (DurationListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitUnionFunction(DurationListExpression.class);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported sequence type: " + sequenceType.getSimpleName());
+    }
+  }
+
+  private <T extends Expression, L extends ListExpression<T>> void exitUnionFunction(
+      Class<L> listType) {
+    final L two = this.stack.pop(listType);
+    final L one = this.stack.pop(listType);
+    this.stack.push(this.script.composeUnionFunction(one, two, listType));
+  }
+
+  @Override
+  public void exitIntersectFunction(IntersectFunctionContext ctx) {
+    final Class<?> sequenceType = this.stack.peek().getClass();
+    if (StringListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(StringListExpression.class);
+    } else if (NumericListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(NumericListExpression.class);
+    } else if (BooleanListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(BooleanListExpression.class);
+    } else if (DateListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(DateListExpression.class);
+    } else if (TimeListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(TimeListExpression.class);
+    } else if (DurationListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitIntersectFunction(DurationListExpression.class);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported sequence type: " + sequenceType.getSimpleName());
+    }
+  }
+
+  private <T extends Expression, L extends ListExpression<T>> void exitIntersectFunction(
+      Class<L> listType) {
+    final L two = this.stack.pop(listType);
+    final L one = this.stack.pop(listType);
+    this.stack.push(this.script.composeIntersectFunction(one, two, listType));
+  }
+
+  @Override
+  public void exitExceptFunction(ExceptFunctionContext ctx) {
+    final Class<?> sequenceType = this.stack.peek().getClass();
+    if (StringListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(StringListExpression.class);
+    } else if (NumericListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(NumericListExpression.class);
+    } else if (BooleanListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(BooleanListExpression.class);
+    } else if (DateListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(DateListExpression.class);
+    } else if (TimeListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(TimeListExpression.class);
+    } else if (DurationListExpression.class.isAssignableFrom(sequenceType)) {
+      this.exitExceptFunction(DurationListExpression.class);
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported sequence type: " + sequenceType.getSimpleName());
+    }
+  }
+
+
+  private <T extends Expression, L extends ListExpression<T>> void exitExceptFunction(
+      Class<L> listType) {
+    final L two = this.stack.pop(listType);
+    final L one = this.stack.pop(listType);
+    this.stack.push(this.script.composeExceptFunction(one, two, listType));
+  }
+
 }

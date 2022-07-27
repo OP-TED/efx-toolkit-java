@@ -309,4 +309,20 @@ public interface ScriptGenerator {
 
   public DurationExpression composeSubtraction(final DurationExpression left,
       final DurationExpression right);
+
+  /*
+   * Sequence Functions
+   */
+
+  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
+      L listOne, L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
+      L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
+      L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
+      L listTwo, Class<L> listType);
 }
