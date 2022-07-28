@@ -1,6 +1,5 @@
 package eu.europa.ted.efx.model;
 
-import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +40,8 @@ public class ContentBlock {
   }
 
   public ContentBlock addChild(final int number, final Markup content, final Context context) {
-    final int outlineNumber = number > 0 ? number
+    // number < 0 means "autogenerate", number == 0 means "no number", number > 0 means "use this number"
+    final int outlineNumber = number >= 0 ? number
         : children.stream().map(b -> b.number).max(Comparator.naturalOrder()).orElse(0) + 1;
 
     String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
@@ -73,14 +73,20 @@ public class ContentBlock {
   }
 
   public String getOutlineNumber() {
-    if (this.children.size() == 0) {
+    if (this.number == 0 || this.children.size() == 0) {
       return "";
     }
 
     if (this.parent == null || this.parent.number == 0) {
       return String.format("%d", this.number);
     }
-    return String.format("%s.%d", this.parent.getOutlineNumber(), this.number);
+
+    final String parentNumber = this.parent.getOutlineNumber();
+    if (parentNumber.isEmpty()) {
+      return String.format("%d", this.number);
+    }
+
+    return String.format("%s.%d", parentNumber, this.number);
   }
 
   public Integer getIndentationLevel() {

@@ -2,6 +2,7 @@ package eu.europa.ted.efx.mock;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -32,7 +33,10 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
   @Override
   public Markup composeFragmentDefinition(String name, String number, Markup content) {
-    return new Markup(String.format("declare %s = { %s }", name, content.script));
+    if (StringUtils.isBlank(number)) {
+      return new Markup(String.format("declare %s = { %s }", name, content.script));
+    }
+    return new Markup(String.format("declare %s = { outline('%s') %s }", name, number, content.script));
   }
 
   @Override
