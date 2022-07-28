@@ -301,4 +301,11 @@ class EfxTemplateTranslatorTest {
         "declare block01 = { label(concat('field', '|', 'name', '|', ./normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{field|name|${BT-00-Text}}"));
   }
+
+  @Test
+  void testEndOfLineComments() {
+    assertEquals(
+        "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' ')text('blah blah') }\nfor-each(/*).call(block01)",
+        translate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
+  }
 }
