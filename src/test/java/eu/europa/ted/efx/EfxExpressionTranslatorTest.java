@@ -1205,37 +1205,37 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testUnionFunction_WithStringSequences() {
-    assertEquals("distinct-values(('one','two'), ('two','three','four'))",
+    assertEquals("distinct-values((('one','two'), ('two','three','four')))",
         test("ND-Root", "value-union(('one', 'two'), ('two', 'three', 'four'))"));
   }
 
   @Test
   void testUnionFunction_WithNumberSequences() {
-    assertEquals("distinct-values((1,2,3), (2,3,4))",
+    assertEquals("distinct-values(((1,2,3), (2,3,4)))",
         test("ND-Root", "value-union((1, 2, 3), (2, 3, 4))"));
   }
 
   @Test
   void testUnionFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
+    assertEquals("distinct-values(((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
         test("ND-Root", "value-union((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testUnionFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
+    assertEquals("distinct-values(((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
         test("ND-Root", "value-union((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
   @Test
   void testUnionFunction_WithBooleanSequences() {
-    assertEquals("distinct-values((true(),false()), (false(),false()))",
+    assertEquals("distinct-values(((true(),false()), (false(),false())))",
         test("ND-Root", "value-union((TRUE, FALSE), (FALSE, NEVER))"));
   }
   
   @Test
   void testUnionFunction_WithFieldReferences() {
-    assertEquals("distinct-values(PathNode/TextField, PathNode/TextField)",
+    assertEquals("distinct-values((PathNode/TextField, PathNode/TextField))",
         test("ND-Root", "value-union(BT-00-Text, BT-00-Text)"));
   }
 

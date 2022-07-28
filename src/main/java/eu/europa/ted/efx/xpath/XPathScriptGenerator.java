@@ -481,7 +481,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + ", " + listTwo.script + ")", listType);
+        return Expression.instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
   }
 
   @Override
