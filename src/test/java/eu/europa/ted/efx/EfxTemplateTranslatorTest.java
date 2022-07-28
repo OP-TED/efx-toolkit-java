@@ -33,10 +33,12 @@ class EfxTemplateTranslatorTest {
   @Test
   void testTemplateLineOutline() {
     // Outline is ignored if the line has no children
-    assertEquals(lines("declare block02 = { text('foo')", "for-each(../..).call(block0201) }", //
-        "declare block0201 = { text('bar')", "for-each(PathNode/NumberField).call(block020101) }", //
-        "declare block020101 = { text('foo') }", //
-        "for-each(/*/PathNode/TextField).call(block02)"), //
+    assertEquals(lines("declare block01 = { text('foo')", 
+    "for-each(../..).call(block0101) }", 
+    "declare block0101 = { text('bar')", 
+    "for-each(PathNode/NumberField).call(block010101) }", 
+    "declare block010101 = { text('foo') }", 
+    "for-each(/*/PathNode/TextField).call(block01)"), //
         translate(lines("2 {BT-00-Text} foo", "\t{ND-Root} bar", "\t\t{BT-00-Number} foo")));
   }
 
