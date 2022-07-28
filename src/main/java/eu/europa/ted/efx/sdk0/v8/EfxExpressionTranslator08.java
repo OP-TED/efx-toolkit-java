@@ -1273,9 +1273,8 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
 
   private <T extends Expression, L extends ListExpression<T>> void exitDistinctValuesFunction(
       Class<L> listType) {
-    final L two = this.stack.pop(listType);
-    final L one = this.stack.pop(listType);
-    this.stack.push(this.script.composeDistinctValuesFunction(one, two, listType));
+    final L list = this.stack.pop(listType);
+    this.stack.push(this.script.composeDistinctValuesFunction(list, listType));
   }
 
   @Override

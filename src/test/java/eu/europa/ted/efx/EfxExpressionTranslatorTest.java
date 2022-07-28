@@ -1167,44 +1167,38 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testDistinctValuesFunction_WithStringSequences() {
-    assertEquals("distinct-values(('one','two'), ('two','three','four'))",
-        test("ND-Root", "distinct-values(('one', 'two'), ('two', 'three', 'four'))"));
+    assertEquals("distinct-values(('one','two','one'))",
+        test("ND-Root", "distinct-values(('one', 'two', 'one'))"));
   }
 
   @Test
   void testDistinctValuesFunction_WithNumberSequences() {
-    assertEquals("distinct-values((1,2,3), (2,3,4))",
-        test("ND-Root", "distinct-values((1, 2, 3), (2, 3, 4))"));
+    assertEquals("distinct-values((1,2,3,2,3,4))",
+        test("ND-Root", "distinct-values((1, 2, 3, 2, 3, 4))"));
   }
 
   @Test
   void testDistinctValuesFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
-        test("ND-Root", "distinct-values((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
+    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'),xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
+        test("ND-Root", "distinct-values((2018-01-01Z, 2020-01-01Z, 2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testDistinctValuesFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
-        test("ND-Root", "distinct-values((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
+    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
+        test("ND-Root", "distinct-values((12:00:00Z, 13:00:00Z, 12:00:00Z, 14:00:00Z))"));
   }
 
   @Test
   void testDistinctValuesFunction_WithBooleanSequences() {
-    assertEquals("distinct-values((true(),false()), (false(),false()))",
-        test("ND-Root", "distinct-values((TRUE, FALSE), (FALSE, NEVER))"));
+    assertEquals("distinct-values((true(),false(),false(),false()))",
+        test("ND-Root", "distinct-values((TRUE, FALSE, FALSE, NEVER))"));
   }
   
   @Test
   void testDistinctValuesFunction_WithFieldReferences() {
-    assertEquals("distinct-values(PathNode/TextField, PathNode/TextField)",
-        test("ND-Root", "distinct-values(BT-00-Text, BT-00-Text)"));
-  }
-
-  @Test
-  void testDistinctValuesFunction_WithTypeMismatch() {
-    assertThrows(ParseCancellationException.class,
-        () -> test("ND-Root", "distinct-values(BT-00-Text, BT-00-Number)"));
+    assertEquals("distinct-values(PathNode/TextField)",
+        test("ND-Root", "distinct-values(BT-00-Text)"));
   }
 
   /* Union */
@@ -1255,37 +1249,37 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testIntersectFunction_WithStringSequences() {
-    assertEquals("distinct-values(('one','two')[. = ('two','three','four')])",
+    assertEquals("distinct-values(('one','two')[.= ('two','three','four')])",
         test("ND-Root", "value-intersect(('one', 'two'), ('two', 'three', 'four'))"));
   }
 
   @Test
   void testIntersectFunction_WithNumberSequences() {
-    assertEquals("distinct-values((1,2,3)[. = (2,3,4)])",
+    assertEquals("distinct-values((1,2,3)[.= (2,3,4)])",
         test("ND-Root", "value-intersect((1, 2, 3), (2, 3, 4))"));
   }
 
   @Test
   void testIntersectFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[. = (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))])",
+    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[.= (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))])",
         test("ND-Root", "value-intersect((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testIntersectFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[. = (xs:time('12:00:00Z'),xs:time('14:00:00Z'))])",
+    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[.= (xs:time('12:00:00Z'),xs:time('14:00:00Z'))])",
         test("ND-Root", "value-intersect((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
   @Test
   void testIntersectFunction_WithBooleanSequences() {
-    assertEquals("distinct-values((true(),false())[. = (false(),false())])",
+    assertEquals("distinct-values((true(),false())[.= (false(),false())])",
         test("ND-Root", "value-intersect((TRUE, FALSE), (FALSE, NEVER))"));
   }
   
   @Test
   void testIntersectFunction_WithFieldReferences() {
-    assertEquals("distinct-values(PathNode/TextField[. = PathNode/TextField])",
+    assertEquals("distinct-values(PathNode/TextField[.= PathNode/TextField])",
         test("ND-Root", "value-intersect(BT-00-Text, BT-00-Text)"));
   }
 

@@ -315,7 +315,7 @@ public interface ScriptGenerator {
    */
 
   public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
-      L listOne, L listTwo, Class<L> listType);
+          L list, Class<L> listType);
 
   public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
       L listTwo, Class<L> listType);

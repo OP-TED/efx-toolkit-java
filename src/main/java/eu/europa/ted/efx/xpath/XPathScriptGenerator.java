@@ -474,8 +474,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
-      L listOne, L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + ", " + listTwo.script + ")", listType);
+      L list, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + list.script + ")", listType);
   }
 
   @Override
@@ -487,7 +487,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[. = " + listTwo.script + "])", listType);
+        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
   }
 
   @Override
