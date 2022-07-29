@@ -3,6 +3,8 @@ package eu.europa.ted.efx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
