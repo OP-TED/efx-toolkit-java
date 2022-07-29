@@ -132,7 +132,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
   }
 
   private String renderTemplate(final CharStream charStream) {
-    logger.info("Rendering template");
+    logger.debug("Rendering template");
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -150,7 +150,7 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
 
-    logger.info("Finished rendering template");
+    logger.debug("Finished rendering template");
 
     return getTranslatedMarkup();
   }
