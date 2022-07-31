@@ -15,7 +15,7 @@ import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.sdk0.v8.entity.*;
+import eu.europa.ted.efx.sdk1.entity.*;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class SymbolResolverMock implements SymbolResolver {

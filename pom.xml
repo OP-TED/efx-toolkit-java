@@ -180,10 +180,10 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>0.8.0-SNAPSHOT</version>
+              <version>1.0.0-SNAPSHOT</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
-              <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk0/v8</outputDirectory>
+              <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk1</outputDirectory>
               <fileMappers>
                 <!-- Remove the folder prefix from filenames -->
                 <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper />

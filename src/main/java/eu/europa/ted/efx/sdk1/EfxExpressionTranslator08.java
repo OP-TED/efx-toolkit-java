@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.sdk0.v8;
+package eu.europa.ted.efx.sdk1;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +42,10 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.model.Expression.TimeListExpression;
-import eu.europa.ted.efx.sdk0.v8.EfxParser.*;
+import eu.europa.ted.efx.sdk1.EfxBaseListener;
+import eu.europa.ted.efx.sdk1.EfxLexer;
+import eu.europa.ted.efx.sdk1.EfxParser;
+import eu.europa.ted.efx.sdk1.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
@@ -59,7 +62,7 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * {@link EfxExpressionTranslator08} only focuses on EFX expressions. To translate EFX templates
  * you need to use the {@link EfxTemplateTranslator08} which derives from this class.
  */
-@VersionDependentComponent(versions = {"0.8"}, componentType = VersionDependentComponentType.EFX_EXPRESSION_TRANSLATOR)
+@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.EFX_EXPRESSION_TRANSLATOR)
 public class EfxExpressionTranslator08 extends EfxBaseListener
     implements EfxExpressionTranslator {
 

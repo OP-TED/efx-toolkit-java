@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.sdk0.v8;
+package eu.europa.ted.efx.sdk1;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +27,7 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
-import eu.europa.ted.efx.sdk0.v8.EfxParser.*;
+import eu.europa.ted.efx.sdk1.EfxParser.*;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator08} to provide additional
@@ -35,7 +35,7 @@ import eu.europa.ted.efx.sdk0.v8.EfxParser.*;
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@VersionDependentComponent(versions = {"0.8"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
+@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
 public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
     implements EfxTemplateTranslator {
 
