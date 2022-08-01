@@ -12,6 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
@@ -38,6 +40,8 @@ import eu.europa.ted.efx.sdk1.EfxParser.*;
 @VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
 public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     implements EfxTemplateTranslator {
+
+  private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslatorV1.class);
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
@@ -128,6 +132,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   }
 
   private String renderTemplate(final CharStream charStream) {
+    logger.debug("Rendering template");
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -145,6 +150,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
 
+    logger.debug("Finished rendering template");
+
     return getTranslatedMarkup();
   }
 
@@ -157,10 +164,15 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * @return The translated code, trimmed
    */
   private String getTranslatedMarkup() {
+    logger.debug("Getting translated markup.");
+
     final StringBuilder sb = new StringBuilder(64);
     while (!this.stack.empty()) {
       sb.insert(0, '\n').insert(0, this.stack.pop(Markup.class).script);
     }
+
+    logger.debug("Finished getting translated markup.");
+
     return sb.toString().trim();
   }
 

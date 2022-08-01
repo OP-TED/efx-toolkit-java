@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public abstract class VersionDependentComponentFactory {
   private static final String FALLBACK_SDK_VERSION = VersionDependentComponent.ANY_VERSION;
 
-  private static final Logger log = LoggerFactory.getLogger(VersionDependentComponentFactory.class);
+  private static final Logger logger = LoggerFactory.getLogger(VersionDependentComponentFactory.class);
 
   private Map<String, Map<VersionDependentComponentType, VersionDependentComponentDescriptor<?>>> componentsMap;
 
@@ -69,7 +69,7 @@ public abstract class VersionDependentComponentFactory {
     if (descriptor == null) {
       String fallbackSdkVersion = FALLBACK_SDK_VERSION;
 
-      log.warn(
+      logger.warn(
           "No implementation found for component type [{}] of SDK [{}]. Trying with fallback SDK [{}]",
           componentType, normalizedVersion, fallbackSdkVersion);
 

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class VersionDependentComponentDescriptor<T> implements Serializable {
   private static final long serialVersionUID = -6237218459963821365L;
 
-  private static final Logger log = LoggerFactory.getLogger(VersionDependentComponentDescriptor.class);
+  private static final Logger logger = LoggerFactory.getLogger(VersionDependentComponentDescriptor.class);
 
   private String sdkVersion;
 
@@ -35,7 +35,7 @@ public class VersionDependentComponentDescriptor<T> implements Serializable {
       Class<?>[] paramTypes = Arrays.asList(Optional.ofNullable(initArgs).orElse(new Object[0]))
           .stream().map(Object::getClass).collect(Collectors.toList()).toArray(new Class[0]);
 
-      log.trace("Creating an instance of [{}] using constructor with parameter types: {}", implType,
+      logger.trace("Creating an instance of [{}] using constructor with parameter types: {}", implType,
           paramTypes);
 
       return (T) Arrays.asList(implType.getDeclaredConstructors()).stream()
