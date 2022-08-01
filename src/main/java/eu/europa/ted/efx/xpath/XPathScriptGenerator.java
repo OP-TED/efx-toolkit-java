@@ -250,9 +250,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression composeExternalReference(StringExpression externalReference) {
-    // TODO: implement this properly.
     return new PathExpression(
-        "fn:doc(concat('http://notice.service/', " + externalReference.script + ")')");
+        "fn:doc(concat($urlPrefix, " + externalReference.script + "))");
   }
 
 
