@@ -333,6 +333,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
         leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
   }
 
+  @Override
+  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one,
+      ListExpressionBase two) {
+    return new BooleanExpression("not((" + one.script + " except " + two.script + ", " + two.script + " except " + one.script + "))");
+  }
+
   /*** Numeric functions ***/
 
   @Override
