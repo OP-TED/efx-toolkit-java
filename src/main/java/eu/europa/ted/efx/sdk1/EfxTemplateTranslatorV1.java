@@ -30,13 +30,13 @@ import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 
 /**
- * The EfxTemplateTranslator extends the {@link EfxExpressionTranslator08} to provide additional
+ * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV1} to provide additional
  * translation capabilities for EFX templates. If has been implemented as an extension to the
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
-public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
+@VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
+public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     implements EfxTemplateTranslator {
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
@@ -93,11 +93,11 @@ public class EfxTemplateTranslator08 extends EfxExpressionTranslator08
   ContentBlockStack blockStack = new ContentBlockStack();
 
   @SuppressWarnings("unused")
-  private EfxTemplateTranslator08() {
+  private EfxTemplateTranslatorV1() {
     super();
   }
 
-  public EfxTemplateTranslator08(final MarkupGenerator markupGenerator,
+  public EfxTemplateTranslatorV1(final MarkupGenerator markupGenerator,
       final SymbolResolver symbolResolver, final ScriptGenerator scriptGenerator,
       final BaseErrorListener errorListener) {
     super(symbolResolver, scriptGenerator, errorListener);

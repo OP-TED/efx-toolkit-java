@@ -5,15 +5,15 @@ import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 
-@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.FIELD)
-public class SdkField08 extends SdkField {
+@VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.FIELD)
+public class SdkFieldV1 extends SdkField {
 
-  public SdkField08(String id, String type, String parentNodeId, String xpathAbsolute,
+  public SdkFieldV1(String id, String type, String parentNodeId, String xpathAbsolute,
       String xpathRelative, String rootCodelistId) {
     super(id, type, parentNodeId, xpathAbsolute, xpathRelative, rootCodelistId);
   }
 
-  public SdkField08(JsonNode field) {
+  public SdkFieldV1(JsonNode field) {
     super(field);
   }
 }

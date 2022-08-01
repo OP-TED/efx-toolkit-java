@@ -8,7 +8,7 @@ import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
 public class EfxTranslator {
   enum KnownSdkVersions {
-    SDK_0_6("0.6"), SDK_0_7("0.7"), SDK_1_0("1.0"), UNSUPPORTED("N/A");
+    SDK_0_6("0.6"), SDK_0_7("0.7"), SDK_1("1"), UNSUPPORTED("N/A");
 
     private String name;
 
@@ -57,8 +57,8 @@ public class EfxTranslator {
       normalizedVersion = normalizedVersion.substring(11);
     }
     String[] numbers = normalizedVersion.split("\\.", -2);
-    normalizedVersion = "SDK_" + (numbers.length > 0 ? numbers[0] : "") + "_"
-        + (numbers.length > 1 ? numbers[1] : "");
+    normalizedVersion = "SDK_" + (numbers.length > 0 ? numbers[0] : "") 
+        + ((numbers.length > 1 && Integer.parseInt(numbers[0]) > 0) ? "" : "_" + numbers[1]);
 
     try {
       return KnownSdkVersions.valueOf(normalizedVersion);

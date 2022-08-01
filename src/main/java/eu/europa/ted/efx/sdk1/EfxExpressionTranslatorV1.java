@@ -42,9 +42,6 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.model.Expression.TimeListExpression;
-import eu.europa.ted.efx.sdk1.EfxBaseListener;
-import eu.europa.ted.efx.sdk1.EfxLexer;
-import eu.europa.ted.efx.sdk1.EfxParser;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
@@ -59,11 +56,11 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
  * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link EfxExpressionTranslator08} only focuses on EFX expressions. To translate EFX templates
- * you need to use the {@link EfxTemplateTranslator08} which derives from this class.
+ * {@link EfxExpressionTranslatorV1} only focuses on EFX expressions. To translate EFX templates
+ * you need to use the {@link EfxTemplateTranslatorV1} which derives from this class.
  */
-@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.EFX_EXPRESSION_TRANSLATOR)
-public class EfxExpressionTranslator08 extends EfxBaseListener
+@VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.EFX_EXPRESSION_TRANSLATOR)
+public class EfxExpressionTranslatorV1 extends EfxBaseListener
     implements EfxExpressionTranslator {
 
   private static final String NOT_MODIFIER =
@@ -99,9 +96,9 @@ public class EfxExpressionTranslator08 extends EfxBaseListener
    */
   protected ScriptGenerator script;
 
-  protected EfxExpressionTranslator08() {}
+  protected EfxExpressionTranslatorV1() {}
 
-  public EfxExpressionTranslator08(final SymbolResolver symbolResolver,
+  public EfxExpressionTranslatorV1(final SymbolResolver symbolResolver,
       final ScriptGenerator scriptGenerator, final BaseErrorListener errorListener) {
     this.symbols = symbolResolver;
     this.script = scriptGenerator;

@@ -10,10 +10,10 @@ import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType
  *
  * @author rouschr
  */
-@VersionDependentComponent(versions = {"1.0"}, componentType = VersionDependentComponentType.CODELIST)
-public class SdkCodelist08 extends SdkCodelist {
+@VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.CODELIST)
+public class SdkCodelistV1 extends SdkCodelist {
 
-    public SdkCodelist08(String codelistId, String codelistVersion, List<String> codes) {
+    public SdkCodelistV1(String codelistId, String codelistVersion, List<String> codes) {
         super(codelistId, codelistVersion, codes);
     }
 }
