@@ -59,8 +59,11 @@ public abstract class VersionDependentComponentFactory {
   @SuppressWarnings("unchecked")
   protected <T> T getComponentImpl(String sdkVersion, final VersionDependentComponentType componentType,
       final Class<T> intf, Object... initArgs) throws InstantiationException {
+  
+    String normalizedVersion = normalizeVersion(sdkVersion); 
+
     VersionDependentComponentDescriptor<T> descriptor =
-        (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(sdkVersion))
+        (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(normalizedVersion))
             .orElseGet(Collections::emptyMap).get(componentType);
 
     if (descriptor == null) {
@@ -68,7 +71,7 @@ public abstract class VersionDependentComponentFactory {
 
       logger.warn(
           "No implementation found for component type [{}] of SDK [{}]. Trying with fallback SDK [{}]",
-          componentType, sdkVersion, fallbackSdkVersion);
+          componentType, normalizedVersion, fallbackSdkVersion);
 
       descriptor =
           (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(fallbackSdkVersion))
@@ -82,5 +85,22 @@ public abstract class VersionDependentComponentFactory {
     }
 
     return descriptor.createInstance(initArgs);
+  }
+
+  private static String normalizeVersion(final String sdkVersion) {
+    String normalizedVersion = sdkVersion;
+
+    if (normalizedVersion.startsWith("eforms-sdk-")) {
+      normalizedVersion = normalizedVersion.substring(11);
+    }
+
+    String[] numbers = normalizedVersion.split("\\.", -2);
+
+    if (numbers.length < 1) {
+      throw new IllegalArgumentException("Invalid SDK version: " + sdkVersion);
+    }
+
+    return numbers[0]
+        + ((numbers.length > 1 && Integer.parseInt(numbers[0]) > 0) ? "" : "." + numbers[1]);
   }
 }

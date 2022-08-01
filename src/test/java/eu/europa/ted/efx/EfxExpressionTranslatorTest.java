@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 class EfxExpressionTranslatorTest {
-  final private String SDK_VERSION = "eforms-sdk-0.8";
+  final private String SDK_VERSION = "eforms-sdk-1.0";
 
   private String test(final String context, final String expression) {
     try {
@@ -1006,7 +1006,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldReferenceInOtherNotice() {
     assertEquals(
-        "fn:doc(concat('http://notice.service/', 'da4d46e9-490b-41ff-a2ae-8166d356a619')')/PathNode/TextField/normalize-space(text())",
+        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/PathNode/TextField/normalize-space(text())",
         test("ND-Root", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text"));
   }
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 class EfxTemplateTranslatorTest {
-  final private String SDK_VERSION = "eforms-sdk-0.8";
+  final private String SDK_VERSION = "eforms-sdk-1.0";
 
   private String translate(final String template) {
     try {
