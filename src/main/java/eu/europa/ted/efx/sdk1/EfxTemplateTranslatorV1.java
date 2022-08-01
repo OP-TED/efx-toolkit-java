@@ -41,7 +41,7 @@ import eu.europa.ted.efx.sdk1.EfxParser.*;
 public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     implements EfxTemplateTranslator {
 
-  private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslator08.class);
+  private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslatorV1.class);
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
