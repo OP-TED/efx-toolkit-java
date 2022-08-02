@@ -1337,43 +1337,43 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testSequenceEqualFunction_WithStringSequences() {
-    assertEquals("not((('one','two') except ('two','three','four'), ('two','three','four') except ('one','two')))",
+    assertEquals("deep-equal(sort(('one','two')), sort(('two','three','four')))",
         test("ND-Root", "sequence-equal(('one', 'two'), ('two', 'three', 'four'))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithNumberSequences() {
-    assertEquals("not(((1,2,3) except (2,3,4), (2,3,4) except (1,2,3)))",
+    assertEquals("deep-equal(sort((1,2,3)), sort((2,3,4)))",
         test("ND-Root", "sequence-equal((1, 2, 3), (2, 3, 4))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithDateSequences() {
-    assertEquals("not(((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')) except (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')) except (xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))))",
+    assertEquals("deep-equal(sort((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))), sort((xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
         test("ND-Root", "sequence-equal((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithTimeSequences() {
-    assertEquals("not(((xs:time('12:00:00Z'),xs:time('13:00:00Z')) except (xs:time('12:00:00Z'),xs:time('14:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z')) except (xs:time('12:00:00Z'),xs:time('13:00:00Z'))))",
+    assertEquals("deep-equal(sort((xs:time('12:00:00Z'),xs:time('13:00:00Z'))), sort((xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
         test("ND-Root", "sequence-equal((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithBooleanSequences() {
-    assertEquals("not(((true(),false()) except (false(),false()), (false(),false()) except (true(),false())))",
+    assertEquals("deep-equal(sort((true(),false())), sort((false(),false())))",
         test("ND-Root", "sequence-equal((TRUE, FALSE), (FALSE, NEVER))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithDurationSequences() {
-    assertEquals("not(((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y')) except (xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y')), (xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y')) except (xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))))",
+    assertEquals("deep-equal(sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))), sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y'))))",
         test("ND-Root", "sequence-equal((P1Y, P2Y), (P1Y, P3Y))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithFieldReferences() {
-    assertEquals("not((PathNode/TextField except PathNode/TextField, PathNode/TextField except PathNode/TextField))",
+    assertEquals("deep-equal(sort(PathNode/TextField), sort(PathNode/TextField))",
         test("ND-Root", "sequence-equal(BT-00-Text, BT-00-Text)"));
   }
 }

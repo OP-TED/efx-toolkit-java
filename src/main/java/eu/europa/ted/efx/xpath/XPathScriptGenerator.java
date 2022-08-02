@@ -336,7 +336,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one,
       ListExpressionBase two) {
-    return new BooleanExpression("not((" + one.script + " except " + two.script + ", " + two.script + " except " + one.script + "))");
+    return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
   /*** Numeric functions ***/
