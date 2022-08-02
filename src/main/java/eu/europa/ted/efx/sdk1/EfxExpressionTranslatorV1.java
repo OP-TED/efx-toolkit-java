@@ -1152,6 +1152,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.stack.push(this.script.composeEndsWithCondition(text, endsWith));
   }
 
+  @Override
+  public void exitSequenceEqualFunction(SequenceEqualFunctionContext ctx) {
+    final ListExpression<?> two = this.stack.pop(ListExpression.class);
+    final ListExpression<?> one = this.stack.pop(ListExpression.class);
+    this.stack.push(this.script.composeSequenceEqualFunction(one, two));
+  }
+
   /*** Numeric functions ***/
 
   @Override

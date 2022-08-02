@@ -1333,4 +1333,47 @@ class EfxExpressionTranslatorTest {
         () -> test("ND-Root", "value-except(BT-00-Text, BT-00-Number)"));
   }
 
+  /* Compare sequences */
+
+  @Test
+  void testSequenceEqualFunction_WithStringSequences() {
+    assertEquals("deep-equal(sort(('one','two')), sort(('two','three','four')))",
+        test("ND-Root", "sequence-equal(('one', 'two'), ('two', 'three', 'four'))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithNumberSequences() {
+    assertEquals("deep-equal(sort((1,2,3)), sort((2,3,4)))",
+        test("ND-Root", "sequence-equal((1, 2, 3), (2, 3, 4))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithDateSequences() {
+    assertEquals("deep-equal(sort((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))), sort((xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
+        test("ND-Root", "sequence-equal((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithTimeSequences() {
+    assertEquals("deep-equal(sort((xs:time('12:00:00Z'),xs:time('13:00:00Z'))), sort((xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
+        test("ND-Root", "sequence-equal((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithBooleanSequences() {
+    assertEquals("deep-equal(sort((true(),false())), sort((false(),false())))",
+        test("ND-Root", "sequence-equal((TRUE, FALSE), (FALSE, NEVER))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithDurationSequences() {
+    assertEquals("deep-equal(sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))), sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y'))))",
+        test("ND-Root", "sequence-equal((P1Y, P2Y), (P1Y, P3Y))"));
+  }
+
+  @Test
+  void testSequenceEqualFunction_WithFieldReferences() {
+    assertEquals("deep-equal(sort(PathNode/TextField), sort(PathNode/TextField))",
+        test("ND-Root", "sequence-equal(BT-00-Text, BT-00-Text)"));
+  }
 }
