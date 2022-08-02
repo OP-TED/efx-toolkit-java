@@ -253,7 +253,6 @@ class EfxTemplateTranslatorTest {
 
   @Test
   void testShorthandContextLabelReference_WithNodeContext() {
-    // TODO: Check if Node -> business-term is intended
     assertEquals(
         "declare block01 = { label(concat('node', '|', 'name', '|', 'ND-Root')) }\nfor-each(/*).call(block01)",
         translate("{ND-Root}  #{name}"));

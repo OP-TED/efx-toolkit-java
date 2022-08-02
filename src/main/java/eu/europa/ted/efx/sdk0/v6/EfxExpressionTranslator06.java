@@ -614,8 +614,6 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
 
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-    // TODO: Use an interface for locating attributes. A PathExpression is not necessarily an
-    // XPath in every implementation.
     XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
 
     if (parsedPath.hasAttribute()) {
