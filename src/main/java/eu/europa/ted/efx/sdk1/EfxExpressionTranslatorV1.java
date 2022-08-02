@@ -910,11 +910,22 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
+  public void enterFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
+    if (ctx.noticeReference() != null) {
+      // We push a null context as we switch to an external notice and we need XPaths to be absolute
+      this.efxContext.push(null);
+    }
+  }
+
+  @Override
   public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
     if (ctx.noticeReference() != null) {
       PathExpression field = this.stack.pop(PathExpression.class);
       PathExpression notice = this.stack.pop(PathExpression.class);
       this.stack.push(this.script.composeFieldInExternalReference(notice, field));
+      
+      // Finally, pop the null context we pushed during enterFieldReferenceInOtherNotice 
+      this.efxContext.pop();  
     }
   }
 

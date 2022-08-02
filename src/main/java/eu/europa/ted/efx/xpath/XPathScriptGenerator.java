@@ -258,7 +258,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeFieldInExternalReference(PathExpression externalReference,
       PathExpression fieldReference) {
-    return new PathExpression(externalReference.script + "/" + fieldReference.script);
+    return new PathExpression(externalReference.script + fieldReference.script);
   }
 
 

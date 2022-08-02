@@ -1006,7 +1006,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldReferenceInOtherNotice() {
     assertEquals(
-        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/PathNode/TextField/normalize-space(text())",
+        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField/normalize-space(text())",
         test("ND-Root", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text"));
   }
 
