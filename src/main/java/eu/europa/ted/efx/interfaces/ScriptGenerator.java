@@ -147,8 +147,6 @@ public interface ScriptGenerator {
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
   
   /**
-   * TODO: Not properly defined yet.
-   * 
    * When we need data from an external source, we need some script that gets that data. Getting the
    * data is a two-step process: a) we need to access the data source, b) we need to get the actual
    * data from the data source. This method should return the target language script that connects
@@ -157,8 +155,6 @@ public interface ScriptGenerator {
   public PathExpression composeExternalReference(final StringExpression externalReference);
 
   /**
-   * TODO: Not properly defined yet.
-   * 
    * See {@link #composeExternalReference} for more details.
    */
   public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
