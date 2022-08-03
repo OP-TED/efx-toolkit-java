@@ -149,9 +149,9 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   }
 
   @Override
-  public String translateExpression(final String context, final String expression) {
+  public String translateExpression(final String expression) {
     final EfxLexer lexer =
-        new EfxLexer(CharStreams.fromString(String.format("%s::${%s}", context, expression)));
+        new EfxLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 

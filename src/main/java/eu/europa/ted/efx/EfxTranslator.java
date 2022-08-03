@@ -7,12 +7,12 @@ import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
 public class EfxTranslator {
-  public static String translateExpression(final String context, final String expression,
+ 
+  public static String translateExpression(final String expression,
       final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
       throws InstantiationException {
-    return EfxTranslatorFactory
-        .getEfxExpressionTranslator(sdkVersion, dependencyFactory)
-        .translateExpression(context, expression);
+    return EfxTranslatorFactory.getEfxExpressionTranslator(sdkVersion, dependencyFactory)
+        .translateExpression(expression);
   }
 
   public static String translateTemplate(final Path pathname,
