@@ -149,7 +149,7 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   }
 
   @Override
-  public String translateExpression(final String expression) {
+  public String translateExpression(final String expression, final String... expressionParameters) {
     final EfxLexer lexer =
         new EfxLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);

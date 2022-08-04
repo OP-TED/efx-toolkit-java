@@ -52,23 +52,22 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
-  private static final String LABEL_TYPE_NAME = "name";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_NAME).replaceAll("^'|'$", "");
-  private static final String LABEL_TYPE_WHEN = "when";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_WHEN_TRUE).replaceAll("^'|'$", "").replace("-true", "");
-  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = "value";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ShorthandIndirectLabelReferenceFromContextField)
-      //     .replaceAll("^'|'$", "").replace("#", "");
-  private static final String ASSET_TYPE_INDICATOR = "indicator";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_BT = "business-term";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_FIELD = "field";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_NODE = "node";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_NODE).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_CODE = "code";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
+  private static final String LABEL_TYPE_NAME =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_NAME).replaceAll("^'|'$", "");
+  private static final String LABEL_TYPE_WHEN = EfxLexer.VOCABULARY
+      .getLiteralName(EfxLexer.LABEL_TYPE_WHEN_TRUE).replaceAll("^'|'$", "").replace("-true", "");
+  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ValueKeyword).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_INDICATOR =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_BT =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_FIELD =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_NODE =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_NODE).replaceAll("^'|'$", "");
+  private static final String ASSET_TYPE_CODE =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
 
 
   /**

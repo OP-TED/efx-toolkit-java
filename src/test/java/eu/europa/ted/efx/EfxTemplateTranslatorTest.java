@@ -11,8 +11,8 @@ class EfxTemplateTranslatorTest {
 
   private String translate(final String template) {
     try {
-      return EfxTranslator.translateTemplate(template + "\n", DependencyFactoryMock.INSTANCE,
-          SDK_VERSION);
+      return EfxTranslator.translateTemplate(DependencyFactoryMock.INSTANCE,
+          SDK_VERSION, template + "\n");
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }

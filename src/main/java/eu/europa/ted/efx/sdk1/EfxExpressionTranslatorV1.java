@@ -1,7 +1,9 @@
 package eu.europa.ted.efx.sdk1;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -66,6 +68,9 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   private static final String NOT_MODIFIER =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
 
+  private static final String PARAMETER_MODE_INDICATOR =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ParameterModeIndicator).replaceAll("^'|'$", "");
+
   /**
    *
    */
@@ -96,6 +101,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    */
   protected ScriptGenerator script;
 
+  private LinkedList<String> expressionParameters = new LinkedList<>();
+  
   protected EfxExpressionTranslatorV1() {}
 
   public EfxExpressionTranslatorV1(final SymbolResolver symbolResolver,
@@ -108,7 +115,9 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public String translateExpression(final String expression) {
+  public String translateExpression(final String expression, final String... parameters) {
+    this.expressionParameters.addAll(Arrays.asList(parameters));
+
     final EfxLexer lexer =
         new EfxLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -127,6 +136,30 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     walker.walk(this, tree);
 
     return getTranslatedScript();
+  }
+
+  private <T extends Expression> T translateParameter(final String parameterValue, final Class<T> parameterType) {
+    final EfxExpressionTranslatorV1 translator = new EfxExpressionTranslatorV1(this.symbols, this.script,
+        this.errorListener);
+
+    final EfxLexer lexer =
+        new EfxLexer(CharStreams.fromString(PARAMETER_MODE_INDICATOR + parameterValue));
+    final CommonTokenStream tokens = new CommonTokenStream(lexer);
+    final EfxParser parser = new EfxParser(tokens);
+
+    if (errorListener != null) {
+      lexer.removeErrorListeners();
+      lexer.addErrorListener(errorListener);
+      parser.removeErrorListeners();
+      parser.addErrorListener(errorListener);
+    }
+
+      final ParseTree tree = parser.parameterValue();
+      final ParseTreeWalker walker = new ParseTreeWalker();
+
+      walker.walk(translator, tree);
+
+      return Expression.instantiate(translator.getTranslatedScript(), parameterType);
   }
 
   /**
@@ -1076,52 +1109,95 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitVariableReference(VariableReferenceContext ctx) {
-    this.stack.pushVariable(
+    this.stack.pushVariableReference(ctx.Variable().getText(),
         this.script.composeVariableReference(ctx.Variable().getText(), Expression.class));
+  }
+
+  /*** Parameter Declarations ***/
+
+
+  @Override
+  public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), StringExpression.class);
+  }
+
+  @Override
+  public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), NumericExpression.class);
+  }
+
+  @Override
+  public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), BooleanExpression.class);
+  }
+
+  @Override
+  public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), DateExpression.class);
+  }
+
+  @Override
+  public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), TimeExpression.class);
+  }
+
+  @Override
+  public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(ctx.Variable().getText(), DurationExpression.class);
+  }
+
+  private <T extends Expression> void exitParameterDeclaration(String parameterName, Class<T> parameterType) {
+    if (this.expressionParameters.isEmpty()) {
+      throw new ParseCancellationException("No parameter passed for " + parameterName);
+    }
+
+    this.stack.pushParameterDeclaration(parameterName,
+        this.script.composeParameterDeclaration(parameterName, parameterType),
+        this.translateParameter(this.expressionParameters.pop(), parameterType));
   }
 
   /*** Variable Declarations ***/
 
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+      this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+          this.script.composeVariableDeclaration(ctx.Variable().getText(), StringExpression.class));
   }
 
   @Override
   public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), BooleanExpression.class));
   }
 
   @Override
   public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), NumericExpression.class));
   }
 
   @Override
   public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), DateExpression.class));
   }
 
   @Override
   public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), TimeExpression.class));
   }
 
   @Override
   public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), DurationExpression.class));
   }
 
   @Override
   public void exitContextVariableDeclaration(ContextVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), ContextExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), ContextExpression.class));
   }
 
   /*** Boolean functions ***/

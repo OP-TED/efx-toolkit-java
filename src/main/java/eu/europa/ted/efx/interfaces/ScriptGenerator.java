@@ -62,6 +62,10 @@ public interface ScriptGenerator {
    */
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type);
 
+  public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type);
+
+  public <T extends Expression> T composeParameterDeclaration(String parameterName, Class<T> type);
+
   /**
    * Takes a list of string expressions and returns the target language script that corresponds to a
    * list of string expressions.

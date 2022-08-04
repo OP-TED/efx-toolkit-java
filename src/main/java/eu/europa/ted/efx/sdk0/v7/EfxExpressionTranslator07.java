@@ -104,7 +104,7 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
   }
 
   @Override
-  public String translateExpression(final String expression) {
+  public String translateExpression(final String expression, final String... expressionParameters) {
     final EfxLexer lexer =
         new EfxLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -1160,44 +1160,44 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
 
   @Override
   public void exitUntypedVariable(UntypedVariableContext ctx) {
-    this.stack.pushVariable(
+    this.stack.pushVariableReference(ctx.Variable().getText(),
         this.script.composeVariableReference(ctx.Variable().getText(), Expression.class));
   }
 
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), StringExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), StringExpression.class));
   }
 
   @Override
   public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), BooleanExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), BooleanExpression.class));
   }
 
   @Override
   public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), NumericExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), NumericExpression.class));
   }
 
   @Override
   public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), DateExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), DateExpression.class));
   }
 
   @Override
   public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), TimeExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), TimeExpression.class));
   }
 
   @Override
   public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
-    this.stack.pushVariable(
-        this.script.composeVariableReference(ctx.Variable().getText(), DurationExpression.class));
+    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
+        this.script.composeVariableDeclaration(ctx.Variable().getText(), DurationExpression.class));
   }
 
 
