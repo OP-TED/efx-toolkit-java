@@ -57,7 +57,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   private static final String LABEL_TYPE_WHEN = "when";
       // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_WHEN_TRUE).replaceAll("^'|'$", "").replace("-true", "");
   private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = "value";
-      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ShorthandContextFieldLabelReference)
+      // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ShorthandIndirectLabelReferenceFromContextField)
       //     .replaceAll("^'|'$", "").replace("#", "");
   private static final String ASSET_TYPE_INDICATOR = "indicator";
       // EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
@@ -203,7 +203,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void exitTextTemplate(TextTemplateContext ctx) {
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
-    String text = ctx.text() != null ? ctx.text().getText() : "";
+    String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
     this.stack.push(this.markup.renderFreeText(text).join(template));
   }
 
@@ -216,7 +216,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   }
 
   @Override
-  public void exitValueTemplate(ValueTemplateContext ctx) {
+  public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
@@ -257,7 +257,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.script.equals("value")) {
-      this.shorthandFieldValueLabelReference(fieldId);
+      this.shorthandIndirectLabelReference(fieldId);
     } else {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -268,11 +268,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   }
 
   @Override
-  public void exitShorthandFieldValueLabelReference(ShorthandFieldValueLabelReferenceContext ctx) {
-    this.shorthandFieldValueLabelReference(ctx.FieldId().getText());
+  public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
+    this.shorthandIndirectLabelReference(ctx.FieldId().getText());
   }
 
-  private void shorthandFieldValueLabelReference(final String fieldId) {
+  private void shorthandIndirectLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final StringExpression valueReference = this.script.composeFieldValueReference(
         symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
@@ -317,11 +317,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * context.
    */
   @Override
-  public void exitShorthandContextLabelReference(ShorthandContextLabelReferenceContext ctx) {
+  public void exitShorthandLabelReferenceFromContext(ShorthandLabelReferenceFromContextContext ctx) {
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandFieldValueLabelReference(this.efxContext.symbol());
+        this.shorthandIndirectLabelReference(this.efxContext.symbol());
       } else {
         this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -346,13 +346,13 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * only supported for fields of type 'code' or 'indicator'.
    */
   @Override
-  public void exitShorthandContextFieldLabelReference(
-      ShorthandContextFieldLabelReferenceContext ctx) {
+  public void exitShorthandIndirectLabelReferenceFromContextField(
+      ShorthandIndirectLabelReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
       throw new ParseCancellationException(
           "The #value shorthand syntax can only be used in a field is declared as context.");
     }
-    this.shorthandFieldValueLabelReference(this.efxContext.symbol());
+    this.shorthandIndirectLabelReference(this.efxContext.symbol());
   }
 
   @Override
@@ -393,8 +393,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * the current line of the template.
    */
   @Override
-  public void exitShorthandContextFieldValueReference(
-      ShorthandContextFieldValueReferenceContext ctx) {
+  public void exitShorthandFieldValueReferenceFromContextField(
+      ShorthandFieldValueReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
       throw new ParseCancellationException(
           "The $value shorthand syntax can only be used when a field is declared as the context.");

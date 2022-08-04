@@ -11,7 +11,7 @@ class EfxExpressionTranslatorTest {
 
   private String test(final String context, final String expression) {
     try {
-      return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE,
+      return EfxTranslator.translateExpression(String.format("{%s} ${%s}", context, expression), DependencyFactoryMock.INSTANCE,
           SDK_VERSION);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);

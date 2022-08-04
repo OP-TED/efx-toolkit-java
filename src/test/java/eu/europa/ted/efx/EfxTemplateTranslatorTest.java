@@ -195,78 +195,78 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForIndicator() {
+  void testShorthandIndirectLabelReferenceForIndicator() {
     assertEquals(
         "declare block01 = { label(concat('indicator', '|', 'when', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForCode() {
+  void testShorthandIndirectLabelReferenceForCode() {
     assertEquals(
         "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForInternalCode() {
+  void testShorthandIndirectLabelReferenceForInternalCode() {
     assertEquals(
         "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
   @Test
-  void testShorthandFieldValueLabelReferenceForText() {
+  void testShorthandIndirectLabelReferenceForText() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-01-Text}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndIndicatorField() {
+  void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
         "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/IndicatorField).call(block01)",
         translate("{BT-00-Indicator}  #{name}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndCodeField() {
+  void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndCodeField() {
     assertEquals(
         "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Code')) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code}  #{name}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithValueLabelTypeAndTextField() {
+  void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndTextField() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{value}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithOtherLabelType() {
+  void testShorthandLabelReferenceFromContext_WithOtherLabelType() {
     assertEquals(
         "declare block01 = { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{name}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithUnknownLabelType() {
+  void testShorthandLabelReferenceFromContext_WithUnknownLabelType() {
     assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{whatever}"));
   }
 
   @Test
-  void testShorthandContextLabelReference_WithNodeContext() {
+  void testShorthandLabelReferenceFromContext_WithNodeContext() {
     assertEquals(
         "declare block01 = { label(concat('node', '|', 'name', '|', 'ND-Root')) }\nfor-each(/*).call(block01)",
         translate("{ND-Root}  #{name}"));
   }
 
   @Test
-  void testShorthandContextFieldLabelReference() {
+  void testShorthandIndirectLabelReferenceFromContextField() {
     assertEquals(
         "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} #value"));
   }
 
   @Test
-  void testShorthandContextFieldLabelReference_WithNodeContext() {
+  void testShorthandIndirectLabelReferenceFromContextField_WithNodeContext() {
     assertThrows(ParseCancellationException.class, () -> translate("{ND-Root} #value"));
   }
 
@@ -274,20 +274,20 @@ class EfxTemplateTranslatorTest {
   /*** Expression block ***/
 
   @Test
-  void testShorthandContextFieldValueReference() {
+  void testShorthandFieldValueReferenceFromContextField() {
     assertEquals("declare block01 = { eval(.) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} $value"));
   }
 
   @Test
-  void testShorthandContextFieldValueReference_WithText() {
+  void testShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
         "declare block01 = { text('blah ')label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} blah #value blah $value blah"));
   }
 
   @Test
-  void testShorthandContextFieldValueReference_WithNodeContext() {
+  void testShorthandFieldValueReferenceFromContextField_WithNodeContext() {
     assertThrows(ParseCancellationException.class, () -> translate("{ND-Root} $value"));
   }
 
