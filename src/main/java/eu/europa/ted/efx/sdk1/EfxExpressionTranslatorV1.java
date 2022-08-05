@@ -68,8 +68,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   private static final String NOT_MODIFIER =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
 
-  private static final String PARAMETER_MODE_INDICATOR =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ParameterModeIndicator).replaceAll("^'|'$", "");
+  private static final String BEGIN_EXPRESSION_BLOCK = "{";
+  private static final String END_EXPRESSION_BLOCK = "}";
 
   /**
    *
@@ -143,7 +143,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
         this.errorListener);
 
     final EfxLexer lexer =
-        new EfxLexer(CharStreams.fromString(PARAMETER_MODE_INDICATOR + parameterValue));
+        new EfxLexer(CharStreams.fromString(BEGIN_EXPRESSION_BLOCK + parameterValue + END_EXPRESSION_BLOCK));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
