@@ -105,6 +105,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type) {
+    return Expression.instantiate(variableName, type);
+  }
+
+  @Override
+  public <T extends Expression> T composeParameterDeclaration(String parameterName,
+          Class<T> type) {
+      return Expression.empty(type);
+  }
+
+  @Override
   public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list,
       Class<L> type) {
     if (list == null || list.isEmpty()) {

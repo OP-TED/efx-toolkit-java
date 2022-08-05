@@ -80,6 +80,10 @@ public class Expression extends CallStackObjectBase {
     }
   }
 
+  public static <T extends Expression> T empty(Class<T> type) { 
+    return instantiate("", type);
+  }
+  
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {

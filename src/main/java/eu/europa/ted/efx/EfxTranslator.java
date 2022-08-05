@@ -8,29 +8,28 @@ import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
 public class EfxTranslator {
  
-  public static String translateExpression(final String expression,
-      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
-      throws InstantiationException {
+  public static String translateExpression(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String expression, final String... expressionParameters) throws InstantiationException {
     return EfxTranslatorFactory.getEfxExpressionTranslator(sdkVersion, dependencyFactory)
-        .translateExpression(expression);
+        .translateExpression(expression, expressionParameters);
   }
 
-  public static String translateTemplate(final Path pathname,
-      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion, 
+      final Path pathname)
       throws IOException, InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
         .renderTemplate(pathname);
   }
 
-  public static String translateTemplate(final String template,
-      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String template)
       throws InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
         .renderTemplate(template);
   }
 
-  public static String translateTemplate(final InputStream stream,
-      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion)
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion, 
+      final InputStream stream)
       throws IOException, InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
         .renderTemplate(stream);

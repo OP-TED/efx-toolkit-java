@@ -10,9 +10,13 @@ class EfxExpressionTranslatorTest {
   final private String SDK_VERSION = "eforms-sdk-1.0";
 
   private String test(final String context, final String expression) {
+    return test1(String.format("{%s} ${%s}", context, expression));
+  }
+
+  private String test1(final String expression, final String... params) {
     try {
-      return EfxTranslator.translateExpression(String.format("{%s} ${%s}", context, expression), DependencyFactoryMock.INSTANCE,
-          SDK_VERSION);
+      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION, 
+          expression, params);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }
@@ -1375,5 +1379,47 @@ class EfxExpressionTranslatorTest {
   void testSequenceEqualFunction_WithFieldReferences() {
     assertEquals("deep-equal(sort(PathNode/TextField), sort(PathNode/TextField))",
         test("ND-Root", "sequence-equal(BT-00-Text, BT-00-Text)"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithStringParameter() {
+    assertEquals("'hello' = 'world'",
+        test1("{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "'hello'", "'world'"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithUnquotedStringParameter() {
+    assertThrows(ParseCancellationException.class,
+        () -> test1("{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "hello", "world"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithNumberParameter() {
+    assertEquals("1 = 2",
+        test1("{ND-Root, number:$p1, number:$p2} ${$p1 == $p2}", "1", "2"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithDateParameter() {
+    assertEquals("xs:date('2018-01-01Z') = xs:date('2020-01-01Z')",
+        test1("{ND-Root, date:$p1, date:$p2} ${$p1 == $p2}", "2018-01-01Z", "2020-01-01Z"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithTimeParameter() {
+    assertEquals("xs:time('12:00:00Z') = xs:time('13:00:00Z')",
+        test1("{ND-Root, time:$p1, time:$p2} ${$p1 == $p2}", "12:00:00Z", "13:00:00Z"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithBooleanParameter() {
+    assertEquals("true() = false()",
+        test1("{ND-Root, indicator:$p1, indicator:$p2} ${$p1 == $p2}", "ALWAYS", "FALSE"));
+  }
+
+  @Test
+  void testParametrizedExpression_WithDurationParameter() {
+    assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
+        test1("{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y"));
   }
 }
