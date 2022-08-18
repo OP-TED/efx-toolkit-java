@@ -5,13 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class VersionDependentComponentFactory {
-  private static final String FALLBACK_SDK_VERSION = VersionDependentComponent.ANY_VERSION;
-
   private static final Logger logger = LoggerFactory.getLogger(VersionDependentComponentFactory.class);
 
   private Map<String, Map<VersionDependentComponentType, VersionDependentComponentDescriptor<?>>> componentsMap;
@@ -67,21 +66,9 @@ public abstract class VersionDependentComponentFactory {
             .orElseGet(Collections::emptyMap).get(componentType);
 
     if (descriptor == null) {
-      String fallbackSdkVersion = FALLBACK_SDK_VERSION;
-
-      logger.warn(
-          "No implementation found for component type [{}] of SDK [{}]. Trying with fallback SDK [{}]",
-          componentType, normalizedVersion, fallbackSdkVersion);
-
-      descriptor =
-          (VersionDependentComponentDescriptor<T>) Optional.ofNullable(componentsMap.get(fallbackSdkVersion))
-              .orElseGet(Collections::emptyMap).get(componentType);
-
-      if (descriptor == null) {
-        throw new IllegalArgumentException(
-            MessageFormat.format("No implementation found for component type [{0}] of SDK [{1}].",
-                componentType, fallbackSdkVersion));
-      }
+      logger.error("Failed to load required components of SDK [{}]", sdkVersion);
+      throw new IllegalArgumentException(MessageFormat
+          .format("No implementation found for component type [{0}] of SDK [{1}].", componentType, sdkVersion));
     }
 
     return descriptor.createInstance(initArgs);
