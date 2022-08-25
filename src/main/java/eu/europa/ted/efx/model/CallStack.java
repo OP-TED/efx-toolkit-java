@@ -44,7 +44,7 @@ public class CallStack extends Stack<CallStackObjectBase> {
     if (this.parameterValues.containsKey(variableName)) {
       this.push(parameterValues.get(variableName));
     } else if (this.variableTypes.containsKey(variableName)) {
-      this.push(Expression.instantiate(variableReference.script, variableTypes.get(variableReference.script)));
+      this.push(Expression.instantiate(variableReference.script, variableTypes.get(variableName)));
     } else {
       throw new ParseCancellationException("A variable or parameter with the name " + variableName + " has not been declared.");
     }
