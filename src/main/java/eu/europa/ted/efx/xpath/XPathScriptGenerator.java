@@ -26,7 +26,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-@VersionDependentComponent(versions = {VersionDependentComponent.ANY_VERSION}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
+@VersionDependentComponent(versions = {"0.6", "0.7", "1"}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
