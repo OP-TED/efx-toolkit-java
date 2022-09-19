@@ -12,8 +12,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import eu.europa.ted.eforms.sdk.selector.component.SdkComponent;
-import eu.europa.ted.eforms.sdk.selector.component.SdkComponentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -51,9 +53,11 @@ import eu.europa.ted.efx.sdk0.v6.EfxParser.ValueTemplateContext;
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
  */
-@SdkComponent(versions = {"0.6"}, componentType = SdkComponentType.EFX_TEMPLATE_TRANSLATOR)
+@VersionDependentComponent(versions = {"0.6"}, componentType = VersionDependentComponentType.EFX_TEMPLATE_TRANSLATOR)
 public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
     implements EfxTemplateTranslator {
+
+  private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslator06.class);
 
   private static final String INCONSISTENT_INDENTATION_SPACES =
       "Inconsistent indentation. Expected a multiple of %d spaces.";
@@ -137,6 +141,7 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
   }
 
   private String renderTemplate(final CharStream charStream) {
+    logger.info("Rendering template");
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -154,6 +159,8 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
 
+    logger.info("Finished rendering template");
+
     return getTranslatedMarkup();
   }
 
@@ -166,10 +173,15 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
    * @return The translated code, trimmed
    */
   private String getTranslatedMarkup() {
+    logger.debug("Getting translated markup.");
+
     final StringBuilder sb = new StringBuilder(64);
     while (!this.stack.empty()) {
       sb.insert(0, '\n').insert(0, this.stack.pop(Markup.class).script);
     }
+
+    logger.debug("Finished getting translated markup.");
+
     return sb.toString().trim();
   }
 
@@ -441,7 +453,7 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, lineContext);
+      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()));
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -450,16 +462,33 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, lineContext);
+      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, lineContext));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext())));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, lineContext);
+        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
       }
     }
+  }
+
+  private Context relativizeContext(Context childContext, Context parentContext) {
+    if (parentContext == null) {
+      return childContext;
+    }
+
+    if (FieldContext.class.isAssignableFrom(childContext.getClass())) {
+      return new FieldContext(childContext.symbol(), childContext.absolutePath(),
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+    }
+
+    assert NodeContext.class.isAssignableFrom(
+        childContext.getClass()) : "Child context should be either a FieldContext NodeContext.";
+
+    return new NodeContext(childContext.symbol(), childContext.absolutePath(),
+        this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
   }
 
   /*** Helpers ***/

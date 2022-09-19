@@ -11,18 +11,18 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SdkComponentDescriptor<T> implements Serializable {
+public class VersionDependentComponentDescriptor<T> implements Serializable {
   private static final long serialVersionUID = -6237218459963821365L;
 
-  private static final Logger log = LoggerFactory.getLogger(SdkComponentDescriptor.class);
+  private static final Logger logger = LoggerFactory.getLogger(VersionDependentComponentDescriptor.class);
 
   private String sdkVersion;
 
-  private SdkComponentType componentType;
+  private VersionDependentComponentType componentType;
 
   private Class<T> implType;
 
-  public SdkComponentDescriptor(String sdkVersion, SdkComponentType componentType,
+  public VersionDependentComponentDescriptor(String sdkVersion, VersionDependentComponentType componentType,
       Class<T> implType) {
     this.sdkVersion = sdkVersion;
     this.componentType = componentType;
@@ -35,7 +35,7 @@ public class SdkComponentDescriptor<T> implements Serializable {
       Class<?>[] paramTypes = Arrays.asList(Optional.ofNullable(initArgs).orElse(new Object[0]))
           .stream().map(Object::getClass).collect(Collectors.toList()).toArray(new Class[0]);
 
-      log.trace("Creating an instance of [{}] using constructor with parameter types: {}", implType,
+      logger.trace("Creating an instance of [{}] using constructor with parameter types: {}", implType,
           paramTypes);
 
       return (T) Arrays.asList(implType.getDeclaredConstructors()).stream()
@@ -81,7 +81,7 @@ public class SdkComponentDescriptor<T> implements Serializable {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    SdkComponentDescriptor<?> other = (SdkComponentDescriptor<?>) obj;
+    VersionDependentComponentDescriptor<?> other = (VersionDependentComponentDescriptor<?>) obj;
     return componentType == other.componentType && Objects.equals(sdkVersion, other.sdkVersion);
   }
 

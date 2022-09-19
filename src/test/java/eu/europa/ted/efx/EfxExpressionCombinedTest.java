@@ -8,12 +8,12 @@ import eu.europa.ted.efx.mock.DependencyFactoryMock;
  * Test for EFX expressions that combine several aspects of the language.
  */
 class EfxExpressionCombinedTest {
-  final private String SDK_VERSION = "eforms-sdk-0.7";
+  final private String SDK_VERSION = "eforms-sdk-1.0";
 
   private String test(final String context, final String expression) {
     try {
-      return EfxTranslator.translateExpression(context, expression, DependencyFactoryMock.INSTANCE,
-          SDK_VERSION);
+      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE,
+          SDK_VERSION, String.format("{%s} ${%s}", context, expression));
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }

@@ -9,11 +9,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
+import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
@@ -22,6 +26,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
+@VersionDependentComponent(versions = {"0.6", "0.7", "1"}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
@@ -50,6 +55,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends Expression> T composeFieldReferenceWithPredicate(PathExpression fieldReference,
       BooleanExpression predicate, Class<T> type) {
     return Expression.instantiate(fieldReference.script + '[' + predicate.script + ']', type);
+  }
+
+  @Override
+  public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis, Class<T> type) {
+        return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
   }
 
   @Override
@@ -91,6 +102,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
     return Expression.instantiate(variableName, type);
+  }
+
+  @Override
+  public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type) {
+    return Expression.instantiate(variableName, type);
+  }
+
+  @Override
+  public <T extends Expression> T composeParameterDeclaration(String parameterName,
+          Class<T> type) {
+      return Expression.empty(type);
   }
 
   @Override
@@ -161,15 +183,29 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
+        return new BooleanExpression(
+          "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+    }
+
+  @Override
+  public <T extends Expression> BooleanExpression composeAllSatisfy(
+      IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+        "every " + iterators.script + " satisfies " + booleanExpression.script);
   }
 
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
+        return new BooleanExpression(
+          "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+    }
+
+  @Override
+  public <T extends Expression> BooleanExpression composeAnySatisfies(
+      IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+        "some " + iterators.script + " satisfies " + booleanExpression.script);
   }
 
   @Override
@@ -189,6 +225,31 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+      IteratorListExpression iterators, T2 expression, Class<L2> targetListType) {
+    return Expression.instantiate("for " + iterators.script + " return " + expression.script,
+        targetListType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
+      String variableName, L sourceList) {
+    return new IteratorExpression(variableName + " in " + sourceList.script);
+  }
+
+  @Override
+  public IteratorExpression composeIteratorExpression(
+      String variableName, PathExpression pathExpression) {
+    return new IteratorExpression(variableName + " in " + pathExpression.script);
+  }
+
+  @Override
+  public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators) {
+    return new IteratorListExpression(
+        iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));
+  }
+  
+  @Override
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
     try {
       Constructor<T> ctor = type.getConstructor(String.class);
@@ -200,16 +261,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression composeExternalReference(StringExpression externalReference) {
-    // TODO: implement this properly.
     return new PathExpression(
-        "fn:doc(concat('http://notice.service/', " + externalReference.script + ")')");
+        "fn:doc(concat($urlPrefix, " + externalReference.script + "))");
   }
 
 
   @Override
   public PathExpression composeFieldInExternalReference(PathExpression externalReference,
       PathExpression fieldReference) {
-    return new PathExpression(externalReference.script + "/" + fieldReference.script);
+    return new PathExpression(externalReference.script + fieldReference.script);
   }
 
 
@@ -245,6 +305,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.script);
   }
 
+  @Override
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  }
 
   /*** Boolean functions ***/
 
@@ -278,6 +342,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
     return new BooleanExpression(
         leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
+  }
+
+  @Override
+  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one,
+      ListExpressionBase two) {
+    return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
   /*** Numeric functions ***/
@@ -416,6 +486,32 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public DurationExpression composeSubtraction(DurationExpression left, DurationExpression right) {
     return new DurationExpression("(" + left.script + " - " + right.script + ")");
   }
+
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
+      L list, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + list.script + ")", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+  }
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
+      L listTwo, Class<L> listType) {
+        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+  }
+
 
   /*** Helpers ***/
 

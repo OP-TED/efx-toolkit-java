@@ -41,7 +41,7 @@ public class Expression extends CallStackObjectBase {
           entry("email", StringExpression.class));
 
   /**
-   * ListExpression types equivalent to eFroms types.
+   * ListExpression types equivalent to eForms types.
    */
   public static final Map<String, Class<? extends Expression>> listTypes = Map.ofEntries(
       entry("id", StringListExpression.class), //
@@ -55,7 +55,7 @@ public class Expression extends CallStackObjectBase {
       entry("code", StringListExpression.class), entry("internal-code", StringListExpression.class), //
       entry("integer", NumericListExpression.class), //
       entry("date", DateListExpression.class), //
-      entry("zoned-date", DateExpression.class), //
+      entry("zoned-date", DateListExpression.class), //
       entry("time", TimeListExpression.class), //
       entry("zoned-time", TimeListExpression.class), //
       entry("url", StringListExpression.class), //
@@ -71,15 +71,19 @@ public class Expression extends CallStackObjectBase {
     this.script = script;
   }
 
-  public static <T extends Expression> T instantiate(String value, Class<T> type) {
+  public static <T extends Expression> T instantiate(String script, Class<T> type) {
     try {
       Constructor<T> constructor = type.getConstructor(String.class);
-      return constructor.newInstance(value);
+      return constructor.newInstance(script);
     } catch (Exception e) {
       throw new ParseCancellationException(e);
     }
   }
 
+  public static <T extends Expression> T empty(Class<T> type) { 
+    return instantiate("", type);
+  }
+  
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {
@@ -102,6 +106,13 @@ public class Expression extends CallStackObjectBase {
   public static class PathExpression extends Expression {
 
     public PathExpression(final String script) {
+      super(script);
+    }
+  }
+
+  public static class ContextExpression extends Expression {
+
+    public ContextExpression(final String script) {
       super(script);
     }
   }
@@ -244,4 +255,23 @@ public class Expression extends CallStackObjectBase {
     }
   }
 
+  /**
+   * Used to represent iterators (for traversing a list using a variable) 
+   */
+  public static class IteratorExpression extends Expression {
+
+    public IteratorExpression(final String script) {
+      super(script);
+    }
+  }
+
+  /**
+   * Used to represent a collection of {@link IteratorExpression}.
+   */
+  public static class IteratorListExpression extends ListExpression<IteratorExpression> {
+
+    public IteratorListExpression(final String script) {
+      super(script);
+    }
+  }
 }

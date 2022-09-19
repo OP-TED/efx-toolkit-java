@@ -5,6 +5,8 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.IteratorExpression;
+import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
@@ -37,6 +39,9 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeFieldReferenceWithPredicate(
       final PathExpression fieldReference, final BooleanExpression predicate, Class<T> type);
 
+  public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis, Class<T> type);
+
   /**
    * Given a PathExpression, this method should return the target language script for retrieving the
    * value of the field.
@@ -56,6 +61,10 @@ public interface ScriptGenerator {
    * returned Expression should be of the indicated type.
    */
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type);
+
+  public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type);
+
+  public <T extends Expression> T composeParameterDeclaration(String parameterName, Class<T> type);
 
   /**
    * Takes a list of string expressions and returns the target language script that corresponds to a
@@ -109,22 +118,39 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
+  @Deprecated(since = "1.0.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAllSatisfy(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
+
+  @Deprecated(since = "1.0.0", forRemoval = true)
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression);
 
+  public <T extends Expression> BooleanExpression composeAnySatisfies(
+      IteratorListExpression iterators, BooleanExpression booleanExpression);
 
   public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
+  @Deprecated(since = "1.0.0", forRemoval = true)
   public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
       String variableName, L1 sourceList, T2 expression, Class<L2> targetListType);
 
+  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
+      IteratorListExpression iterators, T2 expression, Class<L2> targetListType);
+
+  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
+      String variableName, L sourceList);
+
+  public IteratorExpression composeIteratorExpression(
+          String variableName, PathExpression pathExpression);
+  
+  public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
+  
   /**
-   * TODO: Not properly defined yet.
-   * 
    * When we need data from an external source, we need some script that gets that data. Getting the
    * data is a two-step process: a) we need to access the data source, b) we need to get the actual
    * data from the data source. This method should return the target language script that connects
@@ -133,8 +159,6 @@ public interface ScriptGenerator {
   public PathExpression composeExternalReference(final StringExpression externalReference);
 
   /**
-   * TODO: Not properly defined yet.
-   * 
    * See {@link #composeExternalReference} for more details.
    */
   public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
@@ -199,18 +223,14 @@ public interface ScriptGenerator {
    * Numeric Functions
    */
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeCountOperation(final PathExpression set);
 
   public NumericExpression composeCountOperation(final ListExpressionBase list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
 
-  /***
-   * @deprecated Used only by SDK 0.6.x
-   */
+  @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeSumOperation(PathExpression set);
 
   public NumericExpression composeSumOperation(NumericListExpression list);
@@ -245,6 +265,10 @@ public interface ScriptGenerator {
    */
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
+
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack);
+
+  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one, ListExpressionBase two);
 
   /*
    * Date Functions
@@ -287,4 +311,20 @@ public interface ScriptGenerator {
 
   public DurationExpression composeSubtraction(final DurationExpression left,
       final DurationExpression right);
+
+  /*
+   * Sequence Functions
+   */
+
+  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
+          L list, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
+      L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
+      L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
+      L listTwo, Class<L> listType);
 }

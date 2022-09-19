@@ -26,7 +26,7 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
   }
 
   @Override
-  public ScriptGenerator createScriptGenerator() {
+  public ScriptGenerator createScriptGenerator(String sdkVersion) {
     if (scriptGenerator == null) {
       this.scriptGenerator = new XPathScriptGenerator();
     }
@@ -34,7 +34,7 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
   }
 
   @Override
-  public MarkupGenerator createMarkupGenerator() {
+  public MarkupGenerator createMarkupGenerator(String sdkVersion) {
     if (this.markupGenerator == null) {
       this.markupGenerator = new MarkupGeneratorMock();
     }

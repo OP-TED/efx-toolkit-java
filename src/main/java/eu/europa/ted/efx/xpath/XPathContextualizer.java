@@ -76,6 +76,16 @@ public class XPathContextualizer extends XPath20BaseListener {
     return getJoinedXPath(firstPartSteps, secondPartSteps);
   }
 
+  public static PathExpression addAxis(String axis, PathExpression path) {
+    LinkedList<StepInfo> steps = new LinkedList<>(getSteps(path));
+
+    while (steps.getFirst().stepText.equals("..")) {
+      steps.removeFirst();
+    }
+
+    return new PathExpression(axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+  }
+
   private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 
@@ -137,7 +147,7 @@ public class XPathContextualizer extends XPath20BaseListener {
       final LinkedList<StepInfo> second) {
     List<String> dotSteps = Arrays.asList("..", ".");
     while (second.getFirst().stepText.equals("..")
-        && !dotSteps.contains(first.getLast().stepText)) {
+        && !dotSteps.contains(first.getLast().stepText) && !first.getLast().isVariableStep()) {
       second.removeFirst();
       first.removeLast();
     }
@@ -194,6 +204,10 @@ public class XPathContextualizer extends XPath20BaseListener {
 
     public Boolean isAttributeStep() {
       return this.stepText.startsWith("/@");
+    }
+
+    public Boolean isVariableStep() {
+      return this.stepText.startsWith("$");
     }
 
     public String getPredicateText() {
