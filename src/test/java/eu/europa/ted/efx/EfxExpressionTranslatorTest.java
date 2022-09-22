@@ -464,7 +464,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
-    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
+    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
         test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
   
@@ -1136,7 +1136,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testToStringFunction() {
-    assertEquals("string(123)", test("ND-Root", "string(123)"));
+    assertEquals("format-number(123, '0.##########')", test("ND-Root", "string(123)"));
   }
 
   @Test
