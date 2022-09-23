@@ -1,3 +1,6 @@
+**[:memo: Latest Release Notes](CHANGELOG.md)** | **[:package: Latest Release Artifacts](https://search.maven.org/search?q=g:%22eu.europa.ted.eforms%22%20AND%20a:%22efx-toolkit-java%22)**
+
+---
 # Java toolkit for the eForms Expression Language (EFX)
 
 A Java library for the [eForms Expression Language (EFX)](https://docs.ted.europa.eu/eforms/latest/efx)
@@ -32,7 +35,7 @@ The [documentation](https://docs.ted.europa.eu/eforms/latest/efx-toolkit) descri
 
 You can build this project as usual using Maven.
 
-The build process uses the grammar files provided in the [eForms SDK](https://github.com/OP-TED/eForms-SDK) to generate a parser, using [ANTLR](https://www.antlr.org).
+The build process uses the grammar files provided in the [eForms SDK](https://github.com/OP-TED/eForms-SDK/tree/develop/efx-grammar) to generate a parser, using [ANTLR4](https://www.antlr.org).
 
 ## Testing
 
@@ -40,3 +43,10 @@ Unit tests are available under `src/test/java/`. They show in particular a varie
 
 After running the unit tests with `mvn test`, you can generate a coverage report with`mvn jacoco:report`.
 The report is available under `target/site/jacoco/`, in HTML, CSV, and XML format.
+
+## Download
+
+You can download the latest EFX Toolkit from Maven Central.
+
+[![Maven Central](https://img.shields.io/maven-central/v/eu.europa.ted.eforms/efx-toolkit-java?label=Download%20&style=flat-square)](https://search.maven.org/search?q=g:%22eu.europa.ted.eforms%22%20AND%20a:%22efx-toolkit-java%22)
+
