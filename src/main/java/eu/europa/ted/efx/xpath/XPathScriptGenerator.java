@@ -407,7 +407,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
-    return new StringExpression("string(" + number.script + ")");
+    return new StringExpression("format-number(" + number.script + ", '0.##########')");
   }
 
   @Override
