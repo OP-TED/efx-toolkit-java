@@ -60,12 +60,12 @@ class XPathContextualizerTest {
 
   @Test
   void testAttributeInContext() {
-    assertEquals("../c/d", contextualize("/a/b/@attribute", "/a/b/c/d"));
+    assertEquals("c/d", contextualize("/a/b/@attribute", "/a/b/c/d"));
   }
 
   @Test
   void testAttributeInBoth() {
-    assertEquals("../@x", contextualize("/a/b/c/@d", "/a/b/c/@x"));
+    assertEquals("@x", contextualize("/a/b/c/@d", "/a/b/c/@x"));
   }
 
   @Test

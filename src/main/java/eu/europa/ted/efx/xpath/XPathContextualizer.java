@@ -203,7 +203,7 @@ public class XPathContextualizer extends XPath20BaseListener {
     }
 
     public Boolean isAttributeStep() {
-      return this.stepText.startsWith("/@");
+      return this.stepText.startsWith("@");
     }
 
     public Boolean isVariableStep() {
