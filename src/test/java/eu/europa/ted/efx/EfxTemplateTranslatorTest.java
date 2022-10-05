@@ -216,8 +216,21 @@ class EfxTemplateTranslatorTest {
   }
 
   @Test
+  void testShorthandIndirectLabelReferenceForCodeAttribute() {
+    assertEquals(
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../CodeField/@attribute)) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        translate("{BT-00-Text}  #{BT-00-CodeAttribute}"));
+  }
+
+
+  @Test
   void testShorthandIndirectLabelReferenceForText() {
-    assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-01-Text}"));
+    assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-00-Text}"));
+  }
+
+  @Test
+  void testShorthandIndirectLabelReferenceForAttribute() {
+    assertThrows(ParseCancellationException.class, () -> translate("{BT-00-Text}  #{BT-00-Attribute}"));
   }
 
   @Test

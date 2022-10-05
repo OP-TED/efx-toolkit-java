@@ -57,7 +57,9 @@ public class SymbolResolverMock implements SymbolResolver {
             "{\"id\":\"BT-00-Code\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
         entry("BT-00-Internal-Code", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
-        entry("BT-00-Text-Multilingual", new SdkFieldV1(fromString(
+        entry("BT-00-CodeAttribute", new SdkFieldV1(fromString(
+              "{\"id\":\"BT-00-CodeAttribute\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField/@attribute\",\"xpathRelative\":\"PathNode/CodeField/@attribute\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+          entry("BT-00-Text-Multilingual", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
         entry("BT-00-StartDate", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),

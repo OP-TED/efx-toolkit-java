@@ -30,6 +30,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV1} to provide additional
@@ -273,10 +274,15 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   private void shorthandIndirectLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
-    final StringExpression valueReference = this.script.composeFieldValueReference(
-        symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
-        StringExpression.class);
     final String fieldType = this.symbols.getTypeOfField(fieldId);
+    final PathExpression path =
+        symbols.getRelativePathOfField(fieldId, currentContext.absolutePath());
+    final XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
+    final StringExpression valueReference = parsedPath.hasAttribute()
+        ? this.script.composeFieldAttributeReference(parsedPath.getPath(),
+            parsedPath.getAttribute(), StringExpression.class)
+        : this.script.composeFieldValueReference(path, StringExpression.class);
+
     switch (fieldType) {
       case "indicator":
         this.stack
