@@ -119,11 +119,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       // For each step remaining in the contextQueue we prepend a back-step (..) in
       // the resulting relativeXpath.
       while (!contextQueue.isEmpty()) {
-        if (!contextQueue.poll().isAttributeStep()) { // consume the step
-          relativeXpath = "../" + relativeXpath; // prepend a back-step if the step is
-                                                 // not an
-                                                 // attribute reference
-        }
+        contextQueue.poll();                    // consume the step
+        relativeXpath = "../" + relativeXpath;  // prepend a back-step
       }
 
       // We remove any trailing forward slashes from the resulting xPath.
@@ -200,10 +197,6 @@ public class XPathContextualizer extends XPath20BaseListener {
       this.stepText = getInputText.apply(ctx.step());
       this.predicates =
           ctx.predicatelist().predicate().stream().map(getInputText).collect(Collectors.toList());
-    }
-
-    public Boolean isAttributeStep() {
-      return this.stepText.startsWith("@");
     }
 
     public Boolean isVariableStep() {
