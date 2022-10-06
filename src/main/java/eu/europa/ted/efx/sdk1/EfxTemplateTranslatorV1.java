@@ -275,13 +275,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   private void shorthandIndirectLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
-    final PathExpression path =
-        symbols.getRelativePathOfField(fieldId, currentContext.absolutePath());
-    final XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(path);
+    final XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(symbols.getAbsolutePathOfField(fieldId));
     final StringExpression valueReference = parsedPath.hasAttribute()
-        ? this.script.composeFieldAttributeReference(parsedPath.getPath(),
+        ? this.script.composeFieldAttributeReference(symbols.getRelativePath(parsedPath.getPath(), currentContext.absolutePath()) ,
             parsedPath.getAttribute(), StringExpression.class)
-        : this.script.composeFieldValueReference(path, StringExpression.class);
+        : this.script.composeFieldValueReference(symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()), StringExpression.class);
 
     switch (fieldType) {
       case "indicator":

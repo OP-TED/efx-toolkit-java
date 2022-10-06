@@ -222,6 +222,19 @@ class EfxTemplateTranslatorTest {
         translate("{BT-00-Text}  #{BT-00-CodeAttribute}"));
   }
 
+  @Test
+  void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameAttributeInContext() {
+    assertEquals(
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../@attribute)) }\nfor-each(/*/PathNode/CodeField/@attribute).call(block01)",
+        translate("{BT-00-CodeAttribute}  #{BT-00-CodeAttribute}"));
+  }
+
+  @Test
+  void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameElementInContext() {
+    assertEquals(
+        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ./@attribute)) }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        translate("{BT-00-Code}  #{BT-00-CodeAttribute}"));
+  }
 
   @Test
   void testShorthandIndirectLabelReferenceForText() {
