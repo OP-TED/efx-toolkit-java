@@ -60,7 +60,6 @@
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
-    <version.classindex>3.11</version.classindex>
     <version.commons-lang3>3.12.0</version.commons-lang3>
     <version.logback>1.2.11</version.logback>
     <version.jackson>2.13.4</version.jackson>
@@ -69,7 +68,6 @@
 
     <!-- Versions - Plugins -->
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
-    <version.compiler.plugin>3.10.1</version.compiler.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
     <version.install.plugin>2.5.2</version.install.plugin>
     <version.jacoco.plugin>0.8.8</version.jacoco.plugin>
@@ -88,11 +86,6 @@
         <version>${version.eforms-core}</version>
       </dependency>
 
-      <dependency>
-        <groupId>org.atteo.classindex</groupId>
-        <artifactId>classindex</artifactId>
-        <version>${version.classindex}</version>
-      </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -148,10 +141,6 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.atteo.classindex</groupId>
-      <artifactId>classindex</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
@@ -178,20 +167,6 @@
           <version>${version.install.plugin}</version>
           <configuration>
             <createChecksum>true</createChecksum>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${version.compiler.plugin}</version>
-          <configuration>
-            <annotationProcessorPaths>
-              <annotationProcessorPath>
-                <groupId>org.atteo.classindex</groupId>
-                <artifactId>classindex</artifactId>
-                <version>${version.classindex}</version>
-              </annotationProcessorPath>
-            </annotationProcessorPaths>
           </configuration>
         </plugin>
         <plugin>
