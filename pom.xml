@@ -55,7 +55,10 @@
 
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
-    <!-- Third-party libraries -->
+    <!-- Versions - eForms -->
+    <version.eforms-core>0.1.0-SNAPSHOT</version.eforms-core>
+
+    <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
     <version.classindex>3.11</version.classindex>
     <version.commons-lang3>3.12.0</version.commons-lang3>
@@ -64,7 +67,7 @@
     <version.junit-jupiter-api>5.7.2</version.junit-jupiter-api>
     <version.slf4j>1.7.36</version.slf4j>
 
-    <!-- Plugins -->
+    <!-- Versions - Plugins -->
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
     <version.compiler.plugin>3.10.1</version.compiler.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
@@ -78,6 +81,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- eForms -->
+      <dependency>
+        <groupId>eu.europa.ted.eforms</groupId>
+        <artifactId>eforms-core-java</artifactId>
+        <version>${version.eforms-core}</version>
+      </dependency>
+
       <dependency>
         <groupId>org.atteo.classindex</groupId>
         <artifactId>classindex</artifactId>
@@ -117,6 +127,12 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- eForms -->
+    <dependency>
+      <groupId>eu.europa.ted.eforms</groupId>
+      <artifactId>eforms-core-java</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
