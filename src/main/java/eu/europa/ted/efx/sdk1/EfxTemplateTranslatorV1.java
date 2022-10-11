@@ -28,6 +28,7 @@ import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
@@ -276,33 +277,45 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(symbols.getAbsolutePathOfField(fieldId));
-    final StringExpression valueReference = parsedPath.hasAttribute()
-        ? this.script.composeFieldAttributeReference(symbols.getRelativePath(parsedPath.getPath(), currentContext.absolutePath()) ,
-            parsedPath.getAttribute(), StringExpression.class)
-        : this.script.composeFieldValueReference(symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()), StringExpression.class);
+    final PathExpression valueReference = parsedPath.hasAttribute()
+        ? this.script.composeFieldAttributeReference(
+            symbols.getRelativePath(parsedPath.getPath(), currentContext.absolutePath()),
+            parsedPath.getAttribute(), PathExpression.class)
+        : this.script.composeFieldValueReference(
+            symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
+            PathExpression.class);
+    final String loopVariableName = "$item";
 
     switch (fieldType) {
       case "indicator":
-        this.stack
-            .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
+        this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
+            this.script.composeIteratorList(
+                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+            this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
-                    this.script.getStringLiteralFromUnquotedString("-"), valueReference,
+                    this.script.getStringLiteralFromUnquotedString("-"),
+                    this.script.composeVariableReference(loopVariableName, StringExpression.class),
                     this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(fieldId)))));
+                    this.script.getStringLiteralFromUnquotedString(fieldId))),
+            StringListExpression.class)));
         break;
       case "code":
       case "internal-code":
-        this.stack
-            .push(this.markup.renderLabelFromExpression(this.script.composeStringConcatenation(
-                List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(
-                        this.symbols.getRootCodelistOfField(fieldId)),
-                    this.script.getStringLiteralFromUnquotedString("."), valueReference))));
+        this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
+            this.script.composeIteratorList(
+                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+            this.script.composeStringConcatenation(List.of(
+                this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
+                this.script.getStringLiteralFromUnquotedString("|"),
+                this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
+                this.script.getStringLiteralFromUnquotedString("|"),
+                this.script.getStringLiteralFromUnquotedString(
+                    this.symbols.getRootCodelistOfField(fieldId)),
+                this.script.getStringLiteralFromUnquotedString("."),
+                this.script.composeVariableReference(loopVariableName, StringExpression.class))),
+            StringListExpression.class)));
         break;
       default:
         throw new ParseCancellationException(String.format(

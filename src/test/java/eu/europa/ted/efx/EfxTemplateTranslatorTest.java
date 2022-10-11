@@ -197,42 +197,42 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandIndirectLabelReferenceForIndicator() {
     assertEquals(
-        "declare block01 = { label(concat('indicator', '|', 'when', '-', ../IndicatorField/normalize-space(text()), '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCode() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../CodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(for $item in ../CodeField return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForInternalCode() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../InternalCodeField/normalize-space(text()))) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(for $item in ../InternalCodeField return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../CodeField/@attribute)) }\nfor-each(/*/PathNode/TextField).call(block01)",
+        "declare block01 = { label(for $item in ../CodeField/@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01)",
         translate("{BT-00-Text}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameAttributeInContext() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ../@attribute)) }\nfor-each(/*/PathNode/CodeField/@attribute).call(block01)",
+        "declare block01 = { label(for $item in ../@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField/@attribute).call(block01)",
         translate("{BT-00-CodeAttribute}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameElementInContext() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ./@attribute)) }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        "declare block01 = { label(for $item in ./@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code}  #{BT-00-CodeAttribute}"));
   }
 
@@ -287,7 +287,7 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandIndirectLabelReferenceFromContextField() {
     assertEquals(
-        "declare block01 = { label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text()))) }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        "declare block01 = { label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} #value"));
   }
 
@@ -308,7 +308,7 @@ class EfxTemplateTranslatorTest {
   @Test
   void testShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
-        "declare block01 = { text('blah ')label(concat('code', '|', 'name', '|', 'main-activity', '.', ./normalize-space(text())))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
+        "declare block01 = { text('blah ')label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01)",
         translate("{BT-00-Code} blah #value blah $value blah"));
   }
 
