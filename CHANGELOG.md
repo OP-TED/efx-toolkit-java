@@ -1,11 +1,13 @@
-# EFX Toolkit 1.0.2 Release Notes
+# EFX Toolkit 1.0.3 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
 ---
 ## In this release:
 
-This patch fixes a bug in the translation of shorthand indirect label references (e.g. `#{BT-123-Field}`). The bug affected only fields pointing to XML attributes.
+This patch fixes and issue in the translation of indirect label references (e.g. `#{BT-123-Field}`). The issue prevented applications from being able to render sequences of labels when the indirect reference returned sequences of values. 
+
+You can see how this change can be utilised by applications by looking at the [changes](https://github.com/OP-TED/eforms-notice-viewer/compare/7e25fa2..9a1795a) released in version 0.4.0 of eforms-notice-viewer, which can now use a sequence of values returned by an indirect label reference to generate a comma separated list of labels.  
 
 ---
 
