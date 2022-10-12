@@ -1,13 +1,30 @@
-# EFX Toolkit 1.0.3 Release Notes
+# EFX Toolkit 1.1.0 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
 ---
 ## In this release:
 
-This patch fixes and issue in the translation of indirect label references (e.g. `#{BT-123-Field}`). The issue prevented applications from being able to render sequences of labels when the indirect reference returned sequences of values. 
+In this release we moved some utility classes to a new java library: [eforms-core-java](https://github.com/OP-TED/eforms-core-java). These utility classes enable the parallel use of multiple major versions of the SDK by applications. We decided to extract this functionality to a new shared library so that it can also be use by applications that do not necessarily need EFX translation.  
 
-You can see how this change can be utilised by applications by looking at the [changes](https://github.com/OP-TED/eforms-notice-viewer/compare/7e25fa2..9a1795a) released in version 0.4.0 of eforms-notice-viewer, which can now use a sequence of values returned by an indirect label reference to generate a comma separated list of labels.  
+This release also removes the need to use the "classindex" annotation processor plugin. You can remove the following section from your pom.xml.
+
+```
+  <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>${version.compiler.plugin}</version>
+    <configuration>
+      <annotationProcessorPaths>
+        <annotationProcessorPath>
+          <groupId>org.atteo.classindex</groupId>
+          <artifactId>classindex</artifactId>
+          <version>${version.classindex}</version>
+        </annotationProcessorPath>
+      </annotationProcessorPaths>
+    </configuration>
+  </plugin>
+```
 
 ---
 
@@ -22,3 +39,5 @@ This version of the EFX Toolkit has a compile-time dependency on the following v
 - eForms SDK 0.6.x
 - eForms SDK 0.7.x
 - eForms SDK 1.x.x
+
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 0.1.0.
