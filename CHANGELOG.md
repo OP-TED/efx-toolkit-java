@@ -5,7 +5,7 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 ---
 ## In this release:
 
-In this release we moved some utility classes to a new java library: [eforms-core-java](https://github.com/OP-TED/eforms-core-java). These utility classes enable the parallel use of multiple major versions of the SDK by applications. We decided to extract this functionality to a new shared library so that it can also be use by applications that do not necessarily need EFX translation.  
+In this release we moved some utility classes to a new java library: [eforms-core-java](https://github.com/OP-TED/eforms-core-java). These utility classes enable the parallel use of multiple major versions of the SDK by applications. We decided to extract this functionality to a new shared library so that it can also be used by applications that do not necessarily need EFX translation.  
 
 This release also removes the need to use the "classindex" annotation processor plugin. You can remove the following section from your pom.xml.
 
