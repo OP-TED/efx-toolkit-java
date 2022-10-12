@@ -55,18 +55,19 @@
 
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
-    <!-- Third-party libraries -->
+    <!-- Versions - eForms -->
+    <version.eforms-core>0.1.0-SNAPSHOT</version.eforms-core>
+
+    <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
-    <version.classindex>3.11</version.classindex>
     <version.commons-lang3>3.12.0</version.commons-lang3>
     <version.logback>1.2.11</version.logback>
     <version.jackson>2.13.4</version.jackson>
     <version.junit-jupiter-api>5.7.2</version.junit-jupiter-api>
     <version.slf4j>1.7.36</version.slf4j>
 
-    <!-- Plugins -->
+    <!-- Versions - Plugins -->
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
-    <version.compiler.plugin>3.10.1</version.compiler.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
     <version.install.plugin>2.5.2</version.install.plugin>
     <version.jacoco.plugin>0.8.8</version.jacoco.plugin>
@@ -78,11 +79,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- eForms -->
       <dependency>
-        <groupId>org.atteo.classindex</groupId>
-        <artifactId>classindex</artifactId>
-        <version>${version.classindex}</version>
+        <groupId>eu.europa.ted.eforms</groupId>
+        <artifactId>eforms-core-java</artifactId>
+        <version>${version.eforms-core}</version>
       </dependency>
+
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -117,6 +120,12 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- eForms -->
+    <dependency>
+      <groupId>eu.europa.ted.eforms</groupId>
+      <artifactId>eforms-core-java</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -130,10 +139,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.atteo.classindex</groupId>
-      <artifactId>classindex</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -165,20 +170,6 @@
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${version.compiler.plugin}</version>
-          <configuration>
-            <annotationProcessorPaths>
-              <annotationProcessorPath>
-                <groupId>org.atteo.classindex</groupId>
-                <artifactId>classindex</artifactId>
-                <version>${version.classindex}</version>
-              </annotationProcessorPath>
-            </annotationProcessorPaths>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>org.antlr</groupId>
           <artifactId>antlr4-maven-plugin</artifactId>
           <version>${version.antlr4}</version>
@@ -207,11 +198,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${version.source.plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${version.javadoc.plugin}</version>
         </plugin>
       </plugins>
     </pluginManagement>
