@@ -158,6 +158,17 @@ class EfxTemplateTranslatorTest {
         () -> translate(lines("{BT-00-Text} foo", "\t\t{BT-00-Text} bar")));
   }
 
+  @Test
+  void testTemplateLine_VariableScope() {
+    assertEquals(
+        lines("declare block01 = { outline('1') eval(for $x in . return $x)", //
+        "for-each(.).call(block0101) }", //
+        "declare block0101 = { eval(for $x in . return $x) }", //
+        "for-each(/*/PathNode/TextField).call(block01)"),//
+        translate(lines("{BT-00-Text} ${for text:$x in BT-00-Text return $x}", "    {BT-00-Text} ${for text:$x in BT-00-Text return $x}")));
+
+  }
+
 
   /*** Labels ***/
 

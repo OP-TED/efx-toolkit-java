@@ -463,6 +463,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.isEmpty() : "Stack should be empty at this point.";
+    this.stack.clear(); // Variable scope boundary. Clear declared variables 
 
     if (indentChange > 1) {
       throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
