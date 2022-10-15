@@ -96,7 +96,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
-    return Expression.instantiate(fieldReference.script + "/@" + attribute, type);
+    return Expression.instantiate(fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute, type);
   }
 
   @Override
