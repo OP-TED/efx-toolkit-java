@@ -58,4 +58,11 @@ public class CallStack extends Stack<CallStackObjectBase> {
     }
     return expectedType.cast(this.pop());
   }
+
+  @Override
+  public void clear() {
+      super.clear();
+      this.variableTypes.clear();
+      this.parameterValues.clear();  
+  }
 }
