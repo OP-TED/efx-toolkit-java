@@ -991,8 +991,19 @@ class EfxExpressionTranslatorTest {
   }
 
   @Test
+  void testFieldAttributeValueReference_SameElementContext() {
+    assertEquals("@Attribute = 'text'",
+        test("BT-00-Text", "BT-00-Attribute == 'text'"));
+  }
+
+  @Test
   void testScalarFromAttributeReference() {
     assertEquals("PathNode/CodeField/@listName", test("ND-Root", "BT-00-Code/@listName"));
+  }
+  
+  @Test
+  void testScalarFromAttributeReference_SameElementContext() {
+    assertEquals("./@listName", test("BT-00-Code", "BT-00-Code/@listName"));
   }
 
   @Test
