@@ -80,14 +80,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
     if (DurationExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate("(if (" + fieldReference.script + "/@unitCode='WEEK')" + //
-          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
-          " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
-          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
-          " else if (" + fieldReference.script + ")" + //
-          " then xs:yearMonthDuration(concat('P', " + fieldReference.script
-          + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1))))" + //
-          " else ())", type);
+      return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
+          " else if ($F/@unitCode='DAY')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
+          " else if ($F/@unitCode='YEAR')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
+          " else if ($F/@unitCode='MONTH')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
+          // " else if (" + fieldReference.script + ")" + //
+          // " then fn:error('Invalid @unitCode')" + //
+          " else ()))", type);
     }
 
     return Expression.instantiate(fieldReference.script, type);
