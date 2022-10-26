@@ -26,7 +26,8 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-@VersionDependentComponent(versions = {"0.6", "0.7", "1"}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
+@VersionDependentComponent(versions = {"0.6", "0.7", "1"},
+    componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
@@ -60,7 +61,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
       final String axis, Class<T> type) {
-        return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
+    return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
   }
 
   @Override
@@ -96,7 +97,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
-    return Expression.instantiate(fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute, type);
+    return Expression.instantiate(
+        fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute,
+        type);
   }
 
   @Override
@@ -110,9 +113,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression> T composeParameterDeclaration(String parameterName,
-          Class<T> type) {
-      return Expression.empty(type);
+  public <T extends Expression> T composeParameterDeclaration(String parameterName, Class<T> type) {
+    return Expression.empty(type);
   }
 
   @Override
@@ -160,7 +162,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
       return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")");
     }
     if (literal.contains("W")) {
-      final int weeks = this.getWeeksFromDurationLiteral(literal);
+      final int weeks = getWeeksFromDurationLiteral(literal);
       return new DurationExpression(
           "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
     }
@@ -183,9 +185,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    return new BooleanExpression(
+        "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+  }
 
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(
@@ -197,9 +199,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    return new BooleanExpression(
+        "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+  }
 
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(
@@ -238,8 +240,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public IteratorExpression composeIteratorExpression(
-      String variableName, PathExpression pathExpression) {
+  public IteratorExpression composeIteratorExpression(String variableName,
+      PathExpression pathExpression) {
     return new IteratorExpression(variableName + " in " + pathExpression.script);
   }
 
@@ -248,7 +250,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new IteratorListExpression(
         iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));
   }
-  
+
   @Override
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
     try {
@@ -261,8 +263,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression composeExternalReference(StringExpression externalReference) {
-    return new PathExpression(
-        "fn:doc(concat($urlPrefix, " + externalReference.script + "))");
+    return new PathExpression("fn:doc(concat($urlPrefix, " + externalReference.script + "))");
   }
 
 
@@ -306,8 +307,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
-    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle,
+      PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script
+        + "[. = $x] return $y) = 1");
   }
 
   /*** Boolean functions ***/
@@ -489,38 +492,39 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
-      L list, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + list.script + ")", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(L list,
+      Class<L> listType) {
+    return Expression.instantiate("distinct-values(" + list.script + ")", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
+    return Expression
+        .instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+    return Expression.instantiate(
+        "distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+    return Expression.instantiate(
+        "distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
   }
-
 
   /*** Helpers ***/
 
-
-  private String quoted(final String text) {
+  private static String quoted(final String text) {
     return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";
   }
 
-  private int getWeeksFromDurationLiteral(final String literal) {
+  private static int getWeeksFromDurationLiteral(final String literal) {
     Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
     return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
   }

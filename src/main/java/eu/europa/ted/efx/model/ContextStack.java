@@ -15,13 +15,15 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
  */
 public class ContextStack extends Stack<Context> {
 
+  private static final long serialVersionUID = 1L;
+
   private final SymbolResolver symbols;
 
   private final Map<String, Context> variables = new HashMap<>();
 
   /**
    * Creates a new ContextStack.
-   * 
+   *
    * @param symbols the SymbolMap is used to resolve fieldIds and nodeIds.
    */
   public ContextStack(final SymbolResolver symbols) {

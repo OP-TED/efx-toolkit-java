@@ -37,7 +37,7 @@ public abstract class SdkField implements Comparable<SdkField> {
     this.rootCodelistId = createCodelistId(field);
   }
 
-  private String createCodelistId(JsonNode field) {
+  private static String createCodelistId(JsonNode field) {
     Supplier<String> rootCodelistIdSupplier = () -> {
       final JsonNode codelistNode = field.get("codeList");
       if (codelistNode == null) {

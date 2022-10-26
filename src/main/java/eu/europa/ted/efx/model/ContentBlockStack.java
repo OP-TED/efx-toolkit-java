@@ -4,6 +4,8 @@ import java.util.Stack;
 
 public class ContentBlockStack extends Stack<ContentBlock> {
 
+  private static final long serialVersionUID = 1L;
+
   /**
    * Adds a new child block to the top of the stack. When the child is later removed, its parent
    * will return to the top of the stack again.

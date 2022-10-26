@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 /**
  * This class represents an expression in the target scripting language.
- * 
+ *
  * The class is used to restrict the parameter types and return types of the methods that the EFX
  * translator calls. This makes it easier for users to understand the nature and usage of each
  * parameter when implementing {@link eu.europa.ted.efx.interfaces.ScriptGenerator},
@@ -80,10 +80,10 @@ public class Expression extends CallStackObjectBase {
     }
   }
 
-  public static <T extends Expression> T empty(Class<T> type) { 
+  public static <T extends Expression> T empty(Class<T> type) {
     return instantiate("", type);
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {
@@ -99,7 +99,7 @@ public class Expression extends CallStackObjectBase {
 
   /**
    * An PathExpression points to a node in your data set.
-   * 
+   *
    * Typically the data set is a XML document and therefore, in this case, the path expression is a
    * XPath expression.
    */
@@ -256,7 +256,7 @@ public class Expression extends CallStackObjectBase {
   }
 
   /**
-   * Used to represent iterators (for traversing a list using a variable) 
+   * Used to represent iterators (for traversing a list using a variable)
    */
   public static class IteratorExpression extends Expression {
 

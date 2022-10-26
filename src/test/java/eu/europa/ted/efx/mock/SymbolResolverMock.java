@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,10 +17,14 @@ import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.sdk1.entity.*;
+import eu.europa.ted.efx.sdk1.entity.SdkCodelistV1;
+import eu.europa.ted.efx.sdk1.entity.SdkFieldV1;
+import eu.europa.ted.efx.sdk1.entity.SdkNodeV1;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public class SymbolResolverMock implements SymbolResolver {
+
+  private static final Logger logger = LoggerFactory.getLogger(SymbolResolverMock.class);
 
   private static final Map<String, SymbolResolverMock> instances = new HashMap<>();
 
@@ -34,14 +40,13 @@ public class SymbolResolverMock implements SymbolResolver {
     try {
       this.loadMapData();
     } catch (JsonProcessingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e.toString(), e);
     }
   }
 
-  private JsonNode fromString(final String jsonString)
+  private static JsonNode fromString(final String jsonString)
       throws JsonMappingException, JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
     return mapper.readValue(jsonString, JsonNode.class);
   }
 
@@ -58,8 +63,8 @@ public class SymbolResolverMock implements SymbolResolver {
         entry("BT-00-Internal-Code", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
         entry("BT-00-CodeAttribute", new SdkFieldV1(fromString(
-              "{\"id\":\"BT-00-CodeAttribute\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField/@attribute\",\"xpathRelative\":\"PathNode/CodeField/@attribute\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
-          entry("BT-00-Text-Multilingual", new SdkFieldV1(fromString(
+            "{\"id\":\"BT-00-CodeAttribute\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField/@attribute\",\"xpathRelative\":\"PathNode/CodeField/@attribute\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+        entry("BT-00-Text-Multilingual", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
         entry("BT-00-StartDate", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-StartDate\",\"type\":\"date\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/StartDateField\",\"xpathRelative\":\"PathNode/StartDateField\"}}"))),
@@ -94,9 +99,9 @@ public class SymbolResolverMock implements SymbolResolver {
         entry("BT-01-SubNode-Text", new SdkFieldV1(fromString(
             "{\"id\":\"BT-01-SubNode-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-SubNode\",\"xpathAbsolute\":\"/*/SubNode/SubTextField\",\"xpathRelative\":\"SubTextField\"}}"))));
 
-    this.nodeById =Map.ofEntries(//
-        entry("ND-Root", new SdkNodeV1("ND-Root", null, "/*", "/*", false)),
-        entry("ND-SubNode", new SdkNodeV1("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false)));
+    this.nodeById = Map.ofEntries(//
+        entry("ND-Root", new SdkNodeV1("ND-Root", null, "/*", "/*", false)), entry("ND-SubNode",
+            new SdkNodeV1("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false)));
 
     this.codelistById = new HashMap<>(Map.ofEntries(entry("accessibility",
         new SdkCodelistV1("accessibility", "0.0.1", Arrays.asList("code1", "code2", "code3")))));

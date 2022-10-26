@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
+@SuppressWarnings("static-method")
 public class XPathAttributeLocatorTest {
   @Test
   public void testXPathAttributeLocator_WithAttribute() {

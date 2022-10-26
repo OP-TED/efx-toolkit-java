@@ -15,7 +15,7 @@ class EfxExpressionTranslatorTest {
 
   private String test1(final String expression, final String... params) {
     try {
-      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION, 
+      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION,
           expression, params);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
@@ -467,7 +467,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
         test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
-  
+
   @Test
   void testStringsSequenceFromIteration_UsingObjectVariable() {
     assertEquals("for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField return 'text'",
@@ -1000,7 +1000,7 @@ class EfxExpressionTranslatorTest {
   void testScalarFromAttributeReference() {
     assertEquals("PathNode/CodeField/@listName", test("ND-Root", "BT-00-Code/@listName"));
   }
-  
+
   @Test
   void testScalarFromAttributeReference_SameElementContext() {
     assertEquals("./@listName", test("BT-00-Code", "BT-00-Code/@listName"));
@@ -1153,7 +1153,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testConcatFunction() {
     assertEquals("concat('abc', 'def')", test("ND-Root", "concat('abc', 'def')"));
-  };
+  }
 
   @Test
   void testFormatNumberFunction() {
@@ -1209,7 +1209,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false(),false(),false()))",
         test("ND-Root", "distinct-values((TRUE, FALSE, FALSE, NEVER))"));
   }
-  
+
   @Test
   void testDistinctValuesFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField)",
@@ -1247,7 +1247,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values(((true(),false()), (false(),false())))",
         test("ND-Root", "value-union((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testUnionFunction_WithFieldReferences() {
     assertEquals("distinct-values((PathNode/TextField, PathNode/TextField))",
@@ -1291,7 +1291,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false())[.= (false(),false())])",
         test("ND-Root", "value-intersect((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testIntersectFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField[.= PathNode/TextField])",
@@ -1335,7 +1335,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false())[not(. = (false(),false()))])",
         test("ND-Root", "value-except((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testExceptFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField[not(. = PathNode/TextField)])",

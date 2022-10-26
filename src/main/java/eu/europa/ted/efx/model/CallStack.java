@@ -7,17 +7,18 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 public class CallStack extends Stack<CallStackObjectBase> {
 
-  Map<String, Class<? extends Expression>> variableTypes =
-      new HashMap<String, Class<? extends Expression>>();
+  private static final long serialVersionUID = 1L;
 
-  Map<String, Expression> parameterValues =
-      new HashMap<String, Expression>();
+  private Map<String, Class<? extends Expression>> variableTypes = new HashMap<>();
+  private Map<String, Expression> parameterValues = new HashMap<>();
 
   public CallStack() {}
 
-  public void pushParameterDeclaration(String parameterName, Expression parameterDeclaration, Expression parameterValue) {
+  public void pushParameterDeclaration(String parameterName, Expression parameterDeclaration,
+      Expression parameterValue) {
     if (this.variableTypes.containsKey(parameterName)) {
-      throw new ParseCancellationException("A parameter with the name " + parameterDeclaration.script + " already exists");
+      throw new ParseCancellationException(
+          "A parameter with the name " + parameterDeclaration.script + " already exists");
     } else if (parameterDeclaration.getClass() == Expression.class) {
       throw new ParseCancellationException();
     } else {
@@ -29,9 +30,11 @@ public class CallStack extends Stack<CallStackObjectBase> {
 
   public void pushVariableDeclaration(String variableName, Expression variableDeclaration) {
     if (parameterValues.containsKey(variableName)) {
-      throw new ParseCancellationException("A parameter with the name " + variableDeclaration.script + " has already been declared.");
+      throw new ParseCancellationException("A parameter with the name " + variableDeclaration.script
+          + " has already been declared.");
     } else if (this.variableTypes.containsKey(variableName)) {
-      throw new ParseCancellationException("A variable with the name " + variableDeclaration.script + " has already been declared.");
+      throw new ParseCancellationException(
+          "A variable with the name " + variableDeclaration.script + " has already been declared.");
     } else if (variableDeclaration.getClass() == Expression.class) {
       throw new ParseCancellationException();
     } else {
@@ -46,7 +49,8 @@ public class CallStack extends Stack<CallStackObjectBase> {
     } else if (this.variableTypes.containsKey(variableName)) {
       this.push(Expression.instantiate(variableReference.script, variableTypes.get(variableName)));
     } else {
-      throw new ParseCancellationException("A variable or parameter with the name " + variableName + " has not been declared.");
+      throw new ParseCancellationException(
+          "A variable or parameter with the name " + variableName + " has not been declared.");
     }
   }
 
@@ -61,8 +65,8 @@ public class CallStack extends Stack<CallStackObjectBase> {
 
   @Override
   public void clear() {
-      super.clear();
-      this.variableTypes.clear();
-      this.parameterValues.clear();  
+    super.clear();
+    this.variableTypes.clear();
+    this.parameterValues.clear();
   }
 }
