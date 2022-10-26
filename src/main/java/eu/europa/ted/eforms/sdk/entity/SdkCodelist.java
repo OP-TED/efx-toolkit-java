@@ -2,6 +2,7 @@ package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Representation of an SdkCodelist for usage in the symbols map.
@@ -18,6 +19,8 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
 
   private final List<String> codes;
 
+  private final Optional<String> parentCodelistIdOpt;
+
   @SuppressWarnings("unused")
   private SdkCodelist() {
     throw new UnsupportedOperationException();
@@ -29,12 +32,15 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
    *        file.
    * @param codelistVersion The codelist version string, see Version tag in .gc files. This is NOT
    *        the SDK version. It can be useful for debug purposes and to avoid conflicts.
+   * @param parentCodelistIdOpt The parent codelist id, if this is a tailored codelist it must be
+   *        present.
    */
   public SdkCodelist(final String codelistId, final String codelistVersion,
-      final List<String> codes) {
+      final List<String> codes, final Optional<String> parentCodelistIdOpt) {
     this.codelistId = codelistId;
     this.codelistVersion = codelistVersion;
     this.codes = codes;
+    this.parentCodelistIdOpt = parentCodelistIdOpt;
   }
 
   public String getCodelistId() {
@@ -47,6 +53,17 @@ public abstract class SdkCodelist implements Comparable<SdkCodelist> {
 
   public List<String> getCodes() {
     return codes;
+  }
+
+  /**
+   * @return Present if this is a tailored codelist, empty otherwise.
+   */
+  public Optional<String> getParentCodelistIdOpt() {
+    return parentCodelistIdOpt;
+  }
+
+  public String getRootCodelistId() {
+    return parentCodelistIdOpt.isPresent() ? parentCodelistIdOpt.get() : codelistId;
   }
 
   @Override

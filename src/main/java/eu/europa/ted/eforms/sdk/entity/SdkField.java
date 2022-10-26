@@ -10,7 +10,7 @@ public abstract class SdkField implements Comparable<SdkField> {
   private final String xpathRelative;
   private final String parentNodeId;
   private final String type;
-  private final String rootCodelistId;
+  private final String codelistId;
 
   @SuppressWarnings("unused")
   private SdkField() {
@@ -18,27 +18,30 @@ public abstract class SdkField implements Comparable<SdkField> {
   }
 
   public SdkField(final String id, final String type, final String parentNodeId,
-      final String xpathAbsolute, final String xpathRelative, final String rootCodelistId) {
+      final String xpathAbsolute, final String xpathRelative, final String codelistId) {
     this.id = id;
     this.parentNodeId = parentNodeId;
     this.xpathAbsolute = xpathAbsolute;
     this.xpathRelative = xpathRelative;
     this.type = type;
-    this.rootCodelistId = rootCodelistId;
+    this.codelistId = codelistId;
   }
 
-  public SdkField(JsonNode field) {
+  public SdkField(final JsonNode field) {
     this.id = field.get("id").asText(null);
     this.parentNodeId = field.get("parentNodeId").asText(null);
     this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
     this.xpathRelative = field.get("xpathRelative").asText(null);
     this.type = field.get("type").asText(null);
-
-    this.rootCodelistId = createCodelistId(field);
+    this.codelistId = createCodelistId(field);
   }
 
-  private static String createCodelistId(JsonNode field) {
-    Supplier<String> rootCodelistIdSupplier = () -> {
+  /**
+   * @return The codelist id from json, it can be null.
+   */
+  @SuppressWarnings("static-method")
+  protected String createCodelistId(final JsonNode field) {
+    final Supplier<String> codelistIdSupplier = () -> {
       final JsonNode codelistNode = field.get("codeList");
       if (codelistNode == null) {
         return null;
@@ -49,12 +52,11 @@ public abstract class SdkField implements Comparable<SdkField> {
         return null;
       }
 
-      final String parentCodelistId =
-          valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
-      return parentCodelistId == null ? valueNode.get("id").asText(null) : parentCodelistId;
+      // Get the codelist id.
+      return valueNode.get("id").asText(null);
     };
 
-    return rootCodelistIdSupplier.get();
+    return codelistIdSupplier.get();
   }
 
   public String getId() {
@@ -77,8 +79,8 @@ public abstract class SdkField implements Comparable<SdkField> {
     return type;
   }
 
-  public String getRootCodelistId() {
-    return rootCodelistId;
+  public String getCodelistId() {
+    return codelistId;
   }
 
   /**

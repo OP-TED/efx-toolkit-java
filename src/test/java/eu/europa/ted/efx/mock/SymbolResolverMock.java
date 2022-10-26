@@ -5,7 +5,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,11 +62,11 @@ public class SymbolResolverMock implements SymbolResolver {
         entry("BT-00-Indicator", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-indicator\",\"type\":\"indicator\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/IndicatorField\",\"xpathRelative\":\"PathNode/IndicatorField\"}"))),
         entry("BT-00-Code", new SdkFieldV1(fromString(
-            "{\"id\":\"BT-00-Code\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+            "{\"id\":\"BT-00-Code\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\"}}}"))),
         entry("BT-00-Internal-Code", new SdkFieldV1(fromString(
-            "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+            "{\"id\":\"BT-00-Internal-Code\",\"type\":\"internal-code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/InternalCodeField\",\"xpathRelative\":\"PathNode/CodeField\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\"}}}"))),
         entry("BT-00-CodeAttribute", new SdkFieldV1(fromString(
-            "{\"id\":\"BT-00-CodeAttribute\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField/@attribute\",\"xpathRelative\":\"PathNode/CodeField/@attribute\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\",\"parentId\":\"main-activity\"}}}"))),
+            "{\"id\":\"BT-00-CodeAttribute\",\"type\":\"code\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/CodeField/@attribute\",\"xpathRelative\":\"PathNode/CodeField/@attribute\",\"codeList\":{\"value\":{\"id\":\"authority-activity\",\"type\":\"flat\"}}}"))),
         entry("BT-00-Text-Multilingual", new SdkFieldV1(fromString(
             "{\"id\":\"BT-00-Text-Multilingual\",\"type\":\"text-multilingual\",\"parentNodeId\":\"ND-Root\",\"xpathAbsolute\":\"/*/PathNode/TextMultilingualField\",\"xpathRelative\":\"PathNode/TextMultilingualField\"}}"))),
         entry("BT-00-StartDate", new SdkFieldV1(fromString(
@@ -100,11 +103,28 @@ public class SymbolResolverMock implements SymbolResolver {
             "{\"id\":\"BT-01-SubNode-Text\",\"type\":\"text\",\"parentNodeId\":\"ND-SubNode\",\"xpathAbsolute\":\"/*/SubNode/SubTextField\",\"xpathRelative\":\"SubTextField\"}}"))));
 
     this.nodeById = Map.ofEntries(//
-        entry("ND-Root", new SdkNodeV1("ND-Root", null, "/*", "/*", false)), entry("ND-SubNode",
-            new SdkNodeV1("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false)));
+        entry("ND-Root", new SdkNodeV1("ND-Root", null, "/*", "/*", false)),
 
-    this.codelistById = new HashMap<>(Map.ofEntries(entry("accessibility",
-        new SdkCodelistV1("accessibility", "0.0.1", Arrays.asList("code1", "code2", "code3")))));
+        entry("ND-SubNode", new SdkNodeV1("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false))
+
+    );
+
+
+    this.codelistById = new HashMap<>(Map.ofEntries(
+
+        buildCodelistMock("accessibility", Optional.empty()),
+
+        buildCodelistMock("authority-activity", Optional.of("main-activity")),
+
+        buildCodelistMock("main-activity", Optional.empty())
+
+    ));
+  }
+
+  private static Entry<String, SdkCodelist> buildCodelistMock(final String codelistId,
+      final Optional<String> parentCodelistIdOpt) {
+    return entry(codelistId, new SdkCodelistV1(codelistId, "0.0.1",
+        Arrays.asList("code1", "code2", "code3"), parentCodelistIdOpt));
   }
 
   public SdkField getFieldById(String fieldId) {
@@ -136,12 +156,22 @@ public class SymbolResolverMock implements SymbolResolver {
   }
 
   @Override
-  public String getRootCodelistOfField(String fieldId) {
+  public String getRootCodelistOfField(final String fieldId) {
     final SdkField sdkField = fieldById.get(fieldId);
     if (sdkField == null) {
       throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
     }
-    return sdkField.getRootCodelistId();
+    final String codelistId = sdkField.getCodelistId();
+    if (codelistId == null) {
+      throw new ParseCancellationException(String.format("No codelist for field '%s'.", fieldId));
+    }
+
+    final SdkCodelist sdkCodelist = codelistById.get(codelistId);
+    if (sdkCodelist == null) {
+      throw new ParseCancellationException(String.format("Unknown codelist '%s'.", codelistId));
+    }
+
+    return sdkCodelist.getRootCodelistId();
   }
 
   @Override
