@@ -9,8 +9,8 @@ import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType
 public class SdkField07 extends SdkField {
 
   public SdkField07(String id, String type, String parentNodeId, String xpathAbsolute,
-      String xpathRelative, String rootCodelistId) {
-    super(id, type, parentNodeId, xpathAbsolute, xpathRelative, rootCodelistId);
+      String xpathRelative, String codelistId) {
+    super(id, type, parentNodeId, xpathAbsolute, xpathRelative, codelistId);
   }
 
   public SdkField07(JsonNode field) {
