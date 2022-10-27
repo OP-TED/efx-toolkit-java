@@ -4,13 +4,13 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentFactory;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
+import eu.europa.ted.eforms.sdk.component.SdkComponentFactory;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 
-public class ComponentFactory extends VersionDependentComponentFactory {
+public class ComponentFactory extends SdkComponentFactory {
   public static final ComponentFactory INSTANCE = new ComponentFactory();
 
   private ComponentFactory() {
@@ -34,7 +34,7 @@ public class ComponentFactory extends VersionDependentComponentFactory {
     return instances.computeIfAbsent(sdkVersion, k -> {
       try {
         return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-            VersionDependentComponentType.SYMBOL_RESOLVER, SymbolResolver.class, sdkVersion,
+            SdkComponentType.SYMBOL_RESOLVER, SymbolResolver.class, sdkVersion,
             sdkRootPath);
       } catch (InstantiationException e) {
         throw new RuntimeException(MessageFormat.format(
@@ -46,12 +46,12 @@ public class ComponentFactory extends VersionDependentComponentFactory {
   public static MarkupGenerator getMarkupGenerator(final String sdkVersion)
       throws InstantiationException {
     return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-        VersionDependentComponentType.MARKUP_GENERATOR, MarkupGenerator.class);
+        SdkComponentType.MARKUP_GENERATOR, MarkupGenerator.class);
   }
 
   public static ScriptGenerator getScriptGenerator(final String sdkVersion)
       throws InstantiationException {
     return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-        VersionDependentComponentType.SCRIPT_GENERATOR, ScriptGenerator.class);
+        SdkComponentType.SCRIPT_GENERATOR, ScriptGenerator.class);
   }
 }

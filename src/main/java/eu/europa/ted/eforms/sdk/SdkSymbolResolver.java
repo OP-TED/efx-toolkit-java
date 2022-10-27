@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.eforms.sdk.SdkConstants;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
@@ -12,14 +14,12 @@ import eu.europa.ted.eforms.sdk.repository.SdkCodelistRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
 import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-@VersionDependentComponent(versions = {"0.6", "0.7", "1"},
-    componentType = VersionDependentComponentType.SYMBOL_RESOLVER)
+@SdkComponent(versions = {"0.6", "0.7", "1"},
+    componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkField> fieldById;
 

@@ -15,8 +15,8 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -61,7 +61,7 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * {@link EfxExpressionTranslatorV1} only focuses on EFX expressions. To translate EFX templates
  * you need to use the {@link EfxTemplateTranslatorV1} which derives from this class.
  */
-@VersionDependentComponent(versions = {"1"}, componentType = VersionDependentComponentType.EFX_EXPRESSION_TRANSLATOR)
+@SdkComponent(versions = {"1"}, componentType = SdkComponentType.EFX_EXPRESSION_TRANSLATOR)
 public class EfxExpressionTranslatorV1 extends EfxBaseListener
     implements EfxExpressionTranslator {
 
