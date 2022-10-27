@@ -68,9 +68,9 @@ public interface SymbolResolver {
   public String getTypeOfField(final String fieldId);
 
   /**
-   * Gets the codelist associated with the given field. If the codelist is a tailored codelist the
-   * this method will return the its codelist.
-   * 
+   * Gets the codelist associated with the given field. If the codelist is a tailored codelist then
+   * this method will return the identifier of its parent codelist.
+   *
    * @param fieldId The identifier of the field to look for.
    * @return The "root" codelist associated ith the given field.
    */
