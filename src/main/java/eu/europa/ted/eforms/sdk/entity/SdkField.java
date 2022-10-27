@@ -1,7 +1,6 @@
 package eu.europa.ted.eforms.sdk.entity;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public abstract class SdkField implements Comparable<SdkField> {
@@ -10,7 +9,7 @@ public abstract class SdkField implements Comparable<SdkField> {
   private final String xpathRelative;
   private final String parentNodeId;
   private final String type;
-  private final String rootCodelistId;
+  private final String codelistId;
 
   @SuppressWarnings("unused")
   private SdkField() {
@@ -18,43 +17,36 @@ public abstract class SdkField implements Comparable<SdkField> {
   }
 
   public SdkField(final String id, final String type, final String parentNodeId,
-      final String xpathAbsolute, final String xpathRelative, final String rootCodelistId) {
+      final String xpathAbsolute, final String xpathRelative, final String codelistId) {
     this.id = id;
     this.parentNodeId = parentNodeId;
     this.xpathAbsolute = xpathAbsolute;
     this.xpathRelative = xpathRelative;
     this.type = type;
-    this.rootCodelistId = rootCodelistId;
+    this.codelistId = codelistId;
   }
 
-  public SdkField(JsonNode field) {
-    this.id = field.get("id").asText(null);
-    this.parentNodeId = field.get("parentNodeId").asText(null);
-    this.xpathAbsolute = field.get("xpathAbsolute").asText(null);
-    this.xpathRelative = field.get("xpathRelative").asText(null);
-    this.type = field.get("type").asText(null);
-
-    this.rootCodelistId = createCodelistId(field);
+  public SdkField(final JsonNode fieldNode) {
+    this.id = fieldNode.get("id").asText(null);
+    this.parentNodeId = fieldNode.get("parentNodeId").asText(null);
+    this.xpathAbsolute = fieldNode.get("xpathAbsolute").asText(null);
+    this.xpathRelative = fieldNode.get("xpathRelative").asText(null);
+    this.type = fieldNode.get("type").asText(null);
+    this.codelistId = extractCodelistId(fieldNode);
   }
 
-  private String createCodelistId(JsonNode field) {
-    Supplier<String> rootCodelistIdSupplier = () -> {
-      final JsonNode codelistNode = field.get("codeList");
-      if (codelistNode == null) {
-        return null;
-      }
+  protected String extractCodelistId(final JsonNode fieldNode) {
+    final JsonNode codelistNode = fieldNode.get("codeList");
+    if (codelistNode == null) {
+      return null;
+    }
 
-      final JsonNode valueNode = codelistNode.get("value");
-      if (valueNode == null) {
-        return null;
-      }
+    final JsonNode valueNode = codelistNode.get("value");
+    if (valueNode == null) {
+      return null;
+    }
 
-      final String parentCodelistId =
-          valueNode.has("parentId") ? valueNode.get("parentId").asText(null) : null;
-      return parentCodelistId == null ? valueNode.get("id").asText(null) : parentCodelistId;
-    };
-
-    return rootCodelistIdSupplier.get();
+    return valueNode.get("id").asText(null);
   }
 
   public String getId() {
@@ -77,8 +69,8 @@ public abstract class SdkField implements Comparable<SdkField> {
     return type;
   }
 
-  public String getRootCodelistId() {
-    return rootCodelistId;
+  public String getCodelistId() {
+    return codelistId;
   }
 
   /**

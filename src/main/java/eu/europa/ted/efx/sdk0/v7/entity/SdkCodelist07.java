@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.sdk0.v7.entity;
 
 import java.util.List;
+import java.util.Optional;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
 import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
@@ -14,6 +15,6 @@ import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType
 public class SdkCodelist07 extends SdkCodelist {
 
     public SdkCodelist07(String codelistId, String codelistVersion, List<String> codes) {
-        super(codelistId, codelistVersion, codes);
+        super(codelistId, codelistVersion, codes,  Optional.empty());
     }
 }
