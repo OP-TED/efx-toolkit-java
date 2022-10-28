@@ -56,13 +56,14 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>0.1.0</version.eforms-core>
+    <version.eforms-core>0.1.2-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
     <version.commons-lang3>3.12.0</version.commons-lang3>
     <version.logback>1.2.11</version.logback>
     <version.jackson>2.13.4</version.jackson>
+    <version.jackson-databind>2.13.4.2</version.jackson-databind>
     <version.junit-jupiter-api>5.7.2</version.junit-jupiter-api>
     <version.slf4j>1.7.36</version.slf4j>
 
@@ -103,8 +104,13 @@
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
+        <artifactId>jackson-core</artifactId>
         <version>${version.jackson}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${version.jackson-databind}</version>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
@@ -135,6 +141,10 @@
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

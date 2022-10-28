@@ -9,8 +9,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
@@ -26,7 +26,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-@VersionDependentComponent(versions = {"0.6", "0.7", "1"}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
+@SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
