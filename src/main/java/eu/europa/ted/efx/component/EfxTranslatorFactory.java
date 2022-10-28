@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.selector.component;
+package eu.europa.ted.efx.component;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponentFactory;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;

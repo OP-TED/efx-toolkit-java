@@ -3,8 +3,8 @@ package eu.europa.ted.efx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
-import eu.europa.ted.efx.selector.component.EfxTranslatorFactory;
 
 public class EfxTranslator {
  
