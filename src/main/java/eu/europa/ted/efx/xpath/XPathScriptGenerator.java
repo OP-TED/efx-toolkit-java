@@ -9,8 +9,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponent;
-import eu.europa.ted.eforms.sdk.selector.component.VersionDependentComponentType;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
@@ -26,7 +26,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-@VersionDependentComponent(versions = {"0.6", "0.7", "1"}, componentType = VersionDependentComponentType.SCRIPT_GENERATOR)
+@SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
@@ -80,14 +80,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
     if (DurationExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate("(if (" + fieldReference.script + "/@unitCode='WEEK')" + //
-          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number() * 7, 'D'))" + //
-          " else if (" + fieldReference.script + "/@unitCode='DAY')" + //
-          " then xs:dayTimeDuration(concat('P', " + fieldReference.script + "/number(), 'D'))" + //
-          " else if (" + fieldReference.script + ")" + //
-          " then xs:yearMonthDuration(concat('P', " + fieldReference.script
-          + "/number(), upper-case(substring(" + fieldReference.script + "/@unitCode, 1, 1))))" + //
-          " else ())", type);
+      return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
+          " else if ($F/@unitCode='DAY')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
+          " else if ($F/@unitCode='YEAR')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
+          " else if ($F/@unitCode='MONTH')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
+          // " else if (" + fieldReference.script + ")" + //
+          // " then fn:error('Invalid @unitCode')" + //
+          " else ()))", type);
     }
 
     return Expression.instantiate(fieldReference.script, type);

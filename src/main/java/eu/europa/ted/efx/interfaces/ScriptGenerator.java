@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Lic
+ */
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
@@ -15,6 +28,17 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
+/**
+ * A ScriptGenerator is used by the EFX expression translator to translate specific computations to
+ * the target language script.
+ * 
+ * Each method defined by this interface corresponds to a specific computation that needs to be
+ * translated. The parameters necessary for each computation are passed to the method already
+ * translated to the target language. Each method should appropriately combine the given parameters
+ * to form the target language script and return it as an {@link Expression}.
+ * 
+ * As a reference implementation you can use the XPathScriptGenerator class.
+ */
 public interface ScriptGenerator {
 
   /**
