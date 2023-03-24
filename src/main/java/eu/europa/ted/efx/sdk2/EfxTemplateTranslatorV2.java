@@ -2,9 +2,11 @@ package eu.europa.ted.efx.sdk2;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -14,24 +16,40 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.model.BooleanVariable;
 import eu.europa.ted.efx.model.ContentBlock;
 import eu.europa.ted.efx.model.ContentBlockStack;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.DateVariable;
+import eu.europa.ted.efx.model.DurationVariable;
 import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Expression.BooleanExpression;
+import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
+import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.model.NumericVariable;
+import eu.europa.ted.efx.model.StringVariable;
+import eu.europa.ted.efx.model.TimeVariable;
+import eu.europa.ted.efx.model.Variable;
+import eu.europa.ted.efx.model.VariableList;
+import eu.europa.ted.efx.sdk1.EfxExpressionTranslatorV1;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
+import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV1} to provide additional
@@ -284,19 +302,19 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         : this.script.composeFieldValueReference(
             symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
             PathExpression.class);
-    final String loopVariableName = "$item";
-
+    final StringExpression loopVariable = this.script.composeVariableReference("item", StringExpression.class);
     switch (fieldType) {
       case "indicator":
+
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
                     this.script.getStringLiteralFromUnquotedString("-"),
-                    this.script.composeVariableReference(loopVariableName, StringExpression.class),
+                    loopVariable,
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(fieldId))),
             StringListExpression.class)));
@@ -305,7 +323,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       case "internal-code":
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(List.of(
                 this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
                 this.script.getStringLiteralFromUnquotedString("|"),
@@ -314,7 +332,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                 this.script.getStringLiteralFromUnquotedString(
                     this.symbols.getRootCodelistOfField(fieldId)),
                 this.script.getStringLiteralFromUnquotedString("."),
-                this.script.composeVariableReference(loopVariableName, StringExpression.class))),
+                loopVariable)),
             StringListExpression.class)));
         break;
       default:
@@ -430,29 +448,106 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public void exitContextDeclarationBlock(ContextDeclarationBlockContext ctx) {
+    if (ctx.templateVariableList() == null) {
+      this.stack.push(new VariableList());
+    }
+  }
 
+  @Override
+  public void exitContextDeclaration(ContextDeclarationContext ctx) {
+    final PathExpression contextPath = this.stack.pop(PathExpression.class);
+    Variable<PathExpression> contextVariable = this.getContextVariable(ctx, contextPath);
     final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
     if (filedId != null) {
-      this.efxContext.push(new FieldContext(filedId, this.stack.pop(PathExpression.class)));
+      this.efxContext.push(new FieldContext(filedId, contextPath, contextVariable));
+      if (contextVariable != null) {
+        this.stack.declareTemplateVariable(contextVariable.name,
+            Expression.types.get(this.symbols.getTypeOfField(filedId)));
+      }
     } else {
       final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
       assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
-      this.efxContext.push(new NodeContext(nodeId, this.stack.pop(PathExpression.class)));
+      this.efxContext.push(new NodeContext(nodeId, contextPath));
     }
-
-    // final PathExpression absolutePath = this.stack.pop(PathExpression.class);
-    // final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-    // if (filedId != null) {
-    //   this.efxContext.push(new FieldContext(filedId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
-    // } else {
-    //   final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-    //   assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
-    //   this.efxContext.push(new NodeContext(nodeId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
-    // }
   }
 
+  private Variable<PathExpression> getContextVariable(ContextDeclarationContext ctx, PathExpression contextPath) {
+    if (ctx.contextVariableInitializer() == null) {
+      return null;
+    }
+    final String variableName = this.getVariableName(ctx.contextVariableInitializer());
+    return new Variable<>(variableName, XPathContextualizer.contextualize(contextPath, contextPath), this.script.composeVariableReference(variableName, PathExpression.class));
+  }
+
+  @Override
+  public void enterTemplateVariableList(TemplateVariableListContext ctx) {
+    this.stack.push(new VariableList());
+  }
+
+  @Override
+  public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), StringVariable.class, StringExpression.class);
+  }
+
+  @Override
+  public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), BooleanVariable.class, BooleanExpression.class);
+  }
+
+  @Override
+  public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), NumericVariable.class, NumericExpression.class);
+  }
+
+  @Override
+  public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), DateVariable.class, DateExpression.class);
+  }
+
+  @Override
+  public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), TimeVariable.class, TimeExpression.class);
+  }
+
+  @Override
+  public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
+    this.exitVariableInitializer(this.getVariableName(ctx), DurationVariable.class, DurationExpression.class);
+  }
+
+  private <T extends Expression, V extends Variable<T>> void exitVariableInitializer(String variableName, Class<V> variableType, Class<T> expressionType) {
+    T expression = this.stack.pop(expressionType);
+    VariableList variables = this.stack.pop(VariableList.class);
+    try {
+      Constructor<V> constructor = variableType.getConstructor(String.class, expressionType, expressionType);
+      variables.push(constructor.newInstance(variableName, expression, this.script.composeVariableReference(variableName, expressionType)));
+      this.stack.push(variables);
+      this.stack.declareTemplateVariable(variableName, expressionType);
+    } catch (Exception e) {
+      throw new ParseCancellationException(e);
+    }
+  }
 
   /*** Template lines ***/
+
+  @Override
+  public void enterTemplateLine(TemplateLineContext ctx) {
+    final int indentLevel = this.getIndentLevel(ctx);
+    final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
+    if (indentChange > 1) {
+      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+    } else if (indentChange == 1) {
+      if (this.blockStack.isEmpty()) {
+        throw new ParseCancellationException(START_INDENT_AT_ZERO);
+      }
+    } else if (indentChange < 0) {
+      for (int i = indentChange; i < 0; i++) {
+        assert !this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+        assert this.blockStack.currentIndentationLevel() > indentLevel : UNEXPECTED_INDENTATION;
+        this.blockStack.pop();
+      }
+      assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
+    }
+  }
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
@@ -460,10 +555,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
+    final VariableList templateVariables = this.stack.pop(VariableList.class);
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
-    assert this.stack.isEmpty() : "Stack should be empty at this point.";
-    this.stack.clear(); // Variable scope boundary. Clear declared variables 
+    assert this.stack.empty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
       throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
@@ -471,23 +566,16 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()));
+      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()), templateVariables);
     } else if (indentChange < 0) {
-      // lower indent level
-      for (int i = indentChange; i < 0; i++) {
-        assert !this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
-        assert this.blockStack.currentIndentationLevel() > indentLevel : UNEXPECTED_INDENTATION;
-        this.blockStack.pop();
-      }
-      assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), templateVariables);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext())));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext()), templateVariables));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), templateVariables);
       }
     }
   }
@@ -499,7 +587,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     if (FieldContext.class.isAssignableFrom(childContext.getClass())) {
       return new FieldContext(childContext.symbol(), childContext.absolutePath(),
-          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()), childContext.variable());
     }
 
     assert NodeContext.class.isAssignableFrom(
@@ -539,5 +627,33 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       return ctx.Tabs().getText().length();
     }
     return 0;
+  }
+
+  private String getVariableName(StringVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(NumericVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(BooleanVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DateVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(TimeVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DurationVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(ContextVariableInitializerContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
   }
 }

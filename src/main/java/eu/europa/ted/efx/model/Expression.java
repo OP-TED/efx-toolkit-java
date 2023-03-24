@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
  * language. It also enables to EFX translator to perform type checking of EFX expressions.
  *
  */
-public class Expression extends CallStackObjectBase {
+public class Expression extends CallStackObject {
 
   /**
    * eForms types are mapped to Expression types.
@@ -177,17 +177,10 @@ public class Expression extends CallStackObjectBase {
     }
   }
 
-  public static class ListExpressionBase extends Expression {
-
-    public ListExpressionBase(final String script) {
-      super(script);
-    }
-  }
-
   /**
    * Used to represent a list of strings in the target language.
    */
-  public static class ListExpression<T extends Expression> extends ListExpressionBase {
+  public static class ListExpression<T extends Expression> extends Expression {
 
     public ListExpression(final String script) {
       super(script);

@@ -14,6 +14,10 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
@@ -63,14 +67,27 @@ public interface MarkupGenerator {
   Markup renderFreeText(final String freeText);
 
   /**
-   * Given a fragment name (identifier) and some pre-rendered content, this method returns the code
+   * @deprecated Use {@link #composeFragmentDefinition(String, String, Markup, Set)} instead.
+   */
+  @Deprecated(since = "2.0.0", forRemoval = true)
+  Markup composeFragmentDefinition(final String name, String number, Markup content);
+
+  /**
+   * Given a fragment name (identifier) and some pre-rendered content, this method
+   * returns the code
    * that encapsulates it in the target template.
    */
-  Markup composeFragmentDefinition(final String name, String number, Markup content);
+  Markup composeFragmentDefinition(final String name, String number, Markup content, Set<String> parameters);
+
+  /**
+   * @deprecated Use {@link #renderFragmentInvocation(String, PathExpression, Set)} instead.
+   */
+  @Deprecated(since = "2.0.0", forRemoval = true)
+  Markup renderFragmentInvocation(final String name, final PathExpression context);
 
   /**
    * Given a fragment name (identifier), and an evaluation context, this method returns the code
    * that invokes (uses) the fragment.
    */
-  Markup renderFragmentInvocation(final String name, final PathExpression context);
+  Markup renderFragmentInvocation(final String name, final PathExpression context, final Set<Pair<String, String>> variables);
 }

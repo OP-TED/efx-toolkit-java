@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 class EfxExpressionTranslatorTest {
-  final private String SDK_VERSION = "eforms-sdk-1.0";
+  final private String SDK_VERSION = "eforms-sdk-2.0";
 
   private String test(final String context, final String expression) {
     return test1(String.format("{%s} ${%s}", context, expression));

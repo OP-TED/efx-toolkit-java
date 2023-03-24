@@ -3,8 +3,9 @@ package eu.europa.ted.eforms.sdk;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import eu.europa.ted.eforms.sdk.SdkConstants;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
@@ -18,7 +19,7 @@ import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-@SdkComponent(versions = {"0.6", "0.7", "1"},
+@SdkComponent(versions = {"0.6", "0.7", "1", "2"},
     componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkField> fieldById;
