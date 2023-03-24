@@ -751,8 +751,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitParenthesizedDurationsFromITeration(
-      ParenthesizedDurationsFromITerationContext ctx) {
+  public void exitParenthesizedDurationsFromIteration(
+      ParenthesizedDurationsFromIterationContext ctx) {
     this.stack.push(this.script.composeParenthesizedExpression(
         this.stack.pop(DurationListExpression.class), DurationListExpression.class));
   }
