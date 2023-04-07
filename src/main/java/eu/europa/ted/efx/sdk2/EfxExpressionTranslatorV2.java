@@ -1339,6 +1339,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
+    final StringExpression separator = this.stack.pop(StringExpression.class);
+    final StringListExpression list = this.stack.pop(StringListExpression.class);
+    this.stack.push(this.script.composeStringJoin(list, separator));
+  }
+
+  @Override
   public void exitFormatNumberFunction(FormatNumberFunctionContext ctx) {
     final StringExpression format = this.stack.pop(StringExpression.class);
     final NumericExpression number = this.stack.pop(NumericExpression.class);

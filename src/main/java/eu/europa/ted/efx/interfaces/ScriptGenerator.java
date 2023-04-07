@@ -26,6 +26,7 @@ import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 /**
@@ -266,6 +267,8 @@ public interface ScriptGenerator {
    */
 
   public StringExpression composeStringConcatenation(List<StringExpression> list);
+
+  public StringExpression composeStringJoin(StringListExpression list, StringExpression separator);
 
   public BooleanExpression composeEndsWithCondition(StringExpression text,
       StringExpression endsWith);

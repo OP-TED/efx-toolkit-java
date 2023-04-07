@@ -26,6 +26,7 @@ import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 @SdkComponent(versions = {"0.6", "0.7", "1", "2"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -419,6 +420,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.script).collect(Collectors.joining(", ")) + ")");
+  }
+
+  @Override
+  public StringExpression composeStringJoin(StringListExpression list, StringExpression separator) {
+    return new StringExpression(
+        "string-join(" + list.script + ", " + separator.script + ")");
   }
 
   @Override

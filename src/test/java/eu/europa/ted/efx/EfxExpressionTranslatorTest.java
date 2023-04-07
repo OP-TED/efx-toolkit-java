@@ -1156,6 +1156,16 @@ class EfxExpressionTranslatorTest {
   };
 
   @Test
+  void testStringJoinFunction_withLiterals() {
+    assertEquals("string-join(('abc','def'), ',')", test("ND-Root", "string-join(('abc', 'def'), ',')"));
+  }
+
+  @Test
+  void testStringJoinFunction_withFieldReference() {
+    assertEquals("string-join(PathNode/TextField, ',')", test("ND-Root", "string-join(BT-00-Text, ',')"));
+  }
+
+  @Test
   void testFormatNumberFunction() {
     assertEquals("format-number(PathNode/NumberField/number(), '#,##0.00')",
         test("ND-Root", "format-number(BT-00-Number, '#,##0.00')"));
