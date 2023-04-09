@@ -184,15 +184,21 @@ class EfxTemplateTranslatorTest {
   void testTemplateLine_ContextVariable() {
     assertEquals(
         lines("let block01(t, ctx) -> { #1: eval(for $x in . return concat($x, $t))", //
-            "for-each(.).call(block0101(ctx:$ctx, t:$t, t2:'test')) }", //
+            "for-each(.).call(block0101(ctx:$ctx, t:$t, t2:'test'))", //
+            "for-each(.).call(block0102(ctx:$ctx, t:$t, t2:'test3')) }", //
             "let block0101(t, ctx, t2) -> { #1.1: eval(for $y in . return concat($y, $t, $t2))", //
-            "for-each(.).call(block010101(ctx:$ctx, t:$t, t2:$t2)) }", //
+            "for-each(.).call(block010101(ctx:$ctx, t:$t, t2:$t2))", //
+            "for-each(.).call(block010102(ctx:$ctx, t:$t, t2:$t2)) }", //
             "let block010101(t, ctx, t2) -> { eval(for $z in . return concat($z, $t, $ctx)) }", //
+            "let block010102(t, ctx, t2) -> { eval(for $z in . return concat($z, $t, $ctx)) }", //
+            "let block0102(t, ctx, t2) -> { eval(for $z in . return concat($z, $t2, $ctx)) }", //
             "for-each(/*/PathNode/TextField).call(block01(ctx:., t:./normalize-space(text())))"), //
         translate(lines(
             "{context:$ctx = BT-00-Text, text:$t = BT-00-Text} ${for text:$x in BT-00-Text return concat($x, $t)}",
             "    {BT-00-Text, text:$t2 = 'test'} ${for text:$y in BT-00-Text return concat($y, $t, $t2)}",
-            "        {BT-00-Text} ${for text:$z in BT-00-Text return concat($z, $t, $ctx)}")));
+            "        {BT-00-Text} ${for text:$z in BT-00-Text return concat($z, $t, $ctx)}",
+            "        {BT-00-Text} ${for text:$z in BT-00-Text return concat($z, $t, $ctx)}",
+            "    {BT-00-Text, text:$t2 = 'test3'} ${for text:$z in BT-00-Text return concat($z, $t2, $ctx)}")));
 
   }
 

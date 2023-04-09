@@ -433,6 +433,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   /*** Quantified expressions ***/
 
   @Override
+  public void enterQuantifiedExpression(QuantifiedExpressionContext ctx) {
+    this.stack.pushStackFrame();  // Quantified expressions need their own scope because they introduce new variables.
+  }
+
+  @Override
   public void exitQuantifiedExpression(QuantifiedExpressionContext ctx) {
     BooleanExpression booleanExpression = this.stack.pop(BooleanExpression.class);
     if (ctx.Every() != null) {
@@ -442,6 +447,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       this.stack.push(this.script.composeAnySatisfies(this.stack.pop(IteratorListExpression.class),
           booleanExpression));
     }
+    this.stack.popStackFrame(); // Variables declared in the quantified expression go out of scope here.
   }
 
   /*** Numeric expressions ***/
@@ -762,68 +768,68 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void enterStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
     this.exitIterationExpression(StringExpression.class, StringListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void enterNumericSequenceFromIteration(NumericSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitNumericSequenceFromIteration(NumericSequenceFromIterationContext ctx) {
     this.exitIterationExpression(NumericExpression.class, NumericListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void enterBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
     this.exitIterationExpression(BooleanExpression.class, BooleanListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void enterDateSequenceFromIteration(DateSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitDateSequenceFromIteration(DateSequenceFromIterationContext ctx) {
     this.exitIterationExpression(DateExpression.class, DateListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void enterTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
     this.exitIterationExpression(TimeExpression.class, TimeListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void enterDurationSequenceFromIteration(DurationSequenceFromIterationContext ctx) {
-    this.stack.pushStackFrame();
+    this.stack.pushStackFrame(); // Iteration variables are local to the iteration
   }
 
   @Override
   public void exitDurationSequenceFromIteration(DurationSequenceFromIterationContext ctx) {
     this.exitIterationExpression(DurationExpression.class, DurationListExpression.class);
-    this.stack.popStackFrame();
+    this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
   public <T extends Expression, L extends ListExpression<T>> void exitIteratorExpression(

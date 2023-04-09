@@ -539,13 +539,21 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
+      this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
       for (int i = indentChange; i < 0; i++) {
         assert !this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
         assert this.blockStack.currentIndentationLevel() > indentLevel : UNEXPECTED_INDENTATION;
         this.blockStack.pop();
+        this.stack.popStackFrame(); // Each skipped indentation level must go out of scope.
       }
+      this.stack.popStackFrame();  // The previous sibling goes out of scope (same indentation level).
+      this.stack.pushStackFrame(); // Create a stack frame for the new template line.
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
+    }
+    else if (indentChange == 0) {
+      this.stack.popStackFrame();   // The previous sibling goes out of scope (same indentation level).
+      this.stack.pushStackFrame();  // Create a stack frame for the new template line.
     }
   }
 

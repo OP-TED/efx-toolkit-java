@@ -7,43 +7,87 @@ import java.util.Stack;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+/**
+ * The call stack is a stack of stack frames. Each stack frame represents a
+ * scope. The top of the stack is the current scope. The bottom of the stack is
+ * the global scope.
+ */
 public class CallStack  {
 
+  private static final String TYPE_MISMATCH = "Type mismatch. Expected %s instead of %s.";
+  private static final String UNDECLARED_IDENTIFIER = "Identifier not declared: ";
+  private static final String IDENTIFIER_ALREADY_DECLARED = "Identifier already declared: ";
+  private static final String STACK_UNDERFLOW = "Stack underflow. Return values were available in the dropped frame, but no stack frame is left to consume them.";
+
+  /**
+   * Stack frames are means of controlling the scope of variables and parameters.
+   * Certain sub-expressions are scoped, meaning that variables and parameters are
+   * only available within the scope of the sub-expression.
+   */
   class StackFrame extends Stack<CallStackObject> {
 
+    /**
+     * Keeps a list of all identifiers declared in the current scope as well as
+     * their type.
+     */
     Map<String, Class<? extends Expression>> typeRegister = new HashMap<String, Class<? extends Expression>>();
 
+    /**
+     * Keeps a list of all parameter values declared in the current scope.
+     */
     Map<String, Expression> valueRegister = new HashMap<String, Expression>();
 
-    public void pushParameterDeclaration(String parameterName, Expression parameterDeclarationExpression,
+    /**
+     * Registers a parameter identifier and pushes a parameter declaration on the
+     * current stack frame. Also stores the parameter value.
+     */
+    void pushParameterDeclaration(String parameterName, Expression parameterDeclarationExpression,
         Expression parameterValue) {
       this.declareIdentifier(parameterName, parameterDeclarationExpression.getClass());
       this.storeValue(parameterName, parameterValue);
       this.push(parameterDeclarationExpression);
     }
 
-    public void pushVariableDeclaration(String variableName, Expression variableDeclarationExpression) {
+    /**
+     * Registers a variable identifier and pushes a variable declaration on the
+     * current stack frame.
+     */
+    void pushVariableDeclaration(String variableName, Expression variableDeclarationExpression) {
       this.declareIdentifier(variableName, variableDeclarationExpression.getClass());
       this.push(variableDeclarationExpression);
     }
 
-    public void declareIdentifier(String identifier, Class<? extends Expression> type) {
+    /**
+     * Registers an identifier in the current scope.
+     * This registration is later used to check if an identifier is declared in the
+     * current scope.
+     */
+    void declareIdentifier(String identifier, Class<? extends Expression> type) {
       this.typeRegister.put(identifier, type);
     }
 
-    private void storeValue(String identifier, Expression value) {
+    /**
+     * Used to store parameter values.
+     */
+    void storeValue(String identifier, Expression value) {
       this.valueRegister.put(identifier, value);
     }
 
-    public synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
+    /**
+     * Returns the object at the top of the stack and removes it from the stack.
+     * The object must be of the expected type.
+     */
+    synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
       Class<? extends CallStackObject> actualType = peek().getClass();
       if (!expectedType.isAssignableFrom(actualType) && !actualType.equals(Expression.class)) {
-        throw new ParseCancellationException("Type mismatch. Expected " + expectedType.getSimpleName()
-            + " instead of " + this.peek().getClass().getSimpleName());
+        throw new ParseCancellationException(String.format(TYPE_MISMATCH, expectedType.getSimpleName(), this.peek().getClass().getSimpleName()));
       }
       return expectedType.cast(this.pop());
     }
 
+    /**
+     * Clears the stack frame and all its registers.
+     */
     @Override
     public void clear() {
         super.clear();
@@ -52,101 +96,182 @@ public class CallStack  {
     }
   }
 
+  /**
+   * The stack of stack frames.
+   */
   Stack<StackFrame> frames;
 
+  /**
+   * Default and only constructor.
+   * Adds a global scope to the stack.
+   */
   public CallStack() {
     this.frames = new Stack<>();
-    this.frames.push(new StackFrame());
+    this.frames.push(new StackFrame()); // The global scope
   }
 
+  /**
+   * Creates a new stack frame and pushes it on top of the call stack.
+   * 
+   * This method is called at the begin boundary of scoped sub-expression to
+   * allow for the declaration of local variables.
+   */
   public void pushStackFrame() {
     this.frames.push(new StackFrame());
   }
 
+  /**
+   * Drops the current stack frame and passes the return values to the previous
+   * stack frame.
+   * 
+   * This method is called at the end boundary of scoped sub-expressions.
+   * Variables local to the sub-expression must go out of scope and the return
+   * values are passed to the parent expression.
+   */
   public void popStackFrame() {
     StackFrame droppedFrame = this.frames.pop();
-    this.frames.peek().addAll(droppedFrame);  // pass return values to the current stack frame
+
+    // If the dropped frame is not empty, then it contains return values that should
+    // be passed to the next frame on the stack.
+    if (droppedFrame.size() > 0) {
+      if (this.frames.empty()) {
+        throw new ParseCancellationException(STACK_UNDERFLOW);
+      }
+      this.frames.peek().addAll(droppedFrame);
+    }
   }
 
+  /**
+   * Pushes a parameter declaration on the current stack frame.
+   * Checks if another identifier with the same name is already declared in the
+   * current scope.
+   */
   public void pushParameterDeclaration(String parameterName, Expression parameterDeclaration, Expression parameterValue) {
     if (this.inScope(parameterName)) {
-      throw new ParseCancellationException("Identifier " + parameterDeclaration.script + " already declared.");
-    } else if (parameterDeclaration.getClass() == Expression.class) {
-      throw new ParseCancellationException();
-    } else {
-      this.frames.peek().pushParameterDeclaration(parameterName, parameterDeclaration, parameterValue);
+      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + parameterDeclaration.script);
     }
+    this.frames.peek().pushParameterDeclaration(parameterName, parameterDeclaration, parameterValue);
   }
 
+  /**
+   * Pushes a variable declaration on the current stack frame.
+   * Checks if another identifier with the same name is already declared in the
+   * current scope.
+   */
   public void pushVariableDeclaration(String variableName, Expression variableDeclaration) {
     if (this.inScope(variableName)) {
-      throw new ParseCancellationException("Identifier " + variableDeclaration.script + " already declared.");
-    } else if (variableDeclaration.getClass() == Expression.class) {
-      throw new ParseCancellationException();
-    } else {
-      this.frames.peek().pushVariableDeclaration(variableName, variableDeclaration);
+      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + variableDeclaration.script);
     }
+    this.frames.peek().pushVariableDeclaration(variableName, variableDeclaration);
   }
 
+  /**
+   * Declares a template variable. Template variables are tracked to ensure proper
+   * scoping. However, their declaration is not pushed on the stack as they are
+   * declared at the template level (in Markup) and not at the expression level
+   * (not in the target language script).
+   */
   public void declareTemplateVariable(String variableName, Class<? extends Expression> variableType) {
     if (this.inScope(variableName)) {
-      throw new ParseCancellationException("Identifier " + variableName + " already declared.");
-    } else if (variableType == Expression.class) {
-      throw new ParseCancellationException();
-    } else {
-      this.frames.peek().declareIdentifier(variableName, variableType);
+      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + variableName);
     }
+    this.frames.peek().declareIdentifier(variableName, variableType);
   }
 
+  /**
+   * Checks if an identifier is declared in the current scope.
+   */
   boolean inScope(String identifier) {
     return this.frames.stream().anyMatch(f -> f.typeRegister.containsKey(identifier) || f.valueRegister.containsKey(identifier) );      
   }
 
+  /**
+   * Returns the stack frame containing the given identifier.
+   */
   StackFrame findFrameContaining(String identifier) {
     return this.frames.stream().filter(f -> f.typeRegister.containsKey(identifier) || f.valueRegister.containsKey(identifier)).findFirst().orElse(null);
   }
 
+  /**
+   * Gets the value of a parameter.
+   */
   Optional<Expression> getParameter(String identifier) {
     return this.frames.stream().filter(f -> f.valueRegister.containsKey(identifier)).findFirst().map(x -> x.valueRegister.get(identifier));
   }
 
+  /**
+   * Gets the type of a variable.
+   */
   Optional<Class<? extends Expression>> getVariable(String identifier) {
     return this.frames.stream().filter(f -> f.typeRegister.containsKey(identifier)).findFirst().map(x -> x.typeRegister.get(identifier));
   }
 
+  /**
+   * Pushes a variable reference on the current stack frame.
+   * Makes sure there is no name collision with other identifiers already in
+   * scope.
+   */
   public void pushVariableReference(String variableName, Expression variableReference) {
     getParameter(variableName).ifPresentOrElse(parameterValue -> this.push(parameterValue),
         () -> getVariable(variableName).ifPresentOrElse(
             variableType -> this.pushVariableReference(variableReference, variableType),
             () -> {
-              throw new ParseCancellationException("Identifier " + variableName + " not declared.");
+              throw new ParseCancellationException(UNDECLARED_IDENTIFIER + variableName);
             }));
   }
 
+  /**
+   * Pushes a variable reference on the current stack frame.
+   * This method is private because it is only used for to improve the readability
+   * of its public counterpart.
+   */
   private void pushVariableReference(Expression variableReference, Class<? extends Expression> variableType) {
     this.frames.peek().push(Expression.instantiate(variableReference.script, variableType));
   }
 
+  /**
+   * Pushes an object on the current stack frame.
+   * No checks, no questions asked.
+   */
   public void push(CallStackObject item) {
     this.frames.peek().push(item);
   }
 
+  /**
+   * Returns the object at the top of the current stack frame and removes it from
+   * the stack.
+   * 
+   * @param expectedType The that the returned object is expected to have.
+   */
   public synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
     return this.frames.peek().pop(expectedType);
   }
 
+  /**
+   * Returns the object at the top of the current stack frame without removing it
+   * from the stack.
+   */
   public synchronized CallStackObject peek() {
     return this.frames.peek().peek();
   }
 
+  /**
+   * Returns the number of elements in the current stack frame.
+   */
   public int size() {
     return this.frames.peek().size();
   }
-  
+
+  /**
+   * Returns true if the current stack frame is empty.
+   */
   public boolean empty() {
     return this.frames.peek().empty();
   }
 
+  /**
+   * Clears the current stack frame.
+   */
   public void clear() {
     this.frames.peek().clear();
   }
