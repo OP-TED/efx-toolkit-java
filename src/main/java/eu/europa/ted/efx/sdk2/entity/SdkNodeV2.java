@@ -10,13 +10,20 @@ import eu.europa.ted.eforms.sdk.component.SdkComponentType;
  */
 @SdkComponent(versions = {"2"}, componentType = SdkComponentType.NODE)
 public class SdkNodeV2 extends SdkNodeV1 {
+    private final String alias;
 
     public SdkNodeV2(String id, String parentId, String xpathAbsolute, String xpathRelative,
-            boolean repeatable) {
+            boolean repeatable, String alias) {
         super(id, parentId, xpathAbsolute, xpathRelative, repeatable);
+        this.alias = alias;
     }
 
     public SdkNodeV2(JsonNode node) {
         super(node);
+        this.alias = node.has("alias") ? node.get("alias").asText(null) : null;
+    }
+
+    public String getAlias() {
+        return alias;
     }
 }

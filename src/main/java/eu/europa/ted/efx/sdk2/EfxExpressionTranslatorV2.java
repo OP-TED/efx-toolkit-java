@@ -67,8 +67,11 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 public class EfxExpressionTranslatorV2 extends EfxBaseListener
     implements EfxExpressionTranslator {
 
-  private static final String NOT_MODIFIER =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
+  private static final String NOT_MODIFIER = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
+
+  private static final String VARIABLE_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.VariablePrefix).replaceAll("^'|'$", "");
+  private static final String ATTRIBUTE_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.AttributePrefix).replaceAll("^'|'$", "");
+  private static final String CODELIST_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.CodelistPrefix).replaceAll("^'|'$", "");
 
   private static final String BEGIN_EXPRESSION_BLOCK = "{";
   private static final String END_EXPRESSION_BLOCK = "}";
@@ -1044,7 +1047,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.attributeReference().Identifier().getText(), StringExpression.class));
+        this.getAttributeName(ctx), StringExpression.class));
   }
 
   /*** References with context override ***/
@@ -1139,7 +1142,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitCodelistReference(CodelistReferenceContext ctx) {
-    this.stack.push(this.script.composeList(this.symbols.expandCodelist(ctx.codeListId.getText())
+    this.stack.push(this.script.composeList(this.symbols.expandCodelist(this.getCodelistName(ctx))
         .stream().map(s -> this.script.getStringLiteralFromUnquotedString(s))
         .collect(Collectors.toList()), StringListExpression.class));
   }
@@ -1508,8 +1511,24 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeExceptFunction(one, two, listType));
   }
 
+  protected String getCodelistName(String efxCodelistIdentifier) {
+    return StringUtils.substringAfter(efxCodelistIdentifier, CODELIST_PREFIX);
+  }
+
+  private String getCodelistName(CodelistReferenceContext ctx) {
+    return this.getCodelistName(ctx.CodelistId().getText());
+  }
+
+  protected String getAttributeName(String efxAttributeIdentifier) {
+    return StringUtils.substringAfter(efxAttributeIdentifier, ATTRIBUTE_PREFIX);
+  }
+
+  private String getAttributeName(ScalarFromAttributeReferenceContext ctx) {
+    return this.getAttributeName(ctx.attributeReference().Attribute().getText());
+  }
+
   protected String getVariableName(String efxVariableIdentifier) {
-    return StringUtils.stripStart(efxVariableIdentifier, "$");
+    return StringUtils.substringAfter(efxVariableIdentifier, VARIABLE_PREFIX);
   }
 
   private String getVariableName(VariableReferenceContext ctx) {

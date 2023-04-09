@@ -94,13 +94,13 @@ class EfxExpressionTranslatorTest {
   void testFieldValueComparison_UsingTextFields() {
     assertEquals(
         "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
-        test("ND-Root", "BT-00-Text == BT-00-Text-Multilingual"));
+        test("Root", "text == textMultilingual"));
   }
 
   @Test
   void testFieldValueComparison_UsingNumericFields() {
     assertEquals("PathNode/NumberField/number() <= PathNode/IntegerField/number()",
-        test("ND-Root", "BT-00-Number <= BT-00-Integer"));
+        test("ND-Root", "BT-00-Number <= integer"));
   }
 
   @Test
@@ -137,7 +137,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldValueComparison_WithNumericLiteral() {
     assertEquals("PathNode/IntegerField/number() - PathNode/NumberField/number() > 0",
-        test("ND-Root", "BT-00-Integer - BT-00-Number > 0"));
+        test("ND-Root", "integer - BT-00-Number > 0"));
   }
 
   @Test
@@ -174,7 +174,7 @@ class EfxExpressionTranslatorTest {
     assertEquals(
         "2 > 1 and 3 >= 1 and 1 = 1 and 4 < 5 and 5 <= 5 and ../NumberField/number() > ../IntegerField/number()",
         test("BT-00-Text",
-            "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5 and BT-00-Number > BT-00-Integer"));
+            "2 > 1 and 3>=1 and 1==1 and 4<5 and 5<=5 and BT-00-Number > integer"));
   }
 
   @Test
@@ -978,7 +978,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testCodeList() {
-    assertEquals("'a' = ('code1','code2','code3')", test("BT-00-Text", "'a' in (accessibility)"));
+    assertEquals("'a' = ('code1','code2','code3')", test("BT-00-Text", "'a' in codelist:accessibility"));
   }
 
 
@@ -1034,19 +1034,19 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
     assertEquals("../IntegerField/number()",
-        test("BT-00-Code", "BT-01-SubLevel-Text::BT-00-Integer"));
+        test("BT-00-Code", "BT-01-SubLevel-Text::integer"));
   }
 
   @Test
   void testFieldReferenceWithNodeContextOverride() {
     assertEquals("../../PathNode/IntegerField/number()",
-        test("BT-00-Text", "ND-Root::BT-00-Integer"));
+        test("BT-00-Text", "ND-Root::integer"));
   }
 
   @Test
   void testFieldReferenceWithNodeContextOverride_WithPredicate() {
     assertEquals("../../PathNode/IntegerField/number()",
-        test("BT-00-Text", "ND-Root[BT-00-Indicator == TRUE]::BT-00-Integer"));
+        test("BT-00-Text", "ND-Root[BT-00-Indicator == TRUE]::integer"));
   }
 
   @Test
@@ -1069,7 +1069,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldReference_WithAxis() {
     assertEquals("./preceding::PathNode/IntegerField/number()",
-        test("ND-Root", "ND-Root::preceding::BT-00-Integer"));
+        test("ND-Root", "ND-Root::preceding::integer"));
   }
 
   /*** Boolean functions ***/
