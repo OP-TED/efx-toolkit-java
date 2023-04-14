@@ -1170,12 +1170,38 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "date(BT-00-Text)"));
   }
 
+  @Test
+  void testDatePlusMeasureFunction() {
+    assertEquals("(PathNode/StartDateField/xs:date(text()) + (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
+        test("ND-Root", "add-measure(BT-00-StartDate, BT-00-Measure)"));
+  }
+
+  @Test
+  void testDateMinusMeasureFunction() {
+    assertEquals("(PathNode/StartDateField/xs:date(text()) - (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
+        test("ND-Root", "subtract-measure(BT-00-StartDate, BT-00-Measure)"));
+  }
+
   /*** Time functions ***/
 
   @Test
   void testTimeFromStringFunction() {
     assertEquals("xs:time(PathNode/TextField/normalize-space(text()))",
         test("ND-Root", "time(BT-00-Text)"));
+  }
+
+  /*** Duration functions ***/
+
+  @Test
+  void testDayTimeDurationFromStringFunction() {
+    assertEquals("xs:yearMonthDuration(PathNode/TextField/normalize-space(text()))",
+        test("ND-Root", "year-month-duration(BT-00-Text)"));
+  }
+
+  @Test
+  void testYearMonthDurationFromStringFunction() {
+    assertEquals("xs:dayTimeDuration(PathNode/TextField/normalize-space(text()))",
+        test("ND-Root", "day-time-duration(BT-00-Text)"));
   }
 
   /*** Sequence Functions ***/
@@ -1202,6 +1228,12 @@ class EfxExpressionTranslatorTest {
   void testDistinctValuesFunction_WithTimeSequences() {
     assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
         test("ND-Root", "distinct-values((12:00:00Z, 13:00:00Z, 12:00:00Z, 14:00:00Z))"));
+  }
+
+  @Test
+  void testDistinctValuesFunction_WithDurationSequences() {
+    assertEquals("distinct-values((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')))",
+        test("ND-Root", "distinct-values((P1W, P2D, P2D, P5D))"));
   }
 
   @Test
@@ -1240,6 +1272,12 @@ class EfxExpressionTranslatorTest {
   void testUnionFunction_WithTimeSequences() {
     assertEquals("distinct-values(((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
         test("ND-Root", "value-union((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
+  }
+
+  @Test
+  void testUnionFunction_WithDurationSequences() {
+    assertEquals("distinct-values(((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')), (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D'))))",
+        test("ND-Root", "value-union((P1W, P2D), (P2D, P5D))"));
   }
 
   @Test
@@ -1284,6 +1322,12 @@ class EfxExpressionTranslatorTest {
   void testIntersectFunction_WithTimeSequences() {
     assertEquals("distinct-values(for $L1 in (xs:time('12:00:00Z'),xs:time('13:00:00Z')) return if (some $L2 in (xs:time('12:00:00Z'),xs:time('14:00:00Z')) satisfies $L1 = $L2) then $L1 else ())",
         test("ND-Root", "value-intersect((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
+  }
+
+  @Test
+  void testIntersectFunction_WithDurationSequences() {
+    assertEquals("distinct-values(for $L1 in (xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')) return if (some $L2 in (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')) satisfies $L1 = $L2) then $L1 else ())",
+        test("ND-Root", "value-intersect((P1W, P2D), (P2D, P5D))"));
   }
 
   @Test
