@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,13 +16,15 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.lang3.StringUtils;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.CallStackObjectBase;
+import eu.europa.ted.efx.model.CallStackObject;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
@@ -560,7 +563,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitUntypedConditionalExpression(UntypedConditionalExpressionContext ctx) {
-    Class<? extends CallStackObjectBase> typeWhenFalse = this.stack.peek().getClass();
+    Class<? extends CallStackObject> typeWhenFalse = this.stack.peek().getClass();
     if (typeWhenFalse == BooleanExpression.class) {
       this.exitConditionalBooleanExpression();
     } else if (typeWhenFalse == NumericExpression.class) {
@@ -1109,8 +1112,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitVariableReference(VariableReferenceContext ctx) {
-    this.stack.pushVariableReference(ctx.Variable().getText(),
-        this.script.composeVariableReference(ctx.Variable().getText(), Expression.class));
+    this.stack.pushVariableReference(this.getVariableName(ctx),
+        this.script.composeVariableReference(this.getVariableName(ctx), Expression.class));
   }
 
   /*** Parameter Declarations ***/
@@ -1118,32 +1121,32 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), StringExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), NumericExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), BooleanExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), DateExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), TimeExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.Variable().getText(), DurationExpression.class);
+    this.exitParameterDeclaration(this.getVariableName(ctx), DurationExpression.class);
   }
 
   private <T extends Expression> void exitParameterDeclaration(String parameterName, Class<T> parameterType) {
@@ -1160,44 +1163,51 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
-      this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-          this.script.composeVariableDeclaration(ctx.Variable().getText(), StringExpression.class));
+    String variableName = this.getVariableName(ctx);
+      this.stack.pushVariableDeclaration(variableName,
+          this.script.composeVariableDeclaration(variableName, StringExpression.class));
   }
 
   @Override
   public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), BooleanExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, BooleanExpression.class));
   }
 
   @Override
   public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), NumericExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, NumericExpression.class));
   }
 
   @Override
   public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), DateExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, DateExpression.class));
   }
 
   @Override
   public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), TimeExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, TimeExpression.class));
   }
 
   @Override
   public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), DurationExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, DurationExpression.class));
   }
 
   @Override
   public void exitContextVariableDeclaration(ContextVariableDeclarationContext ctx) {
-    this.stack.pushVariableDeclaration(ctx.Variable().getText(),
-        this.script.composeVariableDeclaration(ctx.Variable().getText(), ContextExpression.class));
+    String variableName = this.getVariableName(ctx);
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, ContextExpression.class));
   }
 
   /*** Boolean functions ***/
@@ -1239,7 +1249,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitCountFunction(CountFunctionContext ctx) {
-    this.stack.push(this.script.composeCountOperation(this.stack.pop(ListExpression.class)));
+    final ListExpression<?> expression = this.stack.pop(ListExpression.class);
+    this.stack.push(this.script.composeCountOperation(expression));
   }
 
   @Override
@@ -1448,7 +1459,6 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     }
   }
 
-
   private <T extends Expression, L extends ListExpression<T>> void exitExceptFunction(
       Class<L> listType) {
     final L two = this.stack.pop(listType);
@@ -1456,4 +1466,63 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.stack.push(this.script.composeExceptFunction(one, two, listType));
   }
 
+  private String getVariableName(String efxVariableIdentifier) {
+    return StringUtils.stripStart(efxVariableIdentifier, "$");
+  }
+
+  private String getVariableName(VariableReferenceContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  protected String getVariableName(ContextVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+    private String getVariableName(StringVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(NumericVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(BooleanVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DateVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(TimeVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DurationVariableDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(StringParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(NumericParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(BooleanParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DateParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(TimeParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
+
+  private String getVariableName(DurationParameterDeclarationContext ctx) {
+    return this.getVariableName(ctx.Variable().getText());
+  }
 }
