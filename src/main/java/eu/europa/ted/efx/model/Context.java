@@ -20,8 +20,17 @@ public abstract class Context {
   public static class FieldContext extends Context {
 
     public FieldContext(final String fieldId, final PathExpression absolutePath,
+        final PathExpression relativePath, final Variable<PathExpression> variable) {
+      super(fieldId, absolutePath, relativePath, variable);
+    }
+
+    public FieldContext(final String fieldId, final PathExpression absolutePath,
         final PathExpression relativePath) {
       super(fieldId, absolutePath, relativePath);
+    }
+
+    public FieldContext(final String fieldId, final PathExpression absolutePath, final Variable<PathExpression> variable) {
+      super(fieldId, absolutePath, variable);
     }
 
     public FieldContext(final String fieldId, final PathExpression absolutePath) {
@@ -47,14 +56,25 @@ public abstract class Context {
   private final String symbol;
   private final PathExpression absolutePath;
   private final PathExpression relativePath;
+  private final Variable<PathExpression> variable;
 
   protected Context(final String symbol, final PathExpression absolutePath,
-      final PathExpression relativePath) {
+      final PathExpression relativePath, final Variable<PathExpression> variable) {
+    this.variable = variable;
     this.symbol = symbol;
     this.absolutePath = absolutePath;
     this.relativePath = relativePath == null ? absolutePath : relativePath;
   }
 
+  protected Context(final String symbol, final PathExpression absolutePath,
+      final PathExpression relativePath) {
+        this(symbol, absolutePath, relativePath, null);
+  }
+
+  protected Context(final String symbol, final PathExpression absolutePath, final Variable<PathExpression> variable) {
+    this(symbol, absolutePath, absolutePath, variable);
+  }
+   
   protected Context(final String symbol, final PathExpression absolutePath) {
     this(symbol, absolutePath, absolutePath);
   }
@@ -65,6 +85,10 @@ public abstract class Context {
 
   public Boolean isNodeContext() {
     return this.getClass().equals(NodeContext.class);
+  }
+
+  public Variable<PathExpression> variable() {
+    return variable;
   }
 
   /**

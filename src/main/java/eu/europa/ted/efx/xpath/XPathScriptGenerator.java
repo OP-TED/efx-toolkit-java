@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
+
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,9 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -19,7 +22,6 @@ import eu.europa.ted.efx.model.Expression.DurationExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
-import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -104,12 +106,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
-    return Expression.instantiate(variableName, type);
+    return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
   public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type) {
-    return Expression.instantiate(variableName, type);
+    return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
@@ -348,8 +350,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one,
-      ListExpressionBase two) {
+  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one,
+  ListExpression<? extends Expression> two) {
     return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
@@ -361,7 +363,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public NumericExpression composeCountOperation(ListExpressionBase list) {
+  public NumericExpression composeCountOperation(ListExpression<? extends Expression> list) {
     return new NumericExpression("count(" + list.script + ")");
   }
 

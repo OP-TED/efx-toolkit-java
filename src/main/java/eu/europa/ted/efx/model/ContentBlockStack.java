@@ -8,16 +8,16 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * Adds a new child block to the top of the stack. When the child is later removed, its parent
    * will return to the top of the stack again.
    */
-  public void pushChild(final int number, final Markup content, final Context context) {
-    this.push(this.peek().addChild(number, content, context));
+  public void pushChild(final int number, final Markup content, final Context context, final VariableList variables) {
+    this.push(this.peek().addChild(number, content, context, variables));
   }
 
   /**
    * Removes the block at the top of the stack and replaces it by a new sibling block. When the last
    * sibling is later removed, their parent block will return to the top of the stack again.
    */
-  public void pushSibling(final int number, final Markup content, Context context) {
-    this.push(this.pop().addSibling(number, content, context));
+  public void pushSibling(final int number, final Markup content, Context context, final VariableList variables) {
+    this.push(this.pop().addSibling(number, content, context, variables));
   }
 
   /**
