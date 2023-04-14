@@ -1350,29 +1350,30 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testExceptFunction_WithNumberFieldReferences() {
-    assertEquals("distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (every $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 != $L2) then $L1 else ())",
-        test("ND-Root", "value-except(BT-00-Text, BT-00-Text)"));
+    assertEquals("distinct-values(for $L1 in PathNode/IntegerField/number() return if (every $L2 in PathNode/IntegerField/number() satisfies $L1 != $L2) then $L1 else ())",
+        test("ND-Root", "value-except(BT-00-Integer, BT-00-Integer)"));
   }
+
   @Test
-  void testExceptFunction_WithBooleanReferences() {
-    assertEquals("distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (every $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 != $L2) then $L1 else ())",
-        test("ND-Root", "value-except(BT-00-Text, BT-00-Text)"));
+  void testExceptFunction_WithBooleanFieldReferences() {
+    assertEquals("distinct-values(for $L1 in PathNode/IndicatorField return if (every $L2 in PathNode/IndicatorField satisfies $L1 != $L2) then $L1 else ())",
+        test("ND-Root", "value-except(BT-00-Indicator, BT-00-Indicator)"));
   }
 
     @Test
-  void testExceptFunction_WithDateReferences() {
-    assertEquals("distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (every $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 != $L2) then $L1 else ())",
-        test("ND-Root", "value-except(BT-00-Text, BT-00-Text)"));
+  void testExceptFunction_WithDateFieldReferences() {
+    assertEquals("distinct-values(for $L1 in PathNode/StartDateField/xs:date(text()) return if (every $L2 in PathNode/StartDateField/xs:date(text()) satisfies $L1 != $L2) then $L1 else ())",
+        test("ND-Root", "value-except(BT-00-StartDate, BT-00-StartDate)"));
   }
 
   @Test
   void testExceptFunction_WithTimeFieldReferences() {
-    assertEquals("distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (every $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 != $L2) then $L1 else ())",
-        test("ND-Root", "value-except(BT-00-Text, BT-00-Text)"));
+    assertEquals("distinct-values(for $L1 in PathNode/StartTimeField/xs:time(text()) return if (every $L2 in PathNode/StartTimeField/xs:time(text()) satisfies $L1 != $L2) then $L1 else ())",
+        test("ND-Root", "value-except(BT-00-StartTime, BT-00-StartTime)"));
   }
 
   @Test
-  void testExceptFunction_WithDurationReferences() {
+  void testExceptFunction_WithDurationFieldReferences() {
     assertEquals("distinct-values(for $L1 in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return if (every $L2 in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) satisfies $L1 != $L2) then $L1 else ())",
         test("ND-Root", "value-except(BT-00-Measure, BT-00-Measure)"));
   }
