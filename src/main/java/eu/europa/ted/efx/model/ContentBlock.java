@@ -147,7 +147,7 @@ public class ContentBlock {
 
   public void renderTemplate(MarkupGenerator markupGenerator, List<Markup> templates) {
     templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(),
-        this.renderContent(markupGenerator)));
+        this.renderContent(markupGenerator), this.getTemplateParameters()));
     for (ContentBlock child : this.children) {
       child.renderTemplate(markupGenerator, templates);
     }
@@ -159,6 +159,6 @@ public class ContentBlock {
       variables.addAll(parent.getAllVariables().stream().map(v -> Pair.of(v.name, v.referenceExpression.script)).collect(Collectors.toList()));
     }
     variables.addAll(this.getOwnVariables().stream().map(v -> Pair.of(v.name, v.initializationExpression.script)).collect(Collectors.toList()));
-    return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath());
+    return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath(), variables);
   }
 }
