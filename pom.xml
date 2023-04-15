@@ -56,7 +56,7 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>1.0.1</version.eforms-core>
+    <version.eforms-core>1.0.2-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
@@ -243,7 +243,19 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>1.2.1</version>
+              <version>2.0.0-SNAPSHOT</version>
+              <type>jar</type>
+              <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
+              <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk2</outputDirectory>
+              <fileMappers>
+                <!-- Remove the folder prefix from filenames -->
+                <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper />
+              </fileMappers>
+            </artifactItem>
+            <artifactItem>
+              <groupId>eu.europa.ted.eforms</groupId>
+              <artifactId>eforms-sdk</artifactId>
+              <version>1.6.0</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk1</outputDirectory>
