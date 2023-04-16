@@ -19,7 +19,7 @@ import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.CallStack;
-import eu.europa.ted.efx.model.CallStackObjectBase;
+import eu.europa.ted.efx.model.CallStackObject;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
@@ -546,7 +546,7 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
 
   @Override
   public void exitUntypedConditonalExpression(UntypedConditonalExpressionContext ctx) {
-    Class<? extends CallStackObjectBase> typeWhenFalse = this.stack.peek().getClass();
+    Class<? extends CallStackObject> typeWhenFalse = this.stack.peek().getClass();
     if (typeWhenFalse == BooleanExpression.class) {
       this.exitConditionalBooleanExpression();
     } else if (typeWhenFalse == NumericExpression.class) {
@@ -1233,7 +1233,8 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
 
   @Override
   public void exitCountFunction(CountFunctionContext ctx) {
-    this.stack.push(this.script.composeCountOperation(this.stack.pop(ListExpression.class)));
+    ListExpression<?> expression = this.stack.pop(ListExpression.class);
+    this.stack.push(this.script.composeCountOperation(expression));
   }
 
   @Override
