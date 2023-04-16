@@ -18,7 +18,9 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.DurationListExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
@@ -26,7 +28,9 @@ import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.model.Expression.TimeListExpression;
 
 @SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
@@ -69,19 +73,19 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
 
-    if (StringExpression.class.isAssignableFrom(type)) {
+    if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
     }
-    if (NumericExpression.class.isAssignableFrom(type)) {
+    if (NumericExpression.class.isAssignableFrom(type) || NumericListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/number()", type);
     }
-    if (DateExpression.class.isAssignableFrom(type)) {
+    if (DateExpression.class.isAssignableFrom(type) || DateListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:date(text())", type);
     }
-    if (TimeExpression.class.isAssignableFrom(type)) {
+    if (TimeExpression.class.isAssignableFrom(type) || TimeListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
-    if (DurationExpression.class.isAssignableFrom(type)) {
+    if (DurationExpression.class.isAssignableFrom(type) || DurationListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
           " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
           " else if ($F/@unitCode='DAY')" + //
@@ -506,15 +510,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
-      L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (some $L2 in " + listTwo.script + " satisfies $L1 = $L2) then $L1 else ())", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
-      L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (every $L2 in " + listTwo.script + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
 
