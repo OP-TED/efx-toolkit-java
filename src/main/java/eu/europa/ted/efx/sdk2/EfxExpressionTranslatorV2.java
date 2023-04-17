@@ -1160,6 +1160,44 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeVariableReference(variableName, Expression.class));
   }
 
+  /*** Indexers ***/
+
+  @Override
+  public void exitStringAtSequenceIndex(StringAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(StringExpression.class, StringListExpression.class);
+  }
+
+  @Override
+  public void exitNumericAtSequenceIndex(NumericAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(NumericExpression.class, NumericListExpression.class);
+  }
+
+  @Override
+  public void exitBooleanAtSequenceIndex(BooleanAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(BooleanExpression.class, BooleanListExpression.class);
+  }
+
+  @Override
+  public void exitDateAtSequenceIndex(DateAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(DateExpression.class, DateListExpression.class);
+  }
+
+  @Override
+  public void exitTimeAtSequenceIndex(TimeAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(TimeExpression.class, TimeListExpression.class);
+  }
+
+  @Override
+  public void exitDurationAtSequenceIndex(DurationAtSequenceIndexContext ctx) {
+    this.exitSequenceAtIndex(DurationExpression.class, DurationListExpression.class);
+  }
+
+  private <T extends Expression, L extends ListExpression<T>> void exitSequenceAtIndex(Class<T> itemType, Class<L> listType) {
+    NumericExpression index = this.stack.pop(NumericExpression.class);
+    L list = this.stack.pop(listType);
+    this.stack.push(this.script.composeIndexer(list, index, itemType));
+  }
+
   /*** Parameter Declarations ***/
 
 

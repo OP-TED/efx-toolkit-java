@@ -22,7 +22,7 @@ class EfxExpressionTranslatorTest {
     }
   }
 
-  /*** Boolean expressions ***/
+  // #region: Boolean expressions ---------------------------------------------
 
   @Test
   void testParenthesizedBooleanExpression() {
@@ -289,7 +289,9 @@ class EfxExpressionTranslatorTest {
     assertEquals("false()", test("BT-00-Text", "NEVER"));
   }
 
-  /*** Quantified expressions ***/
+  // #endregion: Boolean expressions
+
+  // #region: Quantified expressions ------------------------------------------
 
   @Test
   void testStringQuantifiedExpression_UsingLiterals() {
@@ -375,7 +377,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "every measure:$x in BT-00-Measure satisfies $x <= P1D"));
   }
 
-  /*** Conditional expressions ***/
+  // #endregion: Quantified expressions
+
+  // #region: Conditional expressions -----------------------------------------
 
   @Test
   void testConditionalExpression() {
@@ -452,7 +456,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "if P1D > BT-00-Measure then P1D else P2D"));
   }
 
-  /*** Iteration expressions ***/
+  // #endregion: Conditional expressions
+  
+  // #region: Iteration expressions -------------------------------------------
 
   // Strings from iteration ---------------------------------------------------
 
@@ -894,7 +900,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "P1D in (for measure:$x in BT-00-Measure return P1D)"));
   }
 
-  /*** Numeric expressions ***/
+  // #endregion: Iteration expressions 
+  
+  // #region: Numeric expressions ---------------------------------------------
 
   @Test
   void testMultiplicationExpression() {
@@ -916,7 +924,9 @@ class EfxExpressionTranslatorTest {
     assertEquals("3.1415", test("BT-00-Text", "3.1415"));
   }
 
-  /*** List ***/
+  // #endregion: Numeric expressions
+   
+  // #region: Lists -----------------------------------------------------------
 
   @Test
   void testStringList() {
@@ -981,8 +991,9 @@ class EfxExpressionTranslatorTest {
     assertEquals("'a' = ('code1','code2','code3')", test("BT-00-Text", "'a' in codelist:accessibility"));
   }
 
-
-  /*** References ***/
+  // #endregion: Lists
+ 
+  // #region: References ------------------------------------------------------
 
   @Test
   void testFieldAttributeValueReference() {
@@ -1072,7 +1083,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "ND-Root::preceding::integer"));
   }
 
-  /*** Boolean functions ***/
+  // #endregion: References
+
+  // #region: Boolean functions -----------------------------------------------
 
   @Test
   void testNotFunction() {
@@ -1099,7 +1112,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "ends-with(BT-00-Text, 'abc')"));
   }
 
-  /*** Numeric functions ***/
+  // #endregion: Boolean functions
+
+  // #region: Numeric functions -----------------------------------------------
 
   @Test
   void testCountFunction_UsingFieldReference() {
@@ -1135,7 +1150,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "string-length(BT-00-Text)"));
   }
 
-  /*** String functions ***/
+  // #endregion: Numeric functions
+ 
+  // #region: String functions ------------------------------------------------
 
   @Test
   void testSubstringFunction() {
@@ -1171,8 +1188,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "format-number(BT-00-Number, '#,##0.00')"));
   }
 
+  // #endregion: String functions
 
-  /*** Date functions ***/
+  // #region: Date functions --------------------------------------------------
 
   @Test
   void testDateFromStringFunction() {
@@ -1180,7 +1198,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "date(BT-00-Text)"));
   }
 
-  /*** Time functions ***/
+  // #endregion: Date functions
+
+  // #region: Time functions --------------------------------------------------
 
   @Test
   void testTimeFromStringFunction() {
@@ -1188,7 +1208,9 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "time(BT-00-Text)"));
   }
 
-  /*** Sequence Functions ***/
+  // #endregion: Time functions
+
+  // #region: Sequence Functions ----------------------------------------------
 
   @Test
   void testDistinctValuesFunction_WithStringSequences() {
@@ -1226,7 +1248,7 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "distinct-values(BT-00-Text)"));
   }
 
-  /* Union */
+  // #region: Union
 
   @Test
   void testUnionFunction_WithStringSequences() {
@@ -1270,7 +1292,9 @@ class EfxExpressionTranslatorTest {
         () -> test("ND-Root", "value-union(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Intersect */
+  // #endregion: Union
+
+  // #region: Intersect
 
   @Test
   void testIntersectFunction_WithStringSequences() {
@@ -1314,7 +1338,9 @@ class EfxExpressionTranslatorTest {
         () -> test("ND-Root", "value-intersect(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Except */
+  // #endregion: Intersect
+
+  // #region: Except
 
   @Test
   void testExceptFunction_WithStringSequences() {
@@ -1358,7 +1384,9 @@ class EfxExpressionTranslatorTest {
         () -> test("ND-Root", "value-except(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Compare sequences */
+  // #endregion: Except
+
+  // #region: Compare sequences
 
   @Test
   void testSequenceEqualFunction_WithStringSequences() {
@@ -1443,4 +1471,30 @@ class EfxExpressionTranslatorTest {
     assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
         test1("{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y"));
   }
+
+  // #endregion: Compare sequences
+  
+  // #endregion Sequence Functions
+
+  // #region: Indexers --------------------------------------------------------
+
+  @Test
+  void testIndexer_WithFieldReference() {
+    assertEquals("PathNode/TextField[1]",
+        test("ND-Root", "text:BT-00-Text[1]"));
+  }
+
+  @Test
+  void testIndexer_WithFieldReferenceAndPredicate() {
+    assertEquals("PathNode/TextField[./normalize-space(text()) = 'hello'][1]",
+        test("ND-Root", "text:BT-00-Text[BT-00-Text == 'hello'][1]"));
+  }
+
+  @Test
+  void testIndexer_WithTextSequence() {
+    assertEquals("('a','b','c')[1]",
+        test("ND-Root", "('a', 'b','c')[1]"));
+  }
+
+  // #endregion: Indexers
 }

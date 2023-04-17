@@ -354,4 +354,7 @@ public interface ScriptGenerator {
 
   public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
       L listTwo, Class<L> listType);
+
+  public <T extends Expression, L extends ListExpression<T>> T composeIndexer(L list,
+      NumericExpression index, Class<T> type);
 }

@@ -284,6 +284,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return XPathContextualizer.join(first, second);
   }
 
+  /** Indexers ***/
+
+  @Override
+  public <T extends Expression, L extends ListExpression<T>> T composeIndexer(L list, NumericExpression index,
+      Class<T> type) {
+    return Expression.instantiate(String.format("%s[%s]", list.script, index.script), type);
+  }
+
   /*** BooleanExpressions ***/
 
 
@@ -536,5 +544,4 @@ public class XPathScriptGenerator implements ScriptGenerator {
     Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
     return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
   }
-
 }
