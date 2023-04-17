@@ -7,10 +7,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.lang3.tuple.Pair;
-
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 
 public class ContentBlock {
@@ -48,18 +46,22 @@ public class ContentBlock {
     return new ContentBlock();
   }
 
-  public ContentBlock addChild(final int number, final Markup content, final Context context, final VariableList variables) {
-    // number < 0 means "autogenerate", number == 0 means "no number", number > 0 means "use this number"
+  public ContentBlock addChild(final int number, final Markup content, final Context context,
+      final VariableList variables) {
+    // number < 0 means "autogenerate", number == 0 means "no number", number > 0 means "use this
+    // number"
     final int outlineNumber = number >= 0 ? number
         : children.stream().map(b -> b.number).max(Comparator.naturalOrder()).orElse(0) + 1;
 
     String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
-    ContentBlock newBlock = new ContentBlock(this, newBlockId, outlineNumber, content, context, variables);
+    ContentBlock newBlock =
+        new ContentBlock(this, newBlockId, outlineNumber, content, context, variables);
     this.children.add(newBlock);
     return newBlock;
   }
 
-  public ContentBlock addSibling(final int number, final Markup content, final Context context, final VariableList variables) {
+  public ContentBlock addSibling(final int number, final Markup content, final Context context,
+      final VariableList variables) {
     if (this.parent == null) {
       throw new ParseCancellationException("Cannot add sibling to root block");
     }
@@ -156,9 +158,12 @@ public class ContentBlock {
   public Markup renderCallTemplate(MarkupGenerator markupGenerator) {
     Set<Pair<String, String>> variables = new LinkedHashSet<>();
     if (this.parent != null) {
-      variables.addAll(parent.getAllVariables().stream().map(v -> Pair.of(v.name, v.referenceExpression.script)).collect(Collectors.toList()));
+      variables.addAll(parent.getAllVariables().stream()
+          .map(v -> Pair.of(v.name, v.referenceExpression.script)).collect(Collectors.toList()));
     }
-    variables.addAll(this.getOwnVariables().stream().map(v -> Pair.of(v.name, v.initializationExpression.script)).collect(Collectors.toList()));
-    return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath(), variables);
+    variables.addAll(this.getOwnVariables().stream()
+        .map(v -> Pair.of(v.name, v.initializationExpression.script)).collect(Collectors.toList()));
+    return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath(),
+        variables);
   }
 }

@@ -1,7 +1,6 @@
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
-
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +8,7 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -29,7 +26,8 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
-@SdkComponent(versions = {"0.6", "0.7", "1", "2"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
+@SdkComponent(versions = {"0.6", "0.7", "1", "2"},
+    componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
@@ -63,7 +61,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
       final String axis, Class<T> type) {
-        return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
+    return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
   }
 
   @Override
@@ -83,17 +81,18 @@ public class XPathScriptGenerator implements ScriptGenerator {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
     if (DurationExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
-          " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
-          " else if ($F/@unitCode='DAY')" + //
-          " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
-          " else if ($F/@unitCode='YEAR')" + //
-          " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
-          " else if ($F/@unitCode='MONTH')" + //
-          " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
-          // " else if (" + fieldReference.script + ")" + //
-          // " then fn:error('Invalid @unitCode')" + //
-          " else ()))", type);
+      return Expression
+          .instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
+              " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
+              " else if ($F/@unitCode='DAY')" + //
+              " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
+              " else if ($F/@unitCode='YEAR')" + //
+              " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
+              " else if ($F/@unitCode='MONTH')" + //
+              " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
+              // " else if (" + fieldReference.script + ")" + //
+              // " then fn:error('Invalid @unitCode')" + //
+              " else ()))", type);
     }
 
     return Expression.instantiate(fieldReference.script, type);
@@ -102,7 +101,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
-    return Expression.instantiate(fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute, type);
+    return Expression.instantiate(
+        fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute,
+        type);
   }
 
   @Override
@@ -117,8 +118,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public <T extends Expression> T composeParameterDeclaration(String parameterName,
-          Class<T> type) {
-      return Expression.empty(type);
+      Class<T> type) {
+    return Expression.empty(type);
   }
 
   @Override
@@ -189,9 +190,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    return new BooleanExpression(
+        "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+  }
 
   @Override
   public <T extends Expression> BooleanExpression composeAllSatisfy(
@@ -203,9 +204,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
       String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
+    return new BooleanExpression(
+        "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
+  }
 
   @Override
   public <T extends Expression> BooleanExpression composeAnySatisfies(
@@ -254,7 +255,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new IteratorListExpression(
         iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));
   }
-  
+
   @Override
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
     try {
@@ -287,7 +288,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   /** Indexers ***/
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> T composeIndexer(L list, NumericExpression index,
+  public <T extends Expression, L extends ListExpression<T>> T composeIndexer(L list,
+      NumericExpression index,
       Class<T> type) {
     return Expression.instantiate(String.format("%s[%s]", list.script, index.script), type);
   }
@@ -320,8 +322,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
-    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle,
+      PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script
+        + "[. = $x] return $y) = 1");
   }
 
   /*** Boolean functions ***/
@@ -360,7 +364,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one,
-  ListExpression<? extends Expression> two) {
+      ListExpression<? extends Expression> two) {
     return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
@@ -511,25 +515,28 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
       L list, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + list.script + ")", listType);
+    return Expression.instantiate("distinct-values(" + list.script + ")", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
+    return Expression
+        .instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+    return Expression.instantiate(
+        "distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
   }
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
       L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+    return Expression.instantiate(
+        "distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
   }
 
 

@@ -95,8 +95,8 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
  * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link EfxExpressionTranslator06} only focuses on EFX expressions. To translate EFX templates
- * you need to use the {@link EfxTemplateTranslator06} which derives from this class.
+ * {@link EfxExpressionTranslator06} only focuses on EFX expressions. To translate EFX templates you
+ * need to use the {@link EfxTemplateTranslator06} which derives from this class.
  */
 @SdkComponent(versions = {"0.6"}, componentType = SdkComponentType.EFX_EXPRESSION_TRANSLATOR)
 public class EfxExpressionTranslator06 extends EfxBaseListener

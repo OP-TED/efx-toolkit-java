@@ -80,10 +80,10 @@ public class Expression extends CallStackObject {
     }
   }
 
-  public static <T extends Expression> T empty(Class<T> type) { 
+  public static <T extends Expression> T empty(Class<T> type) {
     return instantiate("", type);
   }
-  
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {
@@ -249,7 +249,7 @@ public class Expression extends CallStackObject {
   }
 
   /**
-   * Used to represent iterators (for traversing a list using a variable) 
+   * Used to represent iterators (for traversing a list using a variable)
    */
   public static class IteratorExpression extends Expression {
 

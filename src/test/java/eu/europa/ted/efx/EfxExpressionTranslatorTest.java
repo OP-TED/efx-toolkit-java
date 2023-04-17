@@ -15,7 +15,7 @@ class EfxExpressionTranslatorTest {
 
   private String test1(final String expression, final String... params) {
     try {
-      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION, 
+      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION,
           expression, params);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
@@ -69,12 +69,16 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testUniqueValueCondition() {
-    assertEquals("count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1", test("ND-Root", "BT-00-Text is unique in /BT-00-Text"));
+    assertEquals(
+        "count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1",
+        test("ND-Root", "BT-00-Text is unique in /BT-00-Text"));
   }
 
   @Test
   void testUniqueValueCondition_WithNot() {
-    assertEquals("not(count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1)", test("ND-Root", "BT-00-Text is not unique in /BT-00-Text"));
+    assertEquals(
+        "not(count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1)",
+        test("ND-Root", "BT-00-Text is not unique in /BT-00-Text"));
   }
 
 
@@ -345,8 +349,10 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testDateQuantifiedExpression_UsingMultipleIterators() {
-    assertEquals("every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
-        test("ND-Root", "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02Z), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01Z"));
+    assertEquals(
+        "every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
+        test("ND-Root",
+            "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02Z), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01Z"));
   }
 
   @Test
@@ -457,7 +463,7 @@ class EfxExpressionTranslatorTest {
   }
 
   // #endregion: Conditional expressions
-  
+
   // #region: Iteration expressions -------------------------------------------
 
   // Strings from iteration ---------------------------------------------------
@@ -470,14 +476,18 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
-    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
-        test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
+    assertEquals(
+        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
+        test("ND-Root",
+            "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
-  
+
   @Test
   void testStringsSequenceFromIteration_UsingObjectVariable() {
-    assertEquals("for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField return 'text'",
-        test("ND-Root", "for context:$n in BT-00-Text[BT-00-Number is present], date:$d in $n::BT-00-StartDate return 'text'"));
+    assertEquals(
+        "for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField return 'text'",
+        test("ND-Root",
+            "for context:$n in BT-00-Text[BT-00-Number is present], date:$d in $n::BT-00-StartDate return 'text'"));
   }
 
   @Test
@@ -522,7 +532,8 @@ class EfxExpressionTranslatorTest {
   void testStringsFromDateIteration_UsingLiterals() {
     assertEquals(
         "'a' = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 'y')",
-        test("ND-Root", "'a' in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 'y')"));
+        test("ND-Root",
+            "'a' in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 'y')"));
   }
 
   @Test
@@ -602,7 +613,8 @@ class EfxExpressionTranslatorTest {
   void testNumbersFromDateIteration_UsingLiterals() {
     assertEquals(
         "123 = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 0)",
-        test("ND-Root", "123 in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 0)"));
+        test("ND-Root",
+            "123 in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 0)"));
   }
 
   @Test
@@ -862,7 +874,8 @@ class EfxExpressionTranslatorTest {
   void testDurationsFromDateIteration_UsingLiterals() {
     assertEquals(
         "xs:dayTimeDuration('P1D') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:dayTimeDuration('P1D'))",
-        test("ND-Root", "P1D in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return P1D)"));
+        test("ND-Root",
+            "P1D in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return P1D)"));
   }
 
   @Test
@@ -900,8 +913,8 @@ class EfxExpressionTranslatorTest {
         test("ND-Root", "P1D in (for measure:$x in BT-00-Measure return P1D)"));
   }
 
-  // #endregion: Iteration expressions 
-  
+  // #endregion: Iteration expressions
+
   // #region: Numeric expressions ---------------------------------------------
 
   @Test
@@ -925,7 +938,7 @@ class EfxExpressionTranslatorTest {
   }
 
   // #endregion: Numeric expressions
-   
+
   // #region: Lists -----------------------------------------------------------
 
   @Test
@@ -988,11 +1001,12 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testCodeList() {
-    assertEquals("'a' = ('code1','code2','code3')", test("BT-00-Text", "'a' in codelist:accessibility"));
+    assertEquals("'a' = ('code1','code2','code3')",
+        test("BT-00-Text", "'a' in codelist:accessibility"));
   }
 
   // #endregion: Lists
- 
+
   // #region: References ------------------------------------------------------
 
   @Test
@@ -1011,7 +1025,7 @@ class EfxExpressionTranslatorTest {
   void testScalarFromAttributeReference() {
     assertEquals("PathNode/CodeField/@listName", test("ND-Root", "BT-00-Code/@listName"));
   }
-  
+
   @Test
   void testScalarFromAttributeReference_SameElementContext() {
     assertEquals("./@listName", test("BT-00-Code", "BT-00-Code/@listName"));
@@ -1151,7 +1165,7 @@ class EfxExpressionTranslatorTest {
   }
 
   // #endregion: Numeric functions
- 
+
   // #region: String functions ------------------------------------------------
 
   @Test
@@ -1174,12 +1188,14 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testStringJoinFunction_withLiterals() {
-    assertEquals("string-join(('abc','def'), ',')", test("ND-Root", "string-join(('abc', 'def'), ',')"));
+    assertEquals("string-join(('abc','def'), ',')",
+        test("ND-Root", "string-join(('abc', 'def'), ',')"));
   }
 
   @Test
   void testStringJoinFunction_withFieldReference() {
-    assertEquals("string-join(PathNode/TextField, ',')", test("ND-Root", "string-join(BT-00-Text, ',')"));
+    assertEquals("string-join(PathNode/TextField, ',')",
+        test("ND-Root", "string-join(BT-00-Text, ',')"));
   }
 
   @Test
@@ -1226,13 +1242,15 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testDistinctValuesFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'),xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
+    assertEquals(
+        "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'),xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
         test("ND-Root", "distinct-values((2018-01-01Z, 2020-01-01Z, 2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testDistinctValuesFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
+    assertEquals(
+        "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
         test("ND-Root", "distinct-values((12:00:00Z, 13:00:00Z, 12:00:00Z, 14:00:00Z))"));
   }
 
@@ -1241,7 +1259,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false(),false(),false()))",
         test("ND-Root", "distinct-values((TRUE, FALSE, FALSE, NEVER))"));
   }
-  
+
   @Test
   void testDistinctValuesFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField)",
@@ -1264,13 +1282,15 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testUnionFunction_WithDateSequences() {
-    assertEquals("distinct-values(((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
+    assertEquals(
+        "distinct-values(((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
         test("ND-Root", "value-union((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testUnionFunction_WithTimeSequences() {
-    assertEquals("distinct-values(((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
+    assertEquals(
+        "distinct-values(((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
         test("ND-Root", "value-union((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
@@ -1279,7 +1299,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values(((true(),false()), (false(),false())))",
         test("ND-Root", "value-union((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testUnionFunction_WithFieldReferences() {
     assertEquals("distinct-values((PathNode/TextField, PathNode/TextField))",
@@ -1310,13 +1330,15 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testIntersectFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[.= (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))])",
+    assertEquals(
+        "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[.= (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))])",
         test("ND-Root", "value-intersect((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testIntersectFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[.= (xs:time('12:00:00Z'),xs:time('14:00:00Z'))])",
+    assertEquals(
+        "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[.= (xs:time('12:00:00Z'),xs:time('14:00:00Z'))])",
         test("ND-Root", "value-intersect((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
@@ -1325,7 +1347,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false())[.= (false(),false())])",
         test("ND-Root", "value-intersect((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testIntersectFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField[.= PathNode/TextField])",
@@ -1356,13 +1378,15 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testExceptFunction_WithDateSequences() {
-    assertEquals("distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[not(. = (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))])",
+    assertEquals(
+        "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[not(. = (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))])",
         test("ND-Root", "value-except((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testExceptFunction_WithTimeSequences() {
-    assertEquals("distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[not(. = (xs:time('12:00:00Z'),xs:time('14:00:00Z')))])",
+    assertEquals(
+        "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[not(. = (xs:time('12:00:00Z'),xs:time('14:00:00Z')))])",
         test("ND-Root", "value-except((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
@@ -1371,7 +1395,7 @@ class EfxExpressionTranslatorTest {
     assertEquals("distinct-values((true(),false())[not(. = (false(),false()))])",
         test("ND-Root", "value-except((TRUE, FALSE), (FALSE, NEVER))"));
   }
-  
+
   @Test
   void testExceptFunction_WithFieldReferences() {
     assertEquals("distinct-values(PathNode/TextField[not(. = PathNode/TextField)])",
@@ -1402,13 +1426,15 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testSequenceEqualFunction_WithDateSequences() {
-    assertEquals("deep-equal(sort((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))), sort((xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
+    assertEquals(
+        "deep-equal(sort((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))), sort((xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
         test("ND-Root", "sequence-equal((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))"));
   }
 
   @Test
   void testSequenceEqualFunction_WithTimeSequences() {
-    assertEquals("deep-equal(sort((xs:time('12:00:00Z'),xs:time('13:00:00Z'))), sort((xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
+    assertEquals(
+        "deep-equal(sort((xs:time('12:00:00Z'),xs:time('13:00:00Z'))), sort((xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
         test("ND-Root", "sequence-equal((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))"));
   }
 
@@ -1420,7 +1446,8 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testSequenceEqualFunction_WithDurationSequences() {
-    assertEquals("deep-equal(sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))), sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y'))))",
+    assertEquals(
+        "deep-equal(sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))), sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y'))))",
         test("ND-Root", "sequence-equal((P1Y, P2Y), (P1Y, P3Y))"));
   }
 
@@ -1468,12 +1495,13 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testParametrizedExpression_WithDurationParameter() {
-    assertEquals("boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
+    assertEquals(
+        "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
         test1("{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y"));
   }
 
   // #endregion: Compare sequences
-  
+
   // #endregion Sequence Functions
 
   // #region: Indexers --------------------------------------------------------

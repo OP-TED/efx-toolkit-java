@@ -11,12 +11,12 @@ import eu.europa.ted.eforms.sdk.entity.SdkNode;
 @SdkComponent(versions = {"0.6"}, componentType = SdkComponentType.NODE)
 public class SdkNode06 extends SdkNode {
 
-    public SdkNode06(String id, String parentId, String xpathAbsolute, String xpathRelative,
-            boolean repeatable) {
-        super(id, parentId, xpathAbsolute, xpathRelative, repeatable);
-    }
+  public SdkNode06(String id, String parentId, String xpathAbsolute, String xpathRelative,
+      boolean repeatable) {
+    super(id, parentId, xpathAbsolute, xpathRelative, repeatable);
+  }
 
-    public SdkNode06(JsonNode node) {
-        super(node);
-    }
+  public SdkNode06(JsonNode node) {
+    super(node);
+  }
 }

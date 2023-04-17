@@ -31,7 +31,23 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Markup;
 import eu.europa.ted.efx.model.VariableList;
-import eu.europa.ted.efx.sdk1.EfxParser.*;
+import eu.europa.ted.efx.sdk1.EfxParser.AssetIdContext;
+import eu.europa.ted.efx.sdk1.EfxParser.AssetTypeContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ContextDeclarationBlockContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ExpressionTemplateContext;
+import eu.europa.ted.efx.sdk1.EfxParser.LabelTemplateContext;
+import eu.europa.ted.efx.sdk1.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandBtLabelReferenceContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandFieldLabelReferenceContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandFieldValueReferenceFromContextFieldContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandIndirectLabelReferenceContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandIndirectLabelReferenceFromContextFieldContext;
+import eu.europa.ted.efx.sdk1.EfxParser.ShorthandLabelReferenceFromContextContext;
+import eu.europa.ted.efx.sdk1.EfxParser.StandardExpressionBlockContext;
+import eu.europa.ted.efx.sdk1.EfxParser.StandardLabelReferenceContext;
+import eu.europa.ted.efx.sdk1.EfxParser.TemplateFileContext;
+import eu.europa.ted.efx.sdk1.EfxParser.TemplateLineContext;
+import eu.europa.ted.efx.sdk1.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 /**
@@ -277,7 +293,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   private void shorthandIndirectLabelReference(final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
-    final XPathAttributeLocator parsedPath = XPathAttributeLocator.findAttribute(symbols.getAbsolutePathOfField(fieldId));
+    final XPathAttributeLocator parsedPath =
+        XPathAttributeLocator.findAttribute(symbols.getAbsolutePathOfField(fieldId));
     final PathExpression valueReference = parsedPath.hasAttribute()
         ? this.script.composeFieldAttributeReference(
             symbols.getRelativePath(parsedPath.getPath(), currentContext.absolutePath()),
@@ -285,12 +302,14 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         : this.script.composeFieldValueReference(
             symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
             PathExpression.class);
-    final StringExpression loopVariable = this.script.composeVariableReference("item", StringExpression.class);
+    final StringExpression loopVariable =
+        this.script.composeVariableReference("item", StringExpression.class);
     switch (fieldType) {
       case "indicator":
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
+                List.of(
+                    this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                     this.script.getStringLiteralFromUnquotedString("|"),
@@ -305,7 +324,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       case "internal-code":
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
+                List.of(
+                    this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(List.of(
                 this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
                 this.script.getStringLiteralFromUnquotedString("|"),
@@ -333,7 +353,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * context.
    */
   @Override
-  public void exitShorthandLabelReferenceFromContext(ShorthandLabelReferenceFromContextContext ctx) {
+  public void exitShorthandLabelReferenceFromContext(
+      ShorthandLabelReferenceFromContextContext ctx) {
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
@@ -396,8 +417,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class EfxExpressionTranslator. After the expression is translated, the result is passed
-   * through the renderer.
+   * class EfxExpressionTranslator. After the expression is translated, the result is passed through
+   * the renderer.
    */
   @Override
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {
@@ -443,11 +464,14 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     // final PathExpression absolutePath = this.stack.pop(PathExpression.class);
     // final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
     // if (filedId != null) {
-    //   this.efxContext.push(new FieldContext(filedId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
+    // this.efxContext.push(new FieldContext(filedId, absolutePath,
+    // this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
     // } else {
-    //   final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-    //   assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
-    //   this.efxContext.push(new NodeContext(nodeId, absolutePath, this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
+    // final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
+    // assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as
+    // context.";
+    // this.efxContext.push(new NodeContext(nodeId, absolutePath,
+    // this.symbols.getRelativePath(absolutePath, this.blockStack.absolutePath())));
     // }
   }
 
@@ -456,7 +480,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
-    final VariableList variables = new VariableList(); // template variables not supported prior to EFX 2
+    final VariableList variables = new VariableList(); // template variables not supported prior to
+                                                       // EFX 2
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
@@ -464,7 +489,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.empty() : "Stack should be empty at this point.";
-    this.stack.clear(); // Variable scope boundary. Clear declared variables 
+    this.stack.clear(); // Variable scope boundary. Clear declared variables
 
     if (indentChange > 1) {
       throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
@@ -472,7 +497,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
+      this.blockStack.pushChild(outlineNumber, content,
+          this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -481,14 +507,17 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+      this.blockStack.pushSibling(outlineNumber, content,
+          this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content,
+            this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+        this.blockStack.pushSibling(outlineNumber, content,
+            this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
       }
     }
   }

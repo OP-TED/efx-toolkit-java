@@ -14,7 +14,6 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
-
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
@@ -171,10 +170,10 @@ public interface ScriptGenerator {
       String variableName, L sourceList);
 
   public IteratorExpression composeIteratorExpression(
-          String variableName, PathExpression pathExpression);
-  
+      String variableName, PathExpression pathExpression);
+
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
-  
+
   /**
    * When we need data from an external source, we need some script that gets that data. Getting the
    * data is a two-step process: a) we need to access the data source, b) we need to get the actual
@@ -293,9 +292,11 @@ public interface ScriptGenerator {
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
-  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack);
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle,
+      PathExpression haystack);
 
-  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one, ListExpression<? extends Expression> two);
+  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one,
+      ListExpression<? extends Expression> two);
 
   /*
    * Date Functions
@@ -344,7 +345,7 @@ public interface ScriptGenerator {
    */
 
   public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
-          L list, Class<L> listType);
+      L list, Class<L> listType);
 
   public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
       L listTwo, Class<L> listType);

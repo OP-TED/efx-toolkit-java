@@ -29,7 +29,8 @@ public abstract class Context {
       super(fieldId, absolutePath, relativePath);
     }
 
-    public FieldContext(final String fieldId, final PathExpression absolutePath, final Variable<PathExpression> variable) {
+    public FieldContext(final String fieldId, final PathExpression absolutePath,
+        final Variable<PathExpression> variable) {
       super(fieldId, absolutePath, variable);
     }
 
@@ -68,13 +69,14 @@ public abstract class Context {
 
   protected Context(final String symbol, final PathExpression absolutePath,
       final PathExpression relativePath) {
-        this(symbol, absolutePath, relativePath, null);
+    this(symbol, absolutePath, relativePath, null);
   }
 
-  protected Context(final String symbol, final PathExpression absolutePath, final Variable<PathExpression> variable) {
+  protected Context(final String symbol, final PathExpression absolutePath,
+      final Variable<PathExpression> variable) {
     this(symbol, absolutePath, absolutePath, variable);
   }
-   
+
   protected Context(final String symbol, final PathExpression absolutePath) {
     this(symbol, absolutePath, absolutePath);
   }

@@ -3,9 +3,7 @@ package eu.europa.ted.eforms.sdk;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;

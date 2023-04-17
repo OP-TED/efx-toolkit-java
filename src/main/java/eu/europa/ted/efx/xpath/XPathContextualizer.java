@@ -83,7 +83,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       steps.removeFirst();
     }
 
-    return new PathExpression(axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return new PathExpression(
+        axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
   }
 
   private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
@@ -119,8 +120,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       // For each step remaining in the contextQueue we prepend a back-step (..) in
       // the resulting relativeXpath.
       while (!contextQueue.isEmpty()) {
-        contextQueue.poll();                    // consume the step
-        relativeXpath = "../" + relativeXpath;  // prepend a back-step 
+        contextQueue.poll(); // consume the step
+        relativeXpath = "../" + relativeXpath; // prepend a back-step
       }
 
       // We remove any trailing forward slashes from the resulting xPath.

@@ -14,7 +14,8 @@ import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 @SdkComponent(versions = {"0.7"}, componentType = SdkComponentType.CODELIST)
 public class SdkCodelist07 extends SdkCodelist {
 
-    public SdkCodelist07(String codelistId, String codelistVersion, List<String> codes, Optional<String> parentId) {
-        super(codelistId, codelistVersion, codes,  parentId);
-    }
+  public SdkCodelist07(String codelistId, String codelistVersion, List<String> codes,
+      Optional<String> parentId) {
+    super(codelistId, codelistVersion, codes, parentId);
+  }
 }

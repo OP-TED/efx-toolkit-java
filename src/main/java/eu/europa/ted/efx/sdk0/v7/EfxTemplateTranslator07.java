@@ -440,7 +440,8 @@ public class EfxTemplateTranslator07 extends EfxExpressionTranslator07
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
-    final VariableList variables = new VariableList(); // template variables not supported prior to EFX 2
+    final VariableList variables = new VariableList(); // template variables not supported prior to
+                                                       // EFX 2
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
@@ -455,7 +456,8 @@ public class EfxTemplateTranslator07 extends EfxExpressionTranslator07
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
+      this.blockStack.pushChild(outlineNumber, content,
+          this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -464,14 +466,17 @@ public class EfxTemplateTranslator07 extends EfxExpressionTranslator07
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+      this.blockStack.pushSibling(outlineNumber, content,
+          this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content,
+            this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+        this.blockStack.pushSibling(outlineNumber, content,
+            this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
       }
     }
   }
