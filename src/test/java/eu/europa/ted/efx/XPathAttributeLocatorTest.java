@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
-public class XPathAttributeLocatorTest {
+class XPathAttributeLocatorTest {
   @Test
-  public void testXPathAttributeLocator_WithAttribute() {
+  void testXPathAttributeLocator_WithAttribute() {
     final XPathAttributeLocator locator =
         XPathAttributeLocator.findAttribute(new PathExpression("/path/path/@attribute"));
     assertEquals("/path/path", locator.getPath().script);
@@ -16,7 +16,7 @@ public class XPathAttributeLocatorTest {
   }
 
   @Test
-  public void testXPathAttributeLocator_WithMultipleAttributes() {
+  void testXPathAttributeLocator_WithMultipleAttributes() {
     final XPathAttributeLocator locator = XPathAttributeLocator
         .findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']/@attribute"));
     assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
@@ -24,7 +24,7 @@ public class XPathAttributeLocatorTest {
   }
 
   @Test
-  public void testXPathAttributeLocator_WithoutAttribute() {
+  void testXPathAttributeLocator_WithoutAttribute() {
     final XPathAttributeLocator locator = XPathAttributeLocator
         .findAttribute(new PathExpression("/path/path[@otherAttribute = 'text']"));
     assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().script);
@@ -32,7 +32,7 @@ public class XPathAttributeLocatorTest {
   }
 
   @Test
-  public void testXPathAttributeLocator_WithoutPath() {
+  void testXPathAttributeLocator_WithoutPath() {
     final XPathAttributeLocator locator =
         XPathAttributeLocator.findAttribute(new PathExpression("@attribute"));
     assertEquals("", locator.getPath().script);
