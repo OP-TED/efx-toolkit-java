@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.mock;
+package eu.europa.ted.efx.mock.sdk2;
 
 import static java.util.Map.entry;
 import java.util.Arrays;
@@ -25,15 +25,8 @@ import eu.europa.ted.efx.sdk2.entity.SdkFieldV2;
 import eu.europa.ted.efx.sdk2.entity.SdkNodeV2;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-public class SymbolResolverMock implements SymbolResolver {
-
-  private static final Logger logger = LoggerFactory.getLogger(SymbolResolverMock.class);
-
-  private static final Map<String, SymbolResolverMock> instances = new HashMap<>();
-
-  public static SymbolResolverMock getInstance(final String sdkVersion) {
-    return instances.computeIfAbsent(sdkVersion, k -> new SymbolResolverMock());
-  }
+public class SymbolResolverMockV2 implements SymbolResolver {
+  private static final Logger logger = LoggerFactory.getLogger(SymbolResolverMockV2.class);
 
   protected Map<String, SdkFieldV2> fieldById;
   protected Map<String, SdkFieldV2> fieldByAlias;
@@ -41,7 +34,7 @@ public class SymbolResolverMock implements SymbolResolver {
   protected Map<String, SdkNodeV2> nodeByAlias;
   protected Map<String, SdkCodelistV2> codelistById;
 
-  protected SymbolResolverMock() {
+  public SymbolResolverMockV2() {
     try {
       this.loadMapData();
     } catch (JsonProcessingException e) {

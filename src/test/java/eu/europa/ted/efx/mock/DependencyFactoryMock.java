@@ -22,7 +22,7 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
   @Override
   public SymbolResolver createSymbolResolver(String sdkVersion) {
-    return SymbolResolverMock.getInstance(sdkVersion);
+    return SymbolResolverMockFactory.getInstance(sdkVersion);
   }
 
   @Override
