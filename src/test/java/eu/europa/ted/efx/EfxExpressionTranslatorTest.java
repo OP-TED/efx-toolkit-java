@@ -2,54 +2,11 @@ package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
-class EfxExpressionTranslatorTest {
-  private static final String[] SDK_VERSIONS = new String[] {"eforms-sdk-1.0", "eforms-sdk-2.0"};
-
-  protected static Stream<Arguments> provideSdkVersions() {
-    List<Arguments> arguments = new ArrayList<>();
-
-    for (String sdkVersion : SDK_VERSIONS) {
-      arguments.add(Arguments.of(sdkVersion));
-    }
-
-    return Stream.of(arguments.toArray(new Arguments[0]));
-  }
-
-  private void testExpressionTranslationWithContext(final String sdkVersion,
-      final String expectedTranslation, final String context, final String expression) {
-    assertEquals(expectedTranslation,
-        translateExpressionWithContext(sdkVersion, context, expression));
-  }
-
-  private void testExpressionTranslation(final String sdkVersion, final String expectedTranslation,
-      final String expression, final String... params) {
-    assertEquals(expectedTranslation, translateExpression(sdkVersion, expression, params));
-  }
-
-  private String translateExpressionWithContext(final String sdkVersion, final String context,
-      final String expression) {
-    return translateExpression(sdkVersion, String.format("{%s} ${%s}", context, expression));
-  }
-
-  private String translateExpression(final String sdkVersion, final String expression,
-      final String... params) {
-    try {
-      return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, sdkVersion,
-          expression, params);
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+class EfxExpressionTranslatorTest extends EfxTestsBase {
   // #region: Boolean expressions ---------------------------------------------
 
   @ParameterizedTest
@@ -1790,49 +1747,49 @@ class EfxExpressionTranslatorTest {
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithStringParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithStringParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion, "'hello' = 'world'",
         "{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "'hello'", "'world'");
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithUnquotedStringParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithUnquotedStringParameter(final String sdkVersion) {
     assertThrows(ParseCancellationException.class, () -> translateExpression(sdkVersion,
         "{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "hello", "world"));
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithNumberParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithNumberParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion, "1 = 2",
         "{ND-Root, number:$p1, number:$p2} ${$p1 == $p2}", "1", "2");
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithDateParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithDateParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion, "xs:date('2018-01-01Z') = xs:date('2020-01-01Z')",
         "{ND-Root, date:$p1, date:$p2} ${$p1 == $p2}", "2018-01-01Z", "2020-01-01Z");
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithTimeParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithTimeParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion, "xs:time('12:00:00Z') = xs:time('13:00:00Z')",
         "{ND-Root, time:$p1, time:$p2} ${$p1 == $p2}", "12:00:00Z", "13:00:00Z");
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithBooleanParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithBooleanParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion, "true() = false()",
         "{ND-Root, indicator:$p1, indicator:$p2} ${$p1 == $p2}", "ALWAYS", "FALSE");
   }
 
   @ParameterizedTest
   @MethodSource("provideSdkVersions")
-  void testParametrizedExpression_WithDurationParameter(final String sdkVersion) {
+  void testParameterizedExpression_WithDurationParameter(final String sdkVersion) {
     testExpressionTranslation(sdkVersion,
         "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
         "{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y");
