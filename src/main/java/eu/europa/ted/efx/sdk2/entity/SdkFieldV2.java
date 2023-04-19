@@ -1,5 +1,8 @@
 package eu.europa.ted.efx.sdk2.entity;
 
+import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
@@ -18,6 +21,18 @@ public class SdkFieldV2 extends SdkFieldV1 {
   public SdkFieldV2(JsonNode fieldNode) {
     super(fieldNode);
     this.alias = fieldNode.has("alias") ? fieldNode.get("alias").asText(null) : null;
+  }
+
+  @JsonCreator
+  public SdkFieldV2(
+      @JsonProperty("id") final String id,
+      @JsonProperty("type") final String type,
+      @JsonProperty("parentNodeId") final String parentNodeId,
+      @JsonProperty("xpathAbsolute") final String xpathAbsolute,
+      @JsonProperty("xpathRelative") final String xpathRelative,
+      @JsonProperty("codeList") final Map<String, Map<String, String>> codelist,
+      @JsonProperty("alias") final String alias) {
+    this(id, type, parentNodeId, xpathAbsolute, xpathRelative, getCodelistId(codelist), alias);
   }
 
   public String getAlias() {

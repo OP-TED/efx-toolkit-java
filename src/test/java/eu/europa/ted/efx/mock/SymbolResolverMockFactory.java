@@ -1,5 +1,6 @@
 package eu.europa.ted.efx.mock;
 
+import static java.util.Map.entry;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,9 +10,9 @@ import eu.europa.ted.efx.mock.sdk2.SymbolResolverMockV2;
 
 public class SymbolResolverMockFactory {
   private static final Map<String, Class<? extends SymbolResolver>> symbolResolversBySdkVersion =
-      Map.of(
-          "eforms-sdk-1.0", SymbolResolverMockV1.class,
-          "eforms-sdk-2.0", SymbolResolverMockV2.class);
+      Map.ofEntries(
+          entry("eforms-sdk-1.0", SymbolResolverMockV1.class),
+          entry("eforms-sdk-2.0", SymbolResolverMockV2.class));
 
   private static final Map<String, SymbolResolver> instances = new HashMap<>();
 
