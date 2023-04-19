@@ -4,10 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
+
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.DecimalFormat;
 
 class EfxExpressionTranslatorTest {
   final private String SDK_VERSION = "eforms-sdk-1.0";
+  final private TranslatorOptions TRANSLATOR_OPTIONS = new EfxTranslatorOptions(DecimalFormat.EFX_DEFAULT);
 
   private String test(final String context, final String expression) {
     return test1(String.format("{%s} ${%s}", context, expression));
@@ -16,7 +20,7 @@ class EfxExpressionTranslatorTest {
   private String test1(final String expression, final String... params) {
     try {
       return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, SDK_VERSION, 
-          expression, params);
+          expression, TRANSLATOR_OPTIONS, params);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }
@@ -464,7 +468,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
-    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
+    assertEquals("'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0,##########'), 'text'))",
         test("ND-Root", "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))"));
   }
   
@@ -1147,7 +1151,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testToStringFunction() {
-    assertEquals("format-number(123, '0.##########')", test("ND-Root", "string(123)"));
+    assertEquals("format-number(123, '0,##########')", test("ND-Root", "string(123)"));
   }
 
   @Test
@@ -1157,7 +1161,7 @@ class EfxExpressionTranslatorTest {
 
   @Test
   void testFormatNumberFunction() {
-    assertEquals("format-number(PathNode/NumberField/number(), '#,##0.00')",
+    assertEquals("format-number(PathNode/NumberField/number(), '# ##0,00')",
         test("ND-Root", "format-number(BT-00-Number, '#,##0.00')"));
   }
 

@@ -2,18 +2,22 @@ package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.DecimalFormat;
 
 /**
  * Test for EFX expressions that combine several aspects of the language.
  */
 class EfxExpressionCombinedTest {
   final private String SDK_VERSION = "eforms-sdk-1.0";
+  final private TranslatorOptions TRANSLATOR_OPTIONS = new EfxTranslatorOptions(DecimalFormat.EFX_DEFAULT);
 
   private String test(final String context, final String expression) {
     try {
       return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE,
-          SDK_VERSION, String.format("{%s} ${%s}", context, expression));
+          SDK_VERSION, String.format("{%s} ${%s}", context, expression), TRANSLATOR_OPTIONS);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }
