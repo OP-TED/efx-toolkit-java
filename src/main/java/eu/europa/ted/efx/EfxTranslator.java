@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 
 /**
  * Provided for convenience, this class exposes static methods that allow you to quickly instantiate
@@ -25,6 +26,8 @@ import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
  */
 public class EfxTranslator {
  
+  private static TranslatorOptions defaultOptions = EfxTranslatorOptions.DEFAULT;
+
   /**
    * Instantiates an EFX expression translator and translates a given expression.
    * 
@@ -39,9 +42,15 @@ public class EfxTranslator {
    * @throws InstantiationException
    */
   public static String translateExpression(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
-      final String expression, final String... expressionParameters) throws InstantiationException {
-    return EfxTranslatorFactory.getEfxExpressionTranslator(sdkVersion, dependencyFactory)
+      final String expression, TranslatorOptions options, final String... expressionParameters)
+      throws InstantiationException {
+    return EfxTranslatorFactory.getEfxExpressionTranslator(sdkVersion, dependencyFactory, options)
         .translateExpression(expression, expressionParameters);
+  }
+
+  public static String translateExpression(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String expression, final String... expressionParameters) throws InstantiationException {
+    return translateExpression(dependencyFactory, sdkVersion, expression, defaultOptions, expressionParameters);
   }
 
   /**
@@ -58,11 +67,17 @@ public class EfxTranslator {
    * @throws IOException
    * @throws InstantiationException
    */
-  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion, 
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final Path pathname, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
+        .renderTemplate(pathname);
+  }
+
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final Path pathname)
       throws IOException, InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
-        .renderTemplate(pathname);
+    return translateTemplate(dependencyFactory, sdkVersion, pathname, defaultOptions);
   }
 
   /**
@@ -78,10 +93,16 @@ public class EfxTranslator {
    * @throws InstantiationException
    */
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String template, TranslatorOptions options)
+      throws InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
+        .renderTemplate(template);
+  }
+
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final String template)
       throws InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
-        .renderTemplate(template);
+    return translateTemplate(dependencyFactory, sdkVersion, template, defaultOptions);
   }
 
   /**
@@ -98,10 +119,16 @@ public class EfxTranslator {
    * @throws IOException
    * @throws InstantiationException
    */
-  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion, 
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final InputStream stream, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
+        .renderTemplate(stream);
+  }
+
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final InputStream stream)
       throws IOException, InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory)
-        .renderTemplate(stream);
+    return translateTemplate(dependencyFactory, sdkVersion, stream, defaultOptions);
   }
 }

@@ -4,15 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
+
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.DecimalFormat;
 
 class EfxTemplateTranslatorTest {
   final private String SDK_VERSION = "eforms-sdk-1.0";
+  final private TranslatorOptions TRANSLATOR_OPTIONS = new EfxTranslatorOptions(DecimalFormat.EFX_DEFAULT);
 
   private String translate(final String template) {
     try {
       return EfxTranslator.translateTemplate(DependencyFactoryMock.INSTANCE,
-          SDK_VERSION, template + "\n");
+          SDK_VERSION, template + "\n", TRANSLATOR_OPTIONS);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }
