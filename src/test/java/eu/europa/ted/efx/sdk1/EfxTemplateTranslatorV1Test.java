@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
 
-class EfxTemplateTranslatorTestV1 extends EfxTestsBase {
+class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   @Override
   protected String getSdkVersion() {
     return "eforms-sdk-1.0";
@@ -122,14 +122,16 @@ class EfxTemplateTranslatorTestV1 extends EfxTestsBase {
 
   @Test
   void testTemplateLineIdentMixed() {
+    final String lines = lines("{BT-00-Text} foo", "\t  {BT-00-Text} bar");
     assertThrows(ParseCancellationException.class,
-        () -> translateTemplate(lines("{BT-00-Text} foo", "\t  {BT-00-Text} bar")));
+        () -> translateTemplate(lines));
   }
 
   @Test
   void testTemplateLineIdentMixedSpaceThenTab() {
+    final String lines = lines("{BT-00-Text} foo", "  \t{BT-00-Text} bar");
     assertThrows(ParseCancellationException.class,
-        () -> translateTemplate(lines("{BT-00-Text} foo", "  \t{BT-00-Text} bar")));
+        () -> translateTemplate(lines));
   }
 
   @Test
@@ -145,22 +147,22 @@ class EfxTemplateTranslatorTestV1 extends EfxTestsBase {
 
   @Test
   void testTemplateLineIdentUnexpected() {
+    final String lines = lines("{BT-00-Text} foo", "\t\t{BT-00-Text} bar");
     assertThrows(ParseCancellationException.class,
-        () -> translateTemplate(lines("{BT-00-Text} foo", "\t\t{BT-00-Text} bar")));
+        () -> translateTemplate(lines));
   }
 
   @Test
   void testTemplateLine_VariableScope() {
     assertEquals(
-        lines("let block01() -> { #1: eval(for $x in ./normalize-space(text()) return $x)", //
+        lines("let block01() -> { #1: eval(for $x in . return $x)", //
             "for-each(.).call(block0101()) }", //
-            "let block0101() -> { eval(for $x in ./normalize-space(text()) return $x) }", //
+            "let block0101() -> { eval(for $x in . return $x) }", //
             "for-each(/*/PathNode/TextField).call(block01())"), //
         translateTemplate(lines("{BT-00-Text} ${for text:$x in BT-00-Text return $x}",
             "    {BT-00-Text} ${for text:$x in BT-00-Text return $x}")));
 
   }
-
 
   /*** Labels ***/
 
@@ -341,5 +343,4 @@ class EfxTemplateTranslatorTestV1 extends EfxTestsBase {
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' ')text('blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
-
 }

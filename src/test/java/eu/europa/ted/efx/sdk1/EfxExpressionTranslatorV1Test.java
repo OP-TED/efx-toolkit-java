@@ -1,5 +1,6 @@
 package eu.europa.ted.efx.sdk1;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
     return "eforms-sdk-1.0";
   }
 
-  /*** Boolean expressions ***/
+  // #region: Boolean expressions ---------------------------------------------
 
   @Test
   void testParenthesizedBooleanExpression() {
@@ -122,9 +123,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testFieldValueComparison_UsingMeasureFields() {
-    testExpressionTranslationWithContext(
+    assertEquals(
         "boolean(for $T in (current-date()) return ($T + (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) <= $T + (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))))",
-        "ND-Root", "BT-00-Measure <= BT-00-Measure");
+        translateExpressionWithContext("ND-Root", "BT-00-Measure <= BT-00-Measure"));
   }
 
   @Test
@@ -265,9 +266,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNegativeDuration_ViaMultiplicationWithField() {
-    testExpressionTranslationWithContext(
+    assertEquals(
         "(-3 * (2 * (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))))",
-        "ND-Root", "2 * measure:BT-00-Measure * -3");
+        translateExpressionWithContext("ND-Root", "2 * measure:BT-00-Measure * -3"));
   }
 
   @Test
@@ -294,7 +295,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
     testExpressionTranslationWithContext("false()", "BT-00-Text", "NEVER");
   }
 
-  /*** Quantified expressions ***/
+  // #endregion: Boolean expressions
+
+  // #region: Quantified expressions ------------------------------------------
 
   @Test
   void testStringQuantifiedExpression_UsingLiterals() {
@@ -304,9 +307,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testStringQuantifiedExpression_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "every $x in PathNode/TextField/normalize-space(text()) satisfies $x <= 'a'", "ND-Root",
-        "every text:$x in BT-00-Text satisfies $x <= 'a'");
+    testExpressionTranslationWithContext("every $x in PathNode/TextField satisfies $x <= 'a'",
+        "ND-Root", "every text:$x in BT-00-Text satisfies $x <= 'a'");
   }
 
   @Test
@@ -329,9 +331,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumericQuantifiedExpression_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "every $x in PathNode/NumberField/number() satisfies $x <= 1", "ND-Root",
-        "every number:$x in BT-00-Number satisfies $x <= 1");
+    testExpressionTranslationWithContext("every $x in PathNode/NumberField satisfies $x <= 1",
+        "ND-Root", "every number:$x in BT-00-Number satisfies $x <= 1");
   }
 
   @Test
@@ -345,14 +346,14 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDateQuantifiedExpression_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "every $x in PathNode/StartDateField/xs:date(text()) satisfies $x <= xs:date('2012-01-01Z')",
-        "ND-Root", "every date:$x in BT-00-StartDate satisfies $x <= 2012-01-01Z");
+        "every $x in PathNode/StartDateField satisfies $x <= xs:date('2012-01-01Z')", "ND-Root",
+        "every date:$x in BT-00-StartDate satisfies $x <= 2012-01-01Z");
   }
 
   @Test
   void testDateQuantifiedExpression_UsingMultipleIterators() {
     testExpressionTranslationWithContext(
-        "every $x in PathNode/StartDateField/xs:date(text()), $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
+        "every $x in PathNode/StartDateField, $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
         "ND-Root",
         "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02Z), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01Z");
   }
@@ -367,8 +368,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimeQuantifiedExpression_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "every $x in PathNode/StartTimeField/xs:time(text()) satisfies $x <= xs:time('00:00:00Z')",
-        "ND-Root", "every time:$x in BT-00-StartTime satisfies $x <= 00:00:00Z");
+        "every $x in PathNode/StartTimeField satisfies $x <= xs:time('00:00:00Z')", "ND-Root",
+        "every time:$x in BT-00-StartTime satisfies $x <= 00:00:00Z");
   }
 
   @Test
@@ -381,11 +382,13 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationQuantifiedExpression_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "every $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) satisfies boolean(for $T in (current-date()) return ($T + $x <= $T + xs:dayTimeDuration('P1D')))",
+        "every $x in PathNode/MeasureField satisfies boolean(for $T in (current-date()) return ($T + $x <= $T + xs:dayTimeDuration('P1D')))",
         "ND-Root", "every measure:$x in BT-00-Measure satisfies $x <= P1D");
   }
 
-  /*** Conditional expressions ***/
+  // #endregion: Quantified expressions
+
+  // #region: Conditional expressions -----------------------------------------
 
   @Test
   void testConditionalExpression() {
@@ -430,9 +433,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testConditionalStringExpression_UsingFieldReferences_TypeMismatch() {
-    assertThrows(ParseCancellationException.class,
-        () -> translateExpressionWithContext("ND-Root",
-            "if 'a' > 'b' then BT-00-StartDate else BT-00-Text"));
+    assertThrows(ParseCancellationException.class, () -> translateExpressionWithContext("ND-Root",
+        "if 'a' > 'b' then BT-00-StartDate else BT-00-Text"));
   }
 
   @Test
@@ -463,12 +465,14 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testConditionalDurationExpression() {
-    testExpressionTranslationWithContext(
+    assertEquals(
         "(if boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
-        "ND-Root", "if P1D > BT-00-Measure then P1D else P2D");
+        translateExpressionWithContext("ND-Root", "if P1D > BT-00-Measure then P1D else P2D"));
   }
 
-  /*** Iteration expressions ***/
+  // #endregion: Conditional expressions
+
+  // #region: Iteration expressions -------------------------------------------
 
   // Strings from iteration ---------------------------------------------------
 
@@ -482,7 +486,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
     testExpressionTranslationWithContext(
-        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0,##########'), 'text'))",
+        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0.##########'), 'text'))",
         "ND-Root",
         "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))");
   }
@@ -490,7 +494,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testStringsSequenceFromIteration_UsingObjectVariable() {
     testExpressionTranslationWithContext(
-        "for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField/xs:date(text()) return 'text'",
+        "for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField return 'text'",
         "ND-Root",
         "for context:$n in BT-00-Text[BT-00-Number is present], date:$d in $n::BT-00-StartDate return 'text'");
   }
@@ -505,8 +509,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testStringsFromStringIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "'a' = (for $x in PathNode/TextField/normalize-space(text()) return concat($x, 'text'))",
-        "ND-Root", "'a' in (for text:$x in BT-00-Text return concat($x, 'text'))");
+        "'a' = (for $x in PathNode/TextField return concat($x, 'text'))", "ND-Root",
+        "'a' in (for text:$x in BT-00-Text return concat($x, 'text'))");
   }
 
 
@@ -531,9 +535,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testStringsFromNumericIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "'a' = (for $x in PathNode/NumberField/number() return 'y')", "ND-Root",
-        "'a' in (for number:$x in BT-00-Number return 'y')");
+    testExpressionTranslationWithContext("'a' = (for $x in PathNode/NumberField return 'y')",
+        "ND-Root", "'a' in (for number:$x in BT-00-Number return 'y')");
   }
 
   @Test
@@ -545,9 +548,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testStringsFromDateIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "'a' = (for $x in PathNode/StartDateField/xs:date(text()) return 'y')", "ND-Root",
-        "'a' in (for date:$x in BT-00-StartDate return 'y')");
+    testExpressionTranslationWithContext("'a' = (for $x in PathNode/StartDateField return 'y')",
+        "ND-Root", "'a' in (for date:$x in BT-00-StartDate return 'y')");
   }
 
   @Test
@@ -559,9 +561,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testStringsFromTimeIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "'a' = (for $x in PathNode/StartTimeField/xs:time(text()) return 'y')", "ND-Root",
-        "'a' in (for time:$x in BT-00-StartTime return 'y')");
+    testExpressionTranslationWithContext("'a' = (for $x in PathNode/StartTimeField return 'y')",
+        "ND-Root", "'a' in (for time:$x in BT-00-StartTime return 'y')");
   }
 
   @Test
@@ -574,8 +575,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testStringsFromDurationIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "'a' = (for $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return 'y')",
+    testExpressionTranslationWithContext("'a' = (for $x in PathNode/MeasureField return 'y')",
         "ND-Root", "'a' in (for measure:$x in BT-00-Measure return 'y')");
   }
 
@@ -589,9 +589,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromStringIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "123 = (for $x in PathNode/TextField/normalize-space(text()) return number($x))", "ND-Root",
-        "123 in (for text:$x in BT-00-Text return number($x))");
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/TextField return number($x))",
+        "ND-Root", "123 in (for text:$x in BT-00-Text return number($x))");
   }
 
 
@@ -616,7 +615,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromNumericIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext("123 = (for $x in PathNode/NumberField/number() return 0)",
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/NumberField return 0)",
         "ND-Root", "123 in (for number:$x in BT-00-Number return 0)");
   }
 
@@ -629,9 +628,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromDateIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "123 = (for $x in PathNode/StartDateField/xs:date(text()) return 0)", "ND-Root",
-        "123 in (for date:$x in BT-00-StartDate return 0)");
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/StartDateField return 0)",
+        "ND-Root", "123 in (for date:$x in BT-00-StartDate return 0)");
   }
 
   @Test
@@ -643,9 +641,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromTimeIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "123 = (for $x in PathNode/StartTimeField/xs:time(text()) return 0)", "ND-Root",
-        "123 in (for time:$x in BT-00-StartTime return 0)");
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/StartTimeField return 0)",
+        "ND-Root", "123 in (for time:$x in BT-00-StartTime return 0)");
   }
 
   @Test
@@ -658,8 +655,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromDurationIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext(
-        "123 = (for $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return 0)",
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/MeasureField return 0)",
         "ND-Root", "123 in (for measure:$x in BT-00-Measure return 0)");
   }
 
@@ -675,8 +671,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDatesFromStringIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in PathNode/TextField/normalize-space(text()) return xs:date($x))",
-        "ND-Root", "2022-01-01Z in (for text:$x in BT-00-Text return date($x))");
+        "xs:date('2022-01-01Z') = (for $x in PathNode/TextField return xs:date($x))", "ND-Root",
+        "2022-01-01Z in (for text:$x in BT-00-Text return date($x))");
   }
 
 
@@ -705,7 +701,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDatesFromNumericIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in PathNode/NumberField/number() return xs:date('2022-01-01Z'))",
+        "xs:date('2022-01-01Z') = (for $x in PathNode/NumberField return xs:date('2022-01-01Z'))",
         "ND-Root", "2022-01-01Z in (for number:$x in BT-00-Number return 2022-01-01Z)");
   }
 
@@ -720,7 +716,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDatesFromDateIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in PathNode/StartDateField/xs:date(text()) return xs:date('2022-01-01Z'))",
+        "xs:date('2022-01-01Z') = (for $x in PathNode/StartDateField return xs:date('2022-01-01Z'))",
         "ND-Root", "2022-01-01Z in (for date:$x in BT-00-StartDate return 2022-01-01Z)");
   }
 
@@ -735,7 +731,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDatesFromTimeIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in PathNode/StartTimeField/xs:time(text()) return xs:date('2022-01-01Z'))",
+        "xs:date('2022-01-01Z') = (for $x in PathNode/StartTimeField return xs:date('2022-01-01Z'))",
         "ND-Root", "2022-01-01Z in (for time:$x in BT-00-StartTime return 2022-01-01Z)");
   }
 
@@ -750,7 +746,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDatesFromDurationIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return xs:date('2022-01-01Z'))",
+        "xs:date('2022-01-01Z') = (for $x in PathNode/MeasureField return xs:date('2022-01-01Z'))",
         "ND-Root", "2022-01-01Z in (for measure:$x in BT-00-Measure return 2022-01-01Z)");
   }
 
@@ -766,8 +762,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimesFromStringIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in PathNode/TextField/normalize-space(text()) return xs:time($x))",
-        "ND-Root", "12:00:00Z in (for text:$x in BT-00-Text return time($x))");
+        "xs:time('12:00:00Z') = (for $x in PathNode/TextField return xs:time($x))", "ND-Root",
+        "12:00:00Z in (for text:$x in BT-00-Text return time($x))");
   }
 
 
@@ -796,7 +792,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimesFromNumericIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in PathNode/NumberField/number() return xs:time('12:00:00Z'))",
+        "xs:time('12:00:00Z') = (for $x in PathNode/NumberField return xs:time('12:00:00Z'))",
         "ND-Root", "12:00:00Z in (for number:$x in BT-00-Number return 12:00:00Z)");
   }
 
@@ -811,7 +807,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimesFromDateIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in PathNode/StartDateField/xs:date(text()) return xs:time('12:00:00Z'))",
+        "xs:time('12:00:00Z') = (for $x in PathNode/StartDateField return xs:time('12:00:00Z'))",
         "ND-Root", "12:00:00Z in (for date:$x in BT-00-StartDate return 12:00:00Z)");
   }
 
@@ -826,7 +822,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimesFromTimeIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in PathNode/StartTimeField/xs:time(text()) return xs:time('12:00:00Z'))",
+        "xs:time('12:00:00Z') = (for $x in PathNode/StartTimeField return xs:time('12:00:00Z'))",
         "ND-Root", "12:00:00Z in (for time:$x in BT-00-StartTime return 12:00:00Z)");
   }
 
@@ -841,7 +837,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTimesFromDurationIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return xs:time('12:00:00Z'))",
+        "xs:time('12:00:00Z') = (for $x in PathNode/MeasureField return xs:time('12:00:00Z'))",
         "ND-Root", "12:00:00Z in (for measure:$x in BT-00-Measure return 12:00:00Z)");
   }
 
@@ -857,7 +853,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationsFromStringIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in PathNode/TextField/normalize-space(text()) return xs:dayTimeDuration($x))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/TextField return xs:dayTimeDuration($x))",
         "ND-Root", "P1D in (for text:$x in BT-00-Text return day-time-duration($x))");
   }
 
@@ -887,7 +883,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationsFromNumericIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in PathNode/NumberField/number() return xs:dayTimeDuration('P1D'))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/NumberField return xs:dayTimeDuration('P1D'))",
         "ND-Root", "P1D in (for number:$x in BT-00-Number return P1D)");
   }
 
@@ -901,7 +897,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationsFromDateIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in PathNode/StartDateField/xs:date(text()) return xs:dayTimeDuration('P1D'))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/StartDateField return xs:dayTimeDuration('P1D'))",
         "ND-Root", "P1D in (for date:$x in BT-00-StartDate return P1D)");
   }
 
@@ -915,7 +911,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationsFromTimeIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in PathNode/StartTimeField/xs:time(text()) return xs:dayTimeDuration('P1D'))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/StartTimeField return xs:dayTimeDuration('P1D'))",
         "ND-Root", "P1D in (for time:$x in BT-00-StartTime return P1D)");
   }
 
@@ -929,11 +925,13 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testDurationsFromDurationIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return xs:dayTimeDuration('P1D'))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/MeasureField return xs:dayTimeDuration('P1D'))",
         "ND-Root", "P1D in (for measure:$x in BT-00-Measure return P1D)");
   }
 
-  /*** Numeric expressions ***/
+  // #endregion: Iteration expressions
+
+  // #region: Numeric expressions ---------------------------------------------
 
   @Test
   void testMultiplicationExpression() {
@@ -955,7 +953,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
     testExpressionTranslationWithContext("3.1415", "BT-00-Text", "3.1415");
   }
 
-  /*** List ***/
+  // #endregion: Numeric expressions
+
+  // #region: Lists -----------------------------------------------------------
 
   @Test
   void testStringList() {
@@ -1007,11 +1007,13 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "BT-00-Text", "P3M in (P1M, P3M, P6M)");
   }
 
+
+
   @Test
   void testDurationList_UsingDurationField() {
-    testExpressionTranslationWithContext(
+    assertEquals(
         "(for $F in ../MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))",
-        "BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)");
+        translateExpressionWithContext("BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)"));
   }
 
   @Test
@@ -1020,7 +1022,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "'a' in (accessibility)");
   }
 
-  /*** References ***/
+  // #endregion: Lists
+
+  // #region: References ------------------------------------------------------
 
   @Test
   void testFieldAttributeValueReference() {
@@ -1113,7 +1117,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "ND-Root::preceding::BT-00-Integer");
   }
 
-  /*** Boolean functions ***/
+  // #endregion: References
+
+  // #region: Boolean functions -----------------------------------------------
 
   @Test
   void testNotFunction() {
@@ -1144,19 +1150,21 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "ends-with(BT-00-Text, 'abc')");
   }
 
-  /*** Numeric functions ***/
+  // #endregion: Boolean functions
+
+  // #region: Numeric functions -----------------------------------------------
 
   @Test
   void testCountFunction_UsingFieldReference() {
-    testExpressionTranslationWithContext("count(PathNode/TextField/normalize-space(text()))",
-        "ND-Root", "count(BT-00-Text)");
+    testExpressionTranslationWithContext("count(PathNode/TextField)", "ND-Root",
+        "count(BT-00-Text)");
   }
 
   @Test
   void testCountFunction_UsingSequenceFromIteration() {
     testExpressionTranslationWithContext(
-        "count(for $x in PathNode/TextField/normalize-space(text()) return concat($x, '-xyz'))",
-        "ND-Root", "count(for text:$x in BT-00-Text return concat($x, '-xyz'))");
+        "count(for $x in PathNode/TextField return concat($x, '-xyz'))", "ND-Root",
+        "count(for text:$x in BT-00-Text return concat($x, '-xyz'))");
   }
 
   @Test
@@ -1167,15 +1175,14 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testSumFunction_UsingFieldReference() {
-    testExpressionTranslationWithContext("sum(PathNode/NumberField/number())", "ND-Root",
+    testExpressionTranslationWithContext("sum(PathNode/NumberField)", "ND-Root",
         "sum(BT-00-Number)");
   }
 
   @Test
   void testSumFunction_UsingNumericSequenceFromIteration() {
-    testExpressionTranslationWithContext(
-        "sum(for $v in PathNode/NumberField/number() return $v + 1)", "ND-Root",
-        "sum(for number:$v in BT-00-Number return $v +1)");
+    testExpressionTranslationWithContext("sum(for $v in PathNode/NumberField return $v + 1)",
+        "ND-Root", "sum(for number:$v in BT-00-Number return $v +1)");
   }
 
   @Test
@@ -1185,7 +1192,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "string-length(BT-00-Text)");
   }
 
-  /*** String functions ***/
+  // #endregion: Numeric functions
+
+  // #region: String functions ------------------------------------------------
 
   @Test
   void testSubstringFunction() {
@@ -1198,7 +1207,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testToStringFunction() {
-    testExpressionTranslationWithContext("format-number(123, '0,##########')", "ND-Root",
+    testExpressionTranslationWithContext("format-number(123, '0.##########')", "ND-Root",
         "string(123)");
   }
 
@@ -1209,12 +1218,13 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testFormatNumberFunction() {
-    testExpressionTranslationWithContext("format-number(PathNode/NumberField/number(), '# ##0,00')",
+    testExpressionTranslationWithContext("format-number(PathNode/NumberField/number(), '#,##0.00')",
         "ND-Root", "format-number(BT-00-Number, '#,##0.00')");
   }
 
+  // #endregion: String functions
 
-  /*** Date functions ***/
+  // #region: Date functions --------------------------------------------------
 
   @Test
   void testDateFromStringFunction() {
@@ -1222,21 +1232,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "ND-Root", "date(BT-00-Text)");
   }
 
-  @Test
-  void testDatePlusMeasureFunction() {
-    testExpressionTranslationWithContext(
-        "(PathNode/StartDateField/xs:date(text()) + (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
-        "ND-Root", "add-measure(BT-00-StartDate, BT-00-Measure)");
-  }
+  // #endregion: Date functions
 
-  @Test
-  void testDateMinusMeasureFunction() {
-    testExpressionTranslationWithContext(
-        "(PathNode/StartDateField/xs:date(text()) - (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
-        "ND-Root", "subtract-measure(BT-00-StartDate, BT-00-Measure)");
-  }
-
-  /*** Time functions ***/
+  // #region: Time functions --------------------------------------------------
 
   @Test
   void testTimeFromStringFunction() {
@@ -1244,23 +1242,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "ND-Root", "time(BT-00-Text)");
   }
 
-  /*** Duration functions ***/
+  // #endregion: Time functions
 
-  @Test
-  void testDayTimeDurationFromStringFunction() {
-    testExpressionTranslationWithContext(
-        "xs:yearMonthDuration(PathNode/TextField/normalize-space(text()))", "ND-Root",
-        "year-month-duration(BT-00-Text)");
-  }
-
-  @Test
-  void testYearMonthDurationFromStringFunction() {
-    testExpressionTranslationWithContext(
-        "xs:dayTimeDuration(PathNode/TextField/normalize-space(text()))", "ND-Root",
-        "day-time-duration(BT-00-Text)");
-  }
-
-  /*** Sequence Functions ***/
+  // #region: Sequence Functions ----------------------------------------------
 
   @Test
   void testDistinctValuesFunction_WithStringSequences() {
@@ -1289,13 +1273,6 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
-  void testDistinctValuesFunction_WithDurationSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')))",
-        "ND-Root", "distinct-values((P1W, P2D, P2D, P5D))");
-  }
-
-  @Test
   void testDistinctValuesFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("distinct-values((true(),false(),false(),false()))",
         "ND-Root", "distinct-values((TRUE, FALSE, FALSE, NEVER))");
@@ -1303,12 +1280,11 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testDistinctValuesFunction_WithFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(PathNode/TextField/normalize-space(text()))", "ND-Root",
+    testExpressionTranslationWithContext("distinct-values(PathNode/TextField)", "ND-Root",
         "distinct-values(BT-00-Text)");
   }
 
-  /* Union */
+  // #region: Union
 
   @Test
   void testUnionFunction_WithStringSequences() {
@@ -1337,13 +1313,6 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
-  void testUnionFunction_WithDurationSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')), (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D'))))",
-        "ND-Root", "value-union((P1W, P2D), (P2D, P5D))");
-  }
-
-  @Test
   void testUnionFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("distinct-values(((true(),false()), (false(),false())))",
         "ND-Root", "value-union((TRUE, FALSE), (FALSE, NEVER))");
@@ -1352,8 +1321,8 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testUnionFunction_WithFieldReferences() {
     testExpressionTranslationWithContext(
-        "distinct-values((PathNode/TextField/normalize-space(text()), PathNode/TextField/normalize-space(text())))",
-        "ND-Root", "value-union(BT-00-Text, BT-00-Text)");
+        "distinct-values((PathNode/TextField, PathNode/TextField))", "ND-Root",
+        "value-union(BT-00-Text, BT-00-Text)");
   }
 
   @Test
@@ -1362,148 +1331,99 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         () -> translateExpressionWithContext("ND-Root", "value-union(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Intersect */
+  // #endregion: Union
+
+  // #region: Intersect
 
   @Test
   void testIntersectFunction_WithStringSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in ('one','two') return if (some $L2 in ('two','three','four') satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect(('one', 'two'), ('two', 'three', 'four'))");
+        "distinct-values(('one','two')[.= ('two','three','four')])", "ND-Root",
+        "value-intersect(('one', 'two'), ('two', 'three', 'four'))");
   }
 
   @Test
   void testIntersectFunction_WithNumberSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (1,2,3) return if (some $L2 in (2,3,4) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((1, 2, 3), (2, 3, 4))");
+    testExpressionTranslationWithContext("distinct-values((1,2,3)[.= (2,3,4)])", "ND-Root",
+        "value-intersect((1, 2, 3), (2, 3, 4))");
   }
 
   @Test
   void testIntersectFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:date('2018-01-01Z'),xs:date('2020-01-01Z')) return if (some $L2 in (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')) satisfies $L1 = $L2) then $L1 else ())",
+        "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[.= (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))])",
         "ND-Root", "value-intersect((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
   }
 
   @Test
   void testIntersectFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:time('12:00:00Z'),xs:time('13:00:00Z')) return if (some $L2 in (xs:time('12:00:00Z'),xs:time('14:00:00Z')) satisfies $L1 = $L2) then $L1 else ())",
+        "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[.= (xs:time('12:00:00Z'),xs:time('14:00:00Z'))])",
         "ND-Root", "value-intersect((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
   }
 
   @Test
-  void testIntersectFunction_WithDurationSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')) return if (some $L2 in (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((P1W, P2D), (P2D, P5D))");
-  }
-
-  @Test
   void testIntersectFunction_WithBooleanSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (true(),false()) return if (some $L2 in (false(),false()) satisfies $L1 = $L2) then $L1 else ())",
+    testExpressionTranslationWithContext("distinct-values((true(),false())[.= (false(),false())])",
         "ND-Root", "value-intersect((TRUE, FALSE), (FALSE, NEVER))");
   }
 
   @Test
   void testIntersectFunction_WithFieldReferences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (some $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect(BT-00-Text, BT-00-Text)");
+        "distinct-values(PathNode/TextField[.= PathNode/TextField])", "ND-Root",
+        "value-intersect(BT-00-Text, BT-00-Text)");
   }
 
   @Test
   void testIntersectFunction_WithTypeMismatch() {
-    assertThrows(ParseCancellationException.class,
-        () -> translateExpressionWithContext("ND-Root",
-            "value-intersect(BT-00-Text, BT-00-Number)"));
+    assertThrows(ParseCancellationException.class, () -> translateExpressionWithContext("ND-Root",
+        "value-intersect(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Except */
+  // #endregion: Intersect
+
+  // #region: Except
 
   @Test
   void testExceptFunction_WithStringSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in ('one','two') return if (every $L2 in ('two','three','four') satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(('one', 'two'), ('two', 'three', 'four'))");
+        "distinct-values(('one','two')[not(. = ('two','three','four'))])", "ND-Root",
+        "value-except(('one', 'two'), ('two', 'three', 'four'))");
   }
 
   @Test
   void testExceptFunction_WithNumberSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (1,2,3) return if (every $L2 in (2,3,4) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((1, 2, 3), (2, 3, 4))");
+    testExpressionTranslationWithContext("distinct-values((1,2,3)[not(. = (2,3,4))])", "ND-Root",
+        "value-except((1, 2, 3), (2, 3, 4))");
   }
 
   @Test
   void testExceptFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:date('2018-01-01Z'),xs:date('2020-01-01Z')) return if (every $L2 in (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')) satisfies $L1 != $L2) then $L1 else ())",
+        "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))[not(. = (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))])",
         "ND-Root", "value-except((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
   }
 
   @Test
   void testExceptFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:time('12:00:00Z'),xs:time('13:00:00Z')) return if (every $L2 in (xs:time('12:00:00Z'),xs:time('14:00:00Z')) satisfies $L1 != $L2) then $L1 else ())",
+        "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'))[not(. = (xs:time('12:00:00Z'),xs:time('14:00:00Z')))])",
         "ND-Root", "value-except((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
-  }
-
-  @Test
-  void testExceptFunction_WithDurationSequences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')) return if (every $L2 in (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((P1W, P2D), (P2D, P5D))");
   }
 
   @Test
   void testExceptFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (true(),false()) return if (every $L2 in (false(),false()) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((TRUE, FALSE), (FALSE, NEVER))");
+        "distinct-values((true(),false())[not(. = (false(),false()))])", "ND-Root",
+        "value-except((TRUE, FALSE), (FALSE, NEVER))");
   }
 
   @Test
-  void testExceptFunction_WithTextFieldReferences() {
+  void testExceptFunction_WithFieldReferences() {
     testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/TextField/normalize-space(text()) return if (every $L2 in PathNode/TextField/normalize-space(text()) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-Text, BT-00-Text)");
-  }
-
-  @Test
-  void testExceptFunction_WithNumberFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/IntegerField/number() return if (every $L2 in PathNode/IntegerField/number() satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-Integer, BT-00-Integer)");
-  }
-
-  @Test
-  void testExceptFunction_WithBooleanFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/IndicatorField return if (every $L2 in PathNode/IndicatorField satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-Indicator, BT-00-Indicator)");
-  }
-
-  @Test
-  void testExceptFunction_WithDateFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/StartDateField/xs:date(text()) return if (every $L2 in PathNode/StartDateField/xs:date(text()) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-StartDate, BT-00-StartDate)");
-  }
-
-  @Test
-  void testExceptFunction_WithTimeFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in PathNode/StartTimeField/xs:time(text()) return if (every $L2 in PathNode/StartTimeField/xs:time(text()) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-StartTime, BT-00-StartTime)");
-  }
-
-  @Test
-  void testExceptFunction_WithDurationFieldReferences() {
-    testExpressionTranslationWithContext(
-        "distinct-values(for $L1 in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) return if (every $L2 in (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except(BT-00-Measure, BT-00-Measure)");
+        "distinct-values(PathNode/TextField[not(. = PathNode/TextField)])", "ND-Root",
+        "value-except(BT-00-Text, BT-00-Text)");
   }
 
   @Test
@@ -1512,7 +1432,9 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         () -> translateExpressionWithContext("ND-Root", "value-except(BT-00-Text, BT-00-Number)"));
   }
 
-  /* Compare sequences */
+  // #endregion: Except
+
+  // #region: Compare sequences
 
   @Test
   void testSequenceEqualFunction_WithStringSequences() {
@@ -1558,49 +1480,53 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testSequenceEqualFunction_WithFieldReferences() {
     testExpressionTranslationWithContext(
-        "deep-equal(sort(PathNode/TextField/normalize-space(text())), sort(PathNode/TextField/normalize-space(text())))",
-        "ND-Root", "sequence-equal(BT-00-Text, BT-00-Text)");
+        "deep-equal(sort(PathNode/TextField), sort(PathNode/TextField))", "ND-Root",
+        "sequence-equal(BT-00-Text, BT-00-Text)");
   }
 
   @Test
-  void testParametrizedExpression_WithStringParameter() {
+  void testParameterizedExpression_WithStringParameter() {
     testExpressionTranslation("'hello' = 'world'", "{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}",
         "'hello'", "'world'");
   }
 
   @Test
-  void testParametrizedExpression_WithUnquotedStringParameter() {
+  void testParameterizedExpression_WithUnquotedStringParameter() {
     assertThrows(ParseCancellationException.class,
         () -> translateExpression("{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "hello", "world"));
   }
 
   @Test
-  void testParametrizedExpression_WithNumberParameter() {
+  void testParameterizedExpression_WithNumberParameter() {
     testExpressionTranslation("1 = 2", "{ND-Root, number:$p1, number:$p2} ${$p1 == $p2}", "1", "2");
   }
 
   @Test
-  void testParametrizedExpression_WithDateParameter() {
+  void testParameterizedExpression_WithDateParameter() {
     testExpressionTranslation("xs:date('2018-01-01Z') = xs:date('2020-01-01Z')",
         "{ND-Root, date:$p1, date:$p2} ${$p1 == $p2}", "2018-01-01Z", "2020-01-01Z");
   }
 
   @Test
-  void testParametrizedExpression_WithTimeParameter() {
+  void testParameterizedExpression_WithTimeParameter() {
     testExpressionTranslation("xs:time('12:00:00Z') = xs:time('13:00:00Z')",
         "{ND-Root, time:$p1, time:$p2} ${$p1 == $p2}", "12:00:00Z", "13:00:00Z");
   }
 
   @Test
-  void testParametrizedExpression_WithBooleanParameter() {
+  void testParameterizedExpression_WithBooleanParameter() {
     testExpressionTranslation("true() = false()",
         "{ND-Root, indicator:$p1, indicator:$p2} ${$p1 == $p2}", "ALWAYS", "FALSE");
   }
 
   @Test
-  void testParametrizedExpression_WithDurationParameter() {
+  void testParameterizedExpression_WithDurationParameter() {
     testExpressionTranslation(
         "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P2Y')))",
         "{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y");
   }
+
+  // #endregion: Compare sequences
+
+  // #endregion Sequence Functions
 }
