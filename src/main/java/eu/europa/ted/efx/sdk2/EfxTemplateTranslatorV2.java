@@ -44,33 +44,7 @@ import eu.europa.ted.efx.model.StringVariable;
 import eu.europa.ted.efx.model.TimeVariable;
 import eu.europa.ted.efx.model.Variable;
 import eu.europa.ted.efx.model.VariableList;
-import eu.europa.ted.efx.sdk1.EfxExpressionTranslatorV1;
-import eu.europa.ted.efx.sdk2.EfxParser.AssetIdContext;
-import eu.europa.ted.efx.sdk2.EfxParser.AssetTypeContext;
-import eu.europa.ted.efx.sdk2.EfxParser.BooleanVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationBlockContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ContextVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.DateVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ExpressionTemplateContext;
-import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
-import eu.europa.ted.efx.sdk2.EfxParser.LabelTypeContext;
-import eu.europa.ted.efx.sdk2.EfxParser.NumericVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandBtLabelReferenceContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandFieldLabelReferenceContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandFieldValueReferenceFromContextFieldContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandIndirectLabelReferenceContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandIndirectLabelReferenceFromContextFieldContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ShorthandLabelReferenceFromContextContext;
-import eu.europa.ted.efx.sdk2.EfxParser.StandardExpressionBlockContext;
-import eu.europa.ted.efx.sdk2.EfxParser.StandardLabelReferenceContext;
-import eu.europa.ted.efx.sdk2.EfxParser.StringVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableListContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TextTemplateContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TimeVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
@@ -330,7 +304,6 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         this.script.composeVariableReference("item", StringExpression.class);
     switch (fieldType) {
       case "indicator":
-
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(

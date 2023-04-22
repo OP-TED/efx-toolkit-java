@@ -45,8 +45,6 @@ import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.model.Expression.TimeListExpression;
-import eu.europa.ted.efx.sdk1.EfxExpressionTranslatorV1;
-import eu.europa.ted.efx.sdk1.EfxTemplateTranslatorV1;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
