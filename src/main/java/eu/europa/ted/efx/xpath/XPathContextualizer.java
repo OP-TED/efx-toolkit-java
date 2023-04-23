@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -16,22 +17,37 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
 import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.xpath.XPath20Parser.AxisstepContext;
+import eu.europa.ted.efx.xpath.XPath20Parser.FilterexprContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
-import eu.europa.ted.efx.xpath.XPath20Parser.StepexprContext;
 
 public class XPathContextualizer extends XPath20BaseListener {
 
   private final CharStream inputStream;
-  private final Queue<StepInfo> steps = new LinkedList<>();
+  private final LinkedList<StepInfo> steps = new LinkedList<>();
 
   public XPathContextualizer(CharStream inputStream) {
     this.inputStream = inputStream;
   }
 
+  /**
+   * Parses the XPath represented by th e given {@link PathExpression}} and
+   * returns a queue containing a {@link StepInfo} object for each step that the
+   * XPath is comprised of.
+   */
   private static Queue<StepInfo> getSteps(PathExpression xpath) {
+    return getSteps(xpath.script);
+  }
 
-    final CharStream inputStream = CharStreams.fromString(xpath.script);
+  /**
+   * Parses the given xpath and returns a queue containing a {@link StepInfo} for
+   * each step that the XPath is comprised of.
+   */
+  private static Queue<StepInfo> getSteps(String xpath) {
+
+    final CharStream inputStream = CharStreams.fromString(xpath);
     final XPath20Lexer lexer = new XPath20Lexer(inputStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final XPath20Parser parser = new XPath20Parser(tokens);
@@ -44,7 +60,12 @@ public class XPathContextualizer extends XPath20BaseListener {
     return contextualizer.steps;
   }
 
-
+  /**
+   * Makes the given xpath relative to the given context xpath.
+   * @param contextXpath
+   * @param xpath
+   * @return
+   */
   public static PathExpression contextualize(final PathExpression contextXpath,
       final PathExpression xpath) {
 
@@ -58,6 +79,57 @@ public class XPathContextualizer extends XPath20BaseListener {
     Queue<StepInfo> pathSteps = new LinkedList<StepInfo>(getSteps(xpath));
 
     return getContextualizedXpath(contextSteps, pathSteps);
+  }
+
+  public static PathExpression addPredicate(final PathExpression pathExpression, final String predicate) {
+    return new PathExpression(addPredicate(pathExpression.script, predicate));
+  }
+
+  /**
+   * Attempts to add a predicate to the given xpath.
+   * It will add the predicate to the last axis-step in the xpath.
+   * If there is no axis-step in the xpath then it will add the predicate to the last step.
+   * If the xpath is empty then it will still return a PathExpression but with an empty xpath.
+   */
+  public static String addPredicate(final String xpath, final String predicate) {
+    if (predicate == null) {
+      return xpath;
+    }
+    
+    String _predicate = predicate.trim();
+
+    if (_predicate.isEmpty()) {
+      return xpath;
+    }
+
+    if (!_predicate.startsWith("[")) {
+      _predicate = "[" + _predicate;
+    }
+
+    if (!_predicate.endsWith("]")) {
+      _predicate = _predicate + "]";
+    }
+
+    LinkedList<StepInfo> steps = new LinkedList<>(getSteps(xpath));
+
+    StepInfo lastAxisStep = getLastAxisStep(steps);
+    if (lastAxisStep != null) {
+      lastAxisStep.predicates.add(_predicate); 
+    } else if (steps.size() > 0) {
+      steps.getLast().predicates.add(_predicate);
+    }
+    return steps.stream().map(s -> s.stepText + s.getPredicateText()).collect(Collectors.joining("/"));
+  }
+
+  private static StepInfo getLastAxisStep(LinkedList<StepInfo> steps) {
+    int i = steps.size() - 1;
+    while (i >= 0 && !AxisStepInfo.class.isInstance(steps.get(i))) {
+      i--;
+    }
+    if (i < 0) {
+      return null;
+    }
+    return steps.get(i);
   }
 
   public static PathExpression join(final PathExpression first, final PathExpression second) {
@@ -174,9 +246,44 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   @Override
-  public void exitStepexpr(StepexprContext ctx) {
-    if (!inPredicateMode()) {
-      this.steps.offer(new StepInfo(ctx, this::getInputText));
+  public void exitAxisstep(AxisstepContext ctx) {
+    if (inPredicateMode()) {
+      return;
+    }
+
+    // When we recognize a step, we add it to the queue if is is empty.
+    // If the queue is not empty, and the depth of the new step is not smaller than
+    // the depth of the last step in the queue, then this step needs to be added to
+    // the queue too.
+    // Otherwise, the last step in the queue is a sub-expression of the new step,
+    // and we need to
+    // replace it in the queue with the new step.
+    if (this.steps.isEmpty() || !this.steps.getLast().isPartOf(ctx.getSourceInterval())) {
+      this.steps.offer(new AxisStepInfo(ctx, this::getInputText));
+    } else {
+      Interval removedInterval = ctx.getSourceInterval();
+      while(!this.steps.isEmpty() && this.steps.getLast().isPartOf(removedInterval)) {
+        this.steps.removeLast();
+      }
+      this.steps.offer(new AxisStepInfo(ctx, this::getInputText));
+    }    
+  }
+
+  @Override
+  public void exitFilterexpr(FilterexprContext ctx) {
+    if (inPredicateMode()) {
+      return;
+    }
+
+    // Same logic as for axis steps here (sse exitAxisstep).
+    if (this.steps.isEmpty() || !this.steps.getLast().isPartOf(ctx.getSourceInterval())) {
+      this.steps.offer(new FilterStepInfo(ctx, this::getInputText));
+    } else {
+      Interval removedInterval = ctx.getSourceInterval();
+      while(!this.steps.isEmpty() && this.steps.getLast().isPartOf(removedInterval)) {
+        this.steps.removeLast();
+      }
+      this.steps.offer(new FilterStepInfo(ctx, this::getInputText));
     }
   }
 
@@ -190,14 +297,33 @@ public class XPathContextualizer extends XPath20BaseListener {
     this.predicateMode--;
   }
 
-  private class StepInfo {
+  public class AxisStepInfo extends StepInfo {
+
+    public AxisStepInfo(AxisstepContext ctx, Function<ParserRuleContext, String> getInputText) {
+      super(ctx.reversestep() != null? getInputText.apply(ctx.reversestep()) : getInputText.apply(ctx.forwardstep()), 
+      ctx.predicatelist().predicate().stream().map(getInputText).collect(Collectors.toList()), ctx.getSourceInterval());
+    }
+  }
+
+  public class FilterStepInfo extends StepInfo {
+
+    public FilterStepInfo(FilterexprContext ctx, Function<ParserRuleContext, String> getInputText) {
+      super(getInputText.apply(ctx.primaryexpr()), 
+      ctx.predicatelist().predicate().stream().map(getInputText).collect(Collectors.toList()), ctx.getSourceInterval());
+    }
+  }
+
+  public class StepInfo {
     String stepText;
     List<String> predicates;
+    int a;
+    int b;
 
-    public StepInfo(StepexprContext ctx, Function<ParserRuleContext, String> getInputText) {
-      this.stepText = getInputText.apply(ctx.step());
-      this.predicates =
-          ctx.predicatelist().predicate().stream().map(getInputText).collect(Collectors.toList());
+    protected StepInfo(String stepText, List<String> predicates, Interval interval) {
+      this.stepText = stepText;
+      this.predicates = predicates;
+      this.a = interval.a;
+      this.b = interval.b;
     }
 
     public Boolean isVariableStep() {
@@ -240,6 +366,10 @@ public class XPathContextualizer extends XPath20BaseListener {
       Collections.sort(pathPredicates);
       Collections.sort(contextPredicates);
       return pathPredicates.equals(contextPredicates);
+    }
+
+    public Boolean isPartOf(Interval interval) {
+      return this.a >= interval.a && this.b <= interval.b;
     }
   }
 }

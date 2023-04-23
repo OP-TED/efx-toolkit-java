@@ -2,6 +2,7 @@ package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.DecimalFormat;
 
 public abstract class EfxTestsBase {
   protected abstract String getSdkVersion();
@@ -23,7 +24,7 @@ public abstract class EfxTestsBase {
   protected String translateExpression(final String expression, final String... params) {
     try {
       return EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE, getSdkVersion(),
-          expression, params);
+          expression, new EfxTranslatorOptions(DecimalFormat.EFX_DEFAULT), params);
     } catch (InstantiationException e) {
       throw new RuntimeException(e);
     }

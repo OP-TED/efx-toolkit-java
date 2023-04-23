@@ -4,11 +4,13 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponentFactory;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 
 public class ComponentFactory extends SdkComponentFactory {
   public static final ComponentFactory INSTANCE = new ComponentFactory();
@@ -43,15 +45,15 @@ public class ComponentFactory extends SdkComponentFactory {
     });
   }
 
-  public static MarkupGenerator getMarkupGenerator(final String sdkVersion)
+  public static MarkupGenerator getMarkupGenerator(final String sdkVersion, TranslatorOptions options)
       throws InstantiationException {
     return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-        SdkComponentType.MARKUP_GENERATOR, MarkupGenerator.class);
+        SdkComponentType.MARKUP_GENERATOR, MarkupGenerator.class, options);
   }
 
-  public static ScriptGenerator getScriptGenerator(final String sdkVersion)
+  public static ScriptGenerator getScriptGenerator(final String sdkVersion, TranslatorOptions options)
       throws InstantiationException {
     return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-        SdkComponentType.SCRIPT_GENERATOR, ScriptGenerator.class);
+        SdkComponentType.SCRIPT_GENERATOR, ScriptGenerator.class, options);
   }
 }

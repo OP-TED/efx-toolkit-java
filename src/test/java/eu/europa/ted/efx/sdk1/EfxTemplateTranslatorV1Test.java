@@ -155,9 +155,9 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   @Test
   void testTemplateLine_VariableScope() {
     assertEquals(
-        lines("let block01() -> { #1: eval(for $x in . return $x)", //
+        lines("let block01() -> { #1: eval(for $x in ./normalize-space(text()) return $x)", //
             "for-each(.).call(block0101()) }", //
-            "let block0101() -> { eval(for $x in . return $x) }", //
+            "let block0101() -> { eval(for $x in ./normalize-space(text()) return $x) }", //
             "for-each(/*/PathNode/TextField).call(block01())"), //
         translateTemplate(lines("{BT-00-Text} ${for text:$x in BT-00-Text return $x}",
             "    {BT-00-Text} ${for text:$x in BT-00-Text return $x}")));

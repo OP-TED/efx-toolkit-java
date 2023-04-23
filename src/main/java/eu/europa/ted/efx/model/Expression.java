@@ -67,8 +67,16 @@ public class Expression extends CallStackObject {
    */
   public final String script;
 
+  public final Boolean isLiteral;
+
   public Expression(final String script) {
     this.script = script;
+    this.isLiteral = false;
+  }
+
+  public Expression(final String script, final Boolean isLiteral) {
+    this.script = script;
+    this.isLiteral = isLiteral;
   }
 
   public static <T extends Expression> T instantiate(String script, Class<T> type) {
@@ -125,6 +133,10 @@ public class Expression extends CallStackObject {
     public BooleanExpression(final String script) {
       super(script);
     }
+
+    public BooleanExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -134,6 +146,10 @@ public class Expression extends CallStackObject {
 
     public NumericExpression(final String script) {
       super(script);
+    }
+
+    public NumericExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 
@@ -145,6 +161,10 @@ public class Expression extends CallStackObject {
     public StringExpression(final String script) {
       super(script);
     }
+
+    public StringExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -154,6 +174,10 @@ public class Expression extends CallStackObject {
 
     public DateExpression(final String script) {
       super(script);
+    }
+
+    public DateExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 
@@ -165,6 +189,10 @@ public class Expression extends CallStackObject {
     public TimeExpression(final String script) {
       super(script);
     }
+
+    public TimeExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -174,6 +202,10 @@ public class Expression extends CallStackObject {
 
     public DurationExpression(final String script) {
       super(script);
+    }
+    
+    public DurationExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 

@@ -1344,7 +1344,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitCountFunction(CountFunctionContext ctx) {
-    ListExpression<?> expression = this.stack.pop(ListExpression.class);
+    final ListExpression<?> expression = this.stack.pop(ListExpression.class);
     this.stack.push(this.script.composeCountOperation(expression));
   }
 

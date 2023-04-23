@@ -12,10 +12,13 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.DurationListExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
@@ -25,6 +28,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.model.Expression.TimeListExpression;
 
 @SdkComponent(versions = {"0.6", "0.7", "1", "2"},
     componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -45,6 +49,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
       entry(">", ">"), //
       entry(">=", ">="));
 
+  protected TranslatorOptions translatorOptions;
+
+  public XPathScriptGenerator(TranslatorOptions translatorOptions) {
+    this.translatorOptions = translatorOptions;
+  }
 
   @Override
   public <T extends Expression> T composeNodeReferenceWithPredicate(PathExpression nodeReference,
@@ -68,31 +77,30 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
 
-    if (StringExpression.class.isAssignableFrom(type)) {
+    if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
     }
-    if (NumericExpression.class.isAssignableFrom(type)) {
+    if (NumericExpression.class.isAssignableFrom(type) || NumericListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/number()", type);
     }
-    if (DateExpression.class.isAssignableFrom(type)) {
+    if (DateExpression.class.isAssignableFrom(type) || DateListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:date(text())", type);
     }
-    if (TimeExpression.class.isAssignableFrom(type)) {
+    if (TimeExpression.class.isAssignableFrom(type) || TimeListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
-    if (DurationExpression.class.isAssignableFrom(type)) {
-      return Expression
-          .instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
-              " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
-              " else if ($F/@unitCode='DAY')" + //
-              " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
-              " else if ($F/@unitCode='YEAR')" + //
-              " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
-              " else if ($F/@unitCode='MONTH')" + //
-              " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
-              // " else if (" + fieldReference.script + ")" + //
-              // " then fn:error('Invalid @unitCode')" + //
-              " else ()))", type);
+    if (DurationExpression.class.isAssignableFrom(type) || DurationListExpression.class.isAssignableFrom(type)) {
+      return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
+          " else if ($F/@unitCode='DAY')" + //
+          " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
+          " else if ($F/@unitCode='YEAR')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
+          " else if ($F/@unitCode='MONTH')" + //
+          " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
+          // " else if (" + fieldReference.script + ")" + //
+          // " then fn:error('Invalid @unitCode')" + //
+          " else ()))", type);
     }
 
     return Expression.instantiate(fieldReference.script, type);
@@ -138,40 +146,40 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public NumericExpression getNumericLiteralEquivalent(String literal) {
-    return new NumericExpression(literal);
+    return new NumericExpression(literal, true);
   }
 
   @Override
   public StringExpression getStringLiteralEquivalent(String literal) {
-    return new StringExpression(literal);
+    return new StringExpression(literal, true);
   }
 
   @Override
   public BooleanExpression getBooleanEquivalent(boolean value) {
-    return new BooleanExpression(value ? "true()" : "false()");
+    return new BooleanExpression(value ? "true()" : "false()", true);
   }
 
   @Override
   public DateExpression getDateLiteralEquivalent(String literal) {
-    return new DateExpression("xs:date(" + quoted(literal) + ")");
+    return new DateExpression("xs:date(" + quoted(literal) + ")", true);
   }
 
   @Override
   public TimeExpression getTimeLiteralEquivalent(String literal) {
-    return new TimeExpression("xs:time(" + quoted(literal) + ")");
+    return new TimeExpression("xs:time(" + quoted(literal) + ")", true);
   }
 
   @Override
   public DurationExpression getDurationLiteralEquivalent(final String literal) {
     if (literal.contains("M") || literal.contains("Y")) {
-      return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")");
+      return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")", true);
     }
     if (literal.contains("W")) {
       final int weeks = this.getWeeksFromDurationLiteral(literal);
       return new DurationExpression(
-          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
+          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")", true);
     }
-    return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")");
+    return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")", true);
   }
 
   @Override
@@ -425,7 +433,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
-    return new StringExpression("format-number(" + number.script + ", '0.##########')");
+    String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
+    return new StringExpression("format-number(" + number.script + ", '" + formatString + "')");
   }
 
   @Override
@@ -443,12 +452,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format) {
-    return new StringExpression("format-number(" + number.script + ", " + format.script + ")");
+        String formatString = format.isLiteral ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.script) : format.script;
+        return new StringExpression("format-number(" + number.script + ", " + formatString + ")");
   }
 
   @Override
   public StringExpression getStringLiteralFromUnquotedString(String value) {
-    return new StringExpression("'" + value + "'");
+    return new StringExpression("'" + value + "'", true);
   }
 
 
@@ -526,17 +536,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
-      L listTwo, Class<L> listType) {
-    return Expression.instantiate(
-        "distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (some $L2 in " + listTwo.script + " satisfies $L1 = $L2) then $L1 else ())", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
-      L listTwo, Class<L> listType) {
-    return Expression.instantiate(
-        "distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (every $L2 in " + listTwo.script + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
 
