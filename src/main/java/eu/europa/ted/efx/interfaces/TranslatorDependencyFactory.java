@@ -18,12 +18,12 @@ import org.antlr.v4.runtime.BaseErrorListener;
 /**
  * Instantiates the dependencies needed by an EFX translator.
  * 
- * An EFX expression translator needs the following dependencies to be instantiated:
- * - a SymbolResolver to resolve symbols (references of fields etc.).
- * - a ScriptGenerator to provide target script language syntax for specific computations.
- * - an error listener to handle any errors encountered during translation
- * An EFX template translator needs the all three dependencies listed above, plus one more:
- * - a MarkupGenerator to provide target markup language syntax for specific output constructs. 
+ * An EFX expression translator needs the following dependencies to be instantiated: - a
+ * SymbolResolver to resolve symbols (references of fields etc.). - a ScriptGenerator to provide
+ * target script language syntax for specific computations. - an error listener to handle any errors
+ * encountered during translation An EFX template translator needs the all three dependencies listed
+ * above, plus one more: - a MarkupGenerator to provide target markup language syntax for specific
+ * output constructs.
  */
 public interface TranslatorDependencyFactory {
 
@@ -52,7 +52,7 @@ public interface TranslatorDependencyFactory {
    *        language features that ScriptGenerator instance should be able to handle.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
-  public ScriptGenerator createScriptGenerator(String sdkVersion);
+  public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options);
 
   /**
    * Creates a MarkupGenerator instance.
@@ -65,7 +65,7 @@ public interface TranslatorDependencyFactory {
    *        language features that MarkupGenerator instance should be able to handle.
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
-  public MarkupGenerator createMarkupGenerator(String sdkVersion);
+  public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options);
 
   /**
    * Creates an error listener instance.

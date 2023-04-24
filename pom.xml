@@ -56,7 +56,7 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>1.0.2-SNAPSHOT</version.eforms-core>
+    <version.eforms-core>1.0.4-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
@@ -64,7 +64,7 @@
     <version.logback>1.2.11</version.logback>
     <version.jackson>2.13.4</version.jackson>
     <version.jackson-databind>2.13.4.2</version.jackson-databind>
-    <version.junit-jupiter-api>5.7.2</version.junit-jupiter-api>
+    <version.junit-jupiter>5.7.2</version.junit-jupiter>
     <version.slf4j>1.7.36</version.slf4j>
 
     <!-- Versions - Plugins -->
@@ -115,7 +115,12 @@
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
-        <version>${version.junit-jupiter-api}</version>
+        <version>${version.junit-jupiter}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-params</artifactId>
+        <version>${version.junit-jupiter}</version>
       </dependency>
       <dependency>
         <groupId>org.antlr</groupId>
@@ -135,6 +140,11 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

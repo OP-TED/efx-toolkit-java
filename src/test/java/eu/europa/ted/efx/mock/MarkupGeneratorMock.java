@@ -4,10 +4,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -42,7 +40,8 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeFragmentDefinition(String name, String number, Markup content, Set<String> parameters) {
+  public Markup composeFragmentDefinition(String name, String number, Markup content,
+      Set<String> parameters) {
     if (StringUtils.isBlank(number)) {
       return new Markup(String.format("let %s(%s) -> { %s }", name,
           parameters.stream().collect(Collectors.joining(", ")), content.script));
@@ -59,8 +58,10 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   @Override
   public Markup renderFragmentInvocation(String name, PathExpression context,
       Set<Pair<String, String>> variables) {
-    return new Markup(String.format("for-each(%s).call(%s(%s))", context.script, name, variables.stream()
-        .map(v -> String.format("%s:%s", v.getLeft(), v.getRight())).collect(Collectors.joining(", "))));
+    return new Markup(String.format("for-each(%s).call(%s(%s))", context.script, name,
+        variables.stream()
+            .map(v -> String.format("%s:%s", v.getLeft(), v.getRight()))
+            .collect(Collectors.joining(", "))));
   }
 
   @Override

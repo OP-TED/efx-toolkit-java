@@ -41,11 +41,12 @@ public interface SymbolResolver {
    * Gets the path that can be used to locate the given field in the data source, relative to
    * another given path.
    * 
-   * The "path" points to a location in the data source. The path will be eventually used to retrieve
-   * the data from the data source. Typically, the data source is an XML file, in which case the
-   * path should be an XPath. If the data source is a JSON file, then the path should be a JsonPath.
-   * If you intend to use a function call to retrieve the data from the data source then that is what
-   * you should return as path. In general keep in mind that the path is used as target language script.
+   * The "path" points to a location in the data source. The path will be eventually used to
+   * retrieve the data from the data source. Typically, the data source is an XML file, in which
+   * case the path should be an XPath. If the data source is a JSON file, then the path should be a
+   * JsonPath. If you intend to use a function call to retrieve the data from the data source then
+   * that is what you should return as path. In general keep in mind that the path is used as target
+   * language script.
    * 
    * @param fieldId The identifier of the field to look for.
    * @param contextPath The path relative to which we expect to find the return value.
@@ -59,7 +60,7 @@ public interface SymbolResolver {
    * given path.
    * 
    * See {@link getRelativePathOfField} for a description of the concept of "path".
-   *  
+   * 
    * @param nodeId The identifier of the node to look for.
    * @param contextPath The path relative to which we expect to find the return value.
    * @return The path to the given node relative to the given context path.

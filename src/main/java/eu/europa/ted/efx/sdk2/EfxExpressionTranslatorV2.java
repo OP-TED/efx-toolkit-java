@@ -16,7 +16,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
-
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
@@ -60,18 +59,22 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
  * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link EfxExpressionTranslatorV1} only focuses on EFX expressions. To translate EFX templates
- * you need to use the {@link EfxTemplateTranslatorV1} which derives from this class.
+ * {@link EfxExpressionTranslatorV1} only focuses on EFX expressions. To translate EFX templates you
+ * need to use the {@link EfxTemplateTranslatorV1} which derives from this class.
  */
 @SdkComponent(versions = {"2"}, componentType = SdkComponentType.EFX_EXPRESSION_TRANSLATOR)
 public class EfxExpressionTranslatorV2 extends EfxBaseListener
     implements EfxExpressionTranslator {
 
-  private static final String NOT_MODIFIER = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
+  private static final String NOT_MODIFIER =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
 
-  private static final String VARIABLE_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.VariablePrefix).replaceAll("^'|'$", "");
-  private static final String ATTRIBUTE_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.AttributePrefix).replaceAll("^'|'$", "");
-  private static final String CODELIST_PREFIX = EfxLexer.VOCABULARY.getLiteralName(EfxLexer.CodelistPrefix).replaceAll("^'|'$", "");
+  private static final String VARIABLE_PREFIX =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.VariablePrefix).replaceAll("^'|'$", "");
+  private static final String ATTRIBUTE_PREFIX =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.AttributePrefix).replaceAll("^'|'$", "");
+  private static final String CODELIST_PREFIX =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.CodelistPrefix).replaceAll("^'|'$", "");
 
   private static final String BEGIN_EXPRESSION_BLOCK = "{";
   private static final String END_EXPRESSION_BLOCK = "}";
@@ -107,7 +110,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   protected ScriptGenerator script;
 
   private LinkedList<String> expressionParameters = new LinkedList<>();
-  
+
   protected EfxExpressionTranslatorV2() {}
 
   public EfxExpressionTranslatorV2(final SymbolResolver symbolResolver,
@@ -143,12 +146,15 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return getTranslatedScript();
   }
 
-  private <T extends Expression> T translateParameter(final String parameterValue, final Class<T> parameterType) {
-    final EfxExpressionTranslatorV2 translator = new EfxExpressionTranslatorV2(this.symbols, this.script,
-        this.errorListener);
+  private <T extends Expression> T translateParameter(final String parameterValue,
+      final Class<T> parameterType) {
+    final EfxExpressionTranslatorV2 translator =
+        new EfxExpressionTranslatorV2(this.symbols, this.script,
+            this.errorListener);
 
     final EfxLexer lexer =
-        new EfxLexer(CharStreams.fromString(BEGIN_EXPRESSION_BLOCK + parameterValue + END_EXPRESSION_BLOCK));
+        new EfxLexer(
+            CharStreams.fromString(BEGIN_EXPRESSION_BLOCK + parameterValue + END_EXPRESSION_BLOCK));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
@@ -159,12 +165,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       parser.addErrorListener(errorListener);
     }
 
-      final ParseTree tree = parser.parameterValue();
-      final ParseTreeWalker walker = new ParseTreeWalker();
+    final ParseTree tree = parser.parameterValue();
+    final ParseTreeWalker walker = new ParseTreeWalker();
 
-      walker.walk(translator, tree);
+    walker.walk(translator, tree);
 
-      return Expression.instantiate(translator.getTranslatedScript(), parameterType);
+    return Expression.instantiate(translator.getTranslatedScript(), parameterType);
   }
 
   /**
@@ -191,18 +197,20 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     if (ctx instanceof AbsoluteFieldReferenceContext) {
-      return ((AbsoluteFieldReferenceContext) ctx).reference.reference.simpleFieldReference().FieldId()
+      return ((AbsoluteFieldReferenceContext) ctx).reference.reference.simpleFieldReference()
+          .FieldId()
           .getText();
     }
 
     if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
-      return ((FieldReferenceWithFieldContextOverrideContext) ctx).reference.reference.simpleFieldReference()
+      return ((FieldReferenceWithFieldContextOverrideContext) ctx).reference.reference
+          .simpleFieldReference()
           .FieldId().getText();
     }
 
     if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
-      return ((FieldReferenceWithNodeContextOverrideContext) ctx).reference.reference
-          .reference.simpleFieldReference().FieldId().getText();
+      return ((FieldReferenceWithNodeContextOverrideContext) ctx).reference.reference.reference
+          .simpleFieldReference().FieldId().getText();
     }
 
     SimpleFieldReferenceContext fieldReferenceContext =
@@ -434,7 +442,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void enterQuantifiedExpression(QuantifiedExpressionContext ctx) {
-    this.stack.pushStackFrame();  // Quantified expressions need their own scope because they introduce new variables.
+    this.stack.pushStackFrame(); // Quantified expressions need their own scope because they
+                                 // introduce new variables.
   }
 
   @Override
@@ -447,7 +456,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       this.stack.push(this.script.composeAnySatisfies(this.stack.pop(IteratorListExpression.class),
           booleanExpression));
     }
-    this.stack.popStackFrame(); // Variables declared in the quantified expression go out of scope here.
+    this.stack.popStackFrame(); // Variables declared in the quantified expression go out of scope
+                                // here.
   }
 
   /*** Numeric expressions ***/
@@ -693,7 +703,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitTimeIteratorExpression(TimeIteratorExpressionContext ctx) {
     this.exitIteratorExpression(TimeExpression.class, TimeListExpression.class);
   }
-  
+
   @Override
   public void exitDurationIteratorExpression(DurationIteratorExpressionContext ctx) {
     this.exitIteratorExpression(DurationExpression.class, DurationListExpression.class);
@@ -726,7 +736,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       iterators.add(0, this.stack.pop(IteratorExpression.class));
     }
     this.stack.push(this.script.composeIteratorList(iterators));
- }
+  }
 
   @Override
   public void exitParenthesizedStringsFromIteration(ParenthesizedStringsFromIterationContext ctx) {
@@ -839,7 +849,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeIteratorExpression(variable.script, list));
   }
 
-  public <T extends Expression, L extends ListExpression<T>> void exitIterationExpression(Class<T> expressionType,
+  public <T extends Expression, L extends ListExpression<T>> void exitIterationExpression(
+      Class<T> expressionType,
       Class<L> targetListType) {
     T expression = this.stack.pop(expressionType);
     IteratorListExpression iterators = this.stack.pop(IteratorListExpression.class);
@@ -1002,9 +1013,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       PathExpression field = this.stack.pop(PathExpression.class);
       PathExpression notice = this.stack.pop(PathExpression.class);
       this.stack.push(this.script.composeFieldInExternalReference(notice, field));
-      
-      // Finally, pop the null context we pushed during enterFieldReferenceInOtherNotice 
-      this.efxContext.pop();  
+
+      // Finally, pop the null context we pushed during enterFieldReferenceInOtherNotice
+      this.efxContext.pop();
     }
   }
 
@@ -1192,7 +1203,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.exitSequenceAtIndex(DurationExpression.class, DurationListExpression.class);
   }
 
-  private <T extends Expression, L extends ListExpression<T>> void exitSequenceAtIndex(Class<T> itemType, Class<L> listType) {
+  private <T extends Expression, L extends ListExpression<T>> void exitSequenceAtIndex(
+      Class<T> itemType, Class<L> listType) {
     NumericExpression index = this.stack.pop(NumericExpression.class);
     L list = this.stack.pop(listType);
     this.stack.push(this.script.composeIndexer(list, index, itemType));
@@ -1231,7 +1243,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.exitParameterDeclaration(this.getVariableName(ctx), DurationExpression.class);
   }
 
-  private <T extends Expression> void exitParameterDeclaration(String parameterName, Class<T> parameterType) {
+  private <T extends Expression> void exitParameterDeclaration(String parameterName,
+      Class<T> parameterType) {
     if (this.expressionParameters.isEmpty()) {
       throw new ParseCancellationException("No parameter passed for " + parameterName);
     }
@@ -1246,8 +1259,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
     String variableName = this.getVariableName(ctx);
-      this.stack.pushVariableDeclaration(variableName,
-          this.script.composeVariableDeclaration(variableName, StringExpression.class));
+    this.stack.pushVariableDeclaration(variableName,
+        this.script.composeVariableDeclaration(variableName, StringExpression.class));
   }
 
   @Override
@@ -1331,7 +1344,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitCountFunction(CountFunctionContext ctx) {
-    ListExpression<?> expression = this.stack.pop(ListExpression.class);
+    final ListExpression<?> expression = this.stack.pop(ListExpression.class);
     this.stack.push(this.script.composeCountOperation(expression));
   }
 
@@ -1583,7 +1596,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return this.getVariableName(ctx.Variable().getText());
   }
 
-    private String getVariableName(StringVariableDeclarationContext ctx) {
+  private String getVariableName(StringVariableDeclarationContext ctx) {
     return this.getVariableName(ctx.Variable().getText());
   }
 

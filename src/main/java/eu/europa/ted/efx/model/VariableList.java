@@ -5,25 +5,25 @@ import java.util.List;
 
 public class VariableList extends CallStackObject {
 
-    LinkedList<Variable<? extends Expression>> variables;
+  LinkedList<Variable<? extends Expression>> variables;
 
-    public VariableList() {
-        this.variables = new LinkedList<>();
-    }
+  public VariableList() {
+    this.variables = new LinkedList<>();
+  }
 
-    public <T extends Expression> void push(Variable<T> variable) {
-        this.variables.push(variable);
-    }
+  public <T extends Expression> void push(Variable<T> variable) {
+    this.variables.push(variable);
+  }
 
-    public synchronized Variable<? extends Expression> pop() {
-        return this.variables.pop();
-    }
+  public synchronized Variable<? extends Expression> pop() {
+    return this.variables.pop();
+  }
 
-    public boolean isEmpty() {
-        return this.variables.isEmpty();
-    }
+  public boolean isEmpty() {
+    return this.variables.isEmpty();
+  }
 
-    public List<Variable<? extends Expression>> asList() {
-        return this.variables;
-    }
+  public List<Variable<? extends Expression>> asList() {
+    return this.variables;
+  }
 }
