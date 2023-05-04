@@ -356,6 +356,9 @@
     <profile>
       <!-- Profile "release" caters to the requirements for releasing to Maven Central -->
       <id>release</id>
+      <properties>
+        <maven.compiler.debug>false</maven.compiler.debug>
+      </properties>
       <build>
         <plugins>
           <plugin>
