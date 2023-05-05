@@ -46,7 +46,8 @@ public class SdkSymbolResolver implements SymbolResolver {
    * Private, use getInstance method instead.
    *
    * @param sdkVersion The version of the SDK.
-   * @throws InstantiationException
+   * @param sdkRootPath The path to the root of the SDK.
+   * @throws InstantiationException If the SDK version is not supported.
    */
   public SdkSymbolResolver(final String sdkVersion, final Path sdkRootPath)
       throws InstantiationException {

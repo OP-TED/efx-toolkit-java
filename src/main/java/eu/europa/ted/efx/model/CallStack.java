@@ -39,6 +39,9 @@ public class CallStack {
     /**
      * Registers a parameter identifier and pushes a parameter declaration on the current stack
      * frame. Also stores the parameter value.
+     * @param parameterName The name of the parameter.
+     * @param parameterDeclarationExpression The expression used to declare the parameter.
+     * @param parameterValue The value passed to the parameter.
      */
     void pushParameterDeclaration(String parameterName, Expression parameterDeclarationExpression,
         Expression parameterValue) {
@@ -49,6 +52,8 @@ public class CallStack {
 
     /**
      * Registers a variable identifier and pushes a variable declaration on the current stack frame.
+     * @param variableName The name of the variable.
+     * @param variableDeclarationExpression The expression used to declare the variable.
      */
     void pushVariableDeclaration(String variableName, Expression variableDeclarationExpression) {
       this.declareIdentifier(variableName, variableDeclarationExpression.getClass());
@@ -58,6 +63,8 @@ public class CallStack {
     /**
      * Registers an identifier in the current scope. This registration is later used to check if an
      * identifier is declared in the current scope.
+     * @param identifier The identifier to register.
+     * @param type The type of the identifier.
      */
     void declareIdentifier(String identifier, Class<? extends Expression> type) {
       this.typeRegister.put(identifier, type);
@@ -65,6 +72,8 @@ public class CallStack {
 
     /**
      * Used to store parameter values.
+     * @param identifier The identifier of the parameter.
+     * @param value The value of the parameter.
      */
     void storeValue(String identifier, Expression value) {
       this.valueRegister.put(identifier, value);
@@ -73,6 +82,8 @@ public class CallStack {
     /**
      * Returns the object at the top of the stack and removes it from the stack. The object must be
      * of the expected type.
+     * @param expectedType The type that the returned object is expected to have.
+     * @return The object removed from the top of the stack.
      */
     synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
       Class<? extends CallStackObject> actualType = peek().getClass();
@@ -139,6 +150,12 @@ public class CallStack {
   /**
    * Pushes a parameter declaration on the current stack frame. Checks if another identifier with
    * the same name is already declared in the current scope.
+   * 
+   * @param parameterName The name of the parameter.
+   * @param parameterDeclaration The expression used to declare the parameter.
+   * @param parameterValue The value passed to the parameter.
+   * @throws ParseCancellationException if another identifier with the same name is already
+   *        declared in the current scope.
    */
   public void pushParameterDeclaration(String parameterName, Expression parameterDeclaration,
       Expression parameterValue) {
@@ -153,6 +170,9 @@ public class CallStack {
   /**
    * Pushes a variable declaration on the current stack frame. Checks if another identifier with the
    * same name is already declared in the current scope.
+   * 
+   * @param variableName The name of the variable.
+   * @param variableDeclaration The expression used to declare the variable.
    */
   public void pushVariableDeclaration(String variableName, Expression variableDeclaration) {
     if (this.inScope(variableName)) {
@@ -166,6 +186,9 @@ public class CallStack {
    * Declares a template variable. Template variables are tracked to ensure proper scoping. However,
    * their declaration is not pushed on the stack as they are declared at the template level (in
    * Markup) and not at the expression level (not in the target language script).
+   * 
+   * @param variableName The name of the variable.
+   * @param variableType The type of the variable.
    */
   public void declareTemplateVariable(String variableName,
       Class<? extends Expression> variableType) {
@@ -177,6 +200,9 @@ public class CallStack {
 
   /**
    * Checks if an identifier is declared in the current scope.
+   * 
+   * @param identifier The identifier to check.
+   * @return True if the identifier is declared in the current scope.
    */
   boolean inScope(String identifier) {
     return this.frames.stream().anyMatch(
@@ -185,6 +211,9 @@ public class CallStack {
 
   /**
    * Returns the stack frame containing the given identifier.
+   * 
+   * @param identifier The identifier to look for.
+   * @return The stack frame containing the given identifier or null if no such stack frame exists.
    */
   StackFrame findFrameContaining(String identifier) {
     return this.frames.stream()
@@ -195,6 +224,9 @@ public class CallStack {
 
   /**
    * Gets the value of a parameter.
+   * 
+   * @param identifier The identifier of the parameter.
+   * @return The value of the parameter.
    */
   Optional<Expression> getParameter(String identifier) {
     return this.frames.stream().filter(f -> f.valueRegister.containsKey(identifier)).findFirst()
@@ -203,6 +235,9 @@ public class CallStack {
 
   /**
    * Gets the type of a variable.
+   * 
+   * @param identifier The identifier of the variable.
+   * @return The type of the variable.
    */
   Optional<Class<? extends Expression>> getVariable(String identifier) {
     return this.frames.stream().filter(f -> f.typeRegister.containsKey(identifier)).findFirst()
@@ -212,6 +247,10 @@ public class CallStack {
   /**
    * Pushes a variable reference on the current stack frame. Makes sure there is no name collision
    * with other identifiers already in scope.
+   * 
+   * @param variableName The name of the variable.
+   * @param variableReference The variable to push on the stack.
+   * @throws ParseCancellationException if the variable is not declared in the current scope.
    */
   public void pushVariableReference(String variableName, Expression variableReference) {
     getParameter(variableName).ifPresentOrElse(parameterValue -> this.push(parameterValue),
@@ -225,6 +264,8 @@ public class CallStack {
   /**
    * Pushes a variable reference on the current stack frame. This method is private because it is
    * only used for to improve the readability of its public counterpart.
+   * @param variableReference The variable to push on the stack.
+   * @param variableType The type of the variable.
    */
   private void pushVariableReference(Expression variableReference,
       Class<? extends Expression> variableType) {
@@ -233,36 +274,46 @@ public class CallStack {
 
   /**
    * Pushes an object on the current stack frame. No checks, no questions asked.
+   * 
+   * @param item The object to push on the stack.
    */
   public void push(CallStackObject item) {
     this.frames.peek().push(item);
   }
 
   /**
-   * Returns the object at the top of the current stack frame and removes it from the stack.
+   * Gets the object at the top of the current stack frame and removes it from the stack.
    * 
+   * @param <T> The type of the object at the top of the current stack frame.
    * @param expectedType The that the returned object is expected to have.
+   * @return The object at the top of the current stack frame.
    */
   public synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
     return this.frames.peek().pop(expectedType);
   }
 
   /**
-   * Returns the object at the top of the current stack frame without removing it from the stack.
+   * Gets the object at the top of the current stack frame without removing it from the stack.
+   * 
+   * @return The object at the top of the current stack frame.
    */
   public synchronized CallStackObject peek() {
     return this.frames.peek().peek();
   }
 
   /**
-   * Returns the number of elements in the current stack frame.
+   * Gets the number of elements in the current stack frame.
+   * 
+   * @return The number of elements in the current stack frame.
    */
   public int size() {
     return this.frames.peek().size();
   }
 
   /**
-   * Returns true if the current stack frame is empty.
+   * Checks if the current stack frame is empty.
+   * 
+   * @return True if the current stack frame is empty.
    */
   public boolean empty() {
     return this.frames.peek().empty();

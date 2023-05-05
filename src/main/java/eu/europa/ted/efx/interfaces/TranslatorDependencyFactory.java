@@ -50,6 +50,7 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that ScriptGenerator instance should be able to handle.
+   * @param options The options to be used by the ScriptGenerator.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
   public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options);
@@ -63,6 +64,7 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that MarkupGenerator instance should be able to handle.
+   * @param options The options to be used by the MarkupGenerator.
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
   public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options);

@@ -48,6 +48,12 @@ public interface ScriptGenerator {
    * Similar to {@link #composeFieldReferenceWithPredicate} but for nodes. Quick reminder: the
    * difference between fields and nodes is that fields contain values, while nodes contain other
    * nodes and/or fields.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param nodeReference The PathExpression that points to the node.
+   * @param predicate The predicate that should be used to match the subset of nodes.
+   * @param type The type of the returned Expression.
+   * @return The target language script that matches the subset of nodes.
    */
   public <T extends Expression> T composeNodeReferenceWithPredicate(
       final PathExpression nodeReference, final BooleanExpression predicate, Class<T> type);
@@ -59,6 +65,12 @@ public interface ScriptGenerator {
    * Similar to {@link #composeNodeReferenceWithPredicate} but for fields. Quick reminder: the
    * difference between fields and nodes is that fields contain values, while nodes contain other
    * nodes and/or fields.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param fieldReference The PathExpression that points to the field.
+   * @param predicate The predicate that should be used to match the subset of fields.
+   * @param type The type of the returned Expression.
+   * @return The target language script that matches the subset of fields.
    */
   public <T extends Expression> T composeFieldReferenceWithPredicate(
       final PathExpression fieldReference, final BooleanExpression predicate, Class<T> type);
@@ -69,6 +81,11 @@ public interface ScriptGenerator {
   /**
    * Given a PathExpression, this method should return the target language script for retrieving the
    * value of the field.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param fieldReference The PathExpression that points to the field.
+   * @param type The type of the returned Expression.
+   * @return The target language script that retrieves the value of the field.
    */
   public <T extends Expression> T composeFieldValueReference(final PathExpression fieldReference,
       Class<T> type);
@@ -76,6 +93,12 @@ public interface ScriptGenerator {
   /**
    * Given a PathExpression and an attribute name, this method should return the target language
    * script for retrieving the value of the attribute.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param fieldReference The PathExpression that points to the field.
+   * @param attribute The name of the attribute.
+   * @param type The type of the returned Expression.
+   * @return The target language script that retrieves the value of the attribute.
    */
   public <T extends Expression> T composeFieldAttributeReference(
       final PathExpression fieldReference, String attribute, Class<T> type);
@@ -83,6 +106,11 @@ public interface ScriptGenerator {
   /**
    * Given a variable name this method should return script to dereference the variable. The
    * returned Expression should be of the indicated type.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param variableName The name of the variable.
+   * @param type The type of the returned Expression.
+   * @return The target language script that dereferences the variable.
    */
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type);
 
@@ -93,18 +121,31 @@ public interface ScriptGenerator {
   /**
    * Takes a list of string expressions and returns the target language script that corresponds to a
    * list of string expressions.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param <L> The type of the returned ListExpression.
+   * @param list The list of string expressions.
+   * @param type The type of the returned Expression.
+   * @return The target language script that corresponds to a list of string expressions.
    */
   public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list,
       Class<L> type);
 
   /**
    * Takes a Java Boolean value and returns the corresponding target language script.
+   * 
+   * @param value The Java Boolean value.
+   * @return The target language script that corresponds to the given Java Boolean value.
    */
   public BooleanExpression getBooleanEquivalent(boolean value);
 
   /**
    * Returns the target language script for performing a logical AND operation on the two given
    * operands.
+   * 
+   * @param leftOperand The left operand of the logical AND operation.
+   * @param rightOperand The right operand of the logical AND operation.
+   * @return The target language script for performing a logical AND operation on the two given
    */
   public BooleanExpression composeLogicalAnd(final BooleanExpression leftOperand,
       final BooleanExpression rightOperand);
@@ -112,6 +153,10 @@ public interface ScriptGenerator {
   /**
    * Returns the target language script for performing a logical OR operation on the two given
    * operands.
+   * 
+   * @param leftOperand The left operand of the logical OR operation.
+   * @param rightOperand The right operand of the logical OR operation.
+   * @return The target language script for performing a logical OR operation on the two given
    */
   public BooleanExpression composeLogicalOr(final BooleanExpression leftOperand,
       final BooleanExpression rightOperand);
@@ -119,12 +164,21 @@ public interface ScriptGenerator {
   /**
    * Returns the target language script for performing a logical NOT operation on the given boolean
    * expression.
+   * 
+   * @param condition The boolean expression to be negated.
+   * @return The target language script for performing a logical NOT operation on the given boolean
    */
   public BooleanExpression composeLogicalNot(BooleanExpression condition);
 
   /**
    * Returns the target language script that checks whether a given list of values (haystack)
    * contains a given value (needle).
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param <L> The type of the returned ListExpression.
+   * @param needle The value to be searched for.
+   * @param haystack The list of values to be searched.
+   * @return The target language script that checks whether a given list of values (haystack)
    */
   public <T extends Expression, L extends ListExpression<T>> BooleanExpression composeContainsCondition(
       final T needle, final L haystack);
@@ -132,12 +186,21 @@ public interface ScriptGenerator {
   /**
    * Returns the target language script that checks whether a given string matches the given RegEx
    * pattern.
+   * 
+   * @param expression The string expression to be matched.
+   * @param regexPattern The RegEx pattern to be used for matching.
+   * @return The target language script that checks whether a given string matches the given RegEx
    */
   public BooleanExpression composePatternMatchCondition(final StringExpression expression,
       final String regexPattern);
 
   /**
    * Returns the given expression parenthesized in the target language.
+   * 
+   * @param <T> The type of the returned Expression.
+   * @param expression The expression to be parenthesized.
+   * @param type The type of the returned Expression.
+   * @return The given expression parenthesized in the target language.
    */
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
@@ -179,11 +242,18 @@ public interface ScriptGenerator {
    * data is a two-step process: a) we need to access the data source, b) we need to get the actual
    * data from the data source. This method should return the target language script that connects
    * to the data source and permits us to subsequently get the data by using a PathExpression.
+   * 
+   * @param externalReference The PathExpression that points to the external data source.
+   * @return a PathExpression with the target language script that retrieves the external data source.
    */
   public PathExpression composeExternalReference(final StringExpression externalReference);
 
   /**
    * See {@link #composeExternalReference} for more details.
+   * 
+   * @param externalReference The PathExpression that points to the external data source.
+   * @param fieldReference The PathExpression that points to the field in the external data source.
+   * @return a PathExpression with the target language script that retrieves the external data. 
    */
   public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
       final PathExpression fieldReference);
@@ -195,23 +265,26 @@ public interface ScriptGenerator {
    * 
    * @param first The part of the path that goes before the delimiter.
    * @param second The part of the path that goes after the delimiter.
-   * @return
+   * @return The joined path expression.
    */
   public PathExpression joinPaths(PathExpression first, PathExpression second);
 
   /**
    * Gets a piece of text and returns it inside quotes as expected by the target language.
    * 
-   * @param value
-   * @return
+   * @param value The text to be quoted.
+   * @return The quoted text.
    */
   public StringExpression getStringLiteralFromUnquotedString(String value);
 
   /**
    * Returns the target language script that compares the two operands (for equality etc.).
    * 
+   * @param leftOperand The left operand of the comparison.
    * @param operator The EFX operator that is used to compare the two operands. Do not forget to
    *        translate the operator to the target language equivalent.
+   * @param rightOperand The right operand of the comparison.
+   * @return The target language script that performs the comparison.
    */
   public BooleanExpression composeComparisonOperation(Expression leftOperand, String operator,
       Expression rightOperand);
@@ -220,20 +293,29 @@ public interface ScriptGenerator {
    * Given a numeric operation, this method should return the target language script that performs
    * the operation.
    * 
+   * @param leftOperand The left operand of the numeric operation.
    * @param operator The EFX intended operator. Do not forget to translate the operator to the
    *        target language equivalent.
+   * @param rightOperand The right operand of the numeric operation.
+   * @return The target language script that performs the numeric operation.
    */
   public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
       NumericExpression rightOperand);
 
   /**
    * Returns the numeric literal passed in target language script. The passed literal is in EFX.
+   * 
+   * @param efxLiteral The numeric literal in EFX.
+   * @return The numeric literal in the target language.
    */
   public NumericExpression getNumericLiteralEquivalent(final String efxLiteral);
 
   /**
    * Returns the string literal in the target language. Note that the string literal passed as a
    * parameter is already between quotes in EFX.
+   * 
+   * @param efxLiteral The string literal in EFX.
+   * @return The string literal in the target language.
    */
   public StringExpression getStringLiteralEquivalent(final String efxLiteral);
 

@@ -62,9 +62,10 @@ public class XPathContextualizer extends XPath20BaseListener {
 
   /**
    * Makes the given xpath relative to the given context xpath.
-   * @param contextXpath
-   * @param xpath
-   * @return
+   * 
+   * @param contextXpath the context xpath
+   * @param xpath the xpath to contextualize
+   * @return the contextualized xpath
    */
   public static PathExpression contextualize(final PathExpression contextXpath,
       final PathExpression xpath) {
@@ -90,6 +91,10 @@ public class XPathContextualizer extends XPath20BaseListener {
    * It will add the predicate to the last axis-step in the xpath.
    * If there is no axis-step in the xpath then it will add the predicate to the last step.
    * If the xpath is empty then it will still return a PathExpression but with an empty xpath.
+   * 
+   * @param xpath the xpath to add the predicate to
+   * @param predicate the predicate to add
+   * @return the xpath with the predicate added
    */
   public static String addPredicate(final String xpath, final String predicate) {
     if (predicate == null) {
