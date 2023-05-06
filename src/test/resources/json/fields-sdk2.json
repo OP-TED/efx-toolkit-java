@@ -1,7 +1,7 @@
 [
   {
     "id": "BT-00-Text",
-    "alias": "text",
+    "alias": "textField",
     "type": "text",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/TextField",
@@ -9,7 +9,7 @@
   },
   {
     "id": "BT-00-Attribute",
-    "alias": "attribute",
+    "alias": "attributeField",
     "type": "text",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/TextField/@Attribute",
@@ -17,7 +17,7 @@
   },
   {
     "id": "BT-00-Indicator",
-    "alias": "indicator",
+    "alias": "indicatorField",
     "type": "indicator",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/IndicatorField",
@@ -25,7 +25,7 @@
   },
   {
     "id": "BT-00-Code",
-    "alias": "code",
+    "alias": "codeField",
     "type": "code",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/CodeField",
@@ -40,7 +40,7 @@
   },
   {
     "id": "BT-00-Internal-Code",
-    "alias": "internalCode",
+    "alias": "internalCodeField",
     "type": "internal-code",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/InternalCodeField",
@@ -55,7 +55,7 @@
   },
   {
     "id": "BT-00-CodeAttribute",
-    "alias": "codeAttribute",
+    "alias": "codeAttributeField",
     "type": "code",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/CodeField/@attribute",
@@ -70,7 +70,7 @@
   },
   {
     "id": "BT-00-Text-Multilingual",
-    "alias": "textMultilingual",
+    "alias": "textMultilingualField",
     "type": "text-multilingual",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/TextMultilingualField",
@@ -78,7 +78,7 @@
   },
   {
     "id": "BT-00-StartDate",
-    "alias": "startDate",
+    "alias": "startDateField",
     "type": "date",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/StartDateField",
@@ -86,7 +86,7 @@
   },
   {
     "id": "BT-00-EndDate",
-    "alias": "endDate",
+    "alias": "endDateField",
     "type": "date",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/EndDateField",
@@ -94,7 +94,7 @@
   },
   {
     "id": "BT-00-StartTime",
-    "alias": "startTime",
+    "alias": "startTimeField",
     "type": "time",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/StartTimeField",
@@ -102,7 +102,7 @@
   },
   {
     "id": "BT-00-EndTime",
-    "alias": "endTime",
+    "alias": "endTimeField",
     "type": "time",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/EndTimeField",
@@ -110,7 +110,7 @@
   },
   {
     "id": "BT-00-Measure",
-    "alias": "measure",
+    "alias": "measureField",
     "type": "measure",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/MeasureField",
@@ -118,7 +118,7 @@
   },
   {
     "id": "BT-00-Integer",
-    "alias": "integer",
+    "alias": "integerField",
     "type": "integer",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/IntegerField",
@@ -126,7 +126,7 @@
   },
   {
     "id": "BT-00-Amount",
-    "alias": "amount",
+    "alias": "amountField",
     "type": "amount",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/AmountField",
@@ -134,7 +134,7 @@
   },
   {
     "id": "BT-00-Url",
-    "alias": "url",
+    "alias": "urlField",
     "type": "url",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/UrlField",
@@ -142,7 +142,7 @@
   },
   {
     "id": "BT-00-Zoned-Date",
-    "alias": "zonedDate",
+    "alias": "zonedDateField",
     "type": "zoned-date",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/ZonedDateField",
@@ -150,7 +150,7 @@
   },
   {
     "id": "BT-00-Zoned-Time",
-    "alias": "zonedTime",
+    "alias": "zonedTimeField",
     "type": "zoned-time",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/ZonedTimeField",
@@ -158,7 +158,7 @@
   },
   {
     "id": "BT-00-Id-Ref",
-    "alias": "idRef",
+    "alias": "idRefField",
     "type": "id-ref",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/IdRefField",
@@ -166,7 +166,7 @@
   },
   {
     "id": "BT-00-Number",
-    "alias": "number",
+    "alias": "numberField",
     "type": "number",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/NumberField",
@@ -174,7 +174,7 @@
   },
   {
     "id": "BT-00-Phone",
-    "alias": "phone",
+    "alias": "phoneField",
     "type": "phone",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/PhoneField",
@@ -182,7 +182,7 @@
   },
   {
     "id": "BT-00-Email",
-    "alias": "email",
+    "alias": "emailField",
     "type": "email",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/EmailField",
@@ -190,7 +190,7 @@
   },
   {
     "id": "BT-01-SubLevel-Text",
-    "alias": "subLevel_text",
+    "alias": "subLevel_textField",
     "type": "text",
     "parentNodeId": "ND-Root",
     "xpathAbsolute": "/*/PathNode/ChildNode/SubLevelTextField",
@@ -198,7 +198,7 @@
   },
   {
     "id": "BT-01-SubNode-Text",
-    "alias": "subNode_text",
+    "alias": "subNode_textField",
     "type": "text",
     "parentNodeId": "ND-SubNode",
     "xpathAbsolute": "/*/SubNode/SubTextField",

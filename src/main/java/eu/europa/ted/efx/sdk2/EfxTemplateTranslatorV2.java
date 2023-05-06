@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -69,23 +70,14 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
-  private static final String LABEL_TYPE_NAME =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.LABEL_TYPE_NAME).replaceAll("^'|'$", "");
-  private static final String LABEL_TYPE_WHEN = EfxLexer.VOCABULARY
-      .getLiteralName(EfxLexer.LABEL_TYPE_WHEN_TRUE).replaceAll("^'|'$", "").replace("-true", "");
-  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ValueKeyword).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_INDICATOR =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_INDICATOR).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_BT =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_BT).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_FIELD =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_FIELD).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_NODE =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_NODE).replaceAll("^'|'$", "");
-  private static final String ASSET_TYPE_CODE =
-      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ASSET_TYPE_CODE).replaceAll("^'|'$", "");
-
+  private static final String LABEL_TYPE_NAME = getLexerSymbol(EfxLexer.LABEL_TYPE_NAME);
+  private static final String LABEL_TYPE_WHEN = getLexerSymbol(EfxLexer.LABEL_TYPE_WHEN_TRUE).replace("-true", "");
+  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = getLexerSymbol(EfxLexer.ValueKeyword);
+  private static final String ASSET_TYPE_INDICATOR = getLexerSymbol(EfxLexer.Indicator);
+  private static final String ASSET_TYPE_BT = getLexerSymbol(EfxLexer.ASSET_TYPE_BT);
+  private static final String ASSET_TYPE_FIELD = getLexerSymbol(EfxLexer.ASSET_TYPE_FIELD);
+  private static final String ASSET_TYPE_NODE = getLexerSymbol(EfxLexer.ASSET_TYPE_NODE);
+  private static final String ASSET_TYPE_CODE = getLexerSymbol(EfxLexer.Code);
 
   /**
    * Used to control the indentation style used in a template
@@ -150,7 +142,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   private String renderTemplate(final CharStream charStream) {
     logger.debug("Rendering template");
 
-    final EfxLexer lexer = new EfxLexer(charStream);
+    final TemplatePreprocessor preprocessor = this.new TemplatePreprocessor(charStream);
+    final String preprocessedTemplate = preprocessor.processTemplate();
+
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(preprocessedTemplate));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
 
@@ -485,7 +480,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (ctx.contextVariableInitializer() == null) {
       return null;
     }
-    final String variableName = this.getVariableName(ctx.contextVariableInitializer());
+    final String variableName = getVariableName(ctx.contextVariableInitializer());
     return new Variable<>(variableName, XPathContextualizer.contextualize(contextPath, contextPath),
         this.script.composeVariableReference(variableName, PathExpression.class));
   }
@@ -497,37 +492,37 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), StringVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), StringVariable.class,
         StringExpression.class);
   }
 
   @Override
   public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), BooleanVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), BooleanVariable.class,
         BooleanExpression.class);
   }
 
   @Override
   public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), NumericVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), NumericVariable.class,
         NumericExpression.class);
   }
 
   @Override
   public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), DateVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), DateVariable.class,
         DateExpression.class);
   }
 
   @Override
   public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), TimeVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), TimeVariable.class,
         TimeExpression.class);
   }
 
   @Override
   public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
-    this.exitVariableInitializer(this.getVariableName(ctx), DurationVariable.class,
+    this.exitVariableInitializer(getVariableName(ctx), DurationVariable.class,
         DurationExpression.class);
   }
 
@@ -668,34 +663,157 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     return 0;
   }
 
-  private String getVariableName(StringVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(StringVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(NumericVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(NumericVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(BooleanVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(BooleanVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(DateVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(DateVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(TimeVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(TimeVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(DurationVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(DurationVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
-  private String getVariableName(ContextVariableInitializerContext ctx) {
-    return this.getVariableName(ctx.Variable().getText());
+  static private String getVariableName(ContextVariableInitializerContext ctx) {
+    return getVariableName(ctx.Variable().getText());
   }
 
   // #endregion Helpers -------------------------------------------------------
 
+  // #region Pre-processing -------------------------------------------------
+
+  /**
+   * This class is used to pre-process the template before it is actually translated. 
+   * For details, see the comments in the base class {@link ExpressionPreprocessor}.
+   */
+  class TemplatePreprocessor extends ExpressionPreprocessor {
+
+    TemplatePreprocessor(CharStream template) {
+      super(template);
+    }
+
+    String processTemplate() {
+      final ParseTree tree = parser.templateFile();
+      final ParseTreeWalker walker = new ParseTreeWalker();
+      walker.walk(this, tree);
+      return this.rewriter.getText();
+    }
+
+    // #region Template Variables ---------------------------------------------
+  
+    @Override
+    public void exitContextDeclaration(ContextDeclarationContext ctx) {
+      final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+      if (filedId != null) {
+        final ContextVariableInitializerContext initializer = ctx.contextVariableInitializer();
+        if (initializer != null) {
+          this.stack.declareTemplateVariable(getVariableName(initializer),
+              Expression.types.get(this.symbols.getTypeOfField(filedId)));
+        }
+      }
+    }
+
+    @Override
+    public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), StringExpression.class);
+    }
+  
+    @Override
+    public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), BooleanExpression.class);
+    }
+  
+    @Override
+    public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), NumericExpression.class);
+    }
+  
+    @Override
+    public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), DateExpression.class);
+    }
+  
+    @Override
+    public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), TimeExpression.class);
+    }
+  
+    @Override
+    public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
+      this.stack.declareTemplateVariable(getVariableName(ctx), DurationExpression.class);
+    }
+  
+    // #endregion Template Variables ------------------------------------------
+    
+    // #region Scope management --------------------------------------------
+
+    Stack<Integer> levels = new Stack<Integer>();
+
+    @Override
+    public void enterTemplateLine(TemplateLineContext ctx) {
+      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx);
+      final int indentChange = indentLevel - (this.levels.isEmpty() ? 0 : this.levels.peek());
+      if (indentChange > 1) {
+        throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      } else if (indentChange == 1) {
+        if (this.levels.isEmpty()) {
+          throw new ParseCancellationException(START_INDENT_AT_ZERO);
+        }
+        this.stack.pushStackFrame(); // Create a stack frame for the new template line.
+      } else if (indentChange < 0) {
+        for (int i = indentChange; i < 0; i++) {
+          assert !this.levels.isEmpty() : UNEXPECTED_INDENTATION;
+          assert this.levels.peek() > indentLevel : UNEXPECTED_INDENTATION;
+          this.levels.pop();
+          this.stack.popStackFrame(); // Each skipped indentation level must go out of scope.
+        }
+        this.stack.popStackFrame();
+        this.stack.pushStackFrame();
+        assert this.levels.peek() == indentLevel : UNEXPECTED_INDENTATION;
+      } else if (indentChange == 0) {
+        this.stack.popStackFrame();
+        this.stack.pushStackFrame();
+      }
+    }
+
+    @Override
+    public void exitTemplateLine(TemplateLineContext ctx) {
+      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx);
+      final int indentChange = indentLevel - (this.levels.isEmpty() ? 0 : this.levels.peek());
+      assert this.stack.empty() : "Stack should be empty at this point.";
+
+      if (indentChange > 1) {
+        throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      } else if (indentChange == 1) {
+        if (this.levels.isEmpty()) {
+          throw new ParseCancellationException(START_INDENT_AT_ZERO);
+        }
+        this.levels.push(this.levels.peek() + 1);
+      } else if (indentChange == 0) {
+
+        if (this.levels.isEmpty()) {
+          assert indentLevel == 0 : UNEXPECTED_INDENTATION;
+          this.levels.push(0);
+        }
+      }
+    }
+
+    // #endregion Scope management --------------------------------------------
+
+  }
+
+  // #endregion Pre-processing ------------------------------------------------
 }

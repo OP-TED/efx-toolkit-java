@@ -86,10 +86,10 @@ public class CallStack {
      * @return The object removed from the top of the stack.
      */
     synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
-      Class<? extends CallStackObject> actualType = peek().getClass();
+      Class<? extends CallStackObject> actualType = this.peek().getClass();
       if (!expectedType.isAssignableFrom(actualType) && !actualType.equals(Expression.class)) {
         throw new ParseCancellationException(String.format(TYPE_MISMATCH,
-            expectedType.getSimpleName(), this.peek().getClass().getSimpleName()));
+            expectedType.getSimpleName(), actualType.getSimpleName()));
       }
       return expectedType.cast(this.pop());
     }
@@ -242,6 +242,20 @@ public class CallStack {
   Optional<Class<? extends Expression>> getVariable(String identifier) {
     return this.frames.stream().filter(f -> f.typeRegister.containsKey(identifier)).findFirst()
         .map(x -> x.typeRegister.get(identifier));
+  }
+
+  /**
+   * Gets the type of a variable.
+   * 
+   * @param identifier The identifier of the variable.
+   * @return The type of the variable.
+   */
+  public Class<? extends Expression> getTypeOfIdentifier(String identifier) {
+    Optional<Class<? extends Expression>> type = this.getVariable(identifier);
+    if (!type.isPresent()) {
+      throw new ParseCancellationException(UNDECLARED_IDENTIFIER + identifier);
+    }
+    return type.get();
   }
 
   /**

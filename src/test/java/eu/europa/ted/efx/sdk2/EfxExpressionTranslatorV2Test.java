@@ -91,14 +91,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
         "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
-        "Root", "text == textMultilingual");
+        "Root", "textField == textMultilingualField");
   }
 
   @Test
   void testFieldValueComparison_UsingNumericFields() {
     testExpressionTranslationWithContext(
         "PathNode/NumberField/number() <= PathNode/IntegerField/number()", "ND-Root",
-        "BT-00-Number <= integer");
+        "BT-00-Number <= integerField");
   }
 
   @Test
@@ -138,7 +138,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFieldValueComparison_WithNumericLiteral() {
     testExpressionTranslationWithContext(
         "PathNode/IntegerField/number() - PathNode/NumberField/number() > 0", "ND-Root",
-        "integer - BT-00-Number > 0");
+        "integerField - BT-00-Number > 0");
   }
 
   @Test
@@ -268,7 +268,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNegativeDuration_ViaMultiplicationWithField() {
     assertEquals(
         "(-3 * (2 * (for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))))",
-        translateExpressionWithContext("ND-Root", "2 * measure:BT-00-Measure * -3"));
+        translateExpressionWithContext("ND-Root", "2 * (measure)BT-00-Measure * -3"));
   }
 
   @Test
@@ -1078,19 +1078,19 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
     testExpressionTranslationWithContext("../IntegerField/number()", "BT-00-Code",
-        "BT-01-SubLevel-Text::integer");
+        "BT-01-SubLevel-Text::integerField");
   }
 
   @Test
   void testFieldReferenceWithNodeContextOverride() {
     testExpressionTranslationWithContext("../../PathNode/IntegerField/number()", "BT-00-Text",
-        "ND-Root::integer");
+        "ND-Root::integerField");
   }
 
   @Test
   void testFieldReferenceWithNodeContextOverride_WithPredicate() {
     testExpressionTranslationWithContext("../../PathNode/IntegerField/number()", "BT-00-Text",
-        "ND-Root[BT-00-Indicator == TRUE]::integer");
+        "ND-Root[BT-00-Indicator == TRUE]::integerField");
   }
 
   @Test
@@ -1114,7 +1114,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldReference_WithAxis() {
     testExpressionTranslationWithContext("./preceding::PathNode/IntegerField/number()", "ND-Root",
-        "ND-Root::preceding::integer");
+        "ND-Root::preceding::integerField");
   }
 
   // #endregion: References
@@ -1616,14 +1616,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testIndexer_WithFieldReference() {
-    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text())[1]", "ND-Root", "text:BT-00-Text[1]");
+    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text())[1]", "ND-Root", "(text)BT-00-Text[1]");
   }
 
   @Test
   void testIndexer_WithFieldReferenceAndPredicate() {
     testExpressionTranslationWithContext(
         "PathNode/TextField[./normalize-space(text()) = 'hello']/normalize-space(text())[1]", "ND-Root",
-        "text:BT-00-Text[BT-00-Text == 'hello'][1]");
+        "(text)BT-00-Text[BT-00-Text == 'hello'][1]");
   }
 
   @Test
