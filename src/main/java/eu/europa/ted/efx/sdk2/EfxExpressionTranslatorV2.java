@@ -59,8 +59,8 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
  * Apart from writing expressions that can be translated and evaluated in a target scripting
  * language (e.g. XPath/XQuery, JavaScript etc.), EFX also allows the definition of templates that
  * can be translated to a target template markup language (e.g. XSLT, Thymeleaf etc.). The
- * {@link EfxExpressionTranslatorV1} only focuses on EFX expressions. To translate EFX templates you
- * need to use the {@link EfxTemplateTranslatorV1} which derives from this class.
+ * {@link EfxExpressionTranslatorV2} only focuses on EFX expressions. To translate EFX templates you
+ * need to use the {@link EfxTemplateTranslatorV2} which derives from this class.
  */
 @SdkComponent(versions = {"2"}, componentType = SdkComponentType.EFX_EXPRESSION_TRANSLATOR)
 public class EfxExpressionTranslatorV2 extends EfxBaseListener
@@ -189,6 +189,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleFieldReferenceContext} to locate a field identifier.
+   * 
+   * @param ctx The context to start from.
+   * @return The field identifier, or null if none was found.
    */
   protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
@@ -234,6 +237,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleNodeReferenceContext} to locate a node identifier.
+   * 
+   * @param ctx The context to start from.
+   * @return The node identifier, or null if none was found.
    */
   protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
@@ -271,7 +277,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.efxContext.pop();
   }
 
-  /*** Boolean expressions ***/
+  // #region Boolean expressions ----------------------------------------------
 
   @Override
   public void exitParenthesizedBooleanExpression(
@@ -294,7 +300,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeLogicalOr(left, right));
   }
 
-  /*** Boolean expressions - Comparisons ***/
+  // #region Boolean expressions - Comparisons --------------------------------
 
   @Override
   public void exitFieldValueComparison(FieldValueComparisonContext ctx) {
@@ -349,7 +355,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeComparisonOperation(left, ctx.operator.getText(), right));
   }
 
-  /*** Boolean expressions - Conditions ***/
+  // #endregion Boolean expressions - Comparisons -----------------------------
+
+  // #region Boolean expressions - Conditions --------------------------------
 
   @Override
   public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
@@ -395,7 +403,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(condition);
   }
 
-  /*** Boolean expressions - List membership conditions ***/
+  // #endregion Boolean expressions - Conditions ------------------------------
+
+  // #region Boolean expressions - List membership conditions -----------------
 
   @Override
   public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
@@ -438,7 +448,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(condition);
   }
 
-  /*** Quantified expressions ***/
+  // #endregion Boolean expressions - List membership conditions -----------------
+
+  // #endregion Boolean expressions -------------------------------------------
+
+  // #region Quantified expressions -------------------------------------------
 
   @Override
   public void enterQuantifiedExpression(QuantifiedExpressionContext ctx) {
@@ -460,7 +474,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
                                 // here.
   }
 
-  /*** Numeric expressions ***/
+  // #endregion Quantified expressions ----------------------------------------
+
+  // #region Numeric expressions ----------------------------------------------
 
   @Override
   public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
@@ -482,7 +498,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.stack.pop(NumericExpression.class), NumericExpression.class));
   }
 
-  /*** Duration Expressions ***/
+  // #endregion Numeric expressions -------------------------------------------
+
+  // #region Duration Expressions ---------------------------------------------
 
   @Override
   public void exitDurationAdditionExpression(DurationAdditionExpressionContext ctx) {
@@ -577,7 +595,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeList(list, listType));
   }
 
-  /*** Conditional Expressions ***/
+  // #endregion Duration Expressions ------------------------------------------
+
+  // #region Conditional Expressions ------------------------------------------
 
   @Override
   public void exitUntypedConditionalExpression(UntypedConditionalExpressionContext ctx) {
@@ -677,7 +697,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         DurationExpression.class));
   }
 
-  /*** Iterators ***/
+  // #endregion Conditional Expressions ---------------------------------------
+
+  // #region Iterators --------------------------------------------------------
 
   @Override
   public void exitStringIteratorExpression(StringIteratorExpressionContext ctx) {
@@ -858,7 +880,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         .push(this.script.composeForExpression(iterators, expression, targetListType));
   }
 
-  /*** Literals ***/
+  // #endregion Iterators -----------------------------------------------------
+
+  // #region Literals ---------------------------------------------------------
 
   @Override
   public void exitNumericLiteral(NumericLiteralContext ctx) {
@@ -895,7 +919,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.getDurationLiteralEquivalent(ctx.getText()));
   }
 
-  /*** References ***/
+  // #endregion Literals ------------------------------------------------------
+
+  // #region References -------------------------------------------------------
 
   @Override
   public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
@@ -938,7 +964,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
 
-  /*** References with Predicates ***/
+  // #region References with Predicates ---------------------------------------
 
   @Override
   public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
@@ -992,7 +1018,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
   }
 
-  /*** External References ***/
+  // #endregion References with Predicates ------------------------------------
+
+  // #region External References ----------------------------------------------
 
   @Override
   public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
@@ -1019,7 +1047,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
   }
 
-  /*** Value References ***/
+  // #endregion External References -------------------------------------------
+
+  // #region Value References -------------------------------------------------
 
   @Override
   public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
@@ -1067,7 +1097,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.getAttributeName(ctx), StringExpression.class));
   }
 
-  /*** References with context override ***/
+  // #endregion Value References ----------------------------------------------
+
+  // #region References with context override ---------------------------------
 
   /**
    * Handles expressions of the form ContextField::ReferencedField. Changes the context before the
@@ -1155,7 +1187,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
   }
 
-  /*** Other References ***/
+  // #endregion References with context override ------------------------------
+
+  // #region Other References -------------------------------------------------
 
   @Override
   public void exitCodelistReference(CodelistReferenceContext ctx) {
@@ -1171,7 +1205,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeVariableReference(variableName, Expression.class));
   }
 
-  /*** Indexers ***/
+  // #endregion Other References ----------------------------------------------
+
+  // #endregion References ----------------------------------------------------
+
+  // #region Indexers ---------------------------------------------------------
 
   @Override
   public void exitStringAtSequenceIndex(StringAtSequenceIndexContext ctx) {
@@ -1210,7 +1248,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeIndexer(list, index, itemType));
   }
 
-  /*** Parameter Declarations ***/
+  // #endregion Indexers ------------------------------------------------------
+
+  // #region Parameter Declarations -------------------------------------------
 
 
   @Override
@@ -1254,7 +1294,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.translateParameter(this.expressionParameters.pop(), parameterType));
   }
 
-  /*** Variable Declarations ***/
+  // #endregion Parameter Declarations ----------------------------------------
+
+  // #region Variable Declarations --------------------------------------------
 
   @Override
   public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
@@ -1305,7 +1347,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeVariableDeclaration(variableName, ContextExpression.class));
   }
 
-  /*** Boolean functions ***/
+  // #endregion Variable Declarations -----------------------------------------
+
+  // #region Boolean functions ------------------------------------------------
 
   @Override
   public void exitNotFunction(NotFunctionContext ctx) {
@@ -1340,7 +1384,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeSequenceEqualFunction(one, two));
   }
 
-  /*** Numeric functions ***/
+  // #endregion Boolean functions ---------------------------------------------
+
+  // #region Numeric functions ------------------------------------------------
 
   @Override
   public void exitCountFunction(CountFunctionContext ctx) {
@@ -1364,7 +1410,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         .push(this.script.composeStringLengthCalculation(this.stack.pop(StringExpression.class)));
   }
 
-  /*** String functions ***/
+  // #endregion Numeric functions ---------------------------------------------
+
+  // #region String functions -------------------------------------------------
 
   @Override
   public void exitSubstringFunction(SubstringFunctionContext ctx) {
@@ -1412,7 +1460,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeNumberFormatting(number, format));
   }
 
-  /*** Date functions ***/
+  // #endregion String functions ----------------------------------------------
+
+  // #region Date functions ---------------------------------------------------
 
   @Override
   public void exitDateFromStringFunction(DateFromStringFunctionContext ctx) {
@@ -1433,14 +1483,18 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeSubtraction(left, right));
   }
 
-  /*** Time functions ***/
+  // #endregion Date functions ------------------------------------------------
+
+  // #region Time functions ---------------------------------------------------
 
   @Override
   public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToTimeConversion(this.stack.pop(StringExpression.class)));
   }
 
-  /*** Duration Functions ***/
+  // #endregion Time functions ----------------------------------------------
+
+  // #region Duration Functions -----------------------------------------------
 
   @Override
   public void exitDayTimeDurationFromStringFunction(DayTimeDurationFromStringFunctionContext ctx) {
@@ -1455,7 +1509,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeToYearMonthDurationConversion(this.stack.pop(StringExpression.class)));
   }
 
-  /*** Sequence Functions ***/
+  // #endregion Duration Functions -------------------------------------------- 
+
+  // #region Sequence Functions -----------------------------------------------
 
   @Override
   public void exitDistinctValuesFunction(DistinctValuesFunctionContext ctx) {
@@ -1568,6 +1624,10 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeExceptFunction(one, two, listType));
   }
 
+  // #endregion Sequence Functions --------------------------------------------
+      
+  // #region Helpers ----------------------------------------------------------
+
   protected String getCodelistName(String efxCodelistIdentifier) {
     return StringUtils.substringAfter(efxCodelistIdentifier, CODELIST_PREFIX);
   }
@@ -1643,4 +1703,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   private String getVariableName(DurationParameterDeclarationContext ctx) {
     return this.getVariableName(ctx.Variable().getText());
   }
+
+  // #endregion Helpers -------------------------------------------------------
+
 }

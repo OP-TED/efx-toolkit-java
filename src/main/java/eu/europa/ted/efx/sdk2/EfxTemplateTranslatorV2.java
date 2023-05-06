@@ -49,7 +49,7 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 /**
- * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV1} to provide additional
+ * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV2} to provide additional
  * translation capabilities for EFX templates. If has been implemented as an extension to the
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
@@ -192,7 +192,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     return sb.toString().trim();
   }
 
-  /*** Template File ***/
+  // #region Template File ----------------------------------------------------
 
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
@@ -213,7 +213,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.push(file);
   }
 
-  /*** Source template blocks ***/
+  // #endregion Template File -------------------------------------------------
+  
+  // #region Source template blocks -------------------------------------------
 
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
@@ -240,7 +242,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
 
-  /*** Label Blocks #{...} ***/
+  // #endregion Source template blocks ----------------------------------------
+  
+  // #region Label Blocks #{...} ----------------------------------------------
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
@@ -411,7 +415,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     }
   }
 
-  /*** Expression Blocks ${...} ***/
+  // #endregion Label Blocks #{...} -------------------------------------------
+  
+  // #region Expression Blocks ${...} -----------------------------------------
 
   /**
    * Handles a standard expression block in a template line. Most of the work is done by the base
@@ -439,7 +445,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         Expression.class));
   }
 
-  /*** Context Declaration Blocks {...} ***/
+  // #endregion Expression Blocks ${...} --------------------------------------
+  
+  // #region Context Declaration Blocks {...} ---------------------------------
 
   /**
    * This method changes the current EFX context.
@@ -539,7 +547,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     }
   }
 
-  /*** Template lines ***/
+  // #endregion Context Declaration Blocks {...} ------------------------------
+  
+  // #region Template lines  --------------------------------------------------
 
   @Override
   public void enterTemplateLine(TemplateLineContext ctx) {
@@ -624,7 +634,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
   }
 
-  /*** Helpers ***/
+  // #endregion Template lines  -----------------------------------------------
+  
+  // #region Helpers ----------------------------------------------------------
 
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {
@@ -683,4 +695,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   private String getVariableName(ContextVariableInitializerContext ctx) {
     return this.getVariableName(ctx.Variable().getText());
   }
+
+  // #endregion Helpers -------------------------------------------------------
+
 }
