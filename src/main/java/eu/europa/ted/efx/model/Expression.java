@@ -25,7 +25,7 @@ public class Expression extends CallStackObject {
       Map.ofEntries(entry("id", StringExpression.class), //
           entry("id-ref", StringExpression.class), //
           entry("text", StringExpression.class), //
-          entry("text-multilingual", StringExpression.class), //
+          entry("text-multilingual", MultilingualStringExpression.class), //
           entry("indicator", BooleanExpression.class), //
           entry("amount", NumericExpression.class), //
           entry("number", NumericExpression.class), //
@@ -47,7 +47,7 @@ public class Expression extends CallStackObject {
       entry("id", StringListExpression.class), //
       entry("id-ref", StringListExpression.class), //
       entry("text", StringListExpression.class), //
-      entry("text-multilingual", StringListExpression.class), //
+      entry("text-multilingual", MultilingualStringListExpression.class), //
       entry("indicator", BooleanListExpression.class), //
       entry("amount", NumericListExpression.class), //
       entry("number", NumericListExpression.class), //
@@ -167,6 +167,17 @@ public class Expression extends CallStackObject {
     }
   }
 
+  public static class MultilingualStringExpression extends StringExpression {
+
+    public MultilingualStringExpression(final String script) {
+      super(script);
+    }
+
+    public MultilingualStringExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
+  }
+
   /**
    * Represents a date expression or value in the target language.
    */
@@ -225,6 +236,13 @@ public class Expression extends CallStackObject {
   public static class StringListExpression extends ListExpression<StringExpression> {
 
     public StringListExpression(final String script) {
+      super(script);
+    }
+  }
+
+  public static class MultilingualStringListExpression extends ListExpression<MultilingualStringExpression> {
+
+    public MultilingualStringListExpression(final String script) {
       super(script);
     }
   }

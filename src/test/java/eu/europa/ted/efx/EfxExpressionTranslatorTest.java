@@ -97,7 +97,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     assertEquals(
-        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
+        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField[@languageID='eng']/normalize-space(text())",
         test("ND-Root", "BT-00-Text == BT-00-Text-Multilingual"));
   }
 
