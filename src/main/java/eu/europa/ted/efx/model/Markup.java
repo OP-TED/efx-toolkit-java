@@ -16,6 +16,9 @@ public class Markup extends CallStackObject {
 
   /**
    * Helps combine two subsequent markup elements into one.
+   * 
+   * @param next the next markup element.
+   * @return the combined markup element.
    */
   public Markup join(final Markup next) {
     return new Markup(this.script + next.script);

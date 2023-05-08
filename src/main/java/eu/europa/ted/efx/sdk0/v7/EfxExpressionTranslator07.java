@@ -141,6 +141,9 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleFieldReferenceContext} to locate a field identifier.
+   * 
+   * @param ctx The context to start searching from.
+   * @return The field identifier, or null if none was found.
    */
   protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
@@ -184,6 +187,9 @@ public class EfxExpressionTranslator07 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleNodeReferenceContext} to locate a node identifier.
+   * 
+   * @param ctx The context to start searching from.
+   * @return The node identifier, or null if none was found.
    */
   protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 

@@ -182,6 +182,9 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleFieldReferenceContext} to locate a field identifier.
+   * 
+   * @param ctx the context to search in.
+   * @return the field identifier or null if none was found.
    */
   protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
@@ -227,6 +230,9 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleNodeReferenceContext} to locate a node identifier.
+   * 
+   * @param ctx the context to search in.
+   * @return the node identifier or null if none was found.
    */
   protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
@@ -914,6 +920,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * Any field references in the predicate must be resolved relative to the node or field on which
    * the predicate is applied. Therefore we need to switch to that context while the predicate is
    * being parsed.
+   * 
+   * @param ctx The predicate context
    */
   @Override
   public void enterPredicate(EfxParser.PredicateContext ctx) {

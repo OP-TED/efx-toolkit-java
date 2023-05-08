@@ -94,7 +94,9 @@ public abstract class Context {
   }
 
   /**
-   * Returns the [field or node] identifier that was used to create this context.
+   * Gets the [field or node] identifier that was used to create this context.
+   * 
+   * @return the [field or node] identifier that was used to create this context.
    */
   public String symbol() {
     return symbol;
@@ -103,13 +105,17 @@ public abstract class Context {
   /**
    * The absolute path of the context is needed when we want to create a new context relative to
    * this one.
+   * 
+   * @return the absolute path of the context.
    */
   public PathExpression absolutePath() {
     return absolutePath;
   }
 
   /**
-   * Returns the relative path of the context.
+   * Gets the relative path of the context.
+   * 
+   * @return the relative path of the context.
    */
   public PathExpression relativePath() {
     return relativePath;

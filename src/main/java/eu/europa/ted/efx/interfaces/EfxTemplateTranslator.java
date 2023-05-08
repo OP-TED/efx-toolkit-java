@@ -30,7 +30,7 @@ public interface EfxTemplateTranslator extends EfxExpressionTranslator {
    * 
    * @param pathname The path and filename of the EFX template file to translate.
    * @return A string containing the translated template.
-   * @throws IOException
+   * @throws IOException If the file cannot be read.
    */
   String renderTemplate(Path pathname) throws IOException;
 
@@ -47,7 +47,7 @@ public interface EfxTemplateTranslator extends EfxExpressionTranslator {
    * 
    * @param stream An InputStream with the EFX template to be translated.
    * @return A string containing the translated template.
-   * @throws IOException
+   * @throws IOException If the InputStream cannot be read.
    */
   String renderTemplate(InputStream stream) throws IOException;
 }

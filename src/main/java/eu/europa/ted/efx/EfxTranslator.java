@@ -37,9 +37,10 @@ public class EfxTranslator {
    *        expression to be translated.
    * @param expression The EFX expression to translate.
    * @param expressionParameters The values of any parameters that the EFX expression requires.
+   * @param options The options to be used by the EFX expression translator.
    * @return The translated expression in the target script language supported by the given
    *         {@link TranslatorDependencyFactory}.
-   * @throws InstantiationException
+   * @throws InstantiationException If the EFX expression translator cannot be instantiated.
    */
   public static String translateExpression(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final String expression, TranslatorOptions options, final String... expressionParameters)
@@ -64,8 +65,9 @@ public class EfxTranslator {
    * @param pathname The path to the file containing the EFX template to translate.
    * @return The translated template in the target markup language supported by the given
    *         {@link TranslatorDependencyFactory}.
-   * @throws IOException
-   * @throws InstantiationException
+   * @param options The options to be used by the EFX template translator. 
+   * @throws IOException If the file cannot be read.
+   * @throws InstantiationException If the EFX template translator cannot be instantiated.
    */
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final Path pathname, TranslatorOptions options)
@@ -90,7 +92,8 @@ public class EfxTranslator {
    * @param template A string containing the EFX template to translate.
    * @return The translated template in the target markup language supported by the given
    *         {@link TranslatorDependencyFactory}.
-   * @throws InstantiationException
+   * @param options The options to be used by the EFX template translator.
+   * @throws InstantiationException If the EFX template translator cannot be instantiated.
    */
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final String template, TranslatorOptions options)
@@ -116,8 +119,9 @@ public class EfxTranslator {
    * @param stream An InputStream containing the EFX template to be translated.
    * @return The translated template in the target markup language supported by the given
    *         {@link TranslatorDependencyFactory}.
-   * @throws IOException
-   * @throws InstantiationException
+   * @param options The options to be used by the EFX template translator.
+   * @throws IOException If the InputStream cannot be read.
+   * @throws InstantiationException If the EFX template translator cannot be instantiated.
    */
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final InputStream stream, TranslatorOptions options)

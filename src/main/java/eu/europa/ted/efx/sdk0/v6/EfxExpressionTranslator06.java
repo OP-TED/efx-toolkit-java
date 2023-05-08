@@ -105,9 +105,6 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   private static final String NOT_MODIFIER =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
 
-  /**
-   *
-   */
   private static final String TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES =
       "Type mismatch. Cannot compare values of different types: ";
 
@@ -186,6 +183,9 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleFieldReferenceContext} to locate a field identifier.
+   * 
+   * @param ctx the context to start from.
+   * @return the field identifier or null if not found.
    */
   protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
 
@@ -229,6 +229,9 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
    * {@link SimpleNodeReferenceContext} to locate a node identifier.
+   * 
+   * @param ctx the context to start from.
+   * @return the node identifier or null if not found.
    */
   protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
 
@@ -576,6 +579,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
    * Any field references in the predicate must be resolved relative to the field on which the
    * predicate is applied. Therefore we need to switch to the field's context while the predicate is
    * being parsed.
+   * 
+   * @param ctx the predicate context
    */
   @Override
   public void enterPredicate(EfxParser.PredicateContext ctx) {
@@ -585,6 +590,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
 
   /**
    * After the predicate is parsed we need to switch back to the previous context.
+   * 
+   * @param ctx the predicate context
    */
   @Override
   public void exitPredicate(EfxParser.PredicateContext ctx) {
@@ -638,6 +645,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Handles expressions of the form ContextField::ReferencedField. Changes the context before the
    * reference is resolved.
+   * 
+   * @param ctx the context field context
    */
   @Override
   public void exitFieldContext(FieldContextContext ctx) {
@@ -653,6 +662,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Handles expressions of the form ContextField::ReferencedField. Changes the context before the
    * reference is resolved.
+   * 
+   * @param ctx the parser rule context
    */
   @Override
   public void exitFieldReferenceWithFieldContextOverride(
@@ -667,6 +678,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Handles expressions of the form ContextNode::ReferencedField. Changes the context before the
    * reference is resolved.
+   * 
+   * @param ctx the parser rule context
    */
   @Override
   public void exitNodeContext(NodeContextContext ctx) {
@@ -681,6 +694,8 @@ public class EfxExpressionTranslator06 extends EfxBaseListener
   /**
    * Handles expressions of the form ContextNode::ReferencedField. Restores the context after the
    * reference is resolved.
+   *
+   * @param ctx the parser rule context
    */
   @Override
   public void exitFieldReferenceWithNodeContextOverride(
