@@ -255,6 +255,12 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   @Override
+  public void exitComputedLabelReference(ComputedLabelReferenceContext ctx) {
+    StringExpression expression = this.stack.pop(StringExpression.class);
+    this.stack.push(this.markup.renderLabelFromExpression(expression));
+  }
+
+  @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
     StringExpression assetId = this.script.getStringLiteralFromUnquotedString(ctx.BtId().getText());
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
@@ -384,7 +390,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       ShorthandIndirectLabelReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
       throw new ParseCancellationException(
-          "The #value shorthand syntax can only be used in a field is declared as context.");
+          "The #value shorthand syntax can only be used if a field is declared as context.");
     }
     this.shorthandIndirectLabelReference(this.efxContext.symbol());
   }

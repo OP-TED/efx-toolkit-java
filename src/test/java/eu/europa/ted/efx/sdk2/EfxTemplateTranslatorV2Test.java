@@ -213,6 +213,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testComputedLabelReference() {
+    assertEquals(
+        "let block01() -> { label(string-join(('field','|','name','|','BT-00-Text'), ', ')) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{${string-join(('field', '|', 'name', '|', 'BT-00-Text'), ', ')}}"));
+  }
+
+  @Test
   void testShorthandBtLabelReference() {
     assertEquals(
         "let block01() -> { label(concat('business-term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01())",
