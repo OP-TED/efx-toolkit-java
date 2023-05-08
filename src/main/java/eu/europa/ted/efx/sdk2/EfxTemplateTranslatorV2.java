@@ -49,7 +49,7 @@ import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 /**
- * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV1} to provide additional
+ * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV2} to provide additional
  * translation capabilities for EFX templates. If has been implemented as an extension to the
  * EfxExpressionTranslator in order to keep things simpler when one only needs to translate EFX
  * expressions (like the condition associated with a business rule).
