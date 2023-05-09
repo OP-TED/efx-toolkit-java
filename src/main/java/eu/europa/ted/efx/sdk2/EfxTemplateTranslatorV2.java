@@ -465,20 +465,70 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
-    final PathExpression contextPath = this.stack.pop(PathExpression.class);
-    Variable<PathExpression> contextVariable = this.getContextVariable(ctx, contextPath);
-    final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-    if (filedId != null) {
-      this.efxContext.push(new FieldContext(filedId, contextPath, contextVariable));
-      if (contextVariable != null) {
-        this.stack.declareTemplateVariable(contextVariable.name,
-            Expression.types.get(this.symbols.getTypeOfField(filedId)));
-      }
-    } else {
-      final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-      assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
-      this.efxContext.push(new NodeContext(nodeId, contextPath));
+    String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
+    switch (shortcut) {
+      case ".":
+        this.exitSameContextDeclaration();
+        break;
+      case "..":
+        this.exitParentContextDeclaration();
+        break;
+      case "/":
+        this.exitRootContextDeclaration();
+        break;
+      default:
+        PathExpression contextPath = this.stack.pop(PathExpression.class);
+        String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+        if (fieldId != null) {
+          Variable<PathExpression> contextVariable = this.getContextVariable(ctx, contextPath);
+          this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
+        } else {
+          String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
+          assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
+          this.exitNodeContextDeclaration(nodeId, contextPath);
+        }
+        break;
     }
+  }
+
+  private void exitSameContextDeclaration() {
+    Context currentContext = this.blockStack.currentContext();
+    PathExpression contextPath = currentContext.absolutePath();
+    String symbol = currentContext.symbol();
+    if (currentContext.isFieldContext()) {
+      this.exitFieldContextDeclaration(symbol, contextPath, null);
+    } else if (currentContext.isNodeContext()) {
+      this.exitNodeContextDeclaration(symbol, contextPath);
+    }
+  }
+
+  private void exitParentContextDeclaration() {
+    Context parentContext = this.blockStack.parentContext();
+    PathExpression contextPath = parentContext.absolutePath();
+    String symbol = parentContext.symbol();
+    if (parentContext.isFieldContext()) {
+      this.exitFieldContextDeclaration(symbol, contextPath, null);
+    } else if (parentContext.isNodeContext()) {
+      this.exitNodeContextDeclaration(symbol, contextPath);
+    }
+  }
+
+  private void exitRootContextDeclaration() {
+    PathExpression contextPath = new PathExpression("/*");
+    String symbol = "ND-Root";
+    this.exitNodeContextDeclaration(symbol, contextPath);
+  }
+
+  private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable<PathExpression> contextVariable) {
+    this.efxContext.push(new FieldContext(fieldId, contextPath, contextVariable));
+    if (contextVariable != null) {
+      this.stack.declareTemplateVariable(contextVariable.name,
+          Expression.types.get(this.symbols.getTypeOfField(fieldId)));
+    }
+  }
+
+  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath) {
+    this.efxContext.push(new NodeContext(nodeId, contextPath));
   }
 
   private Variable<PathExpression> getContextVariable(ContextDeclarationContext ctx,

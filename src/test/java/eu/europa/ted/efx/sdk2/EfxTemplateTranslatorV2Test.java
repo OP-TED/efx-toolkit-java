@@ -195,6 +195,26 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   }
 
+  @Test
+  void testTemplateLine_ContextDeclarationShortcuts() {
+    assertEquals(
+      translateTemplate(lines(
+        "{BT-00-Number} 1",
+        "    {BT-00-Text} 2",
+        "        {ND-Root} 3",
+        "        {BT-00-Text} ${BT-00-Number}",
+        "        {BT-00-Text} 5",
+        "    {BT-00-Text} ${BT-00-Number}", //
+        "    {BT-00-Number} ${BT-00-Text}")), //
+        translateTemplate(lines(
+            "{BT-00-Number} 1", //
+            "    {BT-00-Text} 2", //
+            "        {/} 3", //
+            "        {..} ${BT-00-Number}", // 
+            "        {.} 5", //
+            "    {.} ${BT-00-Number}", //
+            "    {..} ${BT-00-Text}")));
+  }
 
   /*** Labels ***/
 
