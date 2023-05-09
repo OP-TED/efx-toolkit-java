@@ -236,6 +236,11 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.push(this.markup.renderVariableExpression(expression).join(template));
   }
 
+  @Override
+  public void exitSecondaryTemplate(SecondaryTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    this.stack.push(this.markup.renderLineBreak().join(template));
+  }
 
   // #endregion Source template blocks ----------------------------------------
   

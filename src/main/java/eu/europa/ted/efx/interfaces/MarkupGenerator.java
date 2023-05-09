@@ -80,6 +80,8 @@ public interface MarkupGenerator {
    */
   Markup renderFreeText(final String freeText);
 
+  Markup renderLineBreak();
+
   /**
    * @deprecated Use {@link #composeFragmentDefinition(String, String, Markup, Set)} instead.
    * 

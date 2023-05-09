@@ -216,6 +216,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "    {..} ${BT-00-Text}")));
   }
 
+  @Test
+  void testTemplateLine_WithSecondaryTemplate() {
+    assertEquals(
+        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))<line-break>text('some text') }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n some text"));
+  }
+
+
   /*** Labels ***/
 
   @Test
@@ -377,7 +385,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
-        "let block01() -> { text('blah ')label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' ')text('blah ')eval(.)text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { text('blah ')label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' blah ')eval(.)text(' blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} blah #value blah $value blah"));
   }
 
@@ -399,7 +407,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testEndOfLineComments() {
     assertEquals(
-        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' ')text('blah blah') }\nfor-each(/*).call(block01())",
+        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
 }

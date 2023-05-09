@@ -35,6 +35,11 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
+  public Markup renderLineBreak() {
+    return new Markup("<line-break>");
+  }
+
+  @Override
   public Markup composeFragmentDefinition(String name, String number, Markup content) {
     return this.composeFragmentDefinition(name, number, content, new LinkedHashSet<>());
   }
