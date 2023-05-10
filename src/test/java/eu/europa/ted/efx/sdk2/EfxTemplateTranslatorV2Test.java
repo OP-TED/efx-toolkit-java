@@ -234,6 +234,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testStandardLabelReference_WithPluraliser() {
+    assertEquals(
+        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'), ../NumberField/number()) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text;${BT-00-Number}}"));
+  }
+
+  @Test
   void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
         "let block01() -> { label(concat('auxiliary', '|', 'text', '|', 'value')) }\nfor-each(/*/PathNode/TextField).call(block01())",
