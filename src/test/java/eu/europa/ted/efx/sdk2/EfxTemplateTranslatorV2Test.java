@@ -223,6 +223,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n some text"));
   }
 
+  @Test
+  void testTemplateLine_WithLineBreak() {
+    assertEquals(
+        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))<line-break> }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n"));
+  }
+
 
   /*** Labels ***/
 
