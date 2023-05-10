@@ -248,6 +248,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
     StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
@@ -256,49 +257,53 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         : this.script.getStringLiteralFromUnquotedString("");
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity));
   }
 
   @Override
   public void exitComputedLabelReference(ComputedLabelReferenceContext ctx) {
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
     StringExpression expression = this.stack.pop(StringExpression.class);
-    this.stack.push(this.markup.renderLabelFromExpression(expression));
+    this.stack.push(this.markup.renderLabelFromExpression(expression, quantity));
   }
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
     StringExpression assetId = this.script.getStringLiteralFromUnquotedString(ctx.BtId().getText());
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
             this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity));
   }
 
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldId().getText();
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.script.equals("value")) {
-      this.shorthandIndirectLabelReference(fieldId);
+      this.shorthandIndirectLabelReference(fieldId, quantity);
     } else {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
               this.script.getStringLiteralFromUnquotedString("|"), labelType,
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId)))));
+              this.script.getStringLiteralFromUnquotedString(fieldId))), quantity));
     }
   }
 
   @Override
   public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
-    this.shorthandIndirectLabelReference(ctx.FieldId().getText());
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
+    this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
   }
 
-  private void shorthandIndirectLabelReference(final String fieldId) {
+  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression quantity) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final XPathAttributeLocator parsedPath =
@@ -326,7 +331,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                     loopVariable,
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(fieldId))),
-            StringListExpression.class)));
+            StringListExpression.class), quantity));
         break;
       case "code":
       case "internal-code":
@@ -343,7 +348,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                     this.symbols.getRootCodelistOfField(fieldId)),
                 this.script.getStringLiteralFromUnquotedString("."),
                 loopVariable)),
-            StringListExpression.class)));
+            StringListExpression.class), quantity));
         break;
       default:
         throw new ParseCancellationException(String.format(
@@ -363,17 +368,18 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void exitShorthandLabelReferenceFromContext(
       ShorthandLabelReferenceFromContextContext ctx) {
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : Expression.empty(NumericExpression.class);
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandIndirectLabelReference(this.efxContext.symbol());
+        this.shorthandIndirectLabelReference(this.efxContext.symbol(), quantity);
       } else {
         this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
                 this.script.getStringLiteralFromUnquotedString("|"),
                 this.script.getStringLiteralFromUnquotedString(labelType),
                 this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
+                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity));
       }
     } else if (this.efxContext.isNodeContext()) {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
@@ -381,7 +387,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
               this.script.getStringLiteralFromUnquotedString("|"),
               this.script.getStringLiteralFromUnquotedString(labelType),
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
+              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity));
     }
   }
 
@@ -397,7 +403,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       throw new ParseCancellationException(
           "The #value shorthand syntax can only be used if a field is declared as context.");
     }
-    this.shorthandIndirectLabelReference(this.efxContext.symbol());
+    this.shorthandIndirectLabelReference(this.efxContext.symbol(), Expression.empty(NumericExpression.class));
   }
 
   @Override

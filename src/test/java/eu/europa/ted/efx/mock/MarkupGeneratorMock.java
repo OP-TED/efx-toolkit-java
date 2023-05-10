@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
@@ -21,12 +22,28 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
   @Override
   public Markup renderLabelFromKey(StringExpression key) {
-    return new Markup(String.format("label(%s)", key.script));
+    return this.renderLabelFromKey(key, Expression.empty(NumericExpression.class));
+  }
+
+  @Override
+  public Markup renderLabelFromKey(StringExpression key, NumericExpression quantity) {
+    if (quantity.isEmpty()) {
+      return new Markup(String.format("label(%s)", key.script));
+    }
+    return new Markup(String.format("label(%s, %s)", key.script, quantity.script));
   }
 
   @Override
   public Markup renderLabelFromExpression(Expression expression) {
-    return new Markup(String.format("label(%s)", expression.script));
+    return this.renderLabelFromExpression(expression, Expression.empty(NumericExpression.class)); 
+  }
+
+  @Override
+  public Markup renderLabelFromExpression(Expression expression, NumericExpression quantity) {
+    if (quantity.isEmpty()) {
+      return new Markup(String.format("label(%s)", expression.script));
+    }
+    return new Markup(String.format("label(%s, %s)", expression.script, quantity.script));
   }
 
   @Override

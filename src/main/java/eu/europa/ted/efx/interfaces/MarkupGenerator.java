@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import eu.europa.ted.efx.model.Expression;
+import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
@@ -62,6 +63,16 @@ public interface MarkupGenerator {
   Markup renderLabelFromKey(final StringExpression key);
 
   /**
+   * Given a label key (which will eventually, at runtime, be dereferenced to a label text), this
+   * method returns the template code that renders this label in the target template language.
+   * 
+   * @param key the label key to be dereferenced.
+   * @param quantity a numeric quantity used to decide if the label needs to be pluralized.
+   * @return the template code that renders the label in the target template language.
+   */
+  Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity);
+
+  /**
    * Given an expression (which will eventually, at runtime, be evaluated to a label key and
    * subsequently dereferenced to a label text), this method returns the template code that renders
    * this label in the target template language.
@@ -70,6 +81,17 @@ public interface MarkupGenerator {
    * @return the template code that renders the label in the target template language.
    */
   Markup renderLabelFromExpression(final Expression expression);
+
+  /**
+   * Given an expression (which will eventually, at runtime, be evaluated to a label key and
+   * subsequently dereferenced to a label text), this method returns the template code that renders
+   * this label in the target template language.
+   * 
+   * @param expression the expression that returns the label key.
+   * @param quantity a numeric quantity used to decide if the label needs to be pluralized.
+   * @return the template code that renders the label in the target template language.
+   */
+  Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity);
 
   /**
    * Given a string of free text, this method returns the template code that adds this text in the
