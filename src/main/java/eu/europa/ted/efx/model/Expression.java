@@ -92,6 +92,10 @@ public class Expression extends CallStackObject {
     return instantiate("", type);
   }
 
+    public final Boolean isEmpty() {
+      return this.script.isEmpty();
+    }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == null) {
