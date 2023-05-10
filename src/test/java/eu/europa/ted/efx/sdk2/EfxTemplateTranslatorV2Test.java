@@ -205,7 +205,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "        {BT-00-Text} ${BT-00-Number}",
         "        {BT-00-Text} 5",
         "    {BT-00-Text} ${BT-00-Number}", //
-        "    {BT-00-Number} ${BT-00-Text}")), //
+        "    {BT-00-Number} ${BT-00-Text}",
+        "    {ND-SubNode} N2",
+        "        {ND-Root} N3",
+        "        {ND-Root} N4",
+        "        {ND-SubNode} ${BT-00-Number}")), //
         translateTemplate(lines(
             "{BT-00-Number} 1", //
             "    {BT-00-Text} 2", //
@@ -213,7 +217,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "        {..} ${BT-00-Number}", // 
             "        {.} 5", //
             "    {.} ${BT-00-Number}", //
-            "    {..} ${BT-00-Text}")));
+            "    {..} ${BT-00-Text}",
+            "    {ND-SubNode} N2",
+            "        {ND-Root} N3", //
+            "        {.} N4", //
+            "        {..} ${BT-00-Number}")));
   }
 
   @Test
@@ -221,6 +229,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))<line-break>text('some text') }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n some text"));
+  }
+
+  @Test
+  void testTemplateLine_WithLineBreak() {
+    assertEquals(
+        "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))<line-break> }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n"));
   }
 
 
