@@ -1684,6 +1684,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #region Pre-processing ---------------------------------------------------
 
+  @Override
+  public void exitLateBoundSequence(LateBoundSequenceContext ctx) {
+    assert false: "This should have been handled by the preprocessor: " + ctx.getText() +". Check any changes that you might have made in the EFX grammar that may have broken this assumption.";
+  }
+
+  @Override
+  public void exitLateBoundScalar(LateBoundScalarContext ctx) {
+    assert false: "This should have been handled by the preprocessor: " + ctx.getText() +". Check any changes that you might have made in the EFX grammar that may have broken this assumption.";
+  }
+
   private static String textTypeName = getLexerSymbol(EfxLexer.Text);
   private static String booleanTypeName = getLexerSymbol(EfxLexer.Indicator);
   private static String numericTypeName = getLexerSymbol(EfxLexer.Number);
@@ -1776,8 +1786,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void exitUntypedFieldReferenceExpression(UntypedFieldReferenceExpressionContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundExpressionContext.class)) {
+    public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
         return;
       }
 
@@ -1789,11 +1799,22 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void exitUntypedSequenceExpression(UntypedSequenceExpressionContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundExpressionContext.class)) {
+    public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
         return;
       }
 
+      // Insert the type cast. For attributes, the type is always text.
+      this.rewriter.insertBefore(ctx.getStart(), "(" + textTypeName + ")");
+    }
+
+    @Override
+    public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
+        return;
+      }
+
+      // Find the referenced field and get its type
       String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
       String fieldType = eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(fieldId));
 
@@ -1804,8 +1825,18 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
+    public void exitSequenceFromAttributeReference(SequenceFromAttributeReferenceContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
+        return;
+      }
+
+      // Insert the type cast
+      this.rewriter.insertBefore(ctx.getStart(), "(" + textTypeName + ")");
+    }
+
+    @Override
     public void exitVariableReference(VariableReferenceContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundExpressionContext.class)) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
         return;
       }
 
