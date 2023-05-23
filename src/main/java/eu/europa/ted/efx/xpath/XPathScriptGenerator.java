@@ -82,8 +82,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
       Class<T> type) {
 
     if (MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) {
-      PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID='" + this.translatorOptions.getPrimaryLanguage3LetterCode() + "'");
-      return Expression.instantiate(languageSpecific.script + "/normalize-space(text())", type);
+      String languages = "('" + String.join("','", this.translatorOptions.getAllLanguage3LetterCodes()) + "')";
+      PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
+      String script = "(for $__LANG__ in " + languages + " return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
+      return Expression.instantiate(script, type);
     }
     if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);

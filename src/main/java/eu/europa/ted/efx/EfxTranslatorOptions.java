@@ -61,7 +61,7 @@ public class EfxTranslatorOptions implements TranslatorOptions {
     @Override
     public String[] getAllLanguage3LetterCodes() {
         List<String> languages = new ArrayList<>();
-        languages.add(primaryLocale.getLanguage());
+        languages.add(primaryLocale.getISO3Language());
         for (Locale locale : otherLocales) {
             languages.add(locale.getISO3Language());
         }
