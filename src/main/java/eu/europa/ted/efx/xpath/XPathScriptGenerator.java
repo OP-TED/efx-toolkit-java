@@ -25,6 +25,8 @@ import eu.europa.ted.efx.model.Expression.DurationListExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
+import eu.europa.ted.efx.model.Expression.MultilingualStringExpression;
+import eu.europa.ted.efx.model.Expression.MultilingualStringListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -79,6 +81,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
 
+    if (MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) {
+      String languages = "('" + String.join("','", this.translatorOptions.getAllLanguage3LetterCodes()) + "')";
+      PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
+      String script = "(for $__LANG__ in " + languages + " return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
+      return Expression.instantiate(script, type);
+    }
     if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
     }

@@ -290,7 +290,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitFieldValueComparison(FieldValueComparisonContext ctx) {
     Expression right = this.stack.pop(Expression.class);
     Expression left = this.stack.pop(Expression.class);
-    if (!left.getClass().equals(right.getClass())) {
+    if (!left.getClass().isAssignableFrom(right.getClass()) && !right.getClass().isAssignableFrom(left.getClass())) {
       throw new ParseCancellationException(TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES
           + left.getClass() + " and " + right.getClass());
     }
