@@ -90,7 +90,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
+        "PathNode/TextField/normalize-space(text()) = (for $__LANG__ in ('eng') return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
         "ND-Root", "BT-00-Text == BT-00-Text-Multilingual");
   }
 
