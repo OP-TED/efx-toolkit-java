@@ -244,7 +244,7 @@ public class Expression extends CallStackObject {
     }
   }
 
-  public static class MultilingualStringListExpression extends ListExpression<MultilingualStringExpression> {
+  public static class MultilingualStringListExpression extends StringListExpression {
 
     public MultilingualStringListExpression(final String script) {
       super(script);
