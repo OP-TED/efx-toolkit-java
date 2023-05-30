@@ -39,6 +39,14 @@ The build process uses the grammar files provided in the [eForms SDK](https://gi
 In order to be able to use snapshot versions of dependencies, the following should be added to the "profiles" section of the Maven configuration file "settings.xml" (normally under ${HOME}/.m2):
 
 ```
+<servers>
+  <server>
+    <id>ossrh</id>
+    <username>${env.MAVEN_USERNAME}</username>
+    <password>${env.MAVEN_PASSWORD}</password>
+  </server>
+</servers>
+
 <profile>
   <id>repositories</id>
   <activation>
