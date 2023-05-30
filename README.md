@@ -36,6 +36,32 @@ You can build this project as usual using Maven.
 
 The build process uses the grammar files provided in the [eForms SDK](https://github.com/OP-TED/eForms-SDK/tree/develop/efx-grammar) to generate a parser, using [ANTLR4](https://www.antlr.org).
 
+In order to be able to use snapshot versions of dependencies, the following should be added to the "profiles" section of the Maven configuration file "settings.xml" (normally under ${HOME}/.m2):
+
+```
+<profile>
+  <id>repositories</id>
+  <activation>
+    <activeByDefault>true</activeByDefault>
+  </activation>
+  <repositories>
+    <repository>
+      <id>ossrh</id>
+      <name>OSSRH Snapshots</name>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+</profile>
+```
+
+See ".github/workflows/settings.xml".
+
 ## Testing
 
 Unit tests are available under `src/test/java/`. They show in particular a variety of EFX expressions and the corresponding XPath expression.
