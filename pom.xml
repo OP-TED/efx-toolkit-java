@@ -78,6 +78,7 @@
     <version.jar.plugin>3.2.0</version.jar.plugin>
     <version.javadoc.plugin>3.4.0</version.javadoc.plugin>
     <version.pgp.plugin>1.5</version.pgp.plugin>
+    <version.nexus-staging.plugin>1.6.7</version.nexus-staging.plugin>
     <version.source.plugin>3.2.1</version.source.plugin>
     <version.surefire.plugin>3.0.0-M7</version.surefire.plugin> <!-- Versions prior to 3.0.x do not pick up Junit 5 tests correctly. -->
   </properties>
@@ -231,6 +232,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${version.source.plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>${version.nexus-staging.plugin}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -412,6 +418,16 @@
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>
               </gpgArguments>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://${sonatype.server.url}/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
             </configuration>
           </plugin>
         </plugins>
