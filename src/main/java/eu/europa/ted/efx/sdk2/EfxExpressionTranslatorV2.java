@@ -1387,6 +1387,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region String functions -------------------------------------------------
 
   @Override
+  public void exitUpperCaseFunction(UpperCaseFunctionContext ctx) {
+    this.stack.push(this.script.composeToUpperCaseConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitLowerCaseFunction(LowerCaseFunctionContext ctx) {
+    this.stack.push(this.script.composeToLowerCaseConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
   public void exitSubstringFunction(SubstringFunctionContext ctx) {
     final NumericExpression length =
         ctx.length != null ? this.stack.pop(NumericExpression.class) : null;

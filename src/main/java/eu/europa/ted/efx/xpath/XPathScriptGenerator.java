@@ -446,6 +446,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeToUpperCaseConversion(StringExpression text) {
+    return new StringExpression("upper-case(" + text.script + ")");
+  }
+
+  @Override
+  public StringExpression composeToLowerCaseConversion(StringExpression text) {
+    return new StringExpression("lower-case(" + text.script + ")");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.script).collect(Collectors.joining(", ")) + ")");

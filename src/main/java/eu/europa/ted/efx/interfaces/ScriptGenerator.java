@@ -368,6 +368,10 @@ public interface ScriptGenerator {
 
   public StringExpression composeToStringConversion(NumericExpression number);
 
+  public StringExpression composeToUpperCaseConversion(StringExpression text);
+
+  public StringExpression composeToLowerCaseConversion(StringExpression text);
+
   /*
    * Boolean Functions
    */

@@ -1206,6 +1206,20 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testUpperCaseFunction() {
+    testExpressionTranslation(
+        "upper-case(PathNode/TextField/normalize-space(text()))", 
+        "{ND-Root} ${upper-case(BT-00-Text)}");
+  }
+
+  @Test
+  void testLowerCaseFunction() {
+    testExpressionTranslation(
+        "lower-case(PathNode/TextField/normalize-space(text()))", 
+        "{ND-Root} ${lower-case(BT-00-Text)}");
+  }
+
+  @Test
   void testToStringFunction() {
     testExpressionTranslationWithContext("format-number(123, '0,##########')", "ND-Root",
         "string(123)");
