@@ -5,7 +5,7 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 ---
 ## In this release:
 
-- Updated the XPath 2.0 parse, XPathContextualizer and XPathScriptGenerator to correctly translate sequences. 
+- Updated the XPath 2.0 parser, XPathContextualizer and XPathScriptGenerator to correctly translate sequences. 
 - Improved numeric formatting. The EfxTranslator API now includes overloaded methods that permit control of numeric formatting. The existing API has been preserved.
 - Improved handling of multilingual text fields by adding automatic selection of the visualisation language .  
 ---
