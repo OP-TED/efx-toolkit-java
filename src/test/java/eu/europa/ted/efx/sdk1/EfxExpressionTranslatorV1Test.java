@@ -90,7 +90,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = (for $__LANG__ in ('eng') return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+        "PathNode/TextField/normalize-space(text()) = (for $__LANG__ in ted:preferred-languages() return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
         "ND-Root", "BT-00-Text == BT-00-Text-Multilingual");
   }
 
@@ -1115,6 +1115,18 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   void testFieldReference_WithAxis() {
     testExpressionTranslationWithContext("./preceding::PathNode/IntegerField/number()", "ND-Root",
         "ND-Root::preceding::BT-00-Integer");
+  }
+
+  @Test
+  void testMultilingualTextFieldReference() {
+    testExpressionTranslationWithContext("(for $__LANG__ in ted:preferred-languages() return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+        "ND-Root", "BT-00-Text-Multilingual");
+  }
+
+  @Test
+  void testMultilingualTextFieldReference_WithLanguagePredicate() {
+    testExpressionTranslationWithContext("PathNode/TextMultilingualField[./@languageID = 'eng']/normalize-space(text())",
+        "ND-Root", "BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng']");
   }
 
   // #endregion: References
