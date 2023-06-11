@@ -1448,6 +1448,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeNumberFormatting(number, format));
   }
 
+  @Override
+  public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
+    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(PathExpression.class)));
+  }
+
+  @Override
+  public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
+    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(PathExpression.class)));
+  }
+
   // #endregion String functions ----------------------------------------------
 
   // #region Date functions ---------------------------------------------------
