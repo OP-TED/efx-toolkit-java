@@ -1069,6 +1069,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.getAttributeName(ctx), StringExpression.class));
   }
 
+  @Override
+  public void exitSequenceFromAttributeReference(SequenceFromAttributeReferenceContext ctx) {
+    this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
+        this.getAttributeName(ctx), StringListExpression.class));
+  }
+
   // #endregion Value References ----------------------------------------------
 
   // #region References with context override ---------------------------------
@@ -1624,6 +1630,10 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   protected String getAttributeName(String efxAttributeIdentifier) {
     return StringUtils.substringAfter(efxAttributeIdentifier, ATTRIBUTE_PREFIX);
+  }
+
+  private String getAttributeName(SequenceFromAttributeReferenceContext ctx) {
+    return this.getAttributeName(ctx.attributeReference().Attribute().getText());
   }
 
   private String getAttributeName(ScalarFromAttributeReferenceContext ctx) {
