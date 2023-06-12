@@ -483,9 +483,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression getPreferredLanguage(PathExpression fieldReference) {
     final String variableName = "$__LANG__";
-      String languages = "('" + String.join("','", this.translatorOptions.getAllLanguage3LetterCodes()) + "')";
       PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=" + variableName);
-      String script = "((for " + variableName + " in " + languages + " return if (" + languageSpecific.script + "/normalize-space(text())) then " + variableName + " else ()), " + fieldReference.script + "/normalize-space(text()))[1]";
+      String script = "((for " + variableName + " in ted:preferred-languages() return if (" + languageSpecific.script + "/normalize-space(text())) then " + variableName + " else ()), " + fieldReference.script + "/normalize-space(text()))[1]";
     return new StringExpression(script);
   }
 
