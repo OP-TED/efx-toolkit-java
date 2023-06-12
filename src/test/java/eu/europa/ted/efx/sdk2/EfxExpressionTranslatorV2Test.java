@@ -1043,7 +1043,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testCodeList() {
     testExpressionTranslationWithContext("'a' = ('code1','code2','code3')", "BT-00-Text",
-        "'a' in codelist:accessibility");
+        "'a' in #accessibility");
   }
 
   // #endregion: Lists
