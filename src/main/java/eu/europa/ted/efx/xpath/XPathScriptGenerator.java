@@ -80,11 +80,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
-
-    if (MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) {
-      String languages = "('" + String.join("','", this.translatorOptions.getAllLanguage3LetterCodes()) + "')";
+    if ((MultilingualStringExpression.class.isAssignableFrom(type)
+        || MultilingualStringListExpression.class.isAssignableFrom(type))
+        && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
       PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
-      String script = "(for $__LANG__ in " + languages + " return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
+      String script = "(for $__LANG__ in ted:preferred-languages() return " + languageSpecific.script
+          + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
       return Expression.instantiate(script, type);
     }
     if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
