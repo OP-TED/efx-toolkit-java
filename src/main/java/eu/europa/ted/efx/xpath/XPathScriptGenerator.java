@@ -84,7 +84,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
         || MultilingualStringListExpression.class.isAssignableFrom(type))
         && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
       PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
-      String script = "(for $__LANG__ in ted:preferred-languages() return " + languageSpecific.script
+      String script = "(for $__LANG__ in $PREFERRED_LANGUAGES return " + languageSpecific.script
           + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
       return Expression.instantiate(script, type);
     }
