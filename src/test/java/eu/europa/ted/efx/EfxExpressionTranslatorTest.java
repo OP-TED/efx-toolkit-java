@@ -97,7 +97,7 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     assertEquals(
-        "(for $__LANG__ in ('eng') return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+        "(for $__LANG__ in ted:preferred-languages() return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
         test("ND-Root", "BT-00-Text-Multilingual"));
   }
 
