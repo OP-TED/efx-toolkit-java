@@ -32,14 +32,17 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
   @Override
   public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options) {
-    if (!scriptGenerators.containsKey(sdkVersion)) {
+    // Default hashCode() implementation is OK here
+    // we just need to distinguish TranslatorOptions instances
+    String key = sdkVersion + options.hashCode();
+    if (!scriptGenerators.containsKey(key)) {
       try {
-        this.scriptGenerators.put(sdkVersion, ComponentFactory.getScriptGenerator(sdkVersion, options));
+        this.scriptGenerators.put(key, ComponentFactory.getScriptGenerator(sdkVersion, options));
       } catch (InstantiationException e) {
         throw new RuntimeException(e.getMessage(), e);
       }
     }
-    return this.scriptGenerators.get(sdkVersion);
+    return this.scriptGenerators.get(key);
   }
 
   @Override
