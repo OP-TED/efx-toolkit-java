@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
+
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,9 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -22,8 +25,6 @@ import eu.europa.ted.efx.model.Expression.DurationListExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringExpression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -32,7 +33,7 @@ import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 import eu.europa.ted.efx.model.Expression.TimeListExpression;
 
-@SdkComponent(versions = {"0.6", "0.7", "1", "2"},
+@SdkComponent(versions = {"2"},
     componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
@@ -78,13 +79,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
-
-    if (MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) {
-      String languages = "('" + String.join("','", this.translatorOptions.getAllLanguage3LetterCodes()) + "')";
-      PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
-      String script = "(for $__LANG__ in " + languages + " return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
-      return Expression.instantiate(script, type);
-    }
     if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
     }
@@ -301,7 +295,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return XPathContextualizer.join(first, second);
   }
 
-  /** Indexers ***/
+  //#region Indexers ----------------------------------------------------------
 
   @Override
   public <T extends Expression, L extends ListExpression<T>> T composeIndexer(L list,
@@ -310,7 +304,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate(String.format("%s[%s]", list.script, index.script), type);
   }
 
-  /*** BooleanExpressions ***/
+  //#endregion Indexers -------------------------------------------------------
+
+  //#region Boolean Expressions -----------------------------------------------
 
 
   @Override
@@ -344,7 +340,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
         + "[. = $x] return $y) = 1");
   }
 
-  /*** Boolean functions ***/
+  //#endregion Boolean Expressions ------------------------------------------
+
+  //#region Boolean functions -----------------------------------------------
 
   @Override
   public BooleanExpression composeContainsCondition(StringExpression haystack,
@@ -384,7 +382,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
-  /*** Numeric functions ***/
+  //#endregion Boolean functions ----------------------------------------------
+
+  //#region Numeric functions -------------------------------------------------
 
   @Override
   public NumericExpression composeCountOperation(PathExpression nodeSet) {
@@ -423,8 +423,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
         leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
   }
 
+  //#endregion Numeric functions ----------------------------------------------
 
-  /*** String functions ***/
+  //#region String functions --------------------------------------------------
 
   @Override
   public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
@@ -479,8 +480,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new StringExpression("'" + value + "'", true);
   }
 
+  @Override
+  public StringExpression getPreferredLanguage(PathExpression fieldReference) {
+    final String variableName = "$__LANG__";
+      PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=" + variableName);
+      String script = "((for " + variableName + " in ted:preferred-languages() return if (" + languageSpecific.script + "/normalize-space(text())) then " + variableName + " else ()), " + fieldReference.script + "/normalize-space(text()))[1]";
+    return new StringExpression(script);
+  }
 
-  /*** Date functions ***/
+  @Override
+  public StringExpression getTextInPreferredLanguage(PathExpression fieldReference) {
+    return new StringExpression(XPathContextualizer.addPredicate(fieldReference, "[@languageID=" + this.getPreferredLanguage(fieldReference).script + "]").script );
+  }
+
+  //#endregion String functions -----------------------------------------------
+
+  //#region Date functions ----------------------------------------------------
 
   @Override
   public DateExpression composeToDateConversion(StringExpression date) {
@@ -497,15 +512,18 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new DateExpression("(" + date.script + " - " + duration.script + ")");
   }
 
-  /*** Time functions ***/
+  //#endregion Date functions -------------------------------------------------
+
+  //#region Time functions ----------------------------------------------------
 
   @Override
   public TimeExpression composeToTimeConversion(StringExpression time) {
     return new TimeExpression("xs:time(" + time.script + ")");
   }
 
+  //#endregion Time functions -------------------------------------------------
 
-  /*** Duration functions ***/
+  //#region Duration functions ------------------------------------------------
 
   @Override
   public DurationExpression composeToDayTimeDurationConversion(StringExpression text) {
@@ -563,8 +581,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (every $L2 in " + listTwo.script + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
+  //#endregion Duration functions ---------------------------------------------
 
-  /*** Helpers ***/
+  //#region Helpers -----------------------------------------------------------
 
 
   private String quoted(final String text) {
@@ -575,4 +594,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
     Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
     return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
   }
+
+  //#endregion Helpers --------------------------------------------------------
 }

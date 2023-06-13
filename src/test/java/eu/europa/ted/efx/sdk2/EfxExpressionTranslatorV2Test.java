@@ -88,9 +88,33 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLikePatternCondition_WithTextField() {
+    testExpressionTranslation("fn:matches(normalize-space(PathNode/TextField/normalize-space(text())), '[0-9]*')",
+        "{ND-Root} ${BT-00-Text like '[0-9]*'}");
+  }
+
+  @Test
+  void testLikePatternCondition_WithTextMultilingualField() {
+    testExpressionTranslation("every $lang in PathNode/TextMultilingualField/@languageID satisfies fn:matches(normalize-space(PathNode/TextMultilingualField[./@languageID = $lang]/normalize-space(text())), '[0-9]*')",
+        "{ND-Root} ${every text:$lang in BT-00-Text-Multilingual/@languageID satisfies BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == $lang]  like '[0-9]*'}");
+  }
+
+  @Test 
+  void testVisualisationLanguageFunction() {
+    testExpressionTranslation("PathNode/TextMultilingualField[./@languageID = ((for $__LANG__ in ted:preferred-languages() return if (.[@languageID=$__LANG__]/normalize-space(text())) then $__LANG__ else ()), ./normalize-space(text()))[1]]/normalize-space(text())", 
+    "{ND-Root} ${BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == preferred-language(BT-00-Text-Multilingual)]}");
+  }
+
+  @Test 
+  void testGetPreferredLanguageTextFunction() {
+    testExpressionTranslation("PathNode/TextMultilingualField[@languageID=((for $__LANG__ in ted:preferred-languages() return if (PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text())) then $__LANG__ else ()), PathNode/TextMultilingualField/normalize-space(text()))[1]]", 
+    "{ND-Root} ${preferred-language-text(BT-00-Text-Multilingual)}");
+  }
+
+  @Test
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = (for $__LANG__ in ('eng') return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
         "Root", "textField == textMultilingualField");
   }
 
@@ -1116,6 +1140,26 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext("./preceding::PathNode/IntegerField/number()", "ND-Root",
         "ND-Root::preceding::integerField");
   }
+
+  /**
+   * Unlike EFX-1, where any reference to a text-multilingual field, is automatically translated to
+   * an expression that returns the value of the field in the preferred language, in EFX-2 there are
+   * no such implicit assumptions made. In EFX-2 a reference to a text-multilingual field behaves just 
+   * like any other field reference. To get the value of the field in a specific language you either need
+   * to add a predicate that selects it or use the preferred-language-text function. 
+   */
+  @Test
+  void testMultilingualTextFieldReference() {
+    testExpressionTranslationWithContext("PathNode/TextMultilingualField/normalize-space(text())",
+        "ND-Root", "BT-00-Text-Multilingual");
+  }
+
+  @Test
+  void testMultilingualTextFieldReference_WithLanguagePredicate() {
+    testExpressionTranslationWithContext("PathNode/TextMultilingualField[./@languageID = 'eng']/normalize-space(text())",
+        "ND-Root", "BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng']");
+  }
+
 
   // #endregion: References
 

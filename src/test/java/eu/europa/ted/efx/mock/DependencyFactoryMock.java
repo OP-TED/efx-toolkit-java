@@ -1,14 +1,17 @@
 package eu.europa.ted.efx.mock;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 
+import eu.europa.ted.eforms.sdk.ComponentFactory;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
-import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 /**
  * Provides EfxTranslator dependencies used for unit testing.
@@ -19,9 +22,9 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
   final public static DependencyFactoryMock INSTANCE = new DependencyFactoryMock();
 
-  ScriptGenerator scriptGenerator;
-  MarkupGenerator markupGenerator;
-
+  Map<String, ScriptGenerator> scriptGenerators = new HashMap<>();
+  Map<String, MarkupGenerator> markupGenerators = new HashMap<>();
+  
   @Override
   public SymbolResolver createSymbolResolver(String sdkVersion) {
     return SymbolResolverMockFactory.getInstance(sdkVersion);
@@ -29,18 +32,22 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
   @Override
   public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options) {
-    if (scriptGenerator == null) {
-      this.scriptGenerator = new XPathScriptGenerator(options);
+    if (!scriptGenerators.containsKey(sdkVersion)) {
+      try {
+        this.scriptGenerators.put(sdkVersion, ComponentFactory.getScriptGenerator(sdkVersion, options));
+      } catch (InstantiationException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
     }
-    return this.scriptGenerator;
+    return this.scriptGenerators.get(sdkVersion);
   }
 
   @Override
   public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options) {
-    if (this.markupGenerator == null) {
-      this.markupGenerator = new MarkupGeneratorMock();
+    if (!this.markupGenerators.containsKey(sdkVersion)) {
+      this.markupGenerators.put(sdkVersion, new MarkupGeneratorMock());
     }
-    return this.markupGenerator;
+    return this.markupGenerators.get(sdkVersion);
   }
 
   @Override

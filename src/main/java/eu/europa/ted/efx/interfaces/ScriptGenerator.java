@@ -368,9 +368,58 @@ public interface ScriptGenerator {
 
   public StringExpression composeToStringConversion(NumericExpression number);
 
+  /**
+   * Returns the target language script that converts the given text to upper case.
+   * 
+   * @since SDK 2.0.0
+   * @see #composeToLowerCaseConversion(StringExpression)
+   * 
+   * @param text The text to be converted to upper case.
+   * @return     The target language script that converts the text to upper case.
+   */
   public StringExpression composeToUpperCaseConversion(StringExpression text);
 
+  /**
+   * Returns the target language script that converts the given text to lower case.
+   * 
+   * @since SDK 2.0.0
+   * @see #composeToUpperCaseConversion(StringExpression)
+   * 
+   * @param text   The text to be converted to lower case.
+   * @return       The target language script that converts the text to lower case.
+   */
   public StringExpression composeToLowerCaseConversion(StringExpression text);
+
+  /**
+   * Gets the target language script that retrieves the preferred language ID
+   * out of the languages available in the given field.
+   * 
+   * The function is intended to be used in a predicate to select the text in the preferred
+   * language. The function's implementation will typically have to depend on a runtime call 
+   * to a runtime library function that retrieves the language identifiers that are preferred
+   * for the current visualisation.
+   * 
+   * @since SDK 2.0.0 
+   * @see #getTextInPreferredLanguage(PathExpression)
+   * 
+   * @param fieldReference  The multilingual text field.
+   * @return The target language script that retrieves the preferred language ID.
+   */
+  public StringExpression getPreferredLanguage(final PathExpression fieldReference);
+
+  /**
+   * Given a reference to a multilingual field, this function should generate the target language script
+   * that returns the text value of the field in the preferred language.
+   * 
+   * Calling the function in EFX 2
+   * 
+   * @since SDK 2.0.0
+   * @see #getPreferredLanguage(PathExpression)
+   * 
+   * @param fieldReference  The multilingual text field.
+   * @return The target language script that retrieves the field's text in the preferred language.
+   */
+  public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference);
 
   /*
    * Boolean Functions

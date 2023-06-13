@@ -82,6 +82,14 @@ public class XPathContextualizer extends XPath20BaseListener {
     return getContextualizedXpath(contextSteps, pathSteps);
   }
 
+  public static boolean hasPredicate(final PathExpression xpath, String match) {
+    return hasPredicate(xpath.script, match);
+  }
+  
+  public static boolean hasPredicate(final String xpath, String match) {
+    return getSteps(xpath).stream().anyMatch(s -> s.getPredicateText().contains(match));
+  }
+
   public static PathExpression addPredicate(final PathExpression pathExpression, final String predicate) {
     return new PathExpression(addPredicate(pathExpression.script, predicate));
   }
