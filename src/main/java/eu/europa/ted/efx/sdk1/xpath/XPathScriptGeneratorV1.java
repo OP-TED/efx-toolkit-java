@@ -35,8 +35,8 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      * done implicitly, whereas in EFX 2 it is done explicitly by calling a special
      * function designed to perform this task.
      * 
-     * Both EFX and EFX 2 implementations of the feature rely on the existence of a
-     * "ted:preferred-languages()" function in the XSLT.
+     * Both EFX-1 and EFX-2 implementations of the feature rely on the existence of a
+     * $PREFERRED_LANGUAGES variable in the XSLT.
      * This function returns the list of languages used in the visualisation in the
      * order of preference (visualisation language followed by notice language(s)).
      */
@@ -44,7 +44,7 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference, Class<T> type) {
         if ((MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
             PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
-            String script = "(for $__LANG__ in ted:preferred-languages() return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
+            String script = "(for $__LANG__ in $PREFERRED_LANGUAGES return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
             return Expression.instantiate(script, type);
           }
         return super.composeFieldValueReference(fieldReference, type);
