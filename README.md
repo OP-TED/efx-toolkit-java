@@ -1,4 +1,4 @@
-**[:memo: Latest Release Notes](CHANGELOG.md)** | **[:package: Latest Release Artifacts](https://search.maven.org/search?q=g:%22eu.europa.ted.eforms%22%20AND%20a:%22efx-toolkit-java%22)**
+**[:memo: Latest Release Notes](CHANGELOG.md)** | **[:package: Latest Release Artifacts](https://central.sonatype.com/artifact/eu.europa.ted.eforms/efx-toolkit-java)**
 
 ---
 # Java toolkit for the eForms Expression Language (EFX)
@@ -81,7 +81,7 @@ The report is available under `target/site/jacoco/`, in HTML, CSV, and XML forma
 
 You can download the latest EFX Toolkit from Maven Central.
 
-[![Maven Central](https://img.shields.io/maven-central/v/eu.europa.ted.eforms/efx-toolkit-java?label=Download%20&style=flat-square)](https://search.maven.org/search?q=g:%22eu.europa.ted.eforms%22%20AND%20a:%22efx-toolkit-java%22)
+[![Maven Central](https://img.shields.io/maven-central/v/eu.europa.ted.eforms/efx-toolkit-java?label=Download%20&style=flat-square)](https://central.sonatype.com/artifact/eu.europa.ted.eforms/efx-toolkit-java)
 
 [^1]: _Copyright 2022 European Union_  
 _Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission –
