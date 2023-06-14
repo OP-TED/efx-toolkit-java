@@ -25,7 +25,6 @@ import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
 
 /**
