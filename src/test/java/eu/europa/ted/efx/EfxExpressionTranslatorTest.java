@@ -97,8 +97,8 @@ class EfxExpressionTranslatorTest {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     assertEquals(
-        "(for $__LANG__ in $PREFERRED_LANGUAGES return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
-        test("ND-Root", "BT-00-Text-Multilingual"));
+        "PathNode/TextField/normalize-space(text()) = efx:preferred-language-text(PathNode/TextMultilingualField)",
+        test("ND-Root", "BT-00-Text == BT-00-Text-Multilingual"));
   }
 
   @Test
@@ -1074,6 +1074,18 @@ class EfxExpressionTranslatorTest {
   void testFieldReference_WithAxis() {
     assertEquals("./preceding::PathNode/IntegerField/number()",
         test("ND-Root", "ND-Root::preceding::BT-00-Integer"));
+  }
+
+    @Test
+  void testMultilingualTextFieldReference() {
+    assertEquals("efx:preferred-language-text(PathNode/TextMultilingualField)",
+        test("ND-Root", "BT-00-Text-Multilingual"));
+  }
+
+  @Test
+  void testMultilingualTextFieldReference_WithLanguagePredicate() {
+    assertEquals("PathNode/TextMultilingualField[./@languageID = 'eng']/normalize-space(text())",
+        test("ND-Root", "BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng']"));
   }
 
   /*** Boolean functions ***/
