@@ -100,14 +100,20 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test 
-  void testVisualisationLanguageFunction() {
-    testExpressionTranslation("PathNode/TextMultilingualField[./@languageID = ((for $__LANG__ in $PREFERRED_LANGUAGES return if (.[@languageID=$__LANG__]/normalize-space(text())) then $__LANG__ else ()), ./normalize-space(text()))[1]]/normalize-space(text())", 
+  void testPreferredLanguageFunction() {
+    testExpressionTranslation("PathNode/TextMultilingualField[./@languageID = efx:preferred-language(.)]/normalize-space(text())", 
     "{ND-Root} ${BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == preferred-language(BT-00-Text-Multilingual)]}");
   }
 
+    @Test 
+  void testPreferredLanguageFunction_InPredicate() {
+    testExpressionTranslation("efx:preferred-language(PathNode/TextMultilingualField)", 
+    "{ND-Root} ${preferred-language(BT-00-Text-Multilingual)}");
+  }
+
   @Test 
-  void testGetPreferredLanguageTextFunction() {
-    testExpressionTranslation("PathNode/TextMultilingualField[@languageID=((for $__LANG__ in $PREFERRED_LANGUAGES return if (PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text())) then $__LANG__ else ()), PathNode/TextMultilingualField/normalize-space(text()))[1]]", 
+  void testPreferredLanguageTextFunction() {
+    testExpressionTranslation("efx:preferred-language-text(PathNode/TextMultilingualField)", 
     "{ND-Root} ${preferred-language-text(BT-00-Text-Multilingual)}");
   }
 

@@ -90,7 +90,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = (for $__LANG__ in $PREFERRED_LANGUAGES return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+        "PathNode/TextField/normalize-space(text()) = efx:preferred-language-text(PathNode/TextMultilingualField)",
         "ND-Root", "BT-00-Text == BT-00-Text-Multilingual");
   }
 
@@ -1119,7 +1119,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testMultilingualTextFieldReference() {
-    testExpressionTranslationWithContext("(for $__LANG__ in $PREFERRED_LANGUAGES return PathNode/TextMultilingualField[@languageID=$__LANG__]/normalize-space(text()), PathNode/TextMultilingualField/normalize-space(text()))[1]",
+    testExpressionTranslationWithContext("efx:preferred-language-text(PathNode/TextMultilingualField)",
         "ND-Root", "BT-00-Text-Multilingual");
   }
 

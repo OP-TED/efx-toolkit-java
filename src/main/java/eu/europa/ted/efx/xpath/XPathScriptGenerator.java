@@ -482,16 +482,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression getPreferredLanguage(PathExpression fieldReference) {
-    final String variableName = "$__LANG__";
-    PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=" + variableName);
-    // TODO: rethink about the implicit dependency to the existence of the $PREFERRED_LANGUAGES runtime variable in the XSLT.
-    String script = "((for " + variableName + " in $PREFERRED_LANGUAGES return if (" + languageSpecific.script + "/normalize-space(text())) then " + variableName + " else ()), " + fieldReference.script + "/normalize-space(text()))[1]";
-    return new StringExpression(script);
+    return new StringExpression("efx:preferred-language(" + fieldReference.script + ")");
   }
 
   @Override
   public StringExpression getTextInPreferredLanguage(PathExpression fieldReference) {
-    return new StringExpression(XPathContextualizer.addPredicate(fieldReference, "[@languageID=" + this.getPreferredLanguage(fieldReference).script + "]").script );
+    return new StringExpression("efx:preferred-language-text(" + fieldReference.script + ")");
   }
 
   //#endregion String functions -----------------------------------------------

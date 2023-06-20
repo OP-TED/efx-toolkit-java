@@ -43,10 +43,8 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     @Override
     public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference, Class<T> type) {
         if ((MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
-            PathExpression languageSpecific = XPathContextualizer.addPredicate(fieldReference, "@languageID=$__LANG__");
-            String script = "(for $__LANG__ in $PREFERRED_LANGUAGES return " + languageSpecific.script + "/normalize-space(text()), " + fieldReference.script + "/normalize-space(text()))[1]";
-            return Expression.instantiate(script, type);
-          }
+            return Expression.instantiate("efx:preferred-language-text(" + fieldReference.script + ")", type);
+        }
         return super.composeFieldValueReference(fieldReference, type);
     }
 }
