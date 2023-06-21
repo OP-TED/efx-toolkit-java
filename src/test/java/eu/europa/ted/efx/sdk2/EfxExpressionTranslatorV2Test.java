@@ -1100,6 +1100,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testFieldReferenceInOtherNotice_UsingAReference() {
+    testExpressionTranslationWithContext(
+        "fn:doc(concat($urlPrefix, /*/PathNode/IdField/normalize-space(text())))/*/PathNode/TextField/normalize-space(text())",
+        "ND-Root", "notice(BT-00-Identifier)/BT-00-Text");
+  }
+
+  @Test
   void testFieldReferenceWithFieldContextOverride() {
     testExpressionTranslationWithContext("../TextField/normalize-space(text())", "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Text");

@@ -157,6 +157,14 @@
     "xpathRelative": "PathNode/ZonedTimeField"
   },
   {
+    "id": "BT-00-Identifier",
+    "alias": "identifierField",
+    "type": "id",
+    "parentNodeId": "ND-Root",
+    "xpathAbsolute": "/*/PathNode/IdField",
+    "xpathRelative": "PathNode/IdField"
+  },  
+  {
     "id": "BT-00-Id-Ref",
     "alias": "idRefField",
     "type": "id-ref",
