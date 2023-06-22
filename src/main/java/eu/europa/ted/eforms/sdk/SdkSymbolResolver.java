@@ -17,7 +17,7 @@ import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-@SdkComponent(versions = {"0.6", "0.7", "1", "2"},
+@SdkComponent(versions = {"1", "2"},
     componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkField> fieldById;

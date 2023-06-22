@@ -10,7 +10,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
-@SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
+@SdkComponent(versions = {"1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
 
     public XPathScriptGeneratorV1(TranslatorOptions translatorOptions) {

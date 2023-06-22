@@ -19,8 +19,6 @@ Documentation for the EFX Toolkit is available at: https://docs.ted.europa.eu/ef
 ---
 
 This version of the EFX Toolkit has a compile-time dependency on the following versions of eForms SDK versions and uses the EFX grammar that each version provides:
-- eForms SDK 0.6.x
-- eForms SDK 0.7.x
 - eForms SDK 1.x.x
 
 It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.0.5.
