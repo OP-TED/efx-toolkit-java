@@ -329,15 +329,9 @@ public interface ScriptGenerator {
    * Numeric Functions
    */
 
-  @Deprecated(since = "0.7.0", forRemoval = true)
-  public NumericExpression composeCountOperation(final PathExpression set);
-
   public NumericExpression composeCountOperation(final ListExpression<? extends Expression> list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
-
-  @Deprecated(since = "0.7.0", forRemoval = true)
-  public NumericExpression composeSumOperation(PathExpression set);
 
   public NumericExpression composeSumOperation(NumericListExpression list);
 

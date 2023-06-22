@@ -387,11 +387,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
   //#region Numeric functions -------------------------------------------------
 
   @Override
-  public NumericExpression composeCountOperation(PathExpression nodeSet) {
-    return new NumericExpression("count(" + nodeSet.script + ")");
-  }
-
-  @Override
   public NumericExpression composeCountOperation(ListExpression<? extends Expression> list) {
     return new NumericExpression("count(" + list.script + ")");
   }
@@ -399,11 +394,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeToNumberConversion(StringExpression text) {
     return new NumericExpression("number(" + text.script + ")");
-  }
-
-  @Override
-  public NumericExpression composeSumOperation(PathExpression nodeSet) {
-    return new NumericExpression("sum(" + nodeSet.script + ")");
   }
 
   @Override
