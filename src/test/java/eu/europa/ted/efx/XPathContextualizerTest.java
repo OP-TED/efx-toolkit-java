@@ -83,6 +83,11 @@ class XPathContextualizerTest {
   }
 
   @Test
+  void testPredicateInContextBeingTheOnlyDifference() {
+    assertEquals(".", contextualize("/a/b/c[e/f = 'z']", "/a/b/c"));
+  }
+  
+  @Test
   void testPredicatesBeingTheOnlyDifferences() {
     assertEquals("..[u/v = 'w']/c[x/y = 'z']", contextualize("/a/b/c", "/a/b[u/v = 'w']/c[x/y = 'z']"));
   }
