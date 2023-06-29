@@ -84,7 +84,7 @@ class XPathContextualizerTest {
 
   @Test
   void testPredicatesBeingTheOnlyDifferences() {
-    assertEquals("..[x/y = 'z']/c[x/y = 'z']", contextualize("/a/b/c", "/a/b[x/y = 'z']/c[x/y = 'z']"));
+    assertEquals("..[u/v = 'w']/c[x/y = 'z']", contextualize("/a/b/c", "/a/b[u/v = 'w']/c[x/y = 'z']"));
   }
 
   @Test
