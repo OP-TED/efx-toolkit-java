@@ -189,9 +189,27 @@ public class XPathContextualizer extends XPath20BaseListener {
 
       // At this point there are no more matching nodes in the two queues.
 
+      // We look at the first of the remaining steps in both queues and look if
+      // they are "similar" (meaning that they share the same step-text but but
+      // the path has different predicates). In this case we want to use a dot step
+      // with the predicate.
+      if (!contextQueue.isEmpty() && !pathQueue.isEmpty() && pathQueue.peek().isSimilarTo(contextQueue.peek())) {
+          contextQueue.poll();  // consume the same step from the contextQueue
+          if (contextQueue.isEmpty()) {
+            // Since there are no more steps in the contextQueue, the relative xpath should 
+            // start with a dot step to provide a context for the predicate.
+            relativeXpath += "." + pathQueue.poll().getPredicateText();
+          } else {
+            // Since there are more steps in the contextQueue which we will need to navigate back to,
+            // using back-steps, we will use a back-step to provide context of the predicate.
+            // This avoids an output that looks like ../.[predicate] which is valid but silly.  
+            contextQueue.poll();  // consume the step from the contextQueue
+            relativeXpath += ".." + pathQueue.poll().getPredicateText();
+          }
+      }
+
       // We start building the resulting relativeXpath by appending any nodes
-      // remaining in the
-      // pathQueue.
+      // remaining in the pathQueue.
       while (!pathQueue.isEmpty()) {
         final StepInfo step = pathQueue.poll();
         relativeXpath += "/" + step.stepText + step.getPredicateText();
@@ -356,7 +374,7 @@ public class XPathContextualizer extends XPath20BaseListener {
 
       // If one of the two steps has more predicates that the other,
       if (this.predicates.size() != contextStep.predicates.size()) {
-        // then the steps are the same is the path has no predicates
+        // then the steps are the same if the path has no predicates
         // or all the predicates of the path are also found in the context.
         return this.predicates.isEmpty() || contextStep.predicates.containsAll(this.predicates);
       }
@@ -379,6 +397,25 @@ public class XPathContextualizer extends XPath20BaseListener {
       Collections.sort(pathPredicates);
       Collections.sort(contextPredicates);
       return pathPredicates.equals(contextPredicates);
+    }
+
+    public Boolean isSimilarTo(final StepInfo contextStep) {
+
+      // First check the step texts are the different.
+      if (!Objects.equals(contextStep.stepText, this.stepText)) {
+        return false;
+      }
+
+      // If one of the two steps has more predicates that the other,
+      if (this.predicates.size() != contextStep.predicates.size()) {
+        // then the steps are the same if either of them has no predicates
+        // or all the predicates of the path are also found in the context.
+        return this.predicates.isEmpty() || contextStep.predicates.isEmpty()
+            || contextStep.predicates.containsAll(this.predicates);
+      }
+
+      assert !this.isTheSameAs(contextStep) : "You should not be calling isSimilarTo() without first checking isTheSameAs()";
+      return false;
     }
 
     public Boolean isPartOf(Interval interval) {

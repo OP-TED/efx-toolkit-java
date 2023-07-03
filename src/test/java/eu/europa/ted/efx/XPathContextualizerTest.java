@@ -78,6 +78,21 @@ class XPathContextualizerTest {
   }
 
   @Test
+  void testPredicateBeingTheOnlyDifference() {
+    assertEquals(".[x/y = 'z']", contextualize("/a/b/c", "/a/b/c[x/y = 'z']"));
+  }
+
+  @Test
+  void testPredicateInContextBeingTheOnlyDifference() {
+    assertEquals(".", contextualize("/a/b/c[e/f = 'z']", "/a/b/c"));
+  }
+  
+  @Test
+  void testPredicatesBeingTheOnlyDifferences() {
+    assertEquals("..[u/v = 'w']/c[x/y = 'z']", contextualize("/a/b/c", "/a/b[u/v = 'w']/c[x/y = 'z']"));
+  }
+
+  @Test
   void testPredicateInContextLeaf() {
     assertEquals("../d", contextualize("/a/b/c[e/f = 'z']", "/a/b/d"));
   }
@@ -89,7 +104,7 @@ class XPathContextualizerTest {
 
   @Test
   void testPredicateInXpathMiddle() {
-    assertEquals("../../b[x/y = 'z']/d", contextualize("/a/b/c", "/a/b[x/y = 'z']/d"));
+    assertEquals("..[x/y = 'z']/d", contextualize("/a/b/c", "/a/b[x/y = 'z']/d"));
   }
 
   @Test
@@ -109,7 +124,7 @@ class XPathContextualizerTest {
 
   @Test
   void testPredicateDifferent() {
-    assertEquals("../c[x = 'y']/d", contextualize("/a/b[e = 'f']/c", "/a/b/c[x = 'y']/d"));
+    assertEquals(".[x = 'y']/d", contextualize("/a/b[e = 'f']/c", "/a/b/c[x = 'y']/d"));
   }
 
   @Test
