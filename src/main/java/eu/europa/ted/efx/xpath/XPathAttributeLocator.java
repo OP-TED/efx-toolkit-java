@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.commons.lang3.StringUtils;
 
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
@@ -31,12 +32,24 @@ public class XPathAttributeLocator extends XPath20BaseListener {
   private String path;
   private String attribute;
 
-  public NodePathExpression getPath() {
+  /**
+   * Gets the XPath to the XML element that contains the attribute.
+   * The returned XPath therefore does not contain the attribute itself.
+   * 
+   * @return A {@link NodePathExpression} pointing to the XML element that contains the attribute.
+   */
+  public NodePathExpression getElementPath() {
     return Expression.instantiate(path, NodePathExpression.class);
   }
 
-  public String getAttribute() {
-    return attribute;
+  /** 
+   * Gets the name of the attribute (without the @ prefix).
+   * If the parsed XPath did not point to an attribute, then this method returns null.
+   * 
+   * @return The name of the attribute (or null if the parsed XPath did not point to an attribute).
+   */
+  public String getAttributeName() {
+    return StringUtils.isBlank(attribute) ? null : attribute;
   }
 
   public Boolean hasAttribute() {
@@ -60,6 +73,7 @@ public class XPathAttributeLocator extends XPath20BaseListener {
       this.attribute = ctx.nodetest().getText();
     }
   }
+
   public static XPathAttributeLocator findAttribute(final PathExpression xpath) {
     return findAttribute(xpath.getScript());
   }

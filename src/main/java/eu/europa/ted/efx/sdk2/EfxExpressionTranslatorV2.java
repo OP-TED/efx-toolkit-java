@@ -1050,7 +1050,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       this.stack.push(this.script.composeFieldAttributeReference(
           this.symbols.getRelativePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeOfField(fieldId),
+          this.symbols.getAttributeNameFromAttributeField(fieldId),
           PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
     this.stack.push(this.script.composeFieldValueReference(path));
@@ -1065,7 +1065,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       this.stack.push(this.script.composeFieldAttributeReference(
           this.symbols.getRelativePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeOfField(fieldId),
+          this.symbols.getAttributeNameFromAttributeField(fieldId),
           PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
       this.stack.push(this.script.composeFieldValueReference(path));

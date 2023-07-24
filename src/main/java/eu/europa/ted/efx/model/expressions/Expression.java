@@ -4,9 +4,9 @@ import java.lang.reflect.Constructor;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import eu.europa.ted.efx.model.CallStackObject;
+import eu.europa.ted.efx.model.ParsedEntity;
 
-public interface Expression extends CallStackObject {
+public interface Expression extends ParsedEntity {
 
   public String getScript();
 

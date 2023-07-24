@@ -1,11 +1,11 @@
 package eu.europa.ted.efx.model.variables;
 
-import eu.europa.ted.efx.model.CallStackObject;
+import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
-public class Identifier implements CallStackObject {
+public class Identifier implements ParsedEntity {
   final public String name;
   final public Class<? extends EfxDataType> dataType;
   final public Expression declarationExpression;

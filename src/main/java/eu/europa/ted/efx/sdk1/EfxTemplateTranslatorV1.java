@@ -295,7 +295,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final PathExpression valueReference = this.symbols.isAttributeField(fieldId)
         ? this.script.composeFieldAttributeReference(
             this.symbols.getRelativePath(this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), currentContext.absolutePath()),
-            this.symbols.getAttributeOfField(fieldId), StringPathExpression.class)
+            this.symbols.getAttributeNameFromAttributeField(fieldId), StringPathExpression.class)
         : this.script.composeFieldValueReference(
         this.symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()));
     Variable loopVariable = new Variable("item",

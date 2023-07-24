@@ -119,7 +119,7 @@ public interface SymbolResolver {
    * @param fieldId The identifier of the field to look for.
    * @return True if the field points to an @attribute, false otherwise.
    */
-  public Boolean isAttributeField(final String fieldId);
+  public boolean isAttributeField(final String fieldId);
 
   /**
    * Gets the attribute name of the given field (if the field points to
@@ -129,7 +129,7 @@ public interface SymbolResolver {
    * @return The attribute name of the given field, without the @ prefix, or an
    *         empty string if the field does not point to an @attribute.
    */
-  public String getAttributeOfField(final String fieldId);
+  public String getAttributeNameFromAttributeField(final String fieldId);
 
   /**
    * Gets the absolute path of the given field, without the attribute part.

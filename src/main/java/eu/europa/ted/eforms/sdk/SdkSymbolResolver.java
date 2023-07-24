@@ -177,7 +177,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   @Override
-  public Boolean isAttributeField(final String fieldId) {
+  public boolean isAttributeField(final String fieldId) {
     if (!additionalFieldInfoMap.containsKey(fieldId)) {
       this.cacheAdditionalFieldInfo(fieldId);
     }
@@ -185,7 +185,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   @Override
-  public String getAttributeOfField(final String fieldId) {
+  public String getAttributeNameFromAttributeField(final String fieldId) {
     if (!additionalFieldInfoMap.containsKey(fieldId)) {
       this.cacheAdditionalFieldInfo(fieldId);
     }
@@ -208,7 +208,7 @@ public class SdkSymbolResolver implements SymbolResolver {
    * TODO: Move this additional info to SdkField class, and move the XPathAttributeLocator to the eforms-core-library.
    */
   class AdditionalFieldInfo {
-    public Boolean isAttribute;
+    public boolean isAttribute;
     public String attributeName;
     public PathExpression pathWithoutAttribute;
   }
@@ -226,8 +226,8 @@ public class SdkSymbolResolver implements SymbolResolver {
     var parsedPath = XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId));
     var info = new AdditionalFieldInfo();
     info.isAttribute = parsedPath.hasAttribute();
-    info.attributeName = parsedPath.getAttribute();
-    info.pathWithoutAttribute = parsedPath.getPath();
+    info.attributeName = parsedPath.getAttributeName();
+    info.pathWithoutAttribute = parsedPath.getElementPath();
     additionalFieldInfoMap.put(fieldId, info);
   }
 }

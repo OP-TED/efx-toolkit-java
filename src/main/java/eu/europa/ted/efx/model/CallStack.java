@@ -32,7 +32,7 @@ public class CallStack {
    * available within the
    * scope of the sub-expression.
    */
-  class StackFrame extends Stack<CallStackObject> {
+  class StackFrame extends Stack<ParsedEntity> {
 
     /**
      * Keeps a list of all identifiers declared in the current scope as well as
@@ -60,8 +60,8 @@ public class CallStack {
      * @param expectedType The type that the returned object is expected to have.
      * @return The object removed from the top of the stack.
      */
-    synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
-      Class<? extends CallStackObject> actualType = this.peek().getClass();
+    synchronized <T extends ParsedEntity> T pop(Class<T> expectedType) {
+      Class<? extends ParsedEntity> actualType = this.peek().getClass();
       if (expectedType.isAssignableFrom(actualType)) {
         return expectedType.cast(this.pop());
       }
@@ -233,11 +233,11 @@ public class CallStack {
    * 
    * @param item The object to push on the stack.
    */
-  public void push(CallStackObject item) {
+  public void push(ParsedEntity item) {
     this.frames.peek().push(item);
   }
 
-  public synchronized <T extends CallStackObject> T pop(Class<T> expectedType) {
+  public synchronized <T extends ParsedEntity> T pop(Class<T> expectedType) {
     return this.frames.peek().pop(expectedType);
   }
 
@@ -247,7 +247,7 @@ public class CallStack {
    * 
    * @return The object at the top of the current stack frame.
    */
-  public synchronized CallStackObject peek() {
+  public synchronized ParsedEntity peek() {
     return this.frames.peek().peek();
   }
 

@@ -56,17 +56,17 @@ public class SymbolResolverMockV1
   }
 
   @Override
-  public Boolean isAttributeField(final String fieldId) {
+  public boolean isAttributeField(final String fieldId) {
     return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).hasAttribute();
   }
 
   @Override
-  public String getAttributeOfField(String fieldId) {
-      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getAttribute();
+  public String getAttributeNameFromAttributeField(String fieldId) {
+      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getAttributeName();
   }
 
   @Override
   public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(String fieldId) {
-      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getPath();
+      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getElementPath();
   }
 }

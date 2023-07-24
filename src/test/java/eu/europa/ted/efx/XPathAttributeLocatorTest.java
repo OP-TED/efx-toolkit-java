@@ -13,8 +13,8 @@ class XPathAttributeLocatorTest {
     final XPathAttributeLocator locator =
         XPathAttributeLocator.findAttribute(attributePath);
 
-    assertEquals(expectedPath, locator.getPath().getScript());
-    assertEquals(expectedAttribute, locator.getAttribute());
+    assertEquals(expectedPath, locator.getElementPath().getScript());
+    assertEquals(expectedAttribute, locator.getAttributeName());
   }
 
   @Test
@@ -32,8 +32,8 @@ class XPathAttributeLocatorTest {
   void testXPathAttributeLocator_WithoutAttribute() {
     final XPathAttributeLocator locator = XPathAttributeLocator
         .findAttribute("/path/path[@otherAttribute = 'text']");
-    assertEquals("/path/path[@otherAttribute = 'text']", locator.getPath().getScript());
-    assertNull(locator.getAttribute());
+    assertEquals("/path/path[@otherAttribute = 'text']", locator.getElementPath().getScript());
+    assertNull(locator.getAttributeName());
   }
 
   @Test
