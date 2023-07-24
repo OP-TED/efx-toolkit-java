@@ -16,7 +16,9 @@ import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends SdkNode, C extends SdkCodelist>
@@ -153,7 +155,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
       throw new ParseCancellationException(
           String.format("Unknown field identifier '%s'.", fieldId));
     }
-    return new PathExpression(sdkField.getXpathAbsolute());
+    return PathExpression.instantiate(sdkField.getXpathAbsolute(), FieldTypes.fromString(sdkField.getType()));
   }
 
   /**
@@ -168,6 +170,6 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
       throw new ParseCancellationException(String.format("Unknown node identifier '%s'.", nodeId));
     }
 
-    return new PathExpression(sdkNode.getXpathAbsolute());
+    return new NodePathExpression(sdkNode.getXpathAbsolute());
   }
 }

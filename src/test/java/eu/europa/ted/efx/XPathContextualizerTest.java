@@ -1,14 +1,14 @@
 package eu.europa.ted.efx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 class XPathContextualizerTest {
   private String contextualize(final String context, final String xpath) {
-    return XPathContextualizer.contextualize(new PathExpression(context),
-        new PathExpression(xpath)).script;
+    return XPathContextualizer.contextualize(context, xpath);
   }
 
   @Test

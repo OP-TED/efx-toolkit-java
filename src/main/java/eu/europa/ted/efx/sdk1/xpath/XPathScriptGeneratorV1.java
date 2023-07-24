@@ -3,10 +3,8 @@ package eu.europa.ted.efx.sdk1.xpath;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
-import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringExpression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringListExpression;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
@@ -41,10 +39,10 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      * order of preference (visualisation language followed by notice language(s)).
      */
     @Override
-    public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference, Class<T> type) {
-        if ((MultilingualStringExpression.class.isAssignableFrom(type) || MultilingualStringListExpression.class.isAssignableFrom(type)) && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
-            return Expression.instantiate("efx:preferred-language-text(" + fieldReference.script + ")", type);
+    public PathExpression composeFieldValueReference(PathExpression fieldReference) {
+        if (fieldReference.is(EfxDataType.MultilingualString.class) && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
+            return PathExpression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getDataType());
         }
-        return super.composeFieldValueReference(fieldReference, type);
+        return super.composeFieldValueReference(fieldReference);
     }
 }

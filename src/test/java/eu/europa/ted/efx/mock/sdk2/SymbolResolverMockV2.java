@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.mock.sdk2;
 
 import static java.util.Map.entry;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,10 +9,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import eu.europa.ted.efx.mock.AbstractSymbolResolverMock;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.sdk2.entity.SdkCodelistV2;
 import eu.europa.ted.efx.sdk2.entity.SdkFieldV2;
 import eu.europa.ted.efx.sdk2.entity.SdkNodeV2;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 public class SymbolResolverMockV2
     extends AbstractSymbolResolverMock<SdkFieldV2, SdkNodeV2, SdkCodelistV2> {
@@ -75,5 +79,20 @@ public class SymbolResolverMockV2
   @Override
   protected String getFieldsJsonFilename() {
     return "fields-sdk2.json";
+  }
+
+  @Override
+  public boolean isAttributeField(final String fieldId) {
+    return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).hasAttribute();
+  }
+
+  @Override
+  public String getAttributeNameFromAttributeField(String fieldId) {
+      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getAttributeName();
+  }
+
+  @Override
+  public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(String fieldId) {
+      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getElementPath();
   }
 }

@@ -1034,7 +1034,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testFieldAttributeValueReference_SameElementContext() {
-    testExpressionTranslationWithContext("@Attribute = 'text'", "BT-00-Text",
+    testExpressionTranslationWithContext("./@Attribute = 'text'", "BT-00-Text",
         "BT-00-Attribute == 'text'");
   }
 

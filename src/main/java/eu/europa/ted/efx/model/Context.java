@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.model;
 
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.variables.Variable;
 
 /**
  * Used to store an evaluation context.
@@ -20,7 +21,7 @@ public abstract class Context {
   public static class FieldContext extends Context {
 
     public FieldContext(final String fieldId, final PathExpression absolutePath,
-        final PathExpression relativePath, final Variable<PathExpression> variable) {
+        final PathExpression relativePath, final Variable variable) {
       super(fieldId, absolutePath, relativePath, variable);
     }
 
@@ -30,7 +31,7 @@ public abstract class Context {
     }
 
     public FieldContext(final String fieldId, final PathExpression absolutePath,
-        final Variable<PathExpression> variable) {
+        final Variable variable) {
       super(fieldId, absolutePath, variable);
     }
 
@@ -57,10 +58,10 @@ public abstract class Context {
   private final String symbol;
   private final PathExpression absolutePath;
   private final PathExpression relativePath;
-  private final Variable<PathExpression> variable;
+  private final Variable variable;
 
   protected Context(final String symbol, final PathExpression absolutePath,
-      final PathExpression relativePath, final Variable<PathExpression> variable) {
+      final PathExpression relativePath, final Variable variable) {
     this.variable = variable;
     this.symbol = symbol;
     this.absolutePath = absolutePath;
@@ -73,7 +74,7 @@ public abstract class Context {
   }
 
   protected Context(final String symbol, final PathExpression absolutePath,
-      final Variable<PathExpression> variable) {
+      final Variable variable) {
     this(symbol, absolutePath, absolutePath, variable);
   }
 
@@ -89,7 +90,7 @@ public abstract class Context {
     return this.getClass().equals(NodeContext.class);
   }
 
-  public Variable<PathExpression> variable() {
+  public Variable variable() {
     return variable;
   }
 

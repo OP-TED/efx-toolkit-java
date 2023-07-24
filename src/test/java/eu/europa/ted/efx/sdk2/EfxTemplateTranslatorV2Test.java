@@ -299,14 +299,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testShorthandIndirectLabelReferenceForCode() {
     assertEquals(
-        "let block01() -> { label(for $item in ../CodeField return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(for $item in ../CodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForInternalCode() {
     assertEquals(
-        "let block01() -> { label(for $item in ../InternalCodeField return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(for $item in ../InternalCodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
@@ -386,7 +386,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testShorthandIndirectLabelReferenceFromContextField() {
     assertEquals(
-        "let block01() -> { label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { label(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} #value"));
   }
 
@@ -400,14 +400,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testShorthandFieldValueReferenceFromContextField() {
-    assertEquals("let block01() -> { eval(.) }\nfor-each(/*/PathNode/CodeField).call(block01())",
+    assertEquals("let block01() -> { eval(./normalize-space(text())) }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} $value"));
   }
 
   @Test
   void testShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
-        "let block01() -> { text('blah ')label(for $item in . return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' blah ')eval(.)text(' blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { text('blah ')label(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' blah ')eval(./normalize-space(text()))text(' blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} blah #value blah $value blah"));
   }
 

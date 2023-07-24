@@ -18,7 +18,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.xpath.XPath20Parser.AxisstepContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.FilterexprContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
@@ -38,7 +38,7 @@ public class XPathContextualizer extends XPath20BaseListener {
    * XPath is comprised of.
    */
   private static Queue<StepInfo> getSteps(PathExpression xpath) {
-    return getSteps(xpath.script);
+    return getSteps(xpath.getScript());
   }
 
   /**
@@ -64,15 +64,25 @@ public class XPathContextualizer extends XPath20BaseListener {
    * Makes the given xpath relative to the given context xpath.
    * 
    * @param contextXpath the context xpath
-   * @param xpath the xpath to contextualize
+   * @param xpath        the xpath to contextualize
    * @return the contextualized xpath
    */
   public static PathExpression contextualize(final PathExpression contextXpath,
       final PathExpression xpath) {
+    // If we are asked to contextualise against a null or empty context
+    // then we must return the original xpath (instead of throwing an exception).
+    if (contextXpath == null || contextXpath.getScript().isEmpty()) {
+      return xpath;
+    }
+    return PathExpression.instantiate(contextualize(contextXpath.getScript(), xpath.getScript()), xpath.getDataType());
+  }
+
+  public static String contextualize(final String contextXpath,
+      final String xpath) {
 
     // If we are asked to contextualise against a null or empty context
     // then we must return the original xpath (instead of throwing an exception).
-    if (contextXpath == null || contextXpath.script.isEmpty()) {
+    if (contextXpath == null || contextXpath.isEmpty()) {
       return xpath;
     }
 
@@ -83,7 +93,7 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   public static boolean hasPredicate(final PathExpression xpath, String match) {
-    return hasPredicate(xpath.script, match);
+    return hasPredicate(xpath.getScript(), match);
   }
   
   public static boolean hasPredicate(final String xpath, String match) {
@@ -91,7 +101,7 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   public static PathExpression addPredicate(final PathExpression pathExpression, final String predicate) {
-    return new PathExpression(addPredicate(pathExpression.script, predicate));
+    return PathExpression.instantiate(addPredicate(pathExpression.getScript(), predicate), pathExpression.getDataType());
   }
 
   /**
@@ -147,18 +157,18 @@ public class XPathContextualizer extends XPath20BaseListener {
 
   public static PathExpression join(final PathExpression first, final PathExpression second) {
 
-    if (first == null || first.script.trim().isEmpty()) {
+    if (first == null || first.getScript().trim().isEmpty()) {
       return second;
     }
 
-    if (second == null || second.script.trim().isEmpty()) {
+    if (second == null || second.getScript().trim().isEmpty()) {
       return first;
     }
 
     LinkedList<StepInfo> firstPartSteps = new LinkedList<>(getSteps(first));
     LinkedList<StepInfo> secondPartSteps = new LinkedList<>(getSteps(second));
 
-    return getJoinedXPath(firstPartSteps, secondPartSteps);
+    return PathExpression.instantiate(getJoinedXPath(firstPartSteps, secondPartSteps), second.getDataType());
   }
 
   public static PathExpression addAxis(String axis, PathExpression path) {
@@ -168,11 +178,11 @@ public class XPathContextualizer extends XPath20BaseListener {
       steps.removeFirst();
     }
 
-    return new PathExpression(
-        axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return PathExpression.instantiate(
+        axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")), path.getDataType());
   }
 
-  private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
+  private static String getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 
     // We will store the relative xPath here as we build it.
@@ -240,11 +250,11 @@ public class XPathContextualizer extends XPath20BaseListener {
       }
     }
 
-    return new PathExpression(relativeXpath);
+    return relativeXpath;
   }
 
 
-  private static PathExpression getJoinedXPath(LinkedList<StepInfo> first,
+  private static String getJoinedXPath(LinkedList<StepInfo> first,
       final LinkedList<StepInfo> second) {
     List<String> dotSteps = Arrays.asList("..", ".");
     while (second.getFirst().stepText.equals("..")
@@ -253,8 +263,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       first.removeLast();
     }
 
-    return new PathExpression(first.stream().map(f -> f.stepText).collect(Collectors.joining("/"))
-        + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return first.stream().map(f -> f.stepText).collect(Collectors.joining("/"))
+        + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/"));
   }
 
   /**

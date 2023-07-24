@@ -1,6 +1,9 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.efx.model.templates;
 
 import java.util.Stack;
+
+import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.variables.VariableList;
 
 public class ContentBlockStack extends Stack<ContentBlock> {
 

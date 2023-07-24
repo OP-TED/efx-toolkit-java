@@ -1,9 +1,11 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.efx.model.templates;
+
+import eu.europa.ted.efx.model.ParsedEntity;
 
 /**
  * Represents markup in the target template language.
  */
-public class Markup extends CallStackObject {
+public class Markup implements ParsedEntity {
 
   /**
    * Stores the markup script in the target language.
