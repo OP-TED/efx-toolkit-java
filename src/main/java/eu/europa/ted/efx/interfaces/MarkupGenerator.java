@@ -15,12 +15,14 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.lang3.tuple.Pair;
-import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Expression.NumericExpression;
-import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Markup;
+
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.templates.Markup;
 
 /**
  * The role of this interface is to allow the reuse of the Sdk6EfxTemplateTranslator to generate

@@ -3,10 +3,11 @@ package eu.europa.ted.efx.model;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 
 /**
  * Used to keep track of the current evaluation context. Extends Stack&lt;Context&gt; to provide

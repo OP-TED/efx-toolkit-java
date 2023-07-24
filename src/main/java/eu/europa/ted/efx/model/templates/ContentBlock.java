@@ -1,4 +1,4 @@
-package eu.europa.ted.efx.model;
+package eu.europa.ted.efx.model.templates;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -7,9 +7,14 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.lang3.tuple.Pair;
+
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
+import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.variables.VariableList;
 
 public class ContentBlock {
   private final ContentBlock parent;
@@ -115,20 +120,20 @@ public class ContentBlock {
     return this.parent.getContext();
   }
 
-  public Set<Variable<? extends Expression>> getOwnVariables() {
-    Set<Variable<? extends Expression>> variables = new LinkedHashSet<>();
+  public Set<Variable> getOwnVariables() {
+    Set<Variable> variables = new LinkedHashSet<>();
     if (this.context != null && this.context.variable() != null) {
       variables.add(this.context.variable());
     }
-    variables.addAll(this.variables.asList());
+    variables.addAll(this.variables);
     return variables;
   }
 
-  public Set<Variable<? extends Expression>> getAllVariables() {
+  public Set<Variable> getAllVariables() {
     if (this.parent == null) {
       return new LinkedHashSet<>(this.getOwnVariables());
     }
-    final Set<Variable<? extends Expression>> merged = new LinkedHashSet<>();
+    final Set<Variable> merged = new LinkedHashSet<>();
     merged.addAll(parent.getAllVariables());
     merged.addAll(this.getOwnVariables());
     return merged;
@@ -159,10 +164,10 @@ public class ContentBlock {
     Set<Pair<String, String>> variables = new LinkedHashSet<>();
     if (this.parent != null) {
       variables.addAll(parent.getAllVariables().stream()
-          .map(v -> Pair.of(v.name, v.referenceExpression.script)).collect(Collectors.toList()));
+          .map(v -> Pair.of(v.name, v.referenceExpression.getScript())).collect(Collectors.toList()));
     }
     variables.addAll(this.getOwnVariables().stream()
-        .map(v -> Pair.of(v.name, v.initializationExpression.script)).collect(Collectors.toList()));
+        .map(v -> Pair.of(v.name, v.initializationExpression.getScript())).collect(Collectors.toList()));
     return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath(),
         variables);
   }

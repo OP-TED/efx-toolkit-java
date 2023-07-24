@@ -14,7 +14,8 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 
 /**
  * A SymbolResolver is a mechanism used by EFX translators to resolve symbols.
@@ -110,6 +111,36 @@ public interface SymbolResolver {
    * @return The "root" codelist associated ith the given field.
    */
   public String getRootCodelistOfField(final String fieldId);
+
+  /**
+   * Gets a boolean value indicating whether or not the given field points to
+   * an @attribute.
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return True if the field points to an @attribute, false otherwise.
+   */
+  public Boolean isAttributeField(final String fieldId);
+
+  /**
+   * Gets the attribute name of the given field (if the field points to
+   * an @attribute).
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return The attribute name of the given field, without the @ prefix, or an
+   *         empty string if the field does not point to an @attribute.
+   */
+  public String getAttributeOfField(final String fieldId);
+
+  /**
+   * Gets the absolute path of the given field, without the attribute part.
+   * This method is meant to be used with fields that point to an @attribute.
+   * If the given field does not point to an @attribute then this method returns
+   * the same as {@link #getAbsolutePathOfField}
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return The absolute path of the given field, without the attribute part.
+   */
+  public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(final String fieldId);
 
   /**
    * Gets the list of all codes in a given codelist as a list of strings.

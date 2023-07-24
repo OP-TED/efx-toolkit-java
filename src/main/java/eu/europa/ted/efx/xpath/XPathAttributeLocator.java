@@ -5,7 +5,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.xpath.XPath20Parser.AbbrevforwardstepContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
 
@@ -25,11 +28,11 @@ public class XPathAttributeLocator extends XPath20BaseListener {
 
   private int inPredicate = 0;
   private int splitPosition = -1;
-  private PathExpression path;
+  private String path;
   private String attribute;
 
-  public PathExpression getPath() {
-    return path;
+  public NodePathExpression getPath() {
+    return Expression.instantiate(path, NodePathExpression.class);
   }
 
   public String getAttribute() {
@@ -57,18 +60,21 @@ public class XPathAttributeLocator extends XPath20BaseListener {
       this.attribute = ctx.nodetest().getText();
     }
   }
-
   public static XPathAttributeLocator findAttribute(final PathExpression xpath) {
+    return findAttribute(xpath.getScript());
+  }
+
+  public static XPathAttributeLocator findAttribute(final String xpath) {
 
     final XPathAttributeLocator locator = new XPathAttributeLocator();
 
-    if (!xpath.script.contains("@")) {
+    if (!xpath.contains("@")) {
       locator.path = xpath;
       locator.attribute = null;
       return locator;
     }
 
-    final CharStream inputStream = CharStreams.fromString(xpath.script);
+    final CharStream inputStream = CharStreams.fromString(xpath);
     final XPath20Lexer lexer = new XPath20Lexer(inputStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final XPath20Parser parser = new XPath20Parser(tokens);
@@ -79,11 +85,11 @@ public class XPathAttributeLocator extends XPath20BaseListener {
 
     if (locator.splitPosition > -1) {
       // The attribute we are looking for is at splitPosition
-      String path = xpath.script.substring(0, locator.splitPosition);
+      String path = xpath.substring(0, locator.splitPosition);
       while (path.endsWith("/")) {
         path = path.substring(0, path.length() - 1);
       }
-      locator.path = new PathExpression(path);
+      locator.path = path;
     } else {
       // the XPAth does not point to an attribute
       locator.path = xpath;
