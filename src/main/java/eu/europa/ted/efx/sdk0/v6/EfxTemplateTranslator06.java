@@ -29,6 +29,7 @@ import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.model.VariableList;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk0.v6.EfxParser.ContextDeclarationBlockContext;
@@ -439,13 +440,14 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
+    final VariableList variables = new VariableList(); // template variables not supported by EFX prior to 2.0.0
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
-    assert this.stack.isEmpty() : "Stack should be empty at this point.";
+    assert this.stack.empty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
       throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
@@ -453,7 +455,7 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()));
+      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -462,14 +464,14 @@ public class EfxTemplateTranslator06 extends EfxExpressionTranslator06
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext())));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
       }
     }
   }

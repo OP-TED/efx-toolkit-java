@@ -21,7 +21,6 @@ import eu.europa.ted.efx.model.Expression.DurationExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
-import eu.europa.ted.efx.model.Expression.ListExpressionBase;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
@@ -250,7 +249,7 @@ public interface ScriptGenerator {
   @Deprecated(since = "0.7.0", forRemoval = true)
   public NumericExpression composeCountOperation(final PathExpression set);
 
-  public NumericExpression composeCountOperation(final ListExpressionBase list);
+  public NumericExpression composeCountOperation(final ListExpression<? extends Expression> list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
 
@@ -292,7 +291,7 @@ public interface ScriptGenerator {
 
   public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack);
 
-  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one, ListExpressionBase two);
+  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one, ListExpression<? extends Expression> two);
 
   /*
    * Date Functions

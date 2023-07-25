@@ -4,12 +4,8 @@
 // 
 // This is a faithful implementation of the XPath version 2.0 grammar
 // from the spec at https://www.w3.org/TR/xpath20/
-//
-// Note: Some minor adoptations were done
-// to simplify the translator using this grammar.
 
 grammar XPath20;
-
 
 // [1]
 xpath : expr EOF ;
@@ -43,8 +39,8 @@ nodecomp : KW_IS | LL | GG ;
 // [25]
 pathexpr : ( SLASH relativepathexpr?) | ( SS relativepathexpr) | relativepathexpr ;
 relativepathexpr : stepexpr (( SLASH | SS) stepexpr)* ;
-stepexpr : step predicatelist;
-step: primaryexpr | reversestep | forwardstep; 
+stepexpr : filterexpr | axisstep ;
+axisstep : (reversestep | forwardstep) predicatelist ;
 forwardstep : (forwardaxis nodetest) | abbrevforwardstep ;
 // [30]
 forwardaxis : ( KW_CHILD COLONCOLON) | ( KW_DESCENDANT COLONCOLON) | ( KW_ATTRIBUTE COLONCOLON) | ( KW_SELF COLONCOLON) | ( KW_DESCENDANT_OR_SELF COLONCOLON) | ( KW_FOLLOWING_SIBLING COLONCOLON) | ( KW_FOLLOWING COLONCOLON) | ( KW_NAMESPACE COLONCOLON) ;
@@ -56,6 +52,7 @@ abbrevreversestep : DD ;
 nodetest : kindtest | nametest ;
 nametest : qname | wildcard ;
 wildcard : STAR | (NCName CS) | ( SC NCName) ;
+filterexpr : primaryexpr predicatelist ;
 predicatelist : predicate* ;
 // [40]
 predicate : OB expr CB ;

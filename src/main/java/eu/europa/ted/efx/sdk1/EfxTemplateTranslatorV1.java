@@ -30,6 +30,7 @@ import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
 import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Markup;
+import eu.europa.ted.efx.model.VariableList;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
@@ -284,19 +285,18 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         : this.script.composeFieldValueReference(
             symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()),
             PathExpression.class);
-    final String loopVariableName = "$item";
-
+    final StringExpression loopVariable = this.script.composeVariableReference("item", StringExpression.class);
     switch (fieldType) {
       case "indicator":
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(
                 List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
                     this.script.getStringLiteralFromUnquotedString("-"),
-                    this.script.composeVariableReference(loopVariableName, StringExpression.class),
+                    loopVariable,
                     this.script.getStringLiteralFromUnquotedString("|"),
                     this.script.getStringLiteralFromUnquotedString(fieldId))),
             StringListExpression.class)));
@@ -305,7 +305,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       case "internal-code":
         this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
             this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariableName, valueReference))),
+                List.of(this.script.composeIteratorExpression(loopVariable.script, valueReference))),
             this.script.composeStringConcatenation(List.of(
                 this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
                 this.script.getStringLiteralFromUnquotedString("|"),
@@ -314,7 +314,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.getStringLiteralFromUnquotedString(
                     this.symbols.getRootCodelistOfField(fieldId)),
                 this.script.getStringLiteralFromUnquotedString("."),
-                this.script.composeVariableReference(loopVariableName, StringExpression.class))),
+                loopVariable)),
             StringListExpression.class)));
         break;
       default:
@@ -456,13 +456,14 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
+    final VariableList variables = new VariableList(); // template variables not supported prior to EFX 2
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
-    assert this.stack.isEmpty() : "Stack should be empty at this point.";
+    assert this.stack.empty() : "Stack should be empty at this point.";
     this.stack.clear(); // Variable scope boundary. Clear declared variables 
 
     if (indentChange > 1) {
@@ -471,7 +472,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       if (this.blockStack.isEmpty()) {
         throw new ParseCancellationException(START_INDENT_AT_ZERO);
       }
-      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()));
+      this.blockStack.pushChild(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
     } else if (indentChange < 0) {
       // lower indent level
       for (int i = indentChange; i < 0; i++) {
@@ -480,14 +481,14 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.blockStack.pop();
       }
       assert this.blockStack.currentIndentationLevel() == indentLevel : UNEXPECTED_INDENTATION;
-      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+      this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext())));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()));
+        this.blockStack.pushSibling(outlineNumber, content, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
       }
     }
   }

@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
+
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
@@ -8,23 +9,31 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.Expression;
 import eu.europa.ted.efx.model.Expression.BooleanExpression;
 import eu.europa.ted.efx.model.Expression.DateExpression;
+import eu.europa.ted.efx.model.Expression.DateListExpression;
 import eu.europa.ted.efx.model.Expression.DurationExpression;
+import eu.europa.ted.efx.model.Expression.DurationListExpression;
 import eu.europa.ted.efx.model.Expression.IteratorExpression;
 import eu.europa.ted.efx.model.Expression.IteratorListExpression;
 import eu.europa.ted.efx.model.Expression.ListExpression;
-import eu.europa.ted.efx.model.Expression.ListExpressionBase;
+import eu.europa.ted.efx.model.Expression.MultilingualStringExpression;
+import eu.europa.ted.efx.model.Expression.MultilingualStringListExpression;
 import eu.europa.ted.efx.model.Expression.NumericExpression;
 import eu.europa.ted.efx.model.Expression.NumericListExpression;
 import eu.europa.ted.efx.model.Expression.PathExpression;
 import eu.europa.ted.efx.model.Expression.StringExpression;
+import eu.europa.ted.efx.model.Expression.StringListExpression;
 import eu.europa.ted.efx.model.Expression.TimeExpression;
+import eu.europa.ted.efx.model.Expression.TimeListExpression;
 
 @SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
@@ -44,6 +53,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
       entry(">", ">"), //
       entry(">=", ">="));
 
+  protected TranslatorOptions translatorOptions;
+
+  public XPathScriptGenerator(TranslatorOptions translatorOptions) {
+    this.translatorOptions = translatorOptions;
+  }
 
   @Override
   public <T extends Expression> T composeNodeReferenceWithPredicate(PathExpression nodeReference,
@@ -66,20 +80,24 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
       Class<T> type) {
-
-    if (StringExpression.class.isAssignableFrom(type)) {
+    if ((MultilingualStringExpression.class.isAssignableFrom(type)
+        || MultilingualStringListExpression.class.isAssignableFrom(type))
+        && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
+      return Expression.instantiate("efx:preferred-language-text(" + fieldReference.script + ")", type);
+    }
+    if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
     }
-    if (NumericExpression.class.isAssignableFrom(type)) {
+    if (NumericExpression.class.isAssignableFrom(type) || NumericListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/number()", type);
     }
-    if (DateExpression.class.isAssignableFrom(type)) {
+    if (DateExpression.class.isAssignableFrom(type) || DateListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:date(text())", type);
     }
-    if (TimeExpression.class.isAssignableFrom(type)) {
+    if (TimeExpression.class.isAssignableFrom(type) || TimeListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
     }
-    if (DurationExpression.class.isAssignableFrom(type)) {
+    if (DurationExpression.class.isAssignableFrom(type) || DurationListExpression.class.isAssignableFrom(type)) {
       return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
           " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
           " else if ($F/@unitCode='DAY')" + //
@@ -104,12 +122,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
-    return Expression.instantiate(variableName, type);
+    return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
   public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type) {
-    return Expression.instantiate(variableName, type);
+    return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
@@ -134,40 +152,40 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public NumericExpression getNumericLiteralEquivalent(String literal) {
-    return new NumericExpression(literal);
+    return new NumericExpression(literal, true);
   }
 
   @Override
   public StringExpression getStringLiteralEquivalent(String literal) {
-    return new StringExpression(literal);
+    return new StringExpression(literal, true);
   }
 
   @Override
   public BooleanExpression getBooleanEquivalent(boolean value) {
-    return new BooleanExpression(value ? "true()" : "false()");
+    return new BooleanExpression(value ? "true()" : "false()", true);
   }
 
   @Override
   public DateExpression getDateLiteralEquivalent(String literal) {
-    return new DateExpression("xs:date(" + quoted(literal) + ")");
+    return new DateExpression("xs:date(" + quoted(literal) + ")", true);
   }
 
   @Override
   public TimeExpression getTimeLiteralEquivalent(String literal) {
-    return new TimeExpression("xs:time(" + quoted(literal) + ")");
+    return new TimeExpression("xs:time(" + quoted(literal) + ")", true);
   }
 
   @Override
   public DurationExpression getDurationLiteralEquivalent(final String literal) {
     if (literal.contains("M") || literal.contains("Y")) {
-      return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")");
+      return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")", true);
     }
     if (literal.contains("W")) {
       final int weeks = this.getWeeksFromDurationLiteral(literal);
       return new DurationExpression(
-          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
+          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")", true);
     }
-    return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")");
+    return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")", true);
   }
 
   @Override
@@ -348,8 +366,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public BooleanExpression composeSequenceEqualFunction(ListExpressionBase one,
-      ListExpressionBase two) {
+  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one,
+  ListExpression<? extends Expression> two) {
     return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
   }
 
@@ -361,7 +379,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public NumericExpression composeCountOperation(ListExpressionBase list) {
+  public NumericExpression composeCountOperation(ListExpression<? extends Expression> list) {
     return new NumericExpression("count(" + list.script + ")");
   }
 
@@ -410,7 +428,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
-    return new StringExpression("format-number(" + number.script + ", '0.##########')");
+    String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
+    return new StringExpression("format-number(" + number.script + ", '" + formatString + "')");
   }
 
   @Override
@@ -422,12 +441,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format) {
-    return new StringExpression("format-number(" + number.script + ", " + format.script + ")");
+        String formatString = format.isLiteral ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.script) : format.script;
+        return new StringExpression("format-number(" + number.script + ", " + formatString + ")");
   }
 
   @Override
   public StringExpression getStringLiteralFromUnquotedString(String value) {
-    return new StringExpression("'" + value + "'");
+    return new StringExpression("'" + value + "'", true);
   }
 
 
@@ -504,15 +524,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne,
-      L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[.= " + listTwo.script + "])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (some $L2 in " + listTwo.script + " satisfies $L1 = $L2) then $L1 else ())", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne,
-      L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + listOne.script + "[not(. = " + listTwo.script + ")])", listType);
+  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne, L listTwo, Class<L> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (every $L2 in " + listTwo.script + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
 

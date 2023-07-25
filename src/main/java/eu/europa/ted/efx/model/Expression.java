@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
  * language. It also enables to EFX translator to perform type checking of EFX expressions.
  *
  */
-public class Expression extends CallStackObjectBase {
+public class Expression extends CallStackObject {
 
   /**
    * eForms types are mapped to Expression types.
@@ -25,7 +25,7 @@ public class Expression extends CallStackObjectBase {
       Map.ofEntries(entry("id", StringExpression.class), //
           entry("id-ref", StringExpression.class), //
           entry("text", StringExpression.class), //
-          entry("text-multilingual", StringExpression.class), //
+          entry("text-multilingual", MultilingualStringExpression.class), //
           entry("indicator", BooleanExpression.class), //
           entry("amount", NumericExpression.class), //
           entry("number", NumericExpression.class), //
@@ -47,7 +47,7 @@ public class Expression extends CallStackObjectBase {
       entry("id", StringListExpression.class), //
       entry("id-ref", StringListExpression.class), //
       entry("text", StringListExpression.class), //
-      entry("text-multilingual", StringListExpression.class), //
+      entry("text-multilingual", MultilingualStringListExpression.class), //
       entry("indicator", BooleanListExpression.class), //
       entry("amount", NumericListExpression.class), //
       entry("number", NumericListExpression.class), //
@@ -67,8 +67,16 @@ public class Expression extends CallStackObjectBase {
    */
   public final String script;
 
+  public final Boolean isLiteral;
+
   public Expression(final String script) {
     this.script = script;
+    this.isLiteral = false;
+  }
+
+  public Expression(final String script, final Boolean isLiteral) {
+    this.script = script;
+    this.isLiteral = isLiteral;
   }
 
   public static <T extends Expression> T instantiate(String script, Class<T> type) {
@@ -125,6 +133,10 @@ public class Expression extends CallStackObjectBase {
     public BooleanExpression(final String script) {
       super(script);
     }
+
+    public BooleanExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -134,6 +146,10 @@ public class Expression extends CallStackObjectBase {
 
     public NumericExpression(final String script) {
       super(script);
+    }
+
+    public NumericExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 
@@ -145,6 +161,21 @@ public class Expression extends CallStackObjectBase {
     public StringExpression(final String script) {
       super(script);
     }
+
+    public StringExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
+  }
+
+  public static class MultilingualStringExpression extends StringExpression {
+
+    public MultilingualStringExpression(final String script) {
+      super(script);
+    }
+
+    public MultilingualStringExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -154,6 +185,10 @@ public class Expression extends CallStackObjectBase {
 
     public DateExpression(final String script) {
       super(script);
+    }
+
+    public DateExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 
@@ -165,6 +200,10 @@ public class Expression extends CallStackObjectBase {
     public TimeExpression(final String script) {
       super(script);
     }
+
+    public TimeExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
+    }
   }
 
   /**
@@ -175,19 +214,16 @@ public class Expression extends CallStackObjectBase {
     public DurationExpression(final String script) {
       super(script);
     }
-  }
-
-  public static class ListExpressionBase extends Expression {
-
-    public ListExpressionBase(final String script) {
-      super(script);
+    
+    public DurationExpression(final String script, final Boolean isLiteral) {
+      super(script, isLiteral);
     }
   }
 
   /**
    * Used to represent a list of strings in the target language.
    */
-  public static class ListExpression<T extends Expression> extends ListExpressionBase {
+  public static class ListExpression<T extends Expression> extends Expression {
 
     public ListExpression(final String script) {
       super(script);
@@ -200,6 +236,13 @@ public class Expression extends CallStackObjectBase {
   public static class StringListExpression extends ListExpression<StringExpression> {
 
     public StringListExpression(final String script) {
+      super(script);
+    }
+  }
+
+  public static class MultilingualStringListExpression extends StringListExpression {
+
+    public MultilingualStringListExpression(final String script) {
       super(script);
     }
   }
