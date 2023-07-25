@@ -68,7 +68,9 @@ public interface TranslatorDependencyFactory {
    * @param options The translator options to be used by the ScriptGenerator instance.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
-  public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options);
+  default public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options) {
+    return createScriptGenerator(sdkVersion);
+  }
 
   /**
    * Creates a MarkupGenerator instance.
@@ -97,7 +99,9 @@ public interface TranslatorDependencyFactory {
    * @param options The translator options to be used by the MarkupGenerator instance.
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
-  public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options);
+  default public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options) {
+    return createMarkupGenerator(sdkVersion);
+  }
 
   /**
    * Creates an error listener instance.
