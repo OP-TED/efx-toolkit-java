@@ -18,12 +18,12 @@ import org.antlr.v4.runtime.BaseErrorListener;
 /**
  * Instantiates the dependencies needed by an EFX translator.
  * 
- * An EFX expression translator needs the following dependencies to be instantiated:
- * - a SymbolResolver to resolve symbols (references of fields etc.).
- * - a ScriptGenerator to provide target script language syntax for specific computations.
- * - an error listener to handle any errors encountered during translation
- * An EFX template translator needs the all three dependencies listed above, plus one more:
- * - a MarkupGenerator to provide target markup language syntax for specific output constructs. 
+ * An EFX expression translator needs the following dependencies to be instantiated: - a
+ * SymbolResolver to resolve symbols (references of fields etc.). - a ScriptGenerator to provide
+ * target script language syntax for specific computations. - an error listener to handle any errors
+ * encountered during translation An EFX template translator needs the all three dependencies listed
+ * above, plus one more: - a MarkupGenerator to provide target markup language syntax for specific
+ * output constructs.
  */
 public interface TranslatorDependencyFactory {
 
@@ -47,45 +47,13 @@ public interface TranslatorDependencyFactory {
    * This method is called by the EFX translator to instantiate the ScriptGenerator it will use to
    * translate EFX expressions to the target script language.
    * 
-   * @deprecated Use {@link #createScriptGenerator(String, TranslatorOptions)} instead.
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that ScriptGenerator instance should be able to handle.
+   * @param options The options to be used by the ScriptGenerator.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
-  @Deprecated(since = "1.3.0", forRemoval = true)
-  public ScriptGenerator createScriptGenerator(String sdkVersion);
-
-  /**
-   * Creates a ScriptGenerator instance.
-   * 
-   * This method is called by the EFX translator to instantiate the ScriptGenerator it will use to
-   * translate EFX expressions to the target script language.
-   * 
-   * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
-   *        EFX translator will attempt to translate. This is important as it defines the EFX
-   *        language features that ScriptGenerator instance should be able to handle.
-   * @param options The translator options to be used by the ScriptGenerator instance.
-   * @return An instance of ScriptGenerator to be used by the EFX translator.
-   */
-  default public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options) {
-    return createScriptGenerator(sdkVersion);
-  }
-
-  /**
-   * Creates a MarkupGenerator instance.
-   * 
-   * This method is called by the EFX translator to instantiate the MarkupGenerator it will use to
-   * translate EFX templates to the target markup language.
-   * 
-   * @deprecated Use {@link #createMarkupGenerator(String, TranslatorOptions)} instead.
-   * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
-   *        EFX translator will attempt to translate. This is important as it defines the EFX
-   *        language features that MarkupGenerator instance should be able to handle.
-   * @return The instance of MarkupGenerator to be used by the EFX translator.
-   */
-  @Deprecated(since = "1.3.0", forRemoval = true)
-  public MarkupGenerator createMarkupGenerator(String sdkVersion);
+  public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options);
 
   /**
    * Creates a MarkupGenerator instance.
@@ -96,12 +64,10 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that MarkupGenerator instance should be able to handle.
-   * @param options The translator options to be used by the MarkupGenerator instance.
+   * @param options The options to be used by the MarkupGenerator.
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
-  default public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options) {
-    return createMarkupGenerator(sdkVersion);
-  }
+  public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options);
 
   /**
    * Creates an error listener instance.

@@ -18,7 +18,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.xpath.XPath20Parser.AxisstepContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.FilterexprContext;
 import eu.europa.ted.efx.xpath.XPath20Parser.PredicateContext;
@@ -38,7 +38,7 @@ public class XPathContextualizer extends XPath20BaseListener {
    * XPath is comprised of.
    */
   private static Queue<StepInfo> getSteps(PathExpression xpath) {
-    return getSteps(xpath.script);
+    return getSteps(xpath.getScript());
   }
 
   /**
@@ -62,16 +62,27 @@ public class XPathContextualizer extends XPath20BaseListener {
 
   /**
    * Makes the given xpath relative to the given context xpath.
-   * @param contextXpath
-   * @param xpath
-   * @return
+   * 
+   * @param contextXpath the context xpath
+   * @param xpath        the xpath to contextualize
+   * @return the contextualized xpath
    */
   public static PathExpression contextualize(final PathExpression contextXpath,
       final PathExpression xpath) {
+    // If we are asked to contextualise against a null or empty context
+    // then we must return the original xpath (instead of throwing an exception).
+    if (contextXpath == null || contextXpath.getScript().isEmpty()) {
+      return xpath;
+    }
+    return PathExpression.instantiate(contextualize(contextXpath.getScript(), xpath.getScript()), xpath.getDataType());
+  }
+
+  public static String contextualize(final String contextXpath,
+      final String xpath) {
 
     // If we are asked to contextualise against a null or empty context
     // then we must return the original xpath (instead of throwing an exception).
-    if (contextXpath == null || contextXpath.script.isEmpty()) {
+    if (contextXpath == null || contextXpath.isEmpty()) {
       return xpath;
     }
 
@@ -82,7 +93,7 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   public static boolean hasPredicate(final PathExpression xpath, String match) {
-    return hasPredicate(xpath.script, match);
+    return hasPredicate(xpath.getScript(), match);
   }
   
   public static boolean hasPredicate(final String xpath, String match) {
@@ -90,7 +101,7 @@ public class XPathContextualizer extends XPath20BaseListener {
   }
 
   public static PathExpression addPredicate(final PathExpression pathExpression, final String predicate) {
-    return new PathExpression(addPredicate(pathExpression.script, predicate));
+    return PathExpression.instantiate(addPredicate(pathExpression.getScript(), predicate), pathExpression.getDataType());
   }
 
   /**
@@ -98,6 +109,10 @@ public class XPathContextualizer extends XPath20BaseListener {
    * It will add the predicate to the last axis-step in the xpath.
    * If there is no axis-step in the xpath then it will add the predicate to the last step.
    * If the xpath is empty then it will still return a PathExpression but with an empty xpath.
+   * 
+   * @param xpath the xpath to add the predicate to
+   * @param predicate the predicate to add
+   * @return the xpath with the predicate added
    */
   public static String addPredicate(final String xpath, final String predicate) {
     if (predicate == null) {
@@ -142,18 +157,18 @@ public class XPathContextualizer extends XPath20BaseListener {
 
   public static PathExpression join(final PathExpression first, final PathExpression second) {
 
-    if (first == null || first.script.trim().isEmpty()) {
+    if (first == null || first.getScript().trim().isEmpty()) {
       return second;
     }
 
-    if (second == null || second.script.trim().isEmpty()) {
+    if (second == null || second.getScript().trim().isEmpty()) {
       return first;
     }
 
     LinkedList<StepInfo> firstPartSteps = new LinkedList<>(getSteps(first));
     LinkedList<StepInfo> secondPartSteps = new LinkedList<>(getSteps(second));
 
-    return getJoinedXPath(firstPartSteps, secondPartSteps);
+    return PathExpression.instantiate(getJoinedXPath(firstPartSteps, secondPartSteps), second.getDataType());
   }
 
   public static PathExpression addAxis(String axis, PathExpression path) {
@@ -163,10 +178,11 @@ public class XPathContextualizer extends XPath20BaseListener {
       steps.removeFirst();
     }
 
-    return new PathExpression(axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return PathExpression.instantiate(
+        axis + "::" + steps.stream().map(s -> s.stepText).collect(Collectors.joining("/")), path.getDataType());
   }
 
-  private static PathExpression getContextualizedXpath(Queue<StepInfo> contextQueue,
+  private static String getContextualizedXpath(Queue<StepInfo> contextQueue,
       final Queue<StepInfo> pathQueue) {
 
     // We will store the relative xPath here as we build it.
@@ -183,9 +199,27 @@ public class XPathContextualizer extends XPath20BaseListener {
 
       // At this point there are no more matching nodes in the two queues.
 
+      // We look at the first of the remaining steps in both queues and look if
+      // they are "similar" (meaning that they share the same step-text but but
+      // the path has different predicates). In this case we want to use a dot step
+      // with the predicate.
+      if (!contextQueue.isEmpty() && !pathQueue.isEmpty() && pathQueue.peek().isSimilarTo(contextQueue.peek())) {
+          contextQueue.poll();  // consume the same step from the contextQueue
+          if (contextQueue.isEmpty()) {
+            // Since there are no more steps in the contextQueue, the relative xpath should 
+            // start with a dot step to provide a context for the predicate.
+            relativeXpath += "." + pathQueue.poll().getPredicateText();
+          } else {
+            // Since there are more steps in the contextQueue which we will need to navigate back to,
+            // using back-steps, we will use a back-step to provide context of the predicate.
+            // This avoids an output that looks like ../.[predicate] which is valid but silly.  
+            contextQueue.poll();  // consume the step from the contextQueue
+            relativeXpath += ".." + pathQueue.poll().getPredicateText();
+          }
+      }
+
       // We start building the resulting relativeXpath by appending any nodes
-      // remaining in the
-      // pathQueue.
+      // remaining in the pathQueue.
       while (!pathQueue.isEmpty()) {
         final StepInfo step = pathQueue.poll();
         relativeXpath += "/" + step.stepText + step.getPredicateText();
@@ -199,8 +233,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       // For each step remaining in the contextQueue we prepend a back-step (..) in
       // the resulting relativeXpath.
       while (!contextQueue.isEmpty()) {
-        contextQueue.poll();                    // consume the step
-        relativeXpath = "../" + relativeXpath;  // prepend a back-step 
+        contextQueue.poll(); // consume the step
+        relativeXpath = "../" + relativeXpath; // prepend a back-step
       }
 
       // We remove any trailing forward slashes from the resulting xPath.
@@ -216,11 +250,11 @@ public class XPathContextualizer extends XPath20BaseListener {
       }
     }
 
-    return new PathExpression(relativeXpath);
+    return relativeXpath;
   }
 
 
-  private static PathExpression getJoinedXPath(LinkedList<StepInfo> first,
+  private static String getJoinedXPath(LinkedList<StepInfo> first,
       final LinkedList<StepInfo> second) {
     List<String> dotSteps = Arrays.asList("..", ".");
     while (second.getFirst().stepText.equals("..")
@@ -229,8 +263,8 @@ public class XPathContextualizer extends XPath20BaseListener {
       first.removeLast();
     }
 
-    return new PathExpression(first.stream().map(f -> f.stepText).collect(Collectors.joining("/"))
-        + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/")));
+    return first.stream().map(f -> f.stepText).collect(Collectors.joining("/"))
+        + "/" + second.stream().map(s -> s.stepText).collect(Collectors.joining("/"));
   }
 
   /**
@@ -350,7 +384,7 @@ public class XPathContextualizer extends XPath20BaseListener {
 
       // If one of the two steps has more predicates that the other,
       if (this.predicates.size() != contextStep.predicates.size()) {
-        // then the steps are the same is the path has no predicates
+        // then the steps are the same if the path has no predicates
         // or all the predicates of the path are also found in the context.
         return this.predicates.isEmpty() || contextStep.predicates.containsAll(this.predicates);
       }
@@ -373,6 +407,25 @@ public class XPathContextualizer extends XPath20BaseListener {
       Collections.sort(pathPredicates);
       Collections.sort(contextPredicates);
       return pathPredicates.equals(contextPredicates);
+    }
+
+    public Boolean isSimilarTo(final StepInfo contextStep) {
+
+      // First check the step texts are the different.
+      if (!Objects.equals(contextStep.stepText, this.stepText)) {
+        return false;
+      }
+
+      // If one of the two steps has more predicates that the other,
+      if (this.predicates.size() != contextStep.predicates.size()) {
+        // then the steps are the same if either of them has no predicates
+        // or all the predicates of the path are also found in the context.
+        return this.predicates.isEmpty() || contextStep.predicates.isEmpty()
+            || contextStep.predicates.containsAll(this.predicates);
+      }
+
+      assert !this.isTheSameAs(contextStep) : "You should not be calling isSimilarTo() without first checking isTheSameAs()";
+      return false;
     }
 
     public Boolean isPartOf(Interval interval) {
