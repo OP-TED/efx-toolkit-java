@@ -229,5 +229,8 @@ public class SdkSymbolResolver implements SymbolResolver {
     info.attributeName = parsedPath.getAttributeName();
     info.pathWithoutAttribute = parsedPath.getElementPath();
     additionalFieldInfoMap.put(fieldId, info);
-  }
+  }  
+  
+  // #endregion Temporary helpers ------------------------------------------------
+
 }

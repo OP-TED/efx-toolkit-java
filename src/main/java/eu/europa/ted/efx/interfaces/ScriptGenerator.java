@@ -198,26 +198,14 @@ public interface ScriptGenerator {
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type);
 
 
-  @Deprecated(since = "1.0.0", forRemoval = true)
-  public BooleanExpression composeAllSatisfy(SequenceExpression list,
-      String variableName, BooleanExpression booleanExpression);
-
   public BooleanExpression composeAllSatisfy(
       IteratorListExpression iterators, BooleanExpression booleanExpression);
-
-  @Deprecated(since = "1.0.0", forRemoval = true)
-  public BooleanExpression composeAnySatisfies(SequenceExpression list,
-      String variableName, BooleanExpression booleanExpression);
 
   public BooleanExpression composeAnySatisfies(
       IteratorListExpression iterators, BooleanExpression booleanExpression);
 
   public <T extends TypedExpression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
-
-  @Deprecated(since = "1.0.0", forRemoval = true)
-  public <T1 extends SequenceExpression, T2 extends SequenceExpression> T2 composeForExpression(
-      String variableName, T1 sourceList, ScalarExpression expression, Class<T2> targetListType);
 
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType);

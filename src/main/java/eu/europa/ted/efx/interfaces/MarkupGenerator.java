@@ -107,17 +107,6 @@ public interface MarkupGenerator {
   Markup renderLineBreak();
 
   /**
-   * @deprecated Use {@link #composeFragmentDefinition(String, String, Markup, Set)} instead.
-   * 
-   * @param name the name of the fragment.
-   * @param number the outline number of the fragment.
-   * @param content the content of the fragment.
-   * @return the code that encapsulates the fragment in the target template.
-   */
-  @Deprecated(since = "2.0.0", forRemoval = true)
-  Markup composeFragmentDefinition(final String name, String number, Markup content);
-
-  /**
    * Given a fragment name (identifier) and some pre-rendered content, this method returns the code
    * that encapsulates it in the target template
    * 
@@ -130,15 +119,6 @@ public interface MarkupGenerator {
   Markup composeFragmentDefinition(final String name, String number, Markup content,
       Set<String> parameters);
 
-  /**
-   * @deprecated Use {@link #renderFragmentInvocation(String, PathExpression, Set)} instead.
-   * 
-   * @param name the name of the fragment.
-   * @param context the context of the fragment.
-   * @return the code that invokes (uses) the fragment.
-   */
-  @Deprecated(since = "2.0.0", forRemoval = true)
-  Markup renderFragmentInvocation(final String name, final PathExpression context);
 
   /**
    * Given a fragment name (identifier), and an evaluation context, this method returns the code

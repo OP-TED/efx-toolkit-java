@@ -1,6 +1,5 @@
 package eu.europa.ted.efx.mock;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,11 +58,6 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeFragmentDefinition(String name, String number, Markup content) {
-    return this.composeFragmentDefinition(name, number, content, new LinkedHashSet<>());
-  }
-
-  @Override
   public Markup composeFragmentDefinition(String name, String number, Markup content,
       Set<String> parameters) {
     if (StringUtils.isBlank(number)) {
@@ -72,11 +66,6 @@ public class MarkupGeneratorMock implements MarkupGenerator {
     }
     return new Markup(String.format("let %s(%s) -> { #%s: %s }", name,
         parameters.stream().collect(Collectors.joining(", ")), number, content.script));
-  }
-
-  @Override
-  public Markup renderFragmentInvocation(String name, PathExpression context) {
-    return this.renderFragmentInvocation(name, context, new LinkedHashSet<>());
   }
 
   @Override

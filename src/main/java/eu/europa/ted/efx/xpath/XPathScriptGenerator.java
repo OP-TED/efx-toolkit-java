@@ -198,24 +198,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public BooleanExpression composeAllSatisfy(SequenceExpression list,
-      String variableName, BooleanExpression booleanExpression) {
-    return new BooleanExpression(
-        "every " + variableName + " in " + list.getScript() + " satisfies " + booleanExpression.getScript());
-  }
-
-  @Override
   public BooleanExpression composeAllSatisfy(
       IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
         "every " + iterators.getScript() + " satisfies " + booleanExpression.getScript());
-  }
-
-  @Override
-  public BooleanExpression composeAnySatisfies(SequenceExpression list,
-      String variableName, BooleanExpression booleanExpression) {
-    return new BooleanExpression(
-        "some " + variableName + " in " + list.getScript() + " satisfies " + booleanExpression.getScript());
   }
 
   @Override
@@ -231,14 +217,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate(
         "(if " + condition.getScript() + " then " + whenTrue.getScript() + " else " + whenFalse.getScript() + ")",
         type);
-  }
-
-  @Override
-  public <T1 extends SequenceExpression, T2 extends SequenceExpression> T2 composeForExpression(
-      String variableName, T1 sourceList, ScalarExpression expression, Class<T2> targetListType) {
-    return Expression.instantiate(
-        "for " + variableName + " in " + sourceList.getScript() + " return " + expression.getScript(),
-        targetListType);
   }
 
   @Override
