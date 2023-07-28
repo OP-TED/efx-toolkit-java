@@ -1,6 +1,7 @@
 package eu.europa.ted.eforms.sdk;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,11 +17,13 @@ import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
 import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.types.FieldTypes;
+import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
-@SdkComponent(versions = {"0.6", "0.7", "1"},
-    componentType = SdkComponentType.SYMBOL_RESOLVER)
+@SdkComponent(versions = { "1", "2" }, componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkField> fieldById;
 
@@ -29,11 +32,13 @@ public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkCodelist> codelistById;
 
   /**
-   * Builds EFX list from the passed codelist reference. This will lazily compute and cache the
+   * Builds EFX list from the passed codelist reference. This will lazily compute
+   * and cache the
    * result for reuse as the operation can be costly on some large lists.
    *
    * @param codelistId A reference to an SDK codelist.
-   * @return The EFX string representation of the list of all the codes of the referenced codelist.
+   * @return The EFX string representation of the list of all the codes of the
+   *         referenced codelist.
    */
   @Override
   public final List<String> expandCodelist(final String codelistId) {
@@ -47,8 +52,9 @@ public class SdkSymbolResolver implements SymbolResolver {
   /**
    * Private, use getInstance method instead.
    *
-   * @param sdkVersion The version of the SDK.
-   * @throws InstantiationException
+   * @param sdkVersion  The version of the SDK.
+   * @param sdkRootPath The path to the root of the SDK.
+   * @throws InstantiationException If the SDK version is not supported.
    */
   public SdkSymbolResolver(final String sdkVersion, final Path sdkRootPath)
       throws InstantiationException {
@@ -93,7 +99,7 @@ public class SdkSymbolResolver implements SymbolResolver {
       throw new ParseCancellationException(
           String.format("Unknown field identifier '%s'.", fieldId));
     }
-    return new PathExpression(sdkField.getXpathAbsolute());
+    return PathExpression.instantiate(sdkField.getXpathAbsolute(), FieldTypes.fromString(sdkField.getType()));
   }
 
   /**
@@ -106,13 +112,14 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (sdkNode == null) {
       throw new ParseCancellationException(String.format("Unknown node identifier '%s'.", nodeId));
     }
-    return new PathExpression(sdkNode.getXpathAbsolute());
+    return new NodePathExpression(sdkNode.getXpathAbsolute());
   }
 
   /**
    * Gets the xPath of the given field relative to the given context.
    *
-   * @param fieldId The id of the field for which we want to find the relative xPath.
+   * @param fieldId     The id of the field for which we want to find the relative
+   *                    xPath.
    * @param contextPath xPath indicating the context.
    * @return The xPath of the given field relative to the given context.
    */
@@ -125,7 +132,8 @@ public class SdkSymbolResolver implements SymbolResolver {
   /**
    * Gets the xPath of the given node relative to the given context.
    *
-   * @param nodeId The id of the node for which we want to find the relative xPath.
+   * @param nodeId      The id of the node for which we want to find the relative
+   *                    xPath.
    * @param contextPath XPath indicating the context.
    * @return The XPath of the given node relative to the given context.
    */
@@ -167,4 +175,62 @@ public class SdkSymbolResolver implements SymbolResolver {
 
     return sdkCodelist.getRootCodelistId();
   }
+
+  @Override
+  public boolean isAttributeField(final String fieldId) {
+    if (!additionalFieldInfoMap.containsKey(fieldId)) {
+      this.cacheAdditionalFieldInfo(fieldId);
+    }
+    return additionalFieldInfoMap.get(fieldId).isAttribute;
+  }
+
+  @Override
+  public String getAttributeNameFromAttributeField(final String fieldId) {
+    if (!additionalFieldInfoMap.containsKey(fieldId)) {
+      this.cacheAdditionalFieldInfo(fieldId);
+    }
+    return additionalFieldInfoMap.get(fieldId).attributeName;
+  }
+
+  @Override
+  public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(final String fieldId) {
+    if (!additionalFieldInfoMap.containsKey(fieldId)) {
+      this.cacheAdditionalFieldInfo(fieldId);
+    }
+    return additionalFieldInfoMap.get(fieldId).pathWithoutAttribute;
+  }
+
+  // #region Temporary helpers ------------------------------------------------
+
+  /**
+   * Temporary workaround to store additional info about fields.
+   * 
+   * TODO: Move this additional info to SdkField class, and move the XPathAttributeLocator to the eforms-core-library.
+   */
+  class AdditionalFieldInfo {
+    public boolean isAttribute;
+    public String attributeName;
+    public PathExpression pathWithoutAttribute;
+  }
+
+  /**
+   * Caches the results of xpath parsing to mitigate performance impact.
+   * This is a temporary solution until we move the additional info to the SdkField class.
+   */
+  Map<String, AdditionalFieldInfo> additionalFieldInfoMap = new HashMap<>();
+
+  private void cacheAdditionalFieldInfo(final String fieldId) {
+    if (additionalFieldInfoMap.containsKey(fieldId)) {
+      return;
+    }
+    var parsedPath = XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId));
+    var info = new AdditionalFieldInfo();
+    info.isAttribute = parsedPath.hasAttribute();
+    info.attributeName = parsedPath.getAttributeName();
+    info.pathWithoutAttribute = parsedPath.getElementPath();
+    additionalFieldInfoMap.put(fieldId, info);
+  }  
+  
+  // #endregion Temporary helpers ------------------------------------------------
+
 }

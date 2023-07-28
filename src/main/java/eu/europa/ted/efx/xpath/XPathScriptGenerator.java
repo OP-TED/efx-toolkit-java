@@ -16,26 +16,26 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
-import eu.europa.ted.efx.model.Expression;
-import eu.europa.ted.efx.model.Expression.BooleanExpression;
-import eu.europa.ted.efx.model.Expression.DateExpression;
-import eu.europa.ted.efx.model.Expression.DateListExpression;
-import eu.europa.ted.efx.model.Expression.DurationExpression;
-import eu.europa.ted.efx.model.Expression.DurationListExpression;
-import eu.europa.ted.efx.model.Expression.IteratorExpression;
-import eu.europa.ted.efx.model.Expression.IteratorListExpression;
-import eu.europa.ted.efx.model.Expression.ListExpression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringExpression;
-import eu.europa.ted.efx.model.Expression.MultilingualStringListExpression;
-import eu.europa.ted.efx.model.Expression.NumericExpression;
-import eu.europa.ted.efx.model.Expression.NumericListExpression;
-import eu.europa.ted.efx.model.Expression.PathExpression;
-import eu.europa.ted.efx.model.Expression.StringExpression;
-import eu.europa.ted.efx.model.Expression.StringListExpression;
-import eu.europa.ted.efx.model.Expression.TimeExpression;
-import eu.europa.ted.efx.model.Expression.TimeListExpression;
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.TypedExpression;
+import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
+import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
+import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
+import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
+import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
+import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.types.EfxDataType;
 
-@SdkComponent(versions = {"0.6", "0.7", "1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
+@SdkComponent(versions = {"2"},
+    componentType = SdkComponentType.SCRIPT_GENERATOR)
 public class XPathScriptGenerator implements ScriptGenerator {
 
   /**
@@ -60,45 +60,39 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression> T composeNodeReferenceWithPredicate(PathExpression nodeReference,
-      BooleanExpression predicate, Class<T> type) {
-    return Expression.instantiate(nodeReference.script + '[' + predicate.script + ']', type);
+  public PathExpression composeNodeReferenceWithPredicate(PathExpression nodeReference,
+      BooleanExpression predicate) {
+    return PathExpression.instantiate(nodeReference.getScript() + '[' + predicate.getScript() + ']', EfxDataType.Node.class);
   }
 
   @Override
-  public <T extends Expression> T composeFieldReferenceWithPredicate(PathExpression fieldReference,
-      BooleanExpression predicate, Class<T> type) {
-    return Expression.instantiate(fieldReference.script + '[' + predicate.script + ']', type);
+  public PathExpression composeFieldReferenceWithPredicate(PathExpression fieldReference,
+      BooleanExpression predicate) {
+    return PathExpression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getDataType());
   }
 
   @Override
-  public <T extends Expression> T composeFieldReferenceWithAxis(final PathExpression fieldReference,
-      final String axis, Class<T> type) {
-        return Expression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).script, type);
+  public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis) {
+    return PathExpression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).getScript(), fieldReference.getDataType());
   }
 
   @Override
-  public <T extends Expression> T composeFieldValueReference(PathExpression fieldReference,
-      Class<T> type) {
-    if ((MultilingualStringExpression.class.isAssignableFrom(type)
-        || MultilingualStringListExpression.class.isAssignableFrom(type))
-        && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
-      return Expression.instantiate("efx:preferred-language-text(" + fieldReference.script + ")", type);
+  public PathExpression composeFieldValueReference(PathExpression fieldReference) {
+    if (fieldReference.is(EfxDataType.String.class)) {
+      return PathExpression.instantiate(fieldReference.getScript() + "/normalize-space(text())", fieldReference.getDataType());
     }
-    if (StringExpression.class.isAssignableFrom(type) || StringListExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate(fieldReference.script + "/normalize-space(text())", type);
+    if (fieldReference.is(EfxDataType.Number.class)) {
+      return PathExpression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getDataType());
     }
-    if (NumericExpression.class.isAssignableFrom(type) || NumericListExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate(fieldReference.script + "/number()", type);
+    if (fieldReference.is(EfxDataType.Date.class)) {
+      return PathExpression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getDataType());
     }
-    if (DateExpression.class.isAssignableFrom(type) || DateListExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate(fieldReference.script + "/xs:date(text())", type);
+    if (fieldReference.is(EfxDataType.Time.class)) {
+      return PathExpression.instantiate(fieldReference.getScript() + "/xs:time(text())", fieldReference.getDataType());
     }
-    if (TimeExpression.class.isAssignableFrom(type) || TimeListExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate(fieldReference.script + "/xs:time(text())", type);
-    }
-    if (DurationExpression.class.isAssignableFrom(type) || DurationListExpression.class.isAssignableFrom(type)) {
-      return Expression.instantiate("(for $F in " + fieldReference.script + " return (if ($F/@unitCode='WEEK')" + //
+    if (fieldReference.is(EfxDataType.Duration.class)) {
+      return PathExpression.instantiate("(for $F in " + fieldReference.getScript() + " return (if ($F/@unitCode='WEEK')" + //
           " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
           " else if ($F/@unitCode='DAY')" + //
           " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
@@ -108,44 +102,46 @@ public class XPathScriptGenerator implements ScriptGenerator {
           " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
           // " else if (" + fieldReference.script + ")" + //
           // " then fn:error('Invalid @unitCode')" + //
-          " else ()))", type);
+          " else ()))", fieldReference.getDataType());
     }
 
-    return Expression.instantiate(fieldReference.script, type);
+    return PathExpression.instantiate(fieldReference.getScript(), fieldReference.getDataType());
   }
 
   @Override
-  public <T extends Expression> T composeFieldAttributeReference(PathExpression fieldReference,
+  public <T extends PathExpression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
-    return Expression.instantiate(fieldReference.script + (fieldReference.script.isEmpty() ? "" : "/") + "@" + attribute, type);
+    return Expression.instantiate(
+        fieldReference.getScript() + (fieldReference.getScript().isEmpty() ? "" : "/") + "@" + attribute,
+        type);
   }
 
   @Override
-  public <T extends Expression> T composeVariableReference(String variableName, Class<T> type) {
+  public <T extends TypedExpression> T composeVariableReference(String variableName, Class<T> type) {
     return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
-  public <T extends Expression> T composeVariableDeclaration(String variableName, Class<T> type) {
+  public <T extends TypedExpression> T composeVariableDeclaration(String variableName, Class<T> type) {
     return Expression.instantiate("$" + variableName, type);
   }
 
   @Override
-  public <T extends Expression> T composeParameterDeclaration(String parameterName,
-          Class<T> type) {
-      return Expression.empty(type);
+  public <T extends TypedExpression> T composeParameterDeclaration(String parameterName,
+      Class<T> type) {
+    return Expression.empty(type);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeList(List<T> list,
-      Class<L> type) {
+  public <T extends SequenceExpression> T composeList(List<? extends ScalarExpression> list,
+      Class<T> type) {
     if (list == null || list.isEmpty()) {
       return Expression.instantiate("()", type);
     }
 
     final StringJoiner joiner = new StringJoiner(",", "(", ")");
-    for (final T item : list) {
-      joiner.add(item.script);
+    for (final ScalarExpression item : list) {
+      joiner.add(item.getScript());
     }
     return Expression.instantiate(joiner.toString(), type);
   }
@@ -189,92 +185,69 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> BooleanExpression composeContainsCondition(
-      T needle, L haystack) {
-    return new BooleanExpression(String.format("%s = %s", needle.script, haystack.script));
+  public BooleanExpression composeContainsCondition(
+      ScalarExpression needle, SequenceExpression haystack) {
+    return new BooleanExpression(String.format("%s = %s", needle.getScript(), haystack.getScript()));
   }
 
   @Override
   public BooleanExpression composePatternMatchCondition(StringExpression expression,
       String pattern) {
     return new BooleanExpression(
-        String.format("fn:matches(normalize-space(%s), %s)", expression.script, pattern));
+        String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(), pattern));
   }
 
   @Override
-  public <T extends Expression> BooleanExpression composeAllSatisfy(ListExpression<T> list,
-      String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "every " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
-
-  @Override
-  public <T extends Expression> BooleanExpression composeAllSatisfy(
+  public BooleanExpression composeAllSatisfy(
       IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "every " + iterators.script + " satisfies " + booleanExpression.script);
+        "every " + iterators.getScript() + " satisfies " + booleanExpression.getScript());
   }
 
   @Override
-  public <T extends Expression> BooleanExpression composeAnySatisfies(ListExpression<T> list,
-      String variableName, BooleanExpression booleanExpression) {
-        return new BooleanExpression(
-          "some " + variableName + " in " + list.script + " satisfies " + booleanExpression.script);
-    }
-
-  @Override
-  public <T extends Expression> BooleanExpression composeAnySatisfies(
+  public BooleanExpression composeAnySatisfies(
       IteratorListExpression iterators, BooleanExpression booleanExpression) {
     return new BooleanExpression(
-        "some " + iterators.script + " satisfies " + booleanExpression.script);
+        "some " + iterators.getScript() + " satisfies " + booleanExpression.getScript());
   }
 
   @Override
-  public <T extends Expression> T composeConditionalExpression(BooleanExpression condition,
+  public <T extends TypedExpression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type) {
     return Expression.instantiate(
-        "(if " + condition.script + " then " + whenTrue.script + " else " + whenFalse.script + ")",
+        "(if " + condition.getScript() + " then " + whenTrue.getScript() + " else " + whenFalse.getScript() + ")",
         type);
   }
 
   @Override
-  public <T1 extends Expression, L1 extends ListExpression<T1>, T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
-      String variableName, L1 sourceList, T2 expression, Class<L2> targetListType) {
-    return Expression.instantiate(
-        "for " + variableName + " in " + sourceList.script + " return " + expression.script,
+  public <T extends SequenceExpression> T composeForExpression(
+      IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType) {
+    return Expression.instantiate("for " + iterators.getScript() + " return " + expression.getScript(),
         targetListType);
   }
 
   @Override
-  public <T2 extends Expression, L2 extends ListExpression<T2>> L2 composeForExpression(
-      IteratorListExpression iterators, T2 expression, Class<L2> targetListType) {
-    return Expression.instantiate("for " + iterators.script + " return " + expression.script,
-        targetListType);
+  public IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList) {
+    return new IteratorExpression(variableDeclarationExpression.getScript() + " in " + sourceList.getScript());
   }
 
-  @Override
-  public <T extends Expression, L extends ListExpression<T>> IteratorExpression composeIteratorExpression(
-      String variableName, L sourceList) {
-    return new IteratorExpression(variableName + " in " + sourceList.script);
-  }
-
-  @Override
-  public IteratorExpression composeIteratorExpression(
-      String variableName, PathExpression pathExpression) {
-    return new IteratorExpression(variableName + " in " + pathExpression.script);
-  }
+  // @Override
+  // public IteratorExpression composeIteratorExpression(
+  //     String variableName, EfxPathExpression pathExpression) {
+  //   return new IteratorExpression(variableName + " in " + pathExpression.getScript());
+  // }
 
   @Override
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators) {
     return new IteratorListExpression(
-        iterators.stream().map(i -> i.script).collect(Collectors.joining(", ", "", "")));
+        iterators.stream().map(i -> i.getScript()).collect(Collectors.joining(", ", "", "")));
   }
-  
+
   @Override
   public <T extends Expression> T composeParenthesizedExpression(T expression, Class<T> type) {
     try {
       Constructor<T> ctor = type.getConstructor(String.class);
-      return ctor.newInstance("(" + expression.script + ")");
+      return ctor.newInstance("(" + expression.getScript() + ")");
     } catch (Exception e) {
       throw new ParseCancellationException(e);
     }
@@ -282,15 +255,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression composeExternalReference(StringExpression externalReference) {
-    return new PathExpression(
-        "fn:doc(concat($urlPrefix, " + externalReference.script + "))");
+    return new NodePathExpression(
+        "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
   }
 
 
   @Override
   public PathExpression composeFieldInExternalReference(PathExpression externalReference,
       PathExpression fieldReference) {
-    return new PathExpression(externalReference.script + fieldReference.script);
+    return PathExpression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getDataType());
   }
 
 
@@ -299,150 +272,173 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return XPathContextualizer.join(first, second);
   }
 
-  /*** BooleanExpressions ***/
+  //#region Indexers ----------------------------------------------------------
+
+  @Override
+  public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
+      NumericExpression index, Class<T> type) {
+    return Expression.instantiate(String.format("%s[%s]", list.getScript(), index.getScript()), type);
+  }
+
+  //#endregion Indexers -------------------------------------------------------
+
+  //#region Boolean Expressions -----------------------------------------------
 
 
   @Override
   public BooleanExpression composeLogicalAnd(BooleanExpression leftOperand,
       BooleanExpression rightOperand) {
     return new BooleanExpression(
-        String.format("%s and %s", leftOperand.script, rightOperand.script));
+        String.format("%s and %s", leftOperand.getScript(), rightOperand.getScript()));
   }
 
   @Override
   public BooleanExpression composeLogicalOr(BooleanExpression leftOperand,
       BooleanExpression rightOperand) {
     return new BooleanExpression(
-        String.format("%s or %s", leftOperand.script, rightOperand.script));
+        String.format("%s or %s", leftOperand.getScript(), rightOperand.getScript()));
   }
 
   @Override
   public BooleanExpression composeLogicalNot(BooleanExpression condition) {
-    return new BooleanExpression(String.format("not(%s)", condition.script));
+    return new BooleanExpression(String.format("not(%s)", condition.getScript()));
   }
 
   @Override
   public BooleanExpression composeExistsCondition(PathExpression reference) {
-    return new BooleanExpression(reference.script);
+    return new BooleanExpression(reference.getScript());
   }
 
   @Override
-  public BooleanExpression composeUniqueValueCondition(PathExpression needle, PathExpression haystack) {
-    return new BooleanExpression("count(for $x in " + needle.script + ", $y in " + haystack.script + "[. = $x] return $y) = 1");
+  public BooleanExpression composeUniqueValueCondition(PathExpression needle,
+      PathExpression haystack) {
+    return new BooleanExpression("count(for $x in " + needle.getScript() + ", $y in " + haystack.getScript()
+        + "[. = $x] return $y) = 1");
   }
 
-  /*** Boolean functions ***/
+  //#endregion Boolean Expressions ------------------------------------------
+
+  //#region Boolean functions -----------------------------------------------
 
   @Override
   public BooleanExpression composeContainsCondition(StringExpression haystack,
       StringExpression needle) {
-    return new BooleanExpression("contains(" + haystack.script + ", " + needle.script + ")");
+    return new BooleanExpression("contains(" + haystack.getScript() + ", " + needle.getScript() + ")");
   }
 
   @Override
   public BooleanExpression composeStartsWithCondition(StringExpression text,
       StringExpression startsWith) {
-    return new BooleanExpression("starts-with(" + text.script + ", " + startsWith.script + ")");
+    return new BooleanExpression("starts-with(" + text.getScript() + ", " + startsWith.getScript() + ")");
   }
 
   @Override
   public BooleanExpression composeEndsWithCondition(StringExpression text,
       StringExpression endsWith) {
-    return new BooleanExpression("ends-with(" + text.script + ", " + endsWith.script + ")");
+    return new BooleanExpression("ends-with(" + text.getScript() + ", " + endsWith.getScript() + ")");
   }
 
   @Override
-  public BooleanExpression composeComparisonOperation(Expression leftOperand, String operator,
-      Expression rightOperand) {
-    if (DurationExpression.class.isAssignableFrom(leftOperand.getClass())) {
+  public BooleanExpression composeComparisonOperation(ScalarExpression leftOperand, String operator,
+      ScalarExpression rightOperand) {
+    if (leftOperand.is(EfxDataType.Duration.class)) {
       // TODO: Improve this implementation; Check if both are dayTime or yearMonth and compare
       // directly, otherwise, compare by adding to current-date()
       return new BooleanExpression(
-          "boolean(for $T in (current-date()) return ($T + " + leftOperand.script + " "
-              + operators.get(operator) + " $T + " + rightOperand.script + "))");
+          "boolean(for $T in (current-date()) return ($T + " + leftOperand.getScript() + " "
+              + operators.get(operator) + " $T + " + rightOperand.getScript() + "))");
     }
     return new BooleanExpression(
-        leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
+        leftOperand.getScript() + " " + operators.get(operator) + " " + rightOperand.getScript());
   }
 
   @Override
-  public BooleanExpression composeSequenceEqualFunction(ListExpression<? extends Expression> one,
-  ListExpression<? extends Expression> two) {
-    return new BooleanExpression("deep-equal(sort(" + one.script + "), sort(" + two.script + "))");
+  public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
+      SequenceExpression two) {
+    return new BooleanExpression("deep-equal(sort(" + one.getScript() + "), sort(" + two.getScript() + "))");
   }
 
-  /*** Numeric functions ***/
+  //#endregion Boolean functions ----------------------------------------------
+
+  //#region Numeric functions -------------------------------------------------
 
   @Override
-  public NumericExpression composeCountOperation(PathExpression nodeSet) {
-    return new NumericExpression("count(" + nodeSet.script + ")");
-  }
-
-  @Override
-  public NumericExpression composeCountOperation(ListExpression<? extends Expression> list) {
-    return new NumericExpression("count(" + list.script + ")");
+  public NumericExpression composeCountOperation(SequenceExpression list) {
+    return new NumericExpression("count(" + list.getScript() + ")");
   }
 
   @Override
   public NumericExpression composeToNumberConversion(StringExpression text) {
-    return new NumericExpression("number(" + text.script + ")");
+    return new NumericExpression("number(" + text.getScript() + ")");
   }
 
   @Override
-  public NumericExpression composeSumOperation(PathExpression nodeSet) {
-    return new NumericExpression("sum(" + nodeSet.script + ")");
-  }
-
-  @Override
-  public NumericExpression composeSumOperation(NumericListExpression nodeSet) {
-    return new NumericExpression("sum(" + nodeSet.script + ")");
+  public NumericExpression composeSumOperation(NumericSequenceExpression nodeSet) {
+    return new NumericExpression("sum(" + nodeSet.getScript() + ")");
   }
 
   @Override
   public NumericExpression composeStringLengthCalculation(StringExpression text) {
-    return new NumericExpression("string-length(" + text.script + ")");
+    return new NumericExpression("string-length(" + text.getScript() + ")");
   }
 
   @Override
   public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
       NumericExpression rightOperand) {
     return new NumericExpression(
-        leftOperand.script + " " + operators.get(operator) + " " + rightOperand.script);
+        leftOperand.getScript() + " " + operators.get(operator) + " " + rightOperand.getScript());
   }
 
+  //#endregion Numeric functions ----------------------------------------------
 
-  /*** String functions ***/
+  //#region String functions --------------------------------------------------
 
   @Override
   public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
       NumericExpression length) {
     return new StringExpression(
-        "substring(" + text.script + ", " + start.script + ", " + length.script + ")");
+        "substring(" + text.getScript() + ", " + start.getScript() + ", " + length.getScript() + ")");
   }
 
   @Override
   public StringExpression composeSubstringExtraction(StringExpression text,
       NumericExpression start) {
-    return new StringExpression("substring(" + text.script + ", " + start.script + ")");
+    return new StringExpression("substring(" + text.getScript() + ", " + start.getScript() + ")");
   }
 
   @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
     String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
-    return new StringExpression("format-number(" + number.script + ", '" + formatString + "')");
+    return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
+  }
+
+  @Override
+  public StringExpression composeToUpperCaseConversion(StringExpression text) {
+    return new StringExpression("upper-case(" + text.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeToLowerCaseConversion(StringExpression text) {
+    return new StringExpression("lower-case(" + text.getScript() + ")");
   }
 
   @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
-        "concat(" + list.stream().map(i -> i.script).collect(Collectors.joining(", ")) + ")");
+        "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");
+  }
+
+  @Override
+  public StringExpression composeStringJoin(StringSequenceExpression list, StringExpression separator) {
+    return new StringExpression(
+        "string-join(" + list.getScript() + ", " + separator.getScript() + ")");
   }
 
   @Override
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format) {
-        String formatString = format.isLiteral ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.script) : format.script;
-        return new StringExpression("format-number(" + number.script + ", " + formatString + ")");
+        String formatString = format.isLiteral() ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.getScript()) : format.getScript();
+        return new StringExpression("format-number(" + number.getScript() + ", " + formatString + ")");
   }
 
   @Override
@@ -450,91 +446,107 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new StringExpression("'" + value + "'", true);
   }
 
+  @Override
+  public StringExpression getPreferredLanguage(PathExpression fieldReference) {
+    return new StringExpression("efx:preferred-language(" + fieldReference.getScript() + ")");
+  }
 
-  /*** Date functions ***/
+  @Override
+  public StringExpression getTextInPreferredLanguage(PathExpression fieldReference) {
+    return new StringExpression("efx:preferred-language-text(" + fieldReference.getScript() + ")");
+  }
+
+  //#endregion String functions -----------------------------------------------
+
+  //#region Date functions ----------------------------------------------------
 
   @Override
   public DateExpression composeToDateConversion(StringExpression date) {
-    return new DateExpression("xs:date(" + date.script + ")");
+    return new DateExpression("xs:date(" + date.getScript() + ")");
   }
 
   @Override
   public DateExpression composeAddition(DateExpression date, DurationExpression duration) {
-    return new DateExpression("(" + date.script + " + " + duration.script + ")");
+    return new DateExpression("(" + date.getScript() + " + " + duration.getScript() + ")");
   }
 
   @Override
   public DateExpression composeSubtraction(DateExpression date, DurationExpression duration) {
-    return new DateExpression("(" + date.script + " - " + duration.script + ")");
+    return new DateExpression("(" + date.getScript() + " - " + duration.getScript() + ")");
   }
 
-  /*** Time functions ***/
+  //#endregion Date functions -------------------------------------------------
+
+  //#region Time functions ----------------------------------------------------
 
   @Override
   public TimeExpression composeToTimeConversion(StringExpression time) {
-    return new TimeExpression("xs:time(" + time.script + ")");
+    return new TimeExpression("xs:time(" + time.getScript() + ")");
   }
 
+  //#endregion Time functions -------------------------------------------------
 
-  /*** Duration functions ***/
+  //#region Duration functions ------------------------------------------------
 
   @Override
   public DurationExpression composeToDayTimeDurationConversion(StringExpression text) {
-    return new DurationExpression("xs:dayTimeDuration(" + text.script + ")");
+    return new DurationExpression("xs:dayTimeDuration(" + text.getScript() + ")");
   }
 
   @Override
   public DurationExpression composeToYearMonthDurationConversion(StringExpression text) {
-    return new DurationExpression("xs:yearMonthDuration(" + text.script + ")");
+    return new DurationExpression("xs:yearMonthDuration(" + text.getScript() + ")");
   }
 
   @Override
   public DurationExpression composeSubtraction(DateExpression startDate, DateExpression endDate) {
-    return new DurationExpression("xs:dayTimeDuration(" + endDate.script + " " + operators.get("-")
-        + " " + startDate.script + ")");
+    return new DurationExpression("xs:dayTimeDuration(" + endDate.getScript() + " " + operators.get("-")
+        + " " + startDate.getScript() + ")");
   }
 
   @Override
   public DurationExpression composeMultiplication(NumericExpression number,
       DurationExpression duration) {
-    return new DurationExpression("(" + number.script + " * " + duration.script + ")");
+    return new DurationExpression("(" + number.getScript() + " * " + duration.getScript() + ")");
   }
 
   @Override
   public DurationExpression composeAddition(DurationExpression left, DurationExpression right) {
-    return new DurationExpression("(" + left.script + " + " + right.script + ")");
+    return new DurationExpression("(" + left.getScript() + " + " + right.getScript() + ")");
   }
 
   @Override
   public DurationExpression composeSubtraction(DurationExpression left, DurationExpression right) {
-    return new DurationExpression("(" + left.script + " - " + right.script + ")");
+    return new DurationExpression("(" + left.getScript() + " - " + right.getScript() + ")");
   }
 
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeDistinctValuesFunction(
-      L list, Class<L> listType) {
-        return Expression.instantiate("distinct-values(" + list.script + ")", listType);
+  public <T extends SequenceExpression> T composeDistinctValuesFunction(
+      T list, Class<T> listType) {
+    return Expression.instantiate("distinct-values(" + list.getScript() + ")", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeUnionFunction(L listOne,
-      L listTwo, Class<L> listType) {
-        return Expression.instantiate("distinct-values((" + listOne.script + ", " + listTwo.script + "))", listType);
+  public <T extends SequenceExpression> T composeUnionFunction(T listOne,
+      T listTwo, Class<T> listType) {
+    return Expression
+        .instantiate("distinct-values((" + listOne.getScript() + ", " + listTwo.getScript() + "))", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeIntersectFunction(L listOne, L listTwo, Class<L> listType) {
-    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (some $L2 in " + listTwo.script + " satisfies $L1 = $L2) then $L1 else ())", listType);
+  public <T extends SequenceExpression> T composeIntersectFunction(T listOne, T listTwo, Class<T> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (some $L2 in " + listTwo.getScript() + " satisfies $L1 = $L2) then $L1 else ())", listType);
   }
 
   @Override
-  public <T extends Expression, L extends ListExpression<T>> L composeExceptFunction(L listOne, L listTwo, Class<L> listType) {
-    return Expression.instantiate("distinct-values(for $L1 in " + listOne.script + " return if (every $L2 in " + listTwo.script + " satisfies $L1 != $L2) then $L1 else ())", listType);
+  public <T extends SequenceExpression> T composeExceptFunction(T listOne, T listTwo, Class<T> listType) {
+    return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (every $L2 in " + listTwo.getScript() + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
+  //#endregion Duration functions ---------------------------------------------
 
-  /*** Helpers ***/
+  //#region Helpers -----------------------------------------------------------
 
 
   private String quoted(final String text) {
@@ -546,4 +558,5 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
   }
 
+  //#endregion Helpers --------------------------------------------------------
 }

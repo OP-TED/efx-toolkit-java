@@ -30,6 +30,10 @@ public class ComponentFactory extends SdkComponentFactory {
    * Gets the single instance containing the symbols defined in the given version of the eForms SDK.
    *
    * @param sdkVersion Version of the SDK
+   * @param sdkRootPath Path to the root of the SDK
+   * @return The single instance containing the symbols defined in the given version of the eForms
+   *        SDK.
+   * @throws InstantiationException If the SDK version is not supported.
    */
   public static SymbolResolver getSymbolResolver(final String sdkVersion, final Path sdkRootPath)
       throws InstantiationException {

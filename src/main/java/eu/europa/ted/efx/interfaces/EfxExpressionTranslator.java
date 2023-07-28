@@ -27,7 +27,7 @@ public interface EfxExpressionTranslator {
    * 
    * @param expression A string containing the EFX expression to be translated.
    * @param expressionParameters The values of any parameters that the given expression expects.
-   * @return
+   * @return The translated expression in the target script language.
    */
   String translateExpression(final String expression, final String... expressionParameters);
 }

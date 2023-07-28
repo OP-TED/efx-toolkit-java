@@ -14,7 +14,8 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
-import eu.europa.ted.efx.model.Expression.PathExpression;
+
+import eu.europa.ted.efx.model.expressions.path.PathExpression;
 
 /**
  * A SymbolResolver is a mechanism used by EFX translators to resolve symbols.
@@ -41,11 +42,12 @@ public interface SymbolResolver {
    * Gets the path that can be used to locate the given field in the data source, relative to
    * another given path.
    * 
-   * The "path" points to a location in the data source. The path will be eventually used to retrieve
-   * the data from the data source. Typically, the data source is an XML file, in which case the
-   * path should be an XPath. If the data source is a JSON file, then the path should be a JsonPath.
-   * If you intend to use a function call to retrieve the data from the data source then that is what
-   * you should return as path. In general keep in mind that the path is used as target language script.
+   * The "path" points to a location in the data source. The path will be eventually used to
+   * retrieve the data from the data source. Typically, the data source is an XML file, in which
+   * case the path should be an XPath. If the data source is a JSON file, then the path should be a
+   * JsonPath. If you intend to use a function call to retrieve the data from the data source then
+   * that is what you should return as path. In general keep in mind that the path is used as target
+   * language script.
    * 
    * @param fieldId The identifier of the field to look for.
    * @param contextPath The path relative to which we expect to find the return value.
@@ -59,7 +61,7 @@ public interface SymbolResolver {
    * given path.
    * 
    * See {@link getRelativePathOfField} for a description of the concept of "path".
-   *  
+   * 
    * @param nodeId The identifier of the node to look for.
    * @param contextPath The path relative to which we expect to find the return value.
    * @return The path to the given node relative to the given context path.
@@ -109,6 +111,36 @@ public interface SymbolResolver {
    * @return The "root" codelist associated ith the given field.
    */
   public String getRootCodelistOfField(final String fieldId);
+
+  /**
+   * Gets a boolean value indicating whether or not the given field points to
+   * an @attribute.
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return True if the field points to an @attribute, false otherwise.
+   */
+  public boolean isAttributeField(final String fieldId);
+
+  /**
+   * Gets the attribute name of the given field (if the field points to
+   * an @attribute).
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return The attribute name of the given field, without the @ prefix, or an
+   *         empty string if the field does not point to an @attribute.
+   */
+  public String getAttributeNameFromAttributeField(final String fieldId);
+
+  /**
+   * Gets the absolute path of the given field, without the attribute part.
+   * This method is meant to be used with fields that point to an @attribute.
+   * If the given field does not point to an @attribute then this method returns
+   * the same as {@link #getAbsolutePathOfField}
+   * 
+   * @param fieldId The identifier of the field to look for.
+   * @return The absolute path of the given field, without the attribute part.
+   */
+  public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(final String fieldId);
 
   /**
    * Gets the list of all codes in a given codelist as a list of strings.
