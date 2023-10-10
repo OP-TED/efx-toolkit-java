@@ -9,12 +9,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import eu.europa.ted.eforms.xpath.XPathInfo;
+import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.mock.AbstractSymbolResolverMock;
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.sdk1.entity.SdkCodelistV1;
 import eu.europa.ted.efx.sdk1.entity.SdkFieldV1;
 import eu.europa.ted.efx.sdk1.entity.SdkNodeV1;
-import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 
 public class SymbolResolverMockV1
     extends AbstractSymbolResolverMock<SdkFieldV1, SdkNodeV1, SdkCodelistV1> {
@@ -57,16 +60,19 @@ public class SymbolResolverMockV1
 
   @Override
   public boolean isAttributeField(final String fieldId) {
-    return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).hasAttribute();
+    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
+    return xpathInfo.isAttribute();
   }
 
   @Override
   public String getAttributeNameFromAttributeField(String fieldId) {
-      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getAttributeName();
+    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
+    return xpathInfo.getAttributeName();
   }
 
   @Override
   public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(String fieldId) {
-      return XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId)).getElementPath();
+    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
+    return Expression.instantiate(xpathInfo.getPathToLastElement(), NodePathExpression.class);
   }
 }
