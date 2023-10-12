@@ -2,10 +2,11 @@ package eu.europa.ted.efx.sdk1.xpath;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.xpath.XPathInfo;
+import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 @SdkComponent(versions = {"1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -40,7 +41,8 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      */
     @Override
     public PathExpression composeFieldValueReference(PathExpression fieldReference) {
-        if (fieldReference.is(EfxDataType.MultilingualString.class) && !XPathContextualizer.hasPredicate(fieldReference, "@languageID")) {
+        XPathInfo xpathInfo = XPathProcessor.parse(fieldReference.getScript());
+        if (fieldReference.is(EfxDataType.MultilingualString.class) && !xpathInfo.hasPredicate("@languageID")) {
             return PathExpression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getDataType());
         }
         return super.composeFieldValueReference(fieldReference);

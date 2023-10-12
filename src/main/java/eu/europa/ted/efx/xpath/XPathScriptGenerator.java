@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -74,7 +75,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
       final String axis) {
-    return PathExpression.instantiate(XPathContextualizer.addAxis(axis, fieldReference).getScript(), fieldReference.getDataType());
+    String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
+    return PathExpression.instantiate(resultXPath, fieldReference.getDataType());
   }
 
   @Override
