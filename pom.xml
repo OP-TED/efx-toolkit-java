@@ -330,7 +330,6 @@
             <exclude>**/EfxBaseListener.class</exclude>
             <exclude>**/EfxLexer.class</exclude>
             <exclude>**/EfxParser*.class</exclude>
-            <exclude>**/XPath20*.class</exclude>
           </excludes>
         </configuration>
         <executions>
