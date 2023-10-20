@@ -16,11 +16,13 @@ import eu.europa.ted.eforms.sdk.repository.SdkCodelistRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
 import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
+import eu.europa.ted.eforms.xpath.XPathInfo;
+import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.types.FieldTypes;
-import eu.europa.ted.efx.xpath.XPathAttributeLocator;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 @SdkComponent(versions = { "1", "2" }, componentType = SdkComponentType.SYMBOL_RESOLVER)
@@ -181,7 +183,7 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (!additionalFieldInfoMap.containsKey(fieldId)) {
       this.cacheAdditionalFieldInfo(fieldId);
     }
-    return additionalFieldInfoMap.get(fieldId).isAttribute;
+    return additionalFieldInfoMap.get(fieldId).isAttribute();
   }
 
   @Override
@@ -189,7 +191,7 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (!additionalFieldInfoMap.containsKey(fieldId)) {
       this.cacheAdditionalFieldInfo(fieldId);
     }
-    return additionalFieldInfoMap.get(fieldId).attributeName;
+    return additionalFieldInfoMap.get(fieldId).getAttributeName();
   }
 
   @Override
@@ -197,38 +199,23 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (!additionalFieldInfoMap.containsKey(fieldId)) {
       this.cacheAdditionalFieldInfo(fieldId);
     }
-    return additionalFieldInfoMap.get(fieldId).pathWithoutAttribute;
+    return Expression.instantiate(additionalFieldInfoMap.get(fieldId).getPathToLastElement(), NodePathExpression.class);
   }
 
   // #region Temporary helpers ------------------------------------------------
 
   /**
-   * Temporary workaround to store additional info about fields.
-   * 
-   * TODO: Move this additional info to SdkField class, and move the XPathAttributeLocator to the eforms-core-library.
-   */
-  class AdditionalFieldInfo {
-    public boolean isAttribute;
-    public String attributeName;
-    public PathExpression pathWithoutAttribute;
-  }
-
-  /**
    * Caches the results of xpath parsing to mitigate performance impact.
    * This is a temporary solution until we move the additional info to the SdkField class.
    */
-  Map<String, AdditionalFieldInfo> additionalFieldInfoMap = new HashMap<>();
+  Map<String, XPathInfo> additionalFieldInfoMap = new HashMap<>();
 
   private void cacheAdditionalFieldInfo(final String fieldId) {
     if (additionalFieldInfoMap.containsKey(fieldId)) {
       return;
     }
-    var parsedPath = XPathAttributeLocator.findAttribute(this.getAbsolutePathOfField(fieldId));
-    var info = new AdditionalFieldInfo();
-    info.isAttribute = parsedPath.hasAttribute();
-    info.attributeName = parsedPath.getAttributeName();
-    info.pathWithoutAttribute = parsedPath.getElementPath();
-    additionalFieldInfoMap.put(fieldId, info);
+    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
+    additionalFieldInfoMap.put(fieldId, xpathInfo);
   }  
   
   // #endregion Temporary helpers ------------------------------------------------
