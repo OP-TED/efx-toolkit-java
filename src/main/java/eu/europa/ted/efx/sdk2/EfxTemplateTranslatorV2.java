@@ -347,36 +347,44 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         this.script.composeVariableReference("item", StringExpression.class));
     switch (fieldType) {
       case "indicator":
-        this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
-            this.script.composeIteratorList(
-                List.of(
-                    this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
-            this.script.composeStringConcatenation(
-                List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
-                    this.script.getStringLiteralFromUnquotedString("-"),
-                    new StringExpression(loopVariable.referenceExpression.getScript()),
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    this.script.getStringLiteralFromUnquotedString(fieldId))),
-            StringSequenceExpression.class), quantity));
+        this.stack.push(this.markup.renderLabelFromExpression(
+            this.script.composeDistinctValuesFunction(
+                this.script.composeForExpression(
+                    this.script.composeIteratorList(
+                        List.of(
+                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
+                    this.script.composeStringConcatenation(
+                        List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
+                            this.script.getStringLiteralFromUnquotedString("|"),
+                            this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
+                            this.script.getStringLiteralFromUnquotedString("-"),
+                            new StringExpression(loopVariable.referenceExpression.getScript()),
+                            this.script.getStringLiteralFromUnquotedString("|"),
+                            this.script.getStringLiteralFromUnquotedString(fieldId))),
+                    StringSequenceExpression.class),
+                StringSequenceExpression.class),
+            quantity));
         break;
       case "code":
       case "internal-code":
-        this.stack.push(this.markup.renderLabelFromExpression(this.script.composeForExpression(
-            this.script.composeIteratorList(
-                List.of(
-                    this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
-            this.script.composeStringConcatenation(List.of(
-                this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
-                this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
-                this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(
-                    this.symbols.getRootCodelistOfField(fieldId)),
-                this.script.getStringLiteralFromUnquotedString("."),
-                new StringExpression(loopVariable.referenceExpression.getScript()))),
-            StringSequenceExpression.class), quantity));
+        this.stack.push(this.markup.renderLabelFromExpression(
+            this.script.composeDistinctValuesFunction(
+                this.script.composeForExpression(
+                    this.script.composeIteratorList(
+                        List.of(
+                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
+                    this.script.composeStringConcatenation(List.of(
+                        this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
+                        this.script.getStringLiteralFromUnquotedString("|"),
+                        this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
+                        this.script.getStringLiteralFromUnquotedString("|"),
+                        this.script.getStringLiteralFromUnquotedString(
+                            this.symbols.getRootCodelistOfField(fieldId)),
+                        this.script.getStringLiteralFromUnquotedString("."),
+                        new StringExpression(loopVariable.referenceExpression.getScript()))),
+                    StringSequenceExpression.class),
+                StringSequenceExpression.class),
+            quantity));
         break;
       default:
         throw new ParseCancellationException(String.format(
