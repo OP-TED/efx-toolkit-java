@@ -343,4 +343,14 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' ')text('blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
+
+  @Test
+  void testImplicitFormatting_Dates() {
+    assertEquals("let block01() -> { eval(format-date(PathNode/StartDateField/xs:date(text()), '[D01]/[M01]/[Y0001]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartDate}"));
+  } 
+
+  @Test
+  void testImplicitFormatting_Times() {
+    assertEquals("let block01() -> { eval(format-time(PathNode/StartTimeField/xs:time(text()), '[H01]:[m01] [Z]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartTime}"));
+  } 
 }
