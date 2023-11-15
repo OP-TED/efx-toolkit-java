@@ -26,6 +26,7 @@ import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.path.StringPathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
@@ -33,6 +34,7 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.VariableList;
 import eu.europa.ted.efx.sdk1.EfxParser.AssetIdContext;
@@ -426,7 +428,20 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    */
   @Override
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {
-    this.stack.push(this.stack.pop(Expression.class));
+    var expression = this.stack.pop(Expression.class);
+
+    // This is a hack to make sure that the date and time expressions are rendered in the correct
+    // format. We had to do this because EFX 1 does not support the format-date() and format-time()
+    // functions.
+    if (TypedExpression.class.isAssignableFrom(expression.getClass())) {
+      if (EfxDataType.Date.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
+        expression = new StringExpression("format-date(" + expression.getScript() + ", '[D01]/[M01]/[Y0001]')");
+      } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
+        expression = new StringExpression("format-time(" + expression.getScript() + ", '[H01]:[m01] [Z]')");
+      }
+    }
+
+    this.stack.push(expression);
   }
 
   /***
