@@ -1,4 +1,4 @@
-# EFX Toolkit 2.0.0-alpha.1 Release Notes
+# EFX Toolkit 2.0.0-alpha.2 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
@@ -6,17 +6,22 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ## In this release
 
-This release:
+This release improves translation of EFX-1 templates as follows:
+- Renders sequences of labels when a sequence expression is used to provide asset-ids.
+- Renders distinct labels from sequences
+- Improves date and time formatting
 
-- Improves translation of EFX-1.
-- Adds support for translating EFX-2 expressions and templates.
-- Removes support of the obsolete EFX versions included in pre-release versions of the SDK (SDK 0.x.x).
-- Introduces some breaking changes in the interfaces that need to be implemented by new translators (SymbolResolver, ScriptGenerator, MarkupGenerator).
+This release also includes a refactoring that moved XPath processing classes to the eForms Core Library 1.2.0 to improve reusability. 
+
+There are no changes in EFX-2 translation included in this release.
+
 
 ## EFX-1 Support
 
-Although this is a pre-release version of the EFX Toolkit, it provides production-level support for EFX-1 transpilation.
-EFX-1 is the current version of EFX released with SDK 1. Transpilation of EFX-1 to XPath is on par with the EFX Toolkit 1.3.0.
+Although this is a pre-release version of the EFX Toolkit, it provides production-level support for EFX-1 transpilation. EFX-1 is the current version of EFX released with SDK 1. 
+
+NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit is **better than** what is provided by **EFX Toolkit 1.3.0**.
+
 
 ## EFX-2 Support
 
@@ -35,7 +40,7 @@ Users of the Toolkit that only use the included EFX-to-XPath transpiler will not
 
 ## Future development
 
-Further alpha and beta releases of SDK 2 and EFX Toolkit 2 will be issued. While in "alpha" development stage, further braking changes may be introduced. SDK 2 and EFX 2 are expected to continue to be under development util late 2023.
+Further alpha and beta releases of SDK 2 and EFX Toolkit 2 will be issued. While in "alpha" development stage, further braking changes may be introduced. SDK 2 and EFX 2 are expected to continue to be under development through the first quarter of 2024.
 
 ---
 
@@ -51,4 +56,4 @@ This version of the EFX Toolkit has a compile-time dependency on the following v
 - eForms SDK 1.x.x
 - eForms SDK 2.0.0-alpha.1
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.0.5.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.2.0.
