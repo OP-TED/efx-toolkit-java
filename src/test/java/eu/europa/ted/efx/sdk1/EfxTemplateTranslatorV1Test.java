@@ -181,6 +181,13 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testStandardLabelReference_WithAssetIdIterator() {
+    assertEquals(
+        "let block01() -> { label(distinct-values(for $item in for $t in ./normalize-space(text()) return $t return concat('field', '|', 'name', '|', $item))) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|${for text:$t in BT-00-Text return $t}}"));
+  }
+
+  @Test
   void testShorthandBtLabelReference() {
     assertEquals(
         "let block01() -> { label(concat('business-term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01())",
