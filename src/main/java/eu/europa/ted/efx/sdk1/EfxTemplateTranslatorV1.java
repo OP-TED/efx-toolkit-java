@@ -246,8 +246,36 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
-    StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class)
-        : this.script.getStringLiteralFromUnquotedString("");
+    if (!this.stack.empty() && StringSequenceExpression.class.isAssignableFrom(this.stack.peek().getClass()) && ctx.assetId() != null) {
+
+      // This is a workaround that allows EFX 1 to render a sequence of labels without a special
+      // syntax. When a standard label reference is processed, the template translator checks if
+      // the assetId is provided with a SequenceExpression. If this is the case, then the
+      // translator generates the appropriate code to render a sequence of labels.
+      //
+      // For example, this will render a sequence of labels for a label reference of the form
+      // #{assetType|labelType|${for text:$t in ('assetId1','assetId2') return $t}}:} 
+      // The only restriction is that the assetType and labelType must be the same for all labels in the sequence.
+
+      StringSequenceExpression assetIdSequence = this.stack.pop(StringSequenceExpression.class);
+      this.exitStandardLabelReference(ctx, assetIdSequence);
+    } else {
+
+      // Standard implementation as originally intended by EFX 1
+
+      StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class)
+          : this.script.getStringLiteralFromUnquotedString("");
+      this.exitStandardLabelReference(ctx, assetId);
+    }
+  }
+
+  /**
+   * Renders a single label from a standard label reference.
+   * 
+   * @param ctx     The ParserRuleContext of the standard label reference.
+   * @param assetId The assetId of the label to render.
+   */
+  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringExpression assetId) {
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
     StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
@@ -257,6 +285,39 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
             this.script.getStringLiteralFromUnquotedString("|"), assetId))));
   }
+
+  /**
+   * Renders a sequence of labels from a standard label reference.
+   * 
+   * @param ctx             The ParserRuleContext of the standard label reference.
+   * @param assetIdSequence The sequence of assetIds for the labels to render.
+   */
+  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringSequenceExpression assetIdSequence) {
+    StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.getStringLiteralFromUnquotedString("");
+    StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
+        : this.script.getStringLiteralFromUnquotedString("");
+
+    Variable loopVariable = new Variable("item",
+        this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
+        this.script.composeVariableReference("item", StringExpression.class));
+
+    this.stack.push(this.markup.renderLabelFromExpression(
+        this.script.composeDistinctValuesFunction(
+            this.script.composeForExpression(
+                this.script.composeIteratorList(
+                    List.of(
+                        this.script.composeIteratorExpression(loopVariable.declarationExpression, assetIdSequence))),
+                this.script.composeStringConcatenation(List.of(
+                    assetType,
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    labelType,
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    new StringExpression(loopVariable.referenceExpression.getScript()))),
+                StringSequenceExpression.class),
+            StringSequenceExpression.class)));
+  }
+
 
   @Override
   public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
