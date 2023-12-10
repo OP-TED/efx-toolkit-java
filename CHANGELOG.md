@@ -56,4 +56,4 @@ This version of the EFX Toolkit has a compile-time dependency on the following v
 - eForms SDK 1.x.x
 - eForms SDK 2.0.0-alpha.1
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.2.0.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.3.0.
