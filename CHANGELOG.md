@@ -7,18 +7,19 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 ## In this release
 
 This release improves translation of EFX-1 templates as follows:
-- Renders sequences of labels when a sequence expression is used to provide asset-ids.
-- Renders distinct labels from sequences
-- Improves date and time formatting
 
-This release also includes a refactoring that moved XPath processing classes to the eForms Core Library 1.2.0 to improve reusability. 
+- Renders sequences of labels when a sequence expression is used to provide asset-ids.
+- Renders distinct labels from sequences.
+- Improves date and time formatting.
+
+This release also includes a refactoring that moved XPath processing classes to the eForms Core Library 1.2.0 to improve reusability.
 
 There are no changes in EFX-2 translation included in this release.
 
 
 ## EFX-1 Support
 
-Although this is a pre-release version of the EFX Toolkit, it provides production-level support for EFX-1 transpilation. EFX-1 is the current version of EFX released with SDK 1. 
+Although this is a pre-release version of the EFX Toolkit, it provides production-level support for EFX-1 transpilation. EFX-1 is the current version of EFX released with SDK 1.
 
 NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit is **better than** what is provided by **EFX Toolkit 1.3.0**.
 
