@@ -74,7 +74,7 @@ See ".github/workflows/settings.xml".
 
 Unit tests are available under `src/test/java/`. They show in particular a variety of EFX expressions and the corresponding XPath expression.
 
-After running the unit tests with `mvn test`, you can generate a coverage report with`mvn jacoco:report`.
+After running the unit tests with `mvn test`, you can generate a coverage report with `mvn jacoco:report`.
 The report is available under `target/site/jacoco/`, in HTML, CSV, and XML format.
 
 ## Download

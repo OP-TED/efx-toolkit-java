@@ -3,7 +3,7 @@
 
   <groupId>eu.europa.ted.eforms</groupId>
   <artifactId>efx-toolkit-java</artifactId>
-  <version>2.0.0-alpha.1</version>
+  <version>2.0.0-alpha.2</version>
   <packaging>jar</packaging>
 
   <name>EFX Toolkit for Java</name>
@@ -49,7 +49,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.build.outputTimestamp>2023-05-30T06:25:09Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2023-07-28T16:03:53Z</project.build.outputTimestamp>
 
     <sonatype.server.url>s01.oss.sonatype.org</sonatype.server.url>
 
@@ -59,7 +59,7 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>1.0.5</version.eforms-core>
+    <version.eforms-core>1.3.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.9.3</version.antlr4>
@@ -330,7 +330,6 @@
             <exclude>**/EfxBaseListener.class</exclude>
             <exclude>**/EfxLexer.class</exclude>
             <exclude>**/EfxParser*.class</exclude>
-            <exclude>**/XPath20*.class</exclude>
           </excludes>
         </configuration>
         <executions>

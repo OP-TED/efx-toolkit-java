@@ -181,6 +181,13 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testStandardLabelReference_WithAssetIdIterator() {
+    assertEquals(
+        "let block01() -> { label(distinct-values(for $item in for $t in ./normalize-space(text()) return $t return concat('field', '|', 'name', '|', $item))) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        translateTemplate("{BT-00-Text}  #{field|name|${for text:$t in BT-00-Text return $t}}"));
+  }
+
+  @Test
   void testShorthandBtLabelReference() {
     assertEquals(
         "let block01() -> { label(concat('business-term', '|', 'name', '|', 'BT-00')) }\nfor-each(/*/PathNode/TextField).call(block01())",
@@ -203,42 +210,42 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   @Test
   void testShorthandIndirectLabelReferenceForIndicator() {
     assertEquals(
-        "let block01() -> { label(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator')) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator'))) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCode() {
     assertEquals(
-        "let block01() -> { label(for $item in ../CodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ../CodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForInternalCode() {
     assertEquals(
-        "let block01() -> { label(for $item in ../InternalCodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ../InternalCodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute() {
     assertEquals(
-        "let block01() -> { label(for $item in ../CodeField/@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/TextField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ../CodeField/@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameAttributeInContext() {
     assertEquals(
-        "let block01() -> { label(for $item in ../@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField/@attribute).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ../@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/CodeField/@attribute).call(block01())",
         translateTemplate("{BT-00-CodeAttribute}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameElementInContext() {
     assertEquals(
-        "let block01() -> { label(for $item in ./@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ./@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code}  #{BT-00-CodeAttribute}"));
   }
 
@@ -297,7 +304,7 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   @Test
   void testShorthandIndirectLabelReferenceFromContextField() {
     assertEquals(
-        "let block01() -> { label(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)) }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} #value"));
   }
 
@@ -318,7 +325,7 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   @Test
   void testShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
-        "let block01() -> { text('blah ')label(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))text(' ')text('blah ')eval(./normalize-space(text()))text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
+        "let block01() -> { text('blah ')label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)))text(' ')text('blah ')eval(./normalize-space(text()))text(' ')text('blah') }\nfor-each(/*/PathNode/CodeField).call(block01())",
         translateTemplate("{BT-00-Code} blah #value blah $value blah"));
   }
 
@@ -343,4 +350,14 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' ')text('blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
+
+  @Test
+  void testImplicitFormatting_Dates() {
+    assertEquals("let block01() -> { eval(format-date(PathNode/StartDateField/xs:date(text()), '[D01]/[M01]/[Y0001]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartDate}"));
+  } 
+
+  @Test
+  void testImplicitFormatting_Times() {
+    assertEquals("let block01() -> { eval(format-time(PathNode/StartTimeField/xs:time(text()), '[H01]:[m01] [Z]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartTime}"));
+  } 
 }
