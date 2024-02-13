@@ -29,8 +29,11 @@ import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.path.StringPathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.Markup;
@@ -496,9 +499,29 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     // functions.
     if (TypedExpression.class.isAssignableFrom(expression.getClass())) {
       if (EfxDataType.Date.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
-        expression = new StringExpression("format-date(" + expression.getScript() + ", '[D01]/[M01]/[Y0001]')");
+
+        var loopVariable = new Variable("item",
+            this.script.composeVariableDeclaration("item", DateExpression.class), DateExpression.empty(),
+            this.script.composeVariableReference("item", DateExpression.class));
+
+        expression = this.script.composeForExpression(
+            this.script.composeIteratorList(
+                List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
+                    new DateSequenceExpression(expression.getScript())))),
+            new StringExpression("format-date($item, '[D01]/[M01]/[Y0001]')"),
+            StringSequenceExpression.class);
       } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
-        expression = new StringExpression("format-time(" + expression.getScript() + ", '[H01]:[m01] [Z]')");
+
+        var loopVariable = new Variable("item",
+            this.script.composeVariableDeclaration("item", DateExpression.class), DateExpression.empty(),
+            this.script.composeVariableReference("item", DateExpression.class));
+
+        expression = this.script.composeForExpression(
+            this.script.composeIteratorList(
+                List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
+                    new TimeSequenceExpression(expression.getScript())))),
+            new StringExpression("format-time($item, '[H01]:[m01] [Z]')"),
+            StringSequenceExpression.class);
       }
     }
 
