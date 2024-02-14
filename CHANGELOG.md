@@ -7,7 +7,7 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 ## In this release
 
 This release fixes an a bug that caused an exception to be thrown by XSLT processors when trying to format sequences of dates or times. 
-This bug was reported by a user in OPT-TED/eforms-notice-viewer#88.
+This bug was reported by a user in [eForms Notice Viewer issue #88](https://github.com/OP-TED/eforms-notice-viewer/issues/88).
 
 ## EFX-1 Support
 
