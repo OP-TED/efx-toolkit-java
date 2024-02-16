@@ -353,11 +353,11 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testImplicitFormatting_Dates() {
-    assertEquals("let block01() -> { eval(format-date(PathNode/StartDateField/xs:date(text()), '[D01]/[M01]/[Y0001]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartDate}"));
-  } 
+    assertEquals("let block01() -> { eval(for $item in PathNode/StartDateField/xs:date(text()) return format-date($item, '[D01]/[M01]/[Y0001]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartDate}"));
+  }
 
   @Test
   void testImplicitFormatting_Times() {
-    assertEquals("let block01() -> { eval(format-time(PathNode/StartTimeField/xs:time(text()), '[H01]:[m01] [Z]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartTime}"));
-  } 
+    assertEquals("let block01() -> { eval(for $item in PathNode/StartTimeField/xs:time(text()) return format-time($item, '[H01]:[m01] [Z]')) }\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartTime}"));
+  }
 }
