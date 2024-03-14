@@ -80,7 +80,7 @@
     <version.pgp.plugin>1.5</version.pgp.plugin>
     <version.nexus-staging.plugin>1.6.7</version.nexus-staging.plugin>
     <version.source.plugin>3.2.1</version.source.plugin>
-    <version.surefire.plugin>3.0.0-M7</version.surefire.plugin> <!-- Versions prior to 3.0.x do not pick up Junit 5 tests correctly. -->
+    <version.surefire.plugin>3.2.5</version.surefire.plugin>
   </properties>
 
   <dependencyManagement>
