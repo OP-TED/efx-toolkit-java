@@ -26,18 +26,19 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
   Map<String, MarkupGenerator> markupGenerators = new HashMap<>();
   
   @Override
-  public SymbolResolver createSymbolResolver(String sdkVersion) {
+  public SymbolResolver createSymbolResolver(String sdkVersion, String qualifier) {
+    // Ignore the qualifier for unit tests
     return SymbolResolverMockFactory.getInstance(sdkVersion);
   }
 
   @Override
-  public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options) {
+  public ScriptGenerator createScriptGenerator(String sdkVersion, String qualifier, TranslatorOptions options) {
     // Default hashCode() implementation is OK here
     // we just need to distinguish TranslatorOptions instances
-    String key = sdkVersion + options.hashCode();
+    String key = sdkVersion + qualifier + options.hashCode();
     if (!scriptGenerators.containsKey(key)) {
       try {
-        this.scriptGenerators.put(key, ComponentFactory.getScriptGenerator(sdkVersion, options));
+        this.scriptGenerators.put(key, ComponentFactory.getScriptGenerator(sdkVersion, qualifier, options));
       } catch (InstantiationException e) {
         throw new RuntimeException(e.getMessage(), e);
       }
@@ -46,11 +47,9 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
   }
 
   @Override
-  public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options) {
-    if (!this.markupGenerators.containsKey(sdkVersion)) {
-      this.markupGenerators.put(sdkVersion, new MarkupGeneratorMock());
-    }
-    return this.markupGenerators.get(sdkVersion);
+  public MarkupGenerator createMarkupGenerator(String sdkVersion, String qualifier, TranslatorOptions options) {
+    String key = sdkVersion + qualifier;
+    return this.markupGenerators.computeIfAbsent(key, k -> new MarkupGeneratorMock());
   }
 
   @Override
