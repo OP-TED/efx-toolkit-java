@@ -125,7 +125,7 @@ public class ContentBlock {
     if (this.context != null && this.context.variable() != null) {
       variables.add(this.context.variable());
     }
-    variables.addAll(this.variables);
+    variables.addAll(this.variables.declaredOrder());
     return variables;
   }
 
