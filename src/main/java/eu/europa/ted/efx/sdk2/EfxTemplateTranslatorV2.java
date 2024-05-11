@@ -629,6 +629,11 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
         if (fieldId != null) {
           Variable contextVariable = this.getContextVariable(ctx, contextPath);
+          if (contextVariable != null) {
+            VariableList variables = this.stack.pop(VariableList.class);
+            variables.add(contextVariable);
+            this.stack.push(variables);
+          }
           this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
         } else {
           String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
@@ -694,11 +699,6 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   }
 
-  @Override
-  public void enterTemplateVariableList(TemplateVariableListContext ctx) {
-    this.stack.push(new VariableList());
-  }
-
   // #region Variable Initializers --------------------------------------------
 
   @Override
@@ -740,7 +740,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           this.script.composeVariableDeclaration(variableName, expression.getClass()),
           expression,
           this.script.composeVariableReference(variableName, expression.getClass()));
-      variables.push(variable);
+      variables.add(variable);
       this.stack.push(variables);
       this.stack.declareIdentifier(variable);
     } catch (Exception e) {
@@ -752,18 +752,12 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #endregion New in EFX-2 --------------------------------------------------
 
-  /**
-   * This method changes the current EFX context.
-   * 
-   * The EFX context is always assumed to be either a Field or a Node. Any predicate included in the
-   * EFX context declaration is not relevant and is ignored.
-   */
   @Override
-  public void exitContextDeclarationBlock(ContextDeclarationBlockContext ctx) {
-    if (ctx.templateVariableList() == null) {
-      this.stack.push(new VariableList());
-    }
+  public void enterContextDeclarationBlock(ContextDeclarationBlockContext arg0) {
+    this.stack.push(new VariableList());
   }
+
+
 
 
   // #endregion Context Declaration Blocks {...} ------------------------------
