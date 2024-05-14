@@ -122,9 +122,6 @@ public class ContentBlock {
 
   public Set<Variable> getOwnVariables() {
     Set<Variable> variables = new LinkedHashSet<>();
-    if (this.context != null && this.context.variable() != null) {
-      variables.add(this.context.variable());
-    }
     variables.addAll(this.variables);
     return variables;
   }
@@ -140,7 +137,7 @@ public class ContentBlock {
   }
 
   public Set<String> getTemplateParameters() {
-    return this.getAllVariables().stream().map(v -> v.name).collect(Collectors.toSet());
+    return this.getAllVariables().stream().map(v -> v.name).collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public Markup renderContent(MarkupGenerator markupGenerator) {
