@@ -49,7 +49,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.build.outputTimestamp>2023-07-28T16:03:53Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2024-08-02T09:53:37Z</project.build.outputTimestamp>
 
     <sonatype.server.url>s01.oss.sonatype.org</sonatype.server.url>
 
@@ -59,7 +59,7 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>1.4.0-SNAPSHOT</version.eforms-core>
+    <version.eforms-core>1.4.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
