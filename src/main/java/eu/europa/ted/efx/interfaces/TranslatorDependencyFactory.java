@@ -37,9 +37,10 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as the symbols used in the
    *        EFX expression are defined in the specific version of the SDK.
+   * @param qualifier Qualifier to choose between several implementations.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
-  public SymbolResolver createSymbolResolver(String sdkVersion);
+  public SymbolResolver createSymbolResolver(String sdkVersion, String qualifier);
 
   /**
    * Creates a ScriptGenerator instance.
@@ -50,10 +51,11 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that ScriptGenerator instance should be able to handle.
+   * @param qualifier Qualifier to choose between several implementations.
    * @param options The options to be used by the ScriptGenerator.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
-  public ScriptGenerator createScriptGenerator(String sdkVersion, TranslatorOptions options);
+  public ScriptGenerator createScriptGenerator(String sdkVersion, String qualifier, TranslatorOptions options);
 
   /**
    * Creates a MarkupGenerator instance.
@@ -64,10 +66,11 @@ public interface TranslatorDependencyFactory {
    * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
    *        EFX translator will attempt to translate. This is important as it defines the EFX
    *        language features that MarkupGenerator instance should be able to handle.
+   * @param qualifier Qualifier to choose between several implementations.
    * @param options The options to be used by the MarkupGenerator.
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
-  public MarkupGenerator createMarkupGenerator(String sdkVersion, TranslatorOptions options);
+  public MarkupGenerator createMarkupGenerator(String sdkVersion, String qualifier, TranslatorOptions options);
 
   /**
    * Creates an error listener instance.
