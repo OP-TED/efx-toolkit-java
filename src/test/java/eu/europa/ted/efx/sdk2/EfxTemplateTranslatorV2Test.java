@@ -12,7 +12,34 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     return "eforms-sdk-2.0";
   }
 
-  /*** Template line ***/
+  // #region Globals ----------------------------------------------------------
+  
+  @Test
+  void testGlobals_VariableDeclaration() {
+    assertEquals(
+      lines(
+        "String:$t3='a'",
+        "Number:$n1=12",
+        "String:$t1=$t3",
+        "String:test(String:$p1, Number:$p2) -> { concat($p1, $t1) }",
+        "Number:$n2=$n1 + 1",
+        "String:$t4=udf:test($t3, 22)",
+        "let block01(t2) -> { eval(PathNode/TextField/normalize-space(text())) }",
+        "for-each(/*).call(block01(t2:=udf:test($t3, 99)))"), //
+        translateTemplate(lines(
+            "// comment", //
+            "{text:$t3='a'}// comment",
+            "{number:$n1=12}",
+            "{text:$t1=$t3}",
+            "{text:?test(text:$p1, number:$p2) = concat($p1, $t1)}",
+            "{number:$n2 = $n1 + 1}",
+            "{text:$t4= ?test($t3, 22)}",
+            "{ND-Root, text:$t2=?test($t3, 99)} ${BT-00-Text}")));
+  }
+
+  // #endregion Globals -------------------------------------------------------
+
+  // #region Template line ----------------------------------------------------
 
   @Test
   void testTemplateLineNoIdent() {
@@ -176,18 +203,18 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_ContextVariable() {
     assertEquals(
-        lines("let block01(ctx, t) -> { #1: eval(for $x in ./normalize-space(text()) return concat($x, $t))", //
-            "for-each(.).call(block0101(ctx:$ctx, t:$t, t2:'test'))", //
-            "for-each(.).call(block0102(ctx:$ctx, t:$t, t2:'test3')) }", //
-            "let block0101(ctx, t, t2) -> { #1.1: eval(for $y in ./normalize-space(text()) return concat($y, $t, $t2))", //
-            "for-each(.).call(block010101(ctx:$ctx, t:$t, t2:$t2))", //
-            "for-each(.).call(block010102(ctx:$ctx, t:$t, t2:$t2)) }", //
-            "let block010101(ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t, $ctx)) }", //
-            "let block010102(ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t, $ctx)) }", //
-            "let block0102(ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t2, $ctx)) }", //
-            "for-each(/*/PathNode/TextField).call(block01(ctx:., t:./normalize-space(text())))"), //
+        lines("let block01(xyz, ctx, t) -> { #1: eval(for $x in ./normalize-space(text()) return concat($x, $t))", //
+            "for-each(.).call(block0101(xyz:=$xyz, ctx:=$ctx, t:=$t, t2:='test'))", //
+            "for-each(.).call(block0102(xyz:=$xyz, ctx:=$ctx, t:=$t, t2:='test3')) }", //
+            "let block0101(xyz, ctx, t, t2) -> { #1.1: eval(for $y in ./normalize-space(text()) return concat($y, $t, $t2))", //
+            "for-each(.).call(block010101(xyz:=$xyz, ctx:=$ctx, t:=$t, t2:=$t2))", //
+            "for-each(.).call(block010102(xyz:=$xyz, ctx:=$ctx, t:=$t, t2:=$t2)) }", //
+            "let block010101(xyz, ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t, $ctx)) }", //
+            "let block010102(xyz, ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t, $ctx)) }", //
+            "let block0102(xyz, ctx, t, t2) -> { eval(for $z in ./normalize-space(text()) return concat($z, $t2, $ctx)) }", //
+            "for-each(/*/PathNode/TextField).call(block01(xyz:='a', ctx:=., t:=./normalize-space(text())))"), //
         translateTemplate(lines(
-            "{context:$ctx = BT-00-Text, text:$t = BT-00-Text} ${for text:$x in BT-00-Text return concat($x, $t)}",
+            "{text:$xyz='a', context:$ctx = BT-00-Text, text:$t = BT-00-Text} ${for text:$x in BT-00-Text return concat($x, $t)}",
             "    {BT-00-Text, text:$t2 = 'test'} ${for text:$y in BT-00-Text return concat($y, $t, $t2)}",
             "        {BT-00-Text} ${for text:$z in BT-00-Text return concat($z, $t, $ctx)}",
             "        {BT-00-Text} ${for text:$z in BT-00-Text return concat($z, $t, $ctx)}",
@@ -238,8 +265,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n"));
   }
 
+  // #endregion Template line -------------------------------------------------
 
-  /*** Labels ***/
+  // #region Labels -----------------------------------------------------------
 
   @Test
   void testStandardLabelReference() {
@@ -395,8 +423,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(ParseCancellationException.class, () -> translateTemplate("{ND-Root} #value"));
   }
 
+  // #endregion Labels --------------------------------------------------------
 
-  /*** Expression block ***/
+  // #region Expression block -------------------------------------------------
 
   @Test
   void testShorthandFieldValueReferenceFromContextField() {
@@ -416,8 +445,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(ParseCancellationException.class, () -> translateTemplate("{ND-Root} $value"));
   }
 
+  // #endregion Expression block ----------------------------------------------
 
-  /*** Other ***/
+  // #region Other -----------------------------------------------------------
 
   @Test
   void testNestedExpression() {
@@ -432,4 +462,6 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
+
+  // #endregion Other --------------------------------------------------------
 }

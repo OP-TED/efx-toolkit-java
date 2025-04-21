@@ -4,17 +4,15 @@ import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 
 public class Variable extends Identifier {
-  final public TypedExpression initializationExpression;
+  public final Expression declarationExpression;
+  public final TypedExpression initializationExpression;
+  public final TypedExpression referenceExpression;
 
   public Variable(String variableName, Expression declarationExpression, TypedExpression initializationExpression, TypedExpression referenceExpression) {
-    super(variableName, declarationExpression, referenceExpression);
+    super(variableName, initializationExpression.getDataType());
+    this.declarationExpression = declarationExpression;
     this.initializationExpression = initializationExpression;
+    this.referenceExpression = referenceExpression;
     assert referenceExpression.getDataType() == initializationExpression.getDataType();
-  }
-
-  public Variable(Identifier identifier, TypedExpression initializationExpression) {
-    super(identifier.name, identifier.declarationExpression, identifier.referenceExpression);
-    this.initializationExpression = initializationExpression;
-    assert identifier.dataType == initializationExpression.getDataType();
   }
 }

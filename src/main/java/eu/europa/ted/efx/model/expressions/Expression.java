@@ -10,7 +10,7 @@ public interface Expression extends ParsedEntity {
 
   public String getScript();
 
-  public Boolean isLiteral();
+  public boolean isLiteral();
 
   static <T extends Expression> T instantiate(String script, Class<T> type) {
     return Expression.instantiate(script, false, type);
@@ -22,7 +22,7 @@ public interface Expression extends ParsedEntity {
 
   static <T extends Expression> T instantiate(String script, Boolean isLiteral, Class<T> type) {
     try {
-      if (isLiteral) {
+      if (Boolean.TRUE.equals(isLiteral)) {
         Constructor<T> constructor = type.getConstructor(String.class, Boolean.class);
         return constructor.newInstance(script, isLiteral);
       } else {
@@ -44,7 +44,7 @@ public interface Expression extends ParsedEntity {
   public abstract class Impl implements Expression {
 
     private final String script;
-    private final Boolean isLiteral;
+    private final boolean isLiteral;
 
     @Override
     public String getScript() {
@@ -52,7 +52,7 @@ public interface Expression extends ParsedEntity {
     }
 
     @Override
-    public Boolean isLiteral() {
+    public boolean isLiteral() {
       return this.isLiteral;
     }
 
@@ -71,15 +71,23 @@ public interface Expression extends ParsedEntity {
 
     @Override
     public boolean equals(Object obj) {
-      if (obj == null) {
+      if (this == obj) {
+        return true;
+      }
+
+      if (!(obj instanceof Expression)) {
         return false;
       }
 
-      if (Expression.class.isAssignableFrom(obj.getClass())) {
-        return this.script.equals(((Expression) obj).getScript());
-      }
-
-      return false;
+      Expression other = (Expression) obj;
+      return this.script.equals(other.getScript());
+    }
+    
+    @Override
+    public int hashCode() {
+      int result = script.hashCode();
+      result = 31 * result + Boolean.hashCode(isLiteral);
+      return result;
     }
   }
 }

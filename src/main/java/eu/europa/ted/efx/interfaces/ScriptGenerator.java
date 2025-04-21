@@ -110,6 +110,8 @@ public interface ScriptGenerator {
    */
   public <T extends TypedExpression> T composeVariableReference(String variableName, Class<T> type);
 
+  public <T extends TypedExpression> T composeParameterReference(String parameterName, Class<T> type);
+
   public <T extends TypedExpression> T composeVariableDeclaration(String variableName, Class<T> type);
 
   public <T extends TypedExpression> T composeParameterDeclaration(String parameterName, Class<T> type);
@@ -302,9 +304,7 @@ public interface ScriptGenerator {
 
   public DurationExpression getDurationLiteralEquivalent(final String efxLiteral);
 
-  /*
-   * Numeric Functions
-   */
+  // #region Numeric Functions ------------------------------------------------
 
   public NumericExpression composeCountOperation(final SequenceExpression list);
 
@@ -314,9 +314,9 @@ public interface ScriptGenerator {
 
   public NumericExpression composeStringLengthCalculation(StringExpression text);
 
-  /*
-   * String Functions
-   */
+  // #endregion Numeric Functions -------------------------------------------
+
+  // #region String Functions -----------------------------------------------
 
   public StringExpression composeStringConcatenation(List<StringExpression> list);
 
@@ -392,9 +392,9 @@ public interface ScriptGenerator {
    */
   public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference);
 
-  /*
-   * Boolean Functions
-   */
+  // #endregion String Functions ----------------------------------------------
+
+  // #region Boolean Functions ------------------------------------------------
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
@@ -404,9 +404,9 @@ public interface ScriptGenerator {
   public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
       SequenceExpression two);
 
-  /*
-   * Date Functions
-   */
+  // #endregion Boolean Functions --------------------------------------------
+
+  // #region Date Functions ---------------------------------------------------
 
   public DateExpression composeToDateConversion(StringExpression pop);
 
@@ -416,17 +416,15 @@ public interface ScriptGenerator {
   public DateExpression composeSubtraction(final DateExpression date,
       final DurationExpression duration);
 
-  /*
-   * Time Functions
-   */
+  //#endregion Date Functions -------------------------------------------------
+
+  // #region Time Functions ---------------------------------------------------
 
   public TimeExpression composeToTimeConversion(StringExpression pop);
 
+  // #endregion Time Functions ------------------------------------------------
 
-
-  /*
-   * Duration Functions
-   */
+  // #region Duration Functions -----------------------------------------------
 
   public DurationExpression composeToDayTimeDurationConversion(StringExpression text);
 
@@ -446,9 +444,9 @@ public interface ScriptGenerator {
   public DurationExpression composeSubtraction(final DurationExpression left,
       final DurationExpression right);
 
-  /*
-   * Sequence Functions
-   */
+  // #endregion Duration Functions --------------------------------------------
+
+  // #region Sequence Functions --------------------------------------------
 
   public <T extends SequenceExpression> T composeDistinctValuesFunction(
       T list, Class<T> listType);
@@ -464,4 +462,24 @@ public interface ScriptGenerator {
 
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type);
+
+  // #endregion Sequence Functions -----------------------------------------
+
+  // #region Function Invocation ------------------------------------------
+
+  /**
+   * Composes a function invocation expression with the specified function name, parameters, 
+   * and return type.
+   *
+   * @param <T> The type of the resulting expression, which must extend {@link TypedExpression}.
+   * @param functionName The name of the function to be invoked.
+   * @param parameters A list of parameters to be passed to the function, each of which must 
+   *                   extend {@link TypedExpression}.
+   * @param type The class object representing the expected return type of the function invocation.
+   * @return An expression that will invoke the function at runtime.
+   */
+  public <T extends TypedExpression> T composeFunctionInvocation(String functionName,
+          List<? extends TypedExpression> parameters, Class<T> type);
+
+  // #endregion Function Invocation -----------------------------------------
 }

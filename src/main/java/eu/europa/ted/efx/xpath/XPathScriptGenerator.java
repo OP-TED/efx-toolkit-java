@@ -124,6 +124,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T extends TypedExpression> T composeParameterReference(String parameterName, Class<T> type) {
+    return Expression.instantiate("$" + parameterName, type);
+  }
+
+  @Override
   public <T extends TypedExpression> T composeVariableDeclaration(String variableName, Class<T> type) {
     return Expression.instantiate("$" + variableName, type);
   }
@@ -548,6 +553,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   //#endregion Duration functions ---------------------------------------------
 
+  @Override
+  public <T extends TypedExpression> T composeFunctionInvocation(String functionName, List<? extends TypedExpression> parameters,
+      Class<T> type) {
+    String namespace = translatorOptions.getUserDefinedFunctionNamespace();
+    String qualifiedFunctionName = (namespace != null && !namespace.isEmpty())
+        ? namespace + ":" + functionName
+        : functionName;
+    return Expression.instantiate(qualifiedFunctionName + "(" + parameters.stream().map(p -> p.getScript()).collect(Collectors.joining(", ")) + ")", type);
+  }
+
   //#region Helpers -----------------------------------------------------------
 
 
@@ -556,7 +571,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   private int getWeeksFromDurationLiteral(final String literal) {
-    Matcher weeksMatcher = Pattern.compile("(?<=[^0-9])[0-9]+(?=W)").matcher(literal);
+    Matcher weeksMatcher = Pattern.compile("(?<=\\D)\\d+(?=W)").matcher(literal);
     return weeksMatcher.find() ? Integer.parseInt(weeksMatcher.group()) : 0;
   }
 

@@ -1,17 +1,22 @@
 package eu.europa.ted.efx.model;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.variables.Identifier;
 import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.Function;
+import eu.europa.ted.efx.model.variables.Identifier;
+import eu.europa.ted.efx.model.variables.IdentifierList;
+import eu.europa.ted.efx.model.variables.ParameterList;
+import eu.europa.ted.efx.model.variables.Variable;
 
 /**
  * The call stack is a stack of stack frames. Each stack frame represents a
@@ -38,7 +43,7 @@ public class CallStack {
      * Keeps a list of all identifiers declared in the current scope as well as
      * their type.
      */
-    Map<String, Identifier> identifierRegistry = new HashMap<String, Identifier>();
+    transient Map<String, Identifier> identifierRegistry = new HashMap<>();
 
     /**
      * Registers an identifier in the current scope. This registration is later used
@@ -46,7 +51,6 @@ public class CallStack {
      * identifier is declared in the current scope.
      * 
      * @param identifier The identifier to register.
-     * @param dataType       The type of the identifier.
      */
     void declareIdentifier(Identifier identifier) {
       this.identifierRegistry.put(identifier.name, identifier);
@@ -94,6 +98,12 @@ public class CallStack {
   Stack<StackFrame> frames;
 
   /**
+   * Keeps a list of all identifiers declared in the global scope as well as
+   * their type.
+   */
+  Map<String, Identifier> globalIdentifierRegistry = new LinkedHashMap<>();
+
+  /**
    * Default and only constructor. Adds a global scope to the stack.
    */
   public CallStack() {
@@ -126,7 +136,7 @@ public class CallStack {
 
     // If the dropped frame is not empty, then it contains return values that should
     // be passed to the next frame on the stack.
-    if (droppedFrame.size() > 0) {
+    if (!droppedFrame.isEmpty()) {
       if (this.frames.empty()) {
         throw new ParseCancellationException(STACK_UNDERFLOW);
       }
@@ -147,14 +157,33 @@ public class CallStack {
   }
 
   /**
+   * Declares a global identifier. 
+   * 
+   * @param identifier The identifier to declare.
+   */
+  public void declareGlobalIdentifier(Identifier identifier) {
+    if (this.inScope(identifier.name)) {
+      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + identifier.name);
+    }
+    this.globalIdentifierRegistry.put(identifier.name, identifier);
+  }
+
+  public void declareFunction(Function function) {
+    if (this.inScope(function.name)) {
+      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + function.name);
+    }
+    this.globalIdentifierRegistry.put(function.name, function);
+  }
+
+  /**
    * Checks if an identifier is declared in the current scope.
    * 
    * @param identifier The identifier to check.
    * @return True if the identifier is declared in the current scope.
    */
   boolean inScope(String identifier) {
-    return this.frames.stream().anyMatch(
-        f -> f.identifierRegistry.containsKey(identifier));
+    return this.globalIdentifierRegistry.containsKey(identifier)
+        || this.frames.stream().anyMatch(f -> f.identifierRegistry.containsKey(identifier));
   }
 
   /**
@@ -171,39 +200,101 @@ public class CallStack {
         .findFirst().orElse(null);
   }
 
+  public IdentifierList getGlobals() {
+    IdentifierList globals = new IdentifierList();
+    for (Identifier identifier : globalIdentifierRegistry.values()) {
+        globals.add(identifier);
+    }
+    return globals;
+  }
+
+
   /**
    * Gets the value of a parameter.
    * 
    * @param parameterName The identifier of the parameter.
    * @return The value of the parameter.
    */
-  Optional<Expression> getParameter(String parameterName) {
+  Optional<TypedExpression> getParameter(String parameterName) {
     return this.frames.stream()
         .filter(f -> f.identifierRegistry.containsKey(parameterName)
             && Parameter.class.isAssignableFrom(f.identifierRegistry.get(parameterName).getClass()))
         .findFirst()
-        .map(x -> ((Parameter) x.identifierRegistry.get(parameterName)).parameterValue);
+        .map(x -> ((Parameter) x.identifierRegistry.get(parameterName)).referenceExpression);
   }
 
   /**
-   * Gets the type of a variable.
-   * 
-   * @param identifier The identifier of the variable.
-   * @return The type of the variable.
+   * Retrieves an {@link Identifier} associated with the given identifier string.
+   * The method searches through the identifier registries of all frames and the global
+   * identifier registry. It returns the first matching {@link Identifier} found.
+   *
+   * @param identifier the string identifier to search for in the registries.
+   * @return an {@link Optional} containing the {@link Identifier} if found, or an empty {@link Optional} if not found.
    */
   Optional<Identifier> getIdentifier(String identifier) {
-    return this.frames.stream().filter(f -> f.identifierRegistry.containsKey(identifier)).findFirst()
-        .map(x -> x.identifierRegistry.get(identifier));
+    return Stream.concat(
+            this.frames.stream().map(f -> f.identifierRegistry),
+            Stream.of(this.globalIdentifierRegistry))
+        .filter(registry -> registry.containsKey(identifier))
+        .findFirst()
+        .map(registry -> registry.get(identifier));
+  }
+
+  Optional<Variable> getVariable(String identifier) {
+    return Stream.concat(
+            this.frames.stream().map(f -> f.identifierRegistry),
+            Stream.of(this.globalIdentifierRegistry))
+        .filter(registry -> registry.containsKey(identifier))
+        .findFirst()
+        .map(registry -> registry.get(identifier))
+        .filter(Variable.class::isInstance)
+        .map(Variable.class::cast);
   }
 
   /**
-   * Gets the type of a variable.
-   * 
-   * @param identifierName The identifier of the variable.
-   * @return The type of the variable.
+   * Retrieves a function from the function registry by its name.
+   *
+   * @param functionName the name of the function to retrieve
+   * @return the {@link Function} associated with the given name
+   * @throws ParseCancellationException if the function name is not found in the registry,
+   *         with a message indicating the undeclared identifier
+   */
+  public Function getFunction(String functionName) {
+    return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
+        .filter(Function.class::isInstance)
+        .map(Function.class::cast)
+        .orElseThrow(() -> new ParseCancellationException(UNDECLARED_IDENTIFIER + functionName));
+  }
+
+  /**
+   * Retrieves the list of parameters for a specified function name.
+   *
+   * @param functionName the name of the function whose parameters are to be retrieved
+   * @return the list of parameters associated with the specified function
+   * @throws ParseCancellationException if the function name is not declared in the registry
+   */
+  public ParameterList getFunctionParameters(String functionName) {
+    return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
+      .filter(Function.class::isInstance)
+      .map(identifier -> ((Function) identifier).parameters)
+      .orElseThrow(() -> new ParseCancellationException(UNDECLARED_IDENTIFIER + functionName));
+  }
+
+  /**
+   * Retrieves the data type of a given identifier by its name.
+   * <p>
+   * This method first attempts to find the identifier using the {@code getIdentifier} method.
+   * If not found, it tries to resolve it as a function using the {@code getFunction} method.
+   * If the identifier is still not found, a {@link ParseCancellationException} is thrown.
+   * </p>
+   *
+   * @param identifierName the name of the identifier to look up
+   * @return the class type of the identifier's data type
+   * @throws ParseCancellationException if the identifier is not declared
    */
   public Class<? extends EfxDataType> getTypeOfIdentifier(String identifierName) {
-    Optional<Identifier> identifier = this.getIdentifier(identifierName);
+    Optional<Identifier> identifier = this.getIdentifier(identifierName)
+        .or(() -> Optional.ofNullable((Identifier) this.getFunction(identifierName)));
     if (!identifier.isPresent()) {
       throw new ParseCancellationException(UNDECLARED_IDENTIFIER + identifierName);
     }
@@ -220,8 +311,8 @@ public class CallStack {
    *                                    current scope.
    */
   public void pushIdentifierReference(String identifierName) {
-    getParameter(identifierName).ifPresentOrElse(parameterValue -> this.push(parameterValue),
-        () -> getIdentifier(identifierName).ifPresentOrElse(
+    getParameter(identifierName).ifPresentOrElse(this::push,
+        () -> getVariable(identifierName).ifPresentOrElse(
             variable -> this.push(variable.referenceExpression),
             () -> {
               throw new ParseCancellationException(UNDECLARED_IDENTIFIER + identifierName);
@@ -237,40 +328,54 @@ public class CallStack {
     this.frames.peek().push(item);
   }
 
+  /**
+   * Removes and returns the top element of the call stack, ensuring it matches
+   * the expected type.
+   * This method is thread-safe.
+   *
+   * @param <T>          The type of the element expected to be returned, which
+   *                     must extend {@code ParsedEntity}.
+   * @param expectedType The {@code Class} object representing the expected type
+   *                     of the element.
+   * @return The top element of the call stack, cast to the specified type.
+   */
   public synchronized <T extends ParsedEntity> T pop(Class<T> expectedType) {
     return this.frames.peek().pop(expectedType);
   }
 
   /**
-   * Gets the object at the top of the current stack frame without removing it
-   * from the stack.
-   * 
-   * @return The object at the top of the current stack frame.
+   * Retrieves, but does not remove, the top ParsedEntity from the call stack.
+   * This method is thread-safe as it is synchronized.
+   *
+   * @return the top ParsedEntity from the call stack, or {@code null} if the
+   *         stack is empty.
    */
   public synchronized ParsedEntity peek() {
     return this.frames.peek().peek();
   }
 
   /**
-   * Gets the number of elements in the current stack frame.
-   * 
-   * @return The number of elements in the current stack frame.
+   * Returns the size of the current call stack frame.
+   *
+   * @return the number of elements in the top frame of the call stack.
    */
   public int size() {
     return this.frames.peek().size();
   }
 
   /**
-   * Checks if the current stack frame is empty.
-   * 
-   * @return True if the current stack frame is empty.
+   * Checks if the call stack is empty.
+   *
+   * @return {@code true} if the top frame of the call stack is empty, 
+   *         {@code false} otherwise.
    */
   public boolean empty() {
     return this.frames.peek().empty();
   }
 
   /**
-   * Clears the current stack frame.
+   * Clears the current call stack frame by removing all elements from it.
+   * This operation affects only the top frame of the stack.
    */
   public void clear() {
     this.frames.peek().clear();

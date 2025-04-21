@@ -1209,8 +1209,6 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     }
 
     Parameter parameter = new Parameter(parameterName,
-        this.script.composeParameterDeclaration(parameterName, parameterType),
-        this.script.composeVariableReference(parameterName, parameterType),
         this.translateParameter(this.expressionParameters.pop(), parameterType));
     this.stack.declareIdentifier(parameter);
   }

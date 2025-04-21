@@ -14,6 +14,7 @@
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,6 +24,7 @@ import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.types.EfxDataType;
 
 /**
  * The role of this interface is to allow the reuse of the Sdk6EfxTemplateTranslator to generate
@@ -44,6 +46,39 @@ public interface MarkupGenerator {
    * @return the full content of the target template file.
    */
   Markup composeOutputFile(final List<Markup> content, final List<Markup> fragments);
+
+  /**
+   * Given a body (main content) and a set of fragments, this method returns the full content of the
+   * target template file.
+   * 
+   * @param variables the variables to be included in the template file.
+   * @param functions the functions to be included in the template file.
+   * @param content the body (main content) of the template.
+   * @param fragments the fragments to be included in the template file.
+   * @return the full content of the target template file.
+   */
+  Markup composeOutputFile(List<Markup> globals, final List<Markup> content, final List<Markup> fragments);
+
+  /**
+   * Renders the markup necessary to declare and initialize the variable making it available at runtime.
+   *
+   * @param type        A subclass of {@link EfxDataType} specifying the type of the variable.
+   * @param name        The name of the variable to be declared.
+   * @param initialiser The expression used to initialize the variable.
+   * @return A {@link Markup} object that contains the variable declaration.
+   */
+  Markup renderVariableDeclaration(final Class<? extends EfxDataType> type, final String name, final Expression initialiser);
+
+  /**
+   * Renders the Markup necessary to make the function available at runtime.
+   *
+   * @param type        A sub-class of EfxDataType that represents the return type of the function.
+   * @param name        The name of the function.
+   * @param parameters  The function parameters as a map of parameter names to their corresponding EfxDataType.
+   * @param expression  The function body (the expression that must be evaluated when the function is invoked).
+   * @return            A Markup object tht declares the function.
+   */
+  Markup renderFunctionDeclaration(final Class<? extends EfxDataType> type, final String name, final Map<String, Class<? extends EfxDataType>> parameters, final Expression expression);
 
   /**
    * Given an expression (which will eventually, at runtime, evaluate to the value of a field), this
