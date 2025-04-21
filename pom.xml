@@ -59,6 +59,8 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
+    <version.eforms-sdk-1>1.13.0</version.eforms-sdk-1>
+    <version.eforms-sdk-2>2.0.0-alpha.1</version.eforms-sdk-2>
     <version.eforms-core>1.4.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
@@ -74,7 +76,7 @@
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
     <version.install.plugin>2.5.2</version.install.plugin>
-    <version.jacoco.plugin>0.8.8</version.jacoco.plugin>
+    <version.jacoco.plugin>0.8.12</version.jacoco.plugin>
     <version.jar.plugin>3.2.0</version.jar.plugin>
     <version.javadoc.plugin>3.4.0</version.javadoc.plugin>
     <version.pgp.plugin>1.5</version.pgp.plugin>
@@ -256,7 +258,7 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>2.0.0-alpha.1</version>
+              <version>${version.eforms-sdk-2}</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk2</outputDirectory>
@@ -268,7 +270,7 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>1.6.0</version>
+              <version>${version.eforms-sdk-1}</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk1</outputDirectory>
