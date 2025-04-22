@@ -51,8 +51,7 @@ public interface MarkupGenerator {
    * Given a body (main content) and a set of fragments, this method returns the full content of the
    * target template file.
    * 
-   * @param variables the variables to be included in the template file.
-   * @param functions the functions to be included in the template file.
+   * @param globals the global variables and functions to be included in the template file.
    * @param content the body (main content) of the template.
    * @param fragments the fragments to be included in the template file.
    * @return the full content of the target template file.
