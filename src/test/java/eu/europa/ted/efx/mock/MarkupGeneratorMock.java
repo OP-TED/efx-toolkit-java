@@ -1,6 +1,8 @@
 package eu.europa.ted.efx.mock;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,8 +15,26 @@ import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.types.EfxDataType;
 
 public class MarkupGeneratorMock implements MarkupGenerator {
+
+  @Override
+  public Markup renderVariableDeclaration(Class<? extends EfxDataType> dataType, String variableName,
+          Expression initialiser) {
+      return new Markup(String.format("%s:$%s=%s", dataType.getSimpleName(), variableName, initialiser.getScript()));
+  }
+
+  @Override
+  public Markup renderFunctionDeclaration(Class<? extends EfxDataType> type, String name, Map<String, Class<? extends EfxDataType>> parameters,
+      Expression expression) {
+    return new Markup(
+        String.format("%s:%s(%s) -> { %s }", type.getSimpleName(), name, 
+            parameters.entrySet().stream()
+                .map(entry -> entry.getValue().getSimpleName() + ":$" + entry.getKey())
+                .collect(Collectors.joining(", ")), 
+            expression.getScript()));
+  }
 
   @Override
   public Markup renderVariableExpression(Expression valueReference) {
@@ -73,14 +93,20 @@ public class MarkupGeneratorMock implements MarkupGenerator {
       Set<Pair<String, String>> variables) {
     return new Markup(String.format("for-each(%s).call(%s(%s))", context.getScript(), name,
         variables.stream()
-            .map(v -> String.format("%s:%s", v.getLeft(), v.getRight()))
+            .map(v -> String.format("%s:=%s", v.getLeft(), v.getRight()))
             .collect(Collectors.joining(", "))));
   }
 
   @Override
   public Markup composeOutputFile(List<Markup> body, List<Markup> templates) {
-    return new Markup(String.format("%s\n%s",
+    return this.composeOutputFile(new ArrayList<Markup>(), body, templates);
+  }
+
+  @Override
+  public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> templates) {
+    return new Markup(String.format("%s\n%s\n%s",
+        globals.stream().map(t -> t.script).collect(Collectors.joining("\n")),
         templates.stream().map(t -> t.script).collect(Collectors.joining("\n")),
-        body.stream().map(t -> t.script).collect(Collectors.joining("\n"))));
+        body.stream().map(t -> t.script).collect(Collectors.joining("\n"))).trim());
   }
 }

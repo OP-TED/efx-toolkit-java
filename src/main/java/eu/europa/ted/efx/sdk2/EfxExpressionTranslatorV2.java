@@ -57,7 +57,10 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
+import eu.europa.ted.efx.model.variables.ArgumentList;
+import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.ParameterList;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
@@ -88,6 +91,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.AttributePrefix).replaceAll("^'|'$", "");
   private static final String CODELIST_PREFIX =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.CodelistPrefix).replaceAll("^'|'$", "");
+  
+  private static final String FUNCTION_PREFIX =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.FunctionPrefix).replaceAll("^'|'$", "");
 
   private static final String BEGIN_EXPRESSION_BLOCK = "{";
   private static final String END_EXPRESSION_BLOCK = "}";
@@ -1234,6 +1240,77 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion New in EFX-2: Indexers ---------------------------------------
 
+  // //#region New in EFX-2: Function invocation ------------------------------
+
+
+  @Override
+  public void enterFunctionInvocation(FunctionInvocationContext ctx) {
+    this.stack.push(this.stack.getFunction(getFunctionName(ctx)));
+  }
+
+  @Override
+  public void enterArgumentList(ArgumentListContext ctx) {
+    this.stack.push(new ArgumentList(this.stack.pop(Function.class)));
+  }
+
+  @Override
+  public void exitArgument(ArgumentContext ctx) {
+    var argument = this.stack.pop(TypedExpression.class);        // pop the argument
+    var functionArguments = this.stack.pop(ArgumentList.class);  // pop the function arguments
+    functionArguments.addArgument(argument);                                  // add the argument to the list of arguments
+    this.stack.push(functionArguments);                                       // push the updated list of arguments
+  }
+
+  @Override
+  public void exitArgumentList(ArgumentListContext ctx) {
+    var arguments = this.stack.pop(ArgumentList.class); // pop the function arguments
+    var countExpectedArguments = arguments.parameters.size();
+    var countPassedArguments = arguments.size();
+    if (countExpectedArguments != countPassedArguments) { // check if the number of passed arguments is correct
+      throw new ParseCancellationException("The function " + arguments.identifier + " expects "
+          + countExpectedArguments + " arguments, but " + countPassedArguments + " were passed.");
+    }
+    this.stack.push(arguments); // push the list of arguments back to the stack
+  }
+
+  @Override
+  public void exitStringFunctionInvocation(StringFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, StringExpression.class));
+  }
+
+  @Override
+  public void exitNumericFunctionInvocation(NumericFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, NumericExpression.class));
+  }
+
+  @Override
+  public void exitBooleanFunctionInvocation(BooleanFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, BooleanExpression.class));
+  }
+
+  @Override
+  public void exitDateFunctionInvocation(DateFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, DateExpression.class));
+  }
+
+  @Override
+  public void exitTimeFunctionInvocation(TimeFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, TimeExpression.class));
+  }
+
+  @Override
+  public void exitDurationFunctionInvocation(DurationFunctionInvocationContext ctx) {
+    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, DurationExpression.class));
+  }
+
+  // #endregion New in EFX-2: Function invocation -----------------------------
+
   // #region Parameter Declarations -------------------------------------------
 
 
@@ -1273,8 +1350,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     Parameter parameter = new Parameter(parameterName,
-        this.script.composeParameterDeclaration(parameterName, parameterType),
-        this.script.composeVariableReference(parameterName, parameterType),
         this.translateParameter(this.expressionParameters.pop(), parameterType));
     this.stack.declareIdentifier(parameter);
   }
@@ -1626,67 +1701,135 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #region Variable Names ---------------------------------------------------
 
-  static protected String getVariableName(String efxVariableIdentifier) {
+  protected static String getVariableName(String efxVariableIdentifier) {
     return StringUtils.substringAfter(efxVariableIdentifier, VARIABLE_PREFIX);
   }
 
-  static private String getVariableName(VariableReferenceContext ctx) {
+  private static String getVariableName(VariableReferenceContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static protected String getVariableName(ContextVariableDeclarationContext ctx) {
+  protected static String getVariableName(ContextVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringVariableDeclarationContext ctx) {
+  private static String getVariableName(StringVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericVariableDeclarationContext ctx) {
+  private static String getVariableName(NumericVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanVariableDeclarationContext ctx) {
+  private static String getVariableName(BooleanVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateVariableDeclarationContext ctx) {
+  private static String getVariableName(DateVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeVariableDeclarationContext ctx) {
+  private static String getVariableName(TimeVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationVariableDeclarationContext ctx) {
+  private static String getVariableName(DurationVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringParameterDeclarationContext ctx) {
+  protected static String getVariableName(StringParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericParameterDeclarationContext ctx) {
+  protected static String getVariableName(NumericParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanParameterDeclarationContext ctx) {
+  protected static String getVariableName(BooleanParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateParameterDeclarationContext ctx) {
+  protected static String getVariableName(DateParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeParameterDeclarationContext ctx) {
+  protected static String getVariableName(TimeParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationParameterDeclarationContext ctx) {
+  protected static String getVariableName(DurationParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
   // #endregion Variable Names ---------------------------------------------------
+
+  // #region Function Names ---------------------------------------------------
+
+  protected static String getFunctionName(String functionName) {
+    return StringUtils.substringAfter(functionName, FUNCTION_PREFIX);
+  }
+
+  private static String getFunctionName(StringFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(StringFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(NumericFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(NumericFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(BooleanFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(BooleanFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(DateFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(DateFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(TimeFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(TimeFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(DurationFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(DurationFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(SequenceFromFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(ScalarFromFunctionInvocationContext ctx) {
+    return getFunctionName(ctx.functionInvocation().Function().getText());
+  }
+
+  private static String getFunctionName(FunctionInvocationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  // #endregion Function Names ----------------------------------------------
 
   // #endregion Helpers -------------------------------------------------------
 
@@ -1818,6 +1961,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
+    public void exitScalarFromFunctionInvocation(ScalarFromFunctionInvocationContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
+        return;
+      }
+
+      String functionName = getFunctionName(ctx);
+      String functionType = javaToEfxTypeMap.get(this.stack.getTypeOfIdentifier(functionName));
+
+      if (functionType != null) {
+        // Insert the type cast
+        this.rewriter.insertBefore(ctx.functionInvocation().Function().getSymbol(), "(" + functionType + ")");
+      }
+    }
+
+    @Override
     public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
       if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
         return;
@@ -1841,6 +1999,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
       // Insert the type cast
       this.rewriter.insertBefore(ctx.getStart(), "(" + textTypeName + ")");
+    }
+
+    @Override
+    public void exitSequenceFromFunctionInvocation(SequenceFromFunctionInvocationContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
+        return;
+      }
+
+      String functionName = getFunctionName(ctx);
+      String functionType = javaToEfxTypeMap.get(this.stack.getTypeOfIdentifier(functionName));
+
+      if (functionType != null) {
+        // Insert the type cast
+        this.rewriter.insertBefore(ctx.functionInvocation().Function().getSymbol(), "(" + functionType + ")");
+      }
     }
 
     @Override
@@ -1955,6 +2128,48 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     // #endregion Parameter declarations --------------------------------------
+
+    // #region Function declarations -----------------------------------------
+
+    @Override
+    public void exitStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.String.class, new ParameterList(), StringExpression.empty()));
+    }
+
+    @Override
+    public void exitNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Number.class, new ParameterList(), NumericExpression.empty()));
+    }
+
+    @Override
+    public void exitBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Boolean.class, new ParameterList(), BooleanExpression.empty()));
+    }
+
+
+    @Override
+    public void exitDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Date.class, new ParameterList(), DateExpression.empty()));
+    }
+
+
+    @Override
+    public void exitTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Time.class, new ParameterList(), TimeExpression.empty()));
+    }
+
+    @Override
+    public void exitDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
+      String functionName = getFunctionName(ctx);
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Duration.class, new ParameterList(), DurationExpression.empty()));
+    }
+
+    // #endregion Function declarations ---------------------------------------
 
     // #region Scope management -----------------------------------------------
 

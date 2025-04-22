@@ -16,6 +16,7 @@ package eu.europa.ted.efx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
@@ -25,8 +26,14 @@ import eu.europa.ted.efx.interfaces.TranslatorOptions;
  * an EFX translator to translate EFX expressions and templates.
  */
 public class EfxTranslator {
+
+  private EfxTranslator() {
+    throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+  }
  
   private static TranslatorOptions defaultOptions = EfxTranslatorOptions.DEFAULT;
+
+  //#region Translate EFX expressions -----------------------------------------
 
   /**
    * Instantiates an EFX expression translator and translates a given expression.
@@ -53,6 +60,10 @@ public class EfxTranslator {
       final String expression, final String... expressionParameters) throws InstantiationException {
     return translateExpression(dependencyFactory, sdkVersion, expression, defaultOptions, expressionParameters);
   }
+
+  //#endregion Translate EFX expressions --------------------------------------
+
+  //#region Translate EFX templates -------------------------------------------
 
   /**
    * Instantiates an EFX template translator and translates the EFX template contained in the given
@@ -82,6 +93,14 @@ public class EfxTranslator {
     return translateTemplate(dependencyFactory, sdkVersion, pathname, defaultOptions);
   }
 
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String qualifier,
+      final Path pathname, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .renderTemplate(pathname);
+  }
+
   /**
    * Instantiates an EFX template translator and translates the given EFX template.
    * 
@@ -98,14 +117,20 @@ public class EfxTranslator {
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final String template, TranslatorOptions options)
       throws InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
-        .renderTemplate(template);
+    return translateTemplate(dependencyFactory, sdkVersion, "", template, options);
   }
 
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final String template)
       throws InstantiationException {
     return translateTemplate(dependencyFactory, sdkVersion, template, defaultOptions);
+  }
+
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String qualifier, final String template, TranslatorOptions options)
+      throws InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .renderTemplate(template);
   }
 
   /**
@@ -126,8 +151,7 @@ public class EfxTranslator {
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
       final InputStream stream, TranslatorOptions options)
       throws IOException, InstantiationException {
-    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
-        .renderTemplate(stream);
+      return translateTemplate(dependencyFactory, sdkVersion, "", stream, options);
   }
 
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
@@ -135,4 +159,13 @@ public class EfxTranslator {
       throws IOException, InstantiationException {
     return translateTemplate(dependencyFactory, sdkVersion, stream, defaultOptions);
   }
+
+  public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String qualifier, final InputStream stream, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .renderTemplate(stream);
+  }
+
+  //#endregion Translate EFX templates ----------------------------------------
 }

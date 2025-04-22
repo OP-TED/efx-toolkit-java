@@ -12,4 +12,6 @@ public interface TranslatorOptions {
     public String[] getAllLanguage2LetterCodes();
 
     public String[] getAllLanguage3LetterCodes();
+
+    public String getUserDefinedFunctionNamespace();
 }

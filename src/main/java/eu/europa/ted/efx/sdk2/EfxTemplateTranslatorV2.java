@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -46,20 +45,33 @@ import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
+import eu.europa.ted.efx.model.variables.Function;
+import eu.europa.ted.efx.model.variables.Identifier;
+import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.ParameterList;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.VariableList;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetTypeContext;
+import eu.europa.ted.efx.sdk2.EfxParser.BooleanFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.BooleanParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ComputedLabelReferenceContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationBlockContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ContextVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DateFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DateParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DurationFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ExpressionTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.GlobalVariableDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk2.EfxParser.NumericFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.NumericParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.SecondaryTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ShorthandBtLabelReferenceContext;
@@ -70,11 +82,15 @@ import eu.europa.ted.efx.sdk2.EfxParser.ShorthandIndirectLabelReferenceFromConte
 import eu.europa.ted.efx.sdk2.EfxParser.ShorthandLabelReferenceFromContextContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StandardExpressionBlockContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StandardLabelReferenceContext;
+import eu.europa.ted.efx.sdk2.EfxParser.StringFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.StringParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableListContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TextTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TimeFunctionDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TimeParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeVariableInitializerContext;
 
 /**
@@ -217,6 +233,83 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     return sb.toString().trim();
   }
 
+  // #region Global declarationExpressions ---------------------------------------
+
+  @Override
+  public void exitGlobalVariableDeclaration(GlobalVariableDeclarationContext ctx) {
+    var variable = this.stack.pop(Variable.class);
+    this.stack.declareGlobalIdentifier(variable);
+  }
+
+  @Override
+  public void enterStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.String.class);
+  }
+
+  @Override
+  public void enterBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.Boolean.class);
+  }
+
+  @Override
+  public void enterNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.Number.class);
+  }
+
+  @Override
+  public void enterDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.Date.class);
+  }
+
+  @Override
+  public void enterTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.Time.class);
+  }
+
+  @Override
+  public void enterDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
+    this.stack.push(new ParameterList());
+  }
+
+  @Override
+  public void exitDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
+      this.exitFunctionDeclaration(getFunctionName(ctx), EfxDataType.Duration.class);
+  }
+
+  private void exitFunctionDeclaration(String functionName, Class<? extends EfxDataType> returnType) {
+    var expression = this.stack.pop(TypedExpression.class);
+    var parameters = this.stack.pop(ParameterList.class);
+
+    this.stack.declareFunction(new Function(functionName, returnType, parameters, expression));
+  }
+
+  // #endregion Global declarationExpressions ------------------------------------
+
   // #region Template File ----------------------------------------------------
 
   @Override
@@ -228,13 +321,24 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitTemplateFile(TemplateFileContext ctx) {
     this.blockStack.pop();
 
+    List<Markup> globals = new ArrayList<>();
+    for (Identifier identifier : this.stack.getGlobals()) {
+      if (identifier instanceof Variable) {
+        Variable variable = (Variable) identifier;
+        globals.add(this.markup.renderVariableDeclaration(variable.dataType, variable.name, variable.initializationExpression));
+      } else if (identifier instanceof Function) {
+        Function function = (Function) identifier;
+        globals.add(this.markup.renderFunctionDeclaration(function.dataType, function.name, function.parameters.toMap(), function.expression));
+      }
+    }
+
     List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
-    for (ContentBlock rootBlock : this.rootBlock.getChildren()) {
-      templateCalls.add(rootBlock.renderCallTemplate(markup));
-      rootBlock.renderTemplate(markup, templates);
+    for (ContentBlock block : this.rootBlock.getChildren()) {
+      templateCalls.add(block.renderCallTemplate(markup));
+      block.renderTemplate(markup, templates);
     }
-    Markup file = this.markup.composeOutputFile(templateCalls, templates);
+    Markup file = this.markup.composeOutputFile(globals, templateCalls, templates);
     this.stack.push(file);
   }
 
@@ -734,18 +838,24 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   private void exitVariableInitializer(
       String variableName, Class<? extends ScalarExpression> expressionType) {
     var expression = this.stack.pop(expressionType);
-    VariableList variables = this.stack.pop(VariableList.class);
     try {
       var variable = new Variable(variableName,
           this.script.composeVariableDeclaration(variableName, expression.getClass()),
           expression,
           this.script.composeVariableReference(variableName, expression.getClass()));
-      variables.add(variable);
-      this.stack.push(variables);
-      this.stack.declareIdentifier(variable);
+      this.stack.push(variable);
     } catch (Exception e) {
       throw new ParseCancellationException(e);
     }
+  }
+
+  @Override
+  public void exitTemplateVariableDeclaration(TemplateVariableDeclarationContext arg0) {
+    var variable = this.stack.pop(Variable.class);
+    this.stack.declareIdentifier(variable);
+    VariableList variables = this.stack.pop(VariableList.class);
+    variables.add(variable);
+    this.stack.push(variables);
   }
 
   // #endregion Variable Initializers -----------------------------------------
@@ -762,6 +872,49 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #endregion Context Declaration Blocks {...} ------------------------------
   
+  // #region Parameter Declarations -------------------------------------------
+
+  @Override
+  public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), StringExpression.class);
+  }
+
+  @Override
+  public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), NumericExpression.class);
+  }
+
+  @Override
+  public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), BooleanExpression.class);
+  }
+
+  @Override
+  public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), DateExpression.class);
+  }
+
+  @Override
+  public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), TimeExpression.class);
+  }
+
+  @Override
+  public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
+    this.exitParameterDeclaration(getVariableName(ctx), DurationExpression.class);
+  }
+
+  private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
+    Parameter parameter = new Parameter(parameterName,
+        this.script.composeParameterReference(parameterName, parameterType));
+    this.stack.declareIdentifier(parameter);
+    var parameterList = this.stack.pop(ParameterList.class);
+    parameterList.add(parameter);
+    this.stack.push(parameterList);
+  }
+
+  // #endregion Parameter Declarations ----------------------------------------
+
   // #region Template lines  --------------------------------------------------
 
   @Override
@@ -878,33 +1031,65 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     return 0;
   }
 
-  static private String getVariableName(StringVariableInitializerContext ctx) {
+  // #region Variable Names --------------------------------------------------
+
+  private static String getVariableName(StringVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericVariableInitializerContext ctx) {
+  private static String getVariableName(NumericVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanVariableInitializerContext ctx) {
+  private static String getVariableName(BooleanVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateVariableInitializerContext ctx) {
+  private static String getVariableName(DateVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeVariableInitializerContext ctx) {
+  private static String getVariableName(TimeVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationVariableInitializerContext ctx) {
+  private static String getVariableName(DurationVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(ContextVariableInitializerContext ctx) {
+  private static String getVariableName(ContextVariableInitializerContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
+
+  // #endregion Variable Names -----------------------------------------------
+
+  // #region Function Names --------------------------------------------------
+
+  private static String getFunctionName(StringFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(BooleanFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(NumericFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(DateFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(TimeFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  private static String getFunctionName(DurationFunctionDeclarationContext ctx) {
+    return getFunctionName(ctx.Function().getText());
+  }
+
+  // #endregion Function Names -----------------------------------------------
 
   // #endregion Helpers -------------------------------------------------------
 
@@ -930,12 +1115,24 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     // #region Template Variables ---------------------------------------------
   
     @Override
+    public void exitGlobalVariableDeclaration(GlobalVariableDeclarationContext arg0) {
+      var variable = this.stack.pop(Variable.class);
+      this.stack.declareGlobalIdentifier(variable);
+    }
+
+    @Override
+    public void exitTemplateVariableDeclaration(TemplateVariableDeclarationContext arg0) {
+      var variable = this.stack.pop(Variable.class);
+      this.stack.declareIdentifier(variable);
+    }
+
+    @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
-      final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-      if (filedId != null) {
+      final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+      if (fieldId != null) {
         final ContextVariableInitializerContext initializer = ctx.contextVariableInitializer();
         if (initializer != null) {
-          var t = FieldTypes.fromString(this.symbols.getTypeOfField(filedId));
+          var t = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
                 this.stack.declareIdentifier(new Variable(getVariableName(initializer), PathExpression.instantiate("", t), PathExpression.instantiate("", t), PathExpression.instantiate("", t)));
         }
       }
@@ -943,39 +1140,39 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     @Override
     public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), StringExpression.empty(), StringExpression.empty(), StringExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), StringExpression.empty(), StringExpression.empty(), StringExpression.empty()));
     }
   
     @Override
     public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), BooleanExpression.empty(), BooleanExpression.empty(), BooleanExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), BooleanExpression.empty(), BooleanExpression.empty(), BooleanExpression.empty()));
     }
   
     @Override
     public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), NumericExpression.empty(), NumericExpression.empty(), NumericExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), NumericExpression.empty(), NumericExpression.empty(), NumericExpression.empty()));
     }
   
     @Override
     public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), DateExpression.empty(), DateExpression.empty(), DateExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), DateExpression.empty(), DateExpression.empty(), DateExpression.empty()));
     }
   
     @Override
     public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), TimeExpression.empty(), TimeExpression.empty(), TimeExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), TimeExpression.empty(), TimeExpression.empty(), TimeExpression.empty()));
     }
   
     @Override
     public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
-      this.stack.declareIdentifier(new Variable(getVariableName(ctx), DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
     }
   
     // #endregion Template Variables ------------------------------------------
     
     // #region Scope management --------------------------------------------
 
-    Stack<Integer> levels = new Stack<Integer>();
+    Stack<Integer> levels = new Stack<>();
 
     @Override
     public void enterTemplateLine(TemplateLineContext ctx) {
@@ -1017,13 +1214,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           throw new ParseCancellationException(START_INDENT_AT_ZERO);
         }
         this.levels.push(this.levels.peek() + 1);
-      } else if (indentChange == 0) {
-
-        if (this.levels.isEmpty()) {
+      } else if (indentChange == 0 && this.levels.isEmpty()) {
           assert indentLevel == 0 : UNEXPECTED_INDENTATION;
           this.levels.push(0);
         }
-      }
     }
 
     // #endregion Scope management --------------------------------------------

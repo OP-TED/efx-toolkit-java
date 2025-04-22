@@ -82,11 +82,11 @@ public abstract class Context {
     this(symbol, absolutePath, absolutePath);
   }
 
-  public Boolean isFieldContext() {
+  public boolean isFieldContext() {
     return this.getClass().equals(FieldContext.class);
   }
 
-  public Boolean isNodeContext() {
+  public boolean isNodeContext() {
     return this.getClass().equals(NodeContext.class);
   }
 
