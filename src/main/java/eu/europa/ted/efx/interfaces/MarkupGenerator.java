@@ -77,6 +77,7 @@ public interface MarkupGenerator {
    * @param parameters  The function parameters as a map of parameter names to their corresponding EfxDataType.
    * @param expression  The function body (the expression that must be evaluated when the function is invoked).
    * @return            A Markup object that declares the function.
+   */
   Markup renderFunctionDeclaration(final Class<? extends EfxDataType> type, final String name, final Map<String, Class<? extends EfxDataType>> parameters, final Expression expression);
 
   /**
