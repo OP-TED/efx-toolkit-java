@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.model.variables;
 
+import java.util.Objects;
+
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 
 public class Argument extends Parameter {
@@ -14,8 +16,8 @@ public class Argument extends Parameter {
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(value);
         return result;
     }
 
@@ -25,14 +27,11 @@ public class Argument extends Parameter {
             return true;
         if (obj == null)
             return false;
+        if (!super.equals(obj))
+            return false;
         if (getClass() != obj.getClass())
             return false;
         Argument other = (Argument) obj;
-        if (value == null) {
-            if (other.value != null)
-                return false;
-        } else if (!value.equals(other.value))
-            return false;
-        return true;
+        return Objects.equals(value, other.value);
     }
 }

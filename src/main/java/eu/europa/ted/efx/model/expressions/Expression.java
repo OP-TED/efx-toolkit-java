@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.model.expressions;
 
 import java.lang.reflect.Constructor;
+import java.util.Objects;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
@@ -80,14 +81,12 @@ public interface Expression extends ParsedEntity {
       }
 
       Expression other = (Expression) obj;
-      return this.script.equals(other.getScript());
+      return Objects.equals(script, other.getScript()) && isLiteral == other.isLiteral();
     }
     
     @Override
     public int hashCode() {
-      int result = script.hashCode();
-      result = 31 * result + Boolean.hashCode(isLiteral);
-      return result;
+      return Objects.hash(script, isLiteral);
     }
   }
 }

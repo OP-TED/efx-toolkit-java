@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.model.variables;
 
+import java.util.Objects;
+
 import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
@@ -36,11 +38,7 @@ public abstract class Identifier implements ParsedEntity {
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((name == null) ? 0 : name.hashCode());
-    result = prime * result + ((dataType == null) ? 0 : dataType.hashCode());
-    return result;
+    return Objects.hash(name, dataType);
   }
 
   @Override
@@ -52,16 +50,6 @@ public abstract class Identifier implements ParsedEntity {
     if (getClass() != obj.getClass())
       return false;
     Identifier other = (Identifier) obj;
-    if (name == null) {
-      if (other.name != null)
-        return false;
-    } else if (!name.equals(other.name))
-      return false;
-    if (dataType == null) {
-      if (other.dataType != null)
-        return false;
-    } else if (!dataType.equals(other.dataType))
-      return false;
-    return true;
+    return Objects.equals(name, other.name) && Objects.equals(dataType, other.dataType);
   }
 }

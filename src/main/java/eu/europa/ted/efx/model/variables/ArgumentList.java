@@ -2,6 +2,7 @@ package eu.europa.ted.efx.model.variables;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -46,20 +47,22 @@ public class ArgumentList extends LinkedList<Argument> implements ParsedEntity {
         if (this == obj) {
             return true;
         }
+        if (!super.equals(obj)) {
+            return false;
+        }
         if (!(obj instanceof ArgumentList)) {
             return false;
         }
         ArgumentList other = (ArgumentList) obj;
-        return this.identifier.equals(other.identifier) &&
-               this.parameters.equals(other.parameters) &&
-               super.equals(other);
+        return Objects.equals(identifier, other.identifier) &&
+               Objects.equals(parameters, other.parameters);
     }
 
     @Override
     public int hashCode() {
-        int result = identifier.hashCode();
-        result = 31 * result + parameters.hashCode();
-        result = 31 * result + super.hashCode();
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(identifier, parameters);
         return result;
     }
 }
