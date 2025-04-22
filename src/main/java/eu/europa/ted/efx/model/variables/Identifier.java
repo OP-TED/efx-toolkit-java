@@ -24,12 +24,10 @@ public abstract class Identifier implements ParsedEntity {
   public final Class<? extends EfxDataType> dataType;
 
   /**
-   * Creates an Identifier with the given name and expressions.
-   * The Identifier's data type is inferred from the reference expression.
+   * Creates an Identifier with the given name and type.
    *
-   * @param name                  The name of the identifier.
-   * @param declarationExpression The expression that should be used to declare the Identifier at runtime.
-   * @param referenceExpression   The expression that should be used to reference the identifier.
+   * @param name     The name of the identifier.
+   * @param dataType The data type of the identifier.
    */
   protected Identifier(String name, Class<? extends EfxDataType> dataType) {
     this.name = name;
