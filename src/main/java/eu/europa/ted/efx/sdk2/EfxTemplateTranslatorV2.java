@@ -319,7 +319,11 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
-    this.blockStack.pop();
+    // if there are no template lines the blockStack will be empty, 
+    // otherwise there will be one block left: the one created when exiting the previous line; so we just remove it here.
+    if (!this.blockStack.isEmpty()) {
+      this.blockStack.pop();
+    }
 
     List<Markup> globals = new ArrayList<>();
     for (Identifier identifier : this.stack.getGlobals()) {
