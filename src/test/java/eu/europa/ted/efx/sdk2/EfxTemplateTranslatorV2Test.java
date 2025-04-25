@@ -37,6 +37,26 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{ND-Root, text:$t2=?test($t3, 99)} ${BT-00-Text}")));
   }
 
+  @Test
+  void testGlobals_NoTemplateLines() {
+    assertEquals(
+      lines(
+        "String:$t3='a'",
+        "Number:$n1=12",
+        "String:$t1=$t3",
+        "String:test(String:$p1, Number:$p2) -> { concat($p1, $t1) }",
+        "Number:$n2=$n1 + 1",
+        "String:$t4=udf:test($t3, 22)"), //
+        translateTemplate(lines(
+            "// comment", //
+            "{text:$t3='a'}// comment",
+            "{number:$n1=12}",
+            "{text:$t1=$t3}",
+            "{text:?test(text:$p1, number:$p2) = concat($p1, $t1)}",
+            "{number:$n2 = $n1 + 1}",
+            "{text:$t4= ?test($t3, 22)}")));
+  }
+
   // #endregion Globals -------------------------------------------------------
 
   // #region Template line ----------------------------------------------------
