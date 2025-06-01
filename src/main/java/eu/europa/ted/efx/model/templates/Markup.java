@@ -29,4 +29,8 @@ public class Markup implements ParsedEntity {
   public static Markup empty() {
     return new Markup("");
   }
+
+  public boolean isEmpty() {
+    return this.script.isEmpty();
+  }
 }

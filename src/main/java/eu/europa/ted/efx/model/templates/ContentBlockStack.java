@@ -3,7 +3,7 @@ package eu.europa.ted.efx.model.templates;
 import java.util.Stack;
 
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.variables.VariableList;
+import eu.europa.ted.efx.model.variables.Variables;
 
 public class ContentBlockStack extends Stack<ContentBlock> {
 
@@ -12,13 +12,18 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * will return to the top of the stack again.
    * 
    * @param number the outline number of the child block.
-   * @param content the content of the child block.
-   * @param context the context of the child block.
-   * @param variables the variables of the child block.
+ * @param context the context of the child block.
+ * @param variables the variables of the child block.
+ * @param defaultContent the content of the child block.
    */
-  public void pushChild(final int number, final Markup content, final Context context,
-      final VariableList variables) {
-    this.push(this.peek().addChild(number, content, context, variables));
+  public void pushChild(final int number, final Context context, final Variables variables, final Conditionals conditionals,
+      final Markup defaultContent) {
+    this.push(this.peek().addChild(number, context, variables, conditionals, defaultContent));
+  }
+
+  public void pushChild(final int number, final Context context, final Variables variables,
+      final TemplateDefinition template) {
+    this.push(this.peek().addChild(number, context, variables, template));
   }
 
   /**
@@ -26,13 +31,18 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * sibling is later removed, their parent block will return to the top of the stack again.
    * 
    * @param number the outline number of the sibling block.
-   * @param content the content of the sibling block.
-   * @param context the context of the sibling block.
-   * @param variables the variables of the sibling block.
+ * @param context the context of the sibling block.
+ * @param variables the variables of the sibling block.
+ * @param defaultContent the content of the sibling block.
    */
-  public void pushSibling(final int number, final Markup content, Context context,
-      final VariableList variables) {
-    this.push(this.pop().addSibling(number, content, context, variables));
+  public void pushSibling(final int number, Context context, final Variables variables, final Conditionals conditionals,
+      final Markup defaultContent) {
+    this.push(this.pop().addSibling(number, context, variables, conditionals, defaultContent));
+  }
+
+  public void pushSibling(final int number, Context context, final Variables variables,
+      final TemplateDefinition template) {
+    this.push(this.pop().addSibling(number, context, variables, template));
   }
 
   /**

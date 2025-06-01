@@ -4,13 +4,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
@@ -18,6 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.InvalidIndentationException;
+import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -40,22 +46,29 @@ import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
+import eu.europa.ted.efx.model.templates.Conditional;
+import eu.europa.ted.efx.model.templates.Conditionals;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
+import eu.europa.ted.efx.model.templates.TemplateDefinition;
+import eu.europa.ted.efx.model.templates.TemplateInvocation;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Function;
+import eu.europa.ted.efx.model.variables.StrictArguments;
 import eu.europa.ted.efx.model.variables.Identifier;
-import eu.europa.ted.efx.model.variables.Parameter;
-import eu.europa.ted.efx.model.variables.ParameterList;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
+import eu.europa.ted.efx.model.variables.ParsedParameters;
+import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
-import eu.europa.ted.efx.model.variables.VariableList;
+import eu.europa.ted.efx.model.variables.Variables;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.ChooseTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ComputedLabelReferenceContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationBlockContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationContext;
@@ -68,6 +81,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ExpressionTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.GlobalVariableDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.IndentationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.InvokeTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTypeContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericFunctionDeclarationContext;
@@ -85,6 +100,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.StandardLabelReferenceContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TemplateDefinitionContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TemplateDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateLineContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableDeclarationContext;
@@ -92,6 +109,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.WhenDisplayTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.WhenInvokeTemplateContext;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV2} to provide additional
@@ -105,13 +124,6 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslatorV2.class);
 
-  private static final String INCONSISTENT_INDENTATION_SPACES =
-      "Inconsistent indentation. Expected a multiple of %d spaces.";
-  private static final String INDENTATION_LEVEL_SKIPPED = "Indentation level skipped.";
-  private static final String START_INDENT_AT_ZERO =
-      "Incorrect indentation. Please do not indent the first level in your template.";
-  private static final String MIXED_INDENTATION =
-      "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
   private static final String LABEL_TYPE_NAME = getLexerSymbol(EfxLexer.LABEL_TYPE_NAME);
@@ -243,7 +255,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -253,7 +265,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -263,7 +275,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -273,7 +285,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -283,7 +295,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -293,7 +305,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
-    this.stack.push(new ParameterList());
+    this.stack.push(new ParsedParameters());
   }
 
   @Override
@@ -303,9 +315,22 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   private void exitFunctionDeclaration(String functionName, Class<? extends EfxDataType> returnType) {
     var expression = this.stack.pop(TypedExpression.class);
-    var parameters = this.stack.pop(ParameterList.class);
+    var parameters = this.stack.pop(ParsedParameters.class);
 
     this.stack.declareFunction(new Function(functionName, returnType, parameters, expression));
+  }
+
+  @Override
+  public void exitTemplateDefinition(TemplateDefinitionContext ctx) {
+    var parameters = this.stack.pop(ParsedParameters.class);
+    var template = new Template(ctx.templateName.getText(), parameters);
+    this.stack.declareTemplate(template);
+    this.stack.push(template);
+  }
+
+  @Override
+  public void enterTemplateDefinition(TemplateDefinitionContext ctx) {
+    this.stack.push(new ParsedParameters());
   }
 
   // #endregion Global declarationExpressions ------------------------------------
@@ -339,8 +364,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
     for (ContentBlock block : this.rootBlock.getChildren()) {
-      templateCalls.add(block.renderCallTemplate(markup));
-      block.renderTemplate(markup, templates);
+      if (!(block instanceof TemplateDefinition)) {
+        templateCalls.add(block.renderInvocation(markup));
+      }
+      templates.addAll(block.renderDefinition(markup));
     }
     Markup file = this.markup.composeOutputFile(globals, templateCalls, templates);
     this.stack.push(file);
@@ -355,7 +382,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    this.stack.push(this.markup.renderFreeText(text).join(template));
+    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text)).join(template));
   }
 
   @Override
@@ -560,9 +587,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
             quantity));
         break;
       default:
-        throw new ParseCancellationException(String.format(
-            "Unexpected field type '%s'. Expected a field of either type 'code' or 'indicator'.",
-            fieldType));
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(fieldId, fieldType);
     }
   }
 
@@ -611,8 +636,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitShorthandIndirectLabelReferenceFromContextField(
       ShorthandIndirectLabelReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new ParseCancellationException(
-          "The #value shorthand syntax can only be used if a field is declared as context.");
+      throw InvalidUsageException.shorthandRequiresFieldContext("#value");
     }
     this.shorthandIndirectLabelReference(this.efxContext.symbol(), NumericExpression.empty());
   }
@@ -706,8 +730,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitShorthandFieldValueReferenceFromContextField(
       ShorthandFieldValueReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new ParseCancellationException(
-          "The $value shorthand syntax can only be used when a field is declared as the context.");
+      throw InvalidUsageException.shorthandRequiresFieldContext("$value");
     }
     this.stack.push(this.script.composeFieldValueReference(
         this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath())));
@@ -738,9 +761,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         if (fieldId != null) {
           Variable contextVariable = this.getContextVariable(ctx, contextPath);
           if (contextVariable != null) {
-            VariableList variables = this.stack.pop(VariableList.class);
-            variables.add(contextVariable);
-            this.stack.push(variables);
+            this.stack.peek(Variables.class).add(contextVariable);
           }
           this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
         } else {
@@ -807,6 +828,46 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   }
 
+  // #region Conditional template blocks --------------------------------------
+
+
+  @Override
+  public void enterChooseTemplate(ChooseTemplateContext ctx) {
+      this.stack.push(new Conditionals());
+  }
+
+  @Override
+  public void exitWhenDisplayTemplate(WhenDisplayTemplateContext ctx) {
+    var template = this.stack.pop(Markup.class);
+    var condition = this.stack.pop(BooleanExpression.class);
+    this.stack.peek(Conditionals.class).add(new Conditional(condition, template));
+  }
+
+  @Override
+  public void exitWhenInvokeTemplate(WhenInvokeTemplateContext ctx) {
+    var templateMarkup = this.stack.pop(Markup.class);
+    var condition = this.stack.pop(BooleanExpression.class);
+    this.stack.peek(Conditionals.class).add(new Conditional(condition, templateMarkup));
+  }
+
+  @Override
+  public void enterInvokeTemplate(InvokeTemplateContext ctx) {
+    final Template template = this.stack.getTemplate(ctx.templateName.getText());
+    this.stack.push(new StrictArguments(template));
+  }
+
+  @Override
+  public void exitInvokeTemplate(InvokeTemplateContext ctx) {
+    final String templateName = ctx.templateName.getText();
+    final StrictArguments arguments = this.stack.pop(StrictArguments.class);
+    final Set<Argument> args = arguments.stream()
+        .map(a -> new Argument.Impl(a.name, this.markup.getEfxDataTypeEquivalent(a.dataType), a.value))
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+    this.stack.push(this.markup.renderFragmentInvocation(templateName, args));
+  }
+  
+  // #endregion Conditional template blocks ---------------------------------
+
   // #region Variable Initializers --------------------------------------------
 
   @Override
@@ -842,24 +903,18 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   private void exitVariableInitializer(
       String variableName, Class<? extends ScalarExpression> expressionType) {
     var expression = this.stack.pop(expressionType);
-    try {
-      var variable = new Variable(variableName,
-          this.script.composeVariableDeclaration(variableName, expression.getClass()),
-          expression,
-          this.script.composeVariableReference(variableName, expression.getClass()));
-      this.stack.push(variable);
-    } catch (Exception e) {
-      throw new ParseCancellationException(e);
-    }
+    var variable = new Variable(variableName,
+        this.script.composeVariableDeclaration(variableName, expression.getClass()),
+        expression,
+        this.script.composeVariableReference(variableName, expression.getClass()));
+    this.stack.push(variable);
   }
 
   @Override
   public void exitTemplateVariableDeclaration(TemplateVariableDeclarationContext arg0) {
     var variable = this.stack.pop(Variable.class);
     this.stack.declareIdentifier(variable);
-    VariableList variables = this.stack.pop(VariableList.class);
-    variables.add(variable);
-    this.stack.push(variables);
+    this.stack.peek(Variables.class).add(variable);
   }
 
   // #endregion Variable Initializers -----------------------------------------
@@ -868,7 +923,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterContextDeclarationBlock(ContextDeclarationBlockContext arg0) {
-    this.stack.push(new VariableList());
+    this.stack.push(new Variables());
   }
 
 
@@ -880,56 +935,65 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), StringExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), NumericExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), BooleanExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DateExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), TimeExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DurationExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), DurationExpression.class);
   }
 
   private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
-    Parameter parameter = new Parameter(parameterName,
+    ParsedParameter parameter = new ParsedParameter(parameterName,
         this.script.composeParameterReference(parameterName, parameterType));
     this.stack.declareIdentifier(parameter);
-    var parameterList = this.stack.pop(ParameterList.class);
-    parameterList.add(parameter);
-    this.stack.push(parameterList);
+    this.stack.peek(ParsedParameters.class).add(parameter);
   }
 
   // #endregion Parameter Declarations ----------------------------------------
-
   // #region Template lines  --------------------------------------------------
 
   @Override
   public void enterTemplateLine(TemplateLineContext ctx) {
-    final int indentLevel = this.getIndentLevel(ctx);
+    this.enterTemplateLine(this.getIndentLevel(ctx.indentation()));
+    if (ctx.contextDeclarationBlock() == null) {
+      this.exitRootContextDeclaration();
+      this.stack.push(new Variables());
+    }
+  }
+
+  @Override
+  public void enterTemplateDeclaration(TemplateDeclarationContext ctx) {
+    this.enterTemplateLine(0);
+  }
+
+  private void enterTemplateLine(final int indentLevel) {
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     if (indentChange > 1) {
-      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      throw InvalidIndentationException.indentationLevelSkipped();
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
       }
       this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
@@ -953,36 +1017,54 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void exitTemplateLine(TemplateLineContext ctx) {
     final Context lineContext = this.efxContext.pop();
-    final int indentLevel = this.getIndentLevel(ctx);
+    final int indentLevel = this.getIndentLevel(ctx.indentation());
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
-    final VariableList variables = this.stack.pop(VariableList.class);
+    final Markup defaultContent = this.stack.peek() instanceof Markup ? this.stack.pop(Markup.class) : Markup.empty();
+    final Conditionals conditionals = this.stack.peek() instanceof Conditionals ? this.stack.pop(Conditionals.class) : new Conditionals();
+    final Variables variables = this.stack.pop(Variables.class);
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.empty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
-      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      throw InvalidIndentationException.indentationLevelSkipped();
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
       }
-      this.blockStack.pushChild(outlineNumber, content,
-          this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
+      if (this.blockStack.peek() instanceof TemplateInvocation) {
+        throw InvalidIndentationException.noNestingOnInvocations();
+      }
+        this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
+            conditionals, defaultContent);
     } else if (indentChange < 0) {
-      this.blockStack.pushSibling(outlineNumber, content,
-          this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+        this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
+            conditionals, defaultContent);
     } else if (indentChange == 0) {
-
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content,
-            this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
-      } else {
-        this.blockStack.pushSibling(outlineNumber, content,
-            this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables,
+            conditionals, defaultContent));
+    } else {
+          this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
+              conditionals, defaultContent);
       }
     }
+  }
+
+  @Override
+  public void exitTemplateDeclaration(TemplateDeclarationContext ctx) {
+    final Markup defaultContent = this.stack.pop(Markup.class);
+    final Conditionals conditionals = this.stack.peek() instanceof Conditionals ? this.stack.pop(Conditionals.class) : new Conditionals();
+    final Template template = this.stack.pop(Template.class);
+    assert this.stack.empty() : "Stack should be empty at this point.";
+
+    if (this.getIndentLevel(ctx.indentation()) != 0) {
+      throw InvalidIndentationException.noIndentOnTemplateDeclarations();
+    }
+
+    this.blockStack
+        .push(this.rootBlock.addChild(template.name, conditionals, defaultContent, template.parameters));
   }
 
   private Context relativizeContext(Context childContext, Context parentContext) {
@@ -1005,35 +1087,39 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   
   // #region Helpers ----------------------------------------------------------
 
-  private int getIndentLevel(TemplateLineContext ctx) {
-    if (ctx.MixedIndent() != null) {
-      throw new ParseCancellationException(MIXED_INDENTATION);
+    private int getIndentLevel(IndentationContext ctx) {
+
+      if (ctx == null) {
+        return 0; // No indentation, default to 0.
+      }
+
+      if (ctx.MixedIndent() != null) {
+          throw InvalidIndentationException.mixedIndentation();
+      }
+
+      if (ctx.Spaces() != null) {
+        if (this.indentWith == Indent.UNDETERMINED) {
+          this.indentWith = Indent.SPACES;
+          this.indentSpaces = ctx.Spaces().getText().length();
+        } else if (this.indentWith == Indent.TABS) {
+          throw InvalidIndentationException.mixedIndentation();
+        }
+
+        if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
+          throw InvalidIndentationException.inconsistentSpaces(this.indentSpaces);
+        }
+        return ctx.Spaces().getText().length() / this.indentSpaces;
+      } else if (ctx.Tabs() != null) {
+        if (this.indentWith == Indent.UNDETERMINED) {
+          this.indentWith = Indent.TABS;
+        } else if (this.indentWith == Indent.SPACES) {
+          throw InvalidIndentationException.mixedIndentation();
+        }
+
+        return ctx.Tabs().getText().length();
+      }
+      return 0;
     }
-
-    if (ctx.Spaces() != null) {
-      if (this.indentWith == Indent.UNDETERMINED) {
-        this.indentWith = Indent.SPACES;
-        this.indentSpaces = ctx.Spaces().getText().length();
-      } else if (this.indentWith == Indent.TABS) {
-        throw new ParseCancellationException(MIXED_INDENTATION);
-      }
-
-      if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-        throw new ParseCancellationException(
-            String.format(INCONSISTENT_INDENTATION_SPACES, this.indentSpaces));
-      }
-      return ctx.Spaces().getText().length() / this.indentSpaces;
-    } else if (ctx.Tabs() != null) {
-      if (this.indentWith == Indent.UNDETERMINED) {
-        this.indentWith = Indent.TABS;
-      } else if (this.indentWith == Indent.SPACES) {
-        throw new ParseCancellationException(MIXED_INDENTATION);
-      }
-
-      return ctx.Tabs().getText().length();
-    }
-    return 0;
-  }
 
   // #region Variable Names --------------------------------------------------
 
@@ -1137,39 +1223,40 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         final ContextVariableInitializerContext initializer = ctx.contextVariableInitializer();
         if (initializer != null) {
           var t = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
-                this.stack.declareIdentifier(new Variable(getVariableName(initializer), PathExpression.instantiate("", t), PathExpression.instantiate("", t), PathExpression.instantiate("", t)));
+          this.stack.declareIdentifier(new Variable(getVariableName(initializer), PathExpression.instantiate("", t),
+              PathExpression.instantiate("", t)));
         }
       }
     }
 
     @Override
     public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), StringExpression.empty(), StringExpression.empty(), StringExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), StringExpression.empty(), StringExpression.empty()));
     }
   
     @Override
     public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), BooleanExpression.empty(), BooleanExpression.empty(), BooleanExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), BooleanExpression.empty(), BooleanExpression.empty()));
     }
   
     @Override
     public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), NumericExpression.empty(), NumericExpression.empty(), NumericExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), NumericExpression.empty(), NumericExpression.empty()));
     }
   
     @Override
     public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), DateExpression.empty(), DateExpression.empty(), DateExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), DateExpression.empty(), DateExpression.empty()));
     }
   
     @Override
     public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), TimeExpression.empty(), TimeExpression.empty(), TimeExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), TimeExpression.empty(), TimeExpression.empty()));
     }
   
     @Override
     public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
-      this.stack.push(new Variable(getVariableName(ctx), DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
+      this.stack.push(new Variable(getVariableName(ctx), DurationExpression.empty(), DurationExpression.empty()));
     }
   
     // #endregion Template Variables ------------------------------------------
@@ -1180,13 +1267,22 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     @Override
     public void enterTemplateLine(TemplateLineContext ctx) {
-      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx);
+      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx.indentation());
+      this.enterTemplateLine(indentLevel);
+    }
+
+    @Override
+    public void enterTemplateDeclaration(TemplateDeclarationContext ctx) {
+      this.enterTemplateLine(0);
+    }
+
+    private void enterTemplateLine(final int indentLevel) {
       final int indentChange = indentLevel - (this.levels.isEmpty() ? 0 : this.levels.peek());
       if (indentChange > 1) {
-        throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+        throw InvalidIndentationException.indentationLevelSkipped();
       } else if (indentChange == 1) {
         if (this.levels.isEmpty()) {
-          throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
         }
         this.stack.pushStackFrame(); // Create a stack frame for the new template line.
       } else if (indentChange < 0) {
@@ -1206,16 +1302,25 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     }
 
     @Override
+    public void exitTemplateDeclaration(TemplateDeclarationContext ctx) {
+      this.exitTemplateLine(0);
+    }
+
+    @Override
     public void exitTemplateLine(TemplateLineContext ctx) {
-      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx);
+      final int indentLevel = EfxTemplateTranslatorV2.this.getIndentLevel(ctx.indentation());
+      this.exitTemplateLine(indentLevel);
+    }
+
+    private void exitTemplateLine(final int indentLevel) {
       final int indentChange = indentLevel - (this.levels.isEmpty() ? 0 : this.levels.peek());
       assert this.stack.empty() : "Stack should be empty at this point.";
 
       if (indentChange > 1) {
-        throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+        throw InvalidIndentationException.indentationLevelSkipped();
       } else if (indentChange == 1) {
         if (this.levels.isEmpty()) {
-          throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
         }
         this.levels.push(this.levels.peek() + 1);
       } else if (indentChange == 0 && this.levels.isEmpty()) {

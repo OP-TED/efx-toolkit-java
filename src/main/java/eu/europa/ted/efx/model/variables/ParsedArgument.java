@@ -4,13 +4,18 @@ import java.util.Objects;
 
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 
-public class Argument extends Parameter {
+public class ParsedArgument extends ParsedParameter {
 
     public final TypedExpression value;
 
-    public Argument(Parameter parameter, TypedExpression value) {
+    public ParsedArgument(ParsedParameter parameter, TypedExpression value) {
         super(parameter.name, parameter.referenceExpression);
         this.value = value;
+    }
+
+    public ParsedArgument(Variable variable) {
+        super(variable);
+        this.value = variable.initializationExpression;
     }
 
     @Override
@@ -31,7 +36,12 @@ public class Argument extends Parameter {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Argument other = (Argument) obj;
+        ParsedArgument other = (ParsedArgument) obj;
         return Objects.equals(value, other.value);
     }
+
+    // @Override
+    // public String getValue() {
+    //     return value.getScript();
+    // }
 }

@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
@@ -96,7 +96,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
   public String getTypeOfField(String fieldId) {
     final SdkField sdkField = getFieldById(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     return sdkField.getType();
   }
@@ -105,16 +105,16 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
   public String getRootCodelistOfField(final String fieldId) {
     final SdkField sdkField = getFieldById(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     final String codelistId = sdkField.getCodelistId();
     if (codelistId == null) {
-      throw new ParseCancellationException(String.format("No codelist for field '%s'.", fieldId));
+      throw SymbolResolutionException.noCodelistForField(fieldId);
     }
 
     final SdkCodelist sdkCodelist = getCodelistById(codelistId);
     if (sdkCodelist == null) {
-      throw new ParseCancellationException(String.format("Unknown codelist '%s'.", codelistId));
+      throw SymbolResolutionException.unknownCodelist(codelistId);
     }
 
     return sdkCodelist.getRootCodelistId();
@@ -124,7 +124,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
   public List<String> expandCodelist(String codelistId) {
     SdkCodelist codelist = getCodelistById(codelistId);
     if (codelist == null) {
-      throw new ParseCancellationException(String.format("Codelist '%s' not found.", codelistId));
+      throw SymbolResolutionException.unknownCodelist(codelistId);
     }
     return codelist.getCodes();
   }
@@ -141,7 +141,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
     if (sdkField != null) {
       return sdkField.getParentNodeId();
     }
-    throw new ParseCancellationException(String.format("Unknown field '%s'", fieldId));
+    throw SymbolResolutionException.unknownField(fieldId);
   }
 
   /**
@@ -152,8 +152,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
   public PathExpression getAbsolutePathOfField(final String fieldId) {
     final SdkField sdkField = getFieldById(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(
-          String.format("Unknown field identifier '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     return PathExpression.instantiate(sdkField.getXpathAbsolute(), FieldTypes.fromString(sdkField.getType()));
   }
@@ -167,7 +166,7 @@ public abstract class AbstractSymbolResolverMock<F extends SdkField, N extends S
     final SdkNode sdkNode = getNodeById(nodeId);
 
     if (sdkNode == null) {
-      throw new ParseCancellationException(String.format("Unknown node identifier '%s'.", nodeId));
+      throw SymbolResolutionException.unknownNode(nodeId);
     }
 
     return new NodePathExpression(sdkNode.getXpathAbsolute());

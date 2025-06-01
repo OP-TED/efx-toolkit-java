@@ -2,13 +2,15 @@ package eu.europa.ted.efx.model.types;
 
 public interface EfxDataType {
     Class<? extends EfxDataType> ANY = EfxDataType.class;
+    Class<? extends EfxDataType> UNDEFINED = Undefined.class;
 
-    public interface Boolean extends EfxDataType {}
-    public interface String extends EfxDataType {}
-    public interface MultilingualString extends String {}
-    public interface Number extends EfxDataType {}
-    public interface Date extends EfxDataType {}
-    public interface Duration extends EfxDataType {}
-    public interface Time extends EfxDataType {}
-    public interface Node extends EfxDataType {}
+    interface Boolean extends EfxDataType {}
+    interface String extends EfxDataType {}
+    interface MultilingualString extends String {}
+    interface Number extends EfxDataType {}
+    interface Date extends EfxDataType {}
+    interface Duration extends EfxDataType {}
+    interface Time extends EfxDataType {}
+    interface Node extends EfxDataType {}
+    interface Undefined extends EfxDataType {}
 }
