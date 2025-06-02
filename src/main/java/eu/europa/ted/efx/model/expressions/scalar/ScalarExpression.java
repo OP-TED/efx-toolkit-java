@@ -84,6 +84,8 @@ public interface ScalarExpression extends TypedExpression, EfxExpressionType.Sca
 
   /**
    * A base class for {@link ScalarExpression} implementations.
+   * 
+   * @param <T> the EFX data type for the expression.
    */
   @EfxExpressionTypeAssociation(expressionType = EfxExpressionType.Scalar.class)
   public abstract class Impl<T extends EfxDataType> extends TypedExpression.Impl<T>

@@ -33,9 +33,10 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * sibling is later removed, their parent block will return to the top of the stack again.
    * 
    * @param number the outline number of the sibling block.
- * @param context the context of the sibling block.
- * @param variables the variables of the sibling block.
- * @param defaultContent the content of the sibling block.
+   * @param context the context of the sibling block.
+   * @param variables the variables of the sibling block.
+   * @param conditionals the conditionals of the sibling block.
+   * @param defaultContent the content of the sibling block.
    */
   public void pushSibling(final int number, Context context, final Variables variables, final Conditionals conditionals,
       final Markup defaultContent) {
