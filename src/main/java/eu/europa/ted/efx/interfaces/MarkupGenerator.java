@@ -271,16 +271,15 @@ public interface MarkupGenerator {
     Markup renderFragmentInvocation(final String name, final Set<Argument> arguments);
 
     /**
-     * Given a fragment name (identifier), an evaluation context, and some
-     * pre-rendered content, this method returns the code that invokes (uses) the
-     * fragment in a context loop.
+     * Given an evaluation context, and some pre-rendered content, this method returns the code that 
+     * iterates over the context and repeats the content for each item in the context.
      * 
      * As of version 2.0.0-alpha.4, the method composeFragmentInvocation(String, Set<Argument>)
      * has been split into two methods:
      * 1. {@link #renderFragmentInvocation(String, Set<Argument>)}
      *    for rendering the fragment invocation itself, which is the used by the
      *    context loop.
-     * 2. {@link #renderContextLoop(String, PathExpression, Markup, Set<Argument>)}
+     * 2. {@link #renderContextLoop(PathExpression, Markup, Set<Argument>)}
      *    for rendering the context loop that invokes the fragment.
      * 
      * The EfxTemplateTranslator will call these two methods in sequence to generate the
@@ -291,13 +290,12 @@ public interface MarkupGenerator {
      * In EFX to XSLT translation, this method would generate the xsl:for-each that will loop
      * over the context path expression and invoke the fragment for each item in the loop.
      * 
-     * @param name      the name of the fragment.
      * @param context   the context path expression for the loop.
      * @param content   the content of the fragment.
      * @param arguments the arguments to pass to the fragment.
      * @return the code that invokes (uses) the fragment in a context loop.
      */
-    Markup renderContextLoop(final String name, final PathExpression context, final Markup content,
+    Markup renderContextLoop(final PathExpression context, final Markup content,
             final Set<Argument> arguments);
 
     /**

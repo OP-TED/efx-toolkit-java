@@ -40,6 +40,6 @@ public class TemplateInvocation extends ContentBlock {
     Set<Argument> arguments = this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new));
     var content = markupGenerator.renderFragmentInvocation(this.id, arguments);
-    return markupGenerator.renderContextLoop(this.id, this.context.relativePath(), content, arguments);
+    return markupGenerator.renderContextLoop(this.context.relativePath(), content, arguments);
   }
 }
