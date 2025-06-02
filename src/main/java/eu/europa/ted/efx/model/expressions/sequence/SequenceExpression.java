@@ -82,6 +82,8 @@ public interface SequenceExpression extends TypedExpression, EfxExpressionType.S
 
   /**
    * A base class for {@link SequenceExpression} implementations.
+   * 
+   * @param <T> the data type of the sequence expression result
    */
   @EfxExpressionTypeAssociation(expressionType = EfxExpressionType.Sequence.class)
   public abstract class Impl<T extends EfxDataType> extends TypedExpression.Impl<T>

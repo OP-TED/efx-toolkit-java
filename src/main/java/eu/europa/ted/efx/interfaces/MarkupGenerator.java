@@ -176,8 +176,8 @@ public interface MarkupGenerator {
     /**
      * Returns the markup that represents a line break in the target template.
      * 
-     * For example, in EFX to XSLT, translation this would return a <br> HTML
-     * element if your target is rendering HTML, or an <xsl:text>&#10;</xsl:text>
+     * For example, in EFX to XSLT, translation this would return a {@code <br/>} HTML
+     * element if your target is rendering HTML, or an {@code <xsl:text>&#10;</xsl:text>}
      * (which is the XSLT equivalent of a line feed) if you are not targeting HTML.
      * 
      * @return the markup that represents a line break in the target template.
@@ -258,14 +258,13 @@ public interface MarkupGenerator {
      * 
      * The EfxTemplateTranslator will call this method to generate the
      * fragment invocation code and then will pass the generated Markup to the
-     * {@link #renderContextLoop(String, PathExpression, Markup, Set<Argument>)}.
+     * {@link #renderContextLoop(PathExpression, Markup, Set)}.
      * 
      * In EFX to XSLT translation, this method would generate the xsl:call-template
      * that will invoke the fragment.
      * 
      * @param name      the name of the fragment.
-     * @param context   the context of the fragment.
-     * @param variables the variables of the fragment.
+     * @param arguments the arguments of the fragment.
      * @return          the code that invokes (uses) the fragment.
      */
     Markup renderFragmentInvocation(final String name, final Set<Argument> arguments);
@@ -273,13 +272,12 @@ public interface MarkupGenerator {
     /**
      * Given an evaluation context, and some pre-rendered content, this method returns the code that 
      * iterates over the context and repeats the content for each item in the context.
-     * 
-     * As of version 2.0.0-alpha.4, the method composeFragmentInvocation(String, Set<Argument>)
+     * As of version 2.0.0-alpha.4, the method composeFragmentInvocation(String, Set)
      * has been split into two methods:
-     * 1. {@link #renderFragmentInvocation(String, Set<Argument>)}
+     * 1. {@link #renderFragmentInvocation(String, Set)}
      *    for rendering the fragment invocation itself, which is the used by the
      *    context loop.
-     * 2. {@link #renderContextLoop(PathExpression, Markup, Set<Argument>)}
+     * 2. {@link #renderContextLoop(PathExpression, Markup, Set)}
      *    for rendering the context loop that invokes the fragment.
      * 
      * The EfxTemplateTranslator will call these two methods in sequence to generate the
