@@ -22,6 +22,7 @@ public class TemplateDefinition extends ContentBlock {
    *
    * @param parent       The parent ContentBlock to which this template is attached.
    * @param name         The name with which we will call the template.
+   * @param conditionals The conditionals that determine when this template should be used.
    * @param content      The content to display for this template line.
    * @param parameters   The parameters that this template expects to be passed when invoked.
    */
