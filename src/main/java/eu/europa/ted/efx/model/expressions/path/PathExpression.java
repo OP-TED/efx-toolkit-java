@@ -114,6 +114,8 @@ public interface PathExpression extends ScalarExpression, SequenceExpression, Ef
 
   /**
    * A base class for {@link PathExpression} implementations.
+   * 
+   * @param <T> The EFX data type that this path expression resolves to.
    */
   @EfxExpressionTypeAssociation(expressionType = EfxExpressionType.Path.class)
   public abstract class Impl<T extends EfxDataType> extends TypedExpression.Impl<T>

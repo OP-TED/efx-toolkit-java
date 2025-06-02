@@ -5,8 +5,8 @@ import java.util.Locale;
 
 public class DecimalFormat extends DecimalFormatSymbols {
 
-    public final static DecimalFormat XSL_DEFAULT = DecimalFormat.getXslDefault();
-    public final static DecimalFormat EFX_DEFAULT = DecimalFormat.getEfxDefault();
+    public static final DecimalFormat XSL_DEFAULT = DecimalFormat.getXslDefault();
+    public static final DecimalFormat EFX_DEFAULT = DecimalFormat.getEfxDefault();
 
     DecimalFormat(Locale locale) {
         super(locale);
