@@ -17,7 +17,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -25,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -57,10 +57,11 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
-import eu.europa.ted.efx.model.variables.ArgumentList;
+import eu.europa.ted.efx.model.variables.ParsedArguments;
 import eu.europa.ted.efx.model.variables.Function;
-import eu.europa.ted.efx.model.variables.Parameter;
-import eu.europa.ted.efx.model.variables.ParameterList;
+import eu.europa.ted.efx.model.variables.StrictArguments;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
+import eu.europa.ted.efx.model.variables.ParsedParameters;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
@@ -122,7 +123,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    */
   protected ScriptGenerator script;
 
-  private LinkedList<String> expressionParameters = new LinkedList<>();
+  private LinkedList<String> expressionArguments = new LinkedList<>();
 
   protected EfxExpressionTranslatorV2() {}
 
@@ -136,8 +137,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public String translateExpression(final String expression, final String... parameters) {
-    this.expressionParameters.addAll(Arrays.asList(parameters));
+  public String translateExpression(final String expression, final String... arguments) {
+    this.expressionArguments.addAll(Arrays.asList(arguments));
 
     // New in EFX-2: expression preprocessing
     final ExpressionPreprocessor preprocessor = this.new ExpressionPreprocessor(expression);
@@ -164,7 +165,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return getTranslatedScript();
   }
 
-  private <T extends Expression> T translateParameter(final String parameterValue,
+  private <T extends Expression> T translateArgument(final String parameterValue,
       final Class<T> parameterType) {
     final EfxExpressionTranslatorV2 translator =
         new EfxExpressionTranslatorV2(this.symbols, this.script,
@@ -902,12 +903,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitDateLiteral(DateLiteralContext ctx) {
-    this.stack.push(this.script.getDateLiteralEquivalent(ctx.DATE().getText()));
+    this.stack.push(this.script.getDateLiteralEquivalent(ctx.DateLiteral().getText()));
   }
 
   @Override
   public void exitTimeLiteral(TimeLiteralContext ctx) {
-    this.stack.push(this.script.getTimeLiteralEquivalent(ctx.TIME().getText()));
+    this.stack.push(this.script.getTimeLiteralEquivalent(ctx.TimeLiteral().getText()));
   }
 
   @Override
@@ -1240,72 +1241,67 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion New in EFX-2: Indexers ---------------------------------------
 
-  // //#region New in EFX-2: Function invocation ------------------------------
+  // #region New in EFX-2: Function invocation ------------------------------
 
 
   @Override
   public void enterFunctionInvocation(FunctionInvocationContext ctx) {
-    this.stack.push(this.stack.getFunction(getFunctionName(ctx)));
-  }
-
-  @Override
-  public void enterArgumentList(ArgumentListContext ctx) {
-    this.stack.push(new ArgumentList(this.stack.pop(Function.class)));
+    final Function function = this.stack.getFunction(getFunctionName(ctx));
+    this.stack.push(new StrictArguments(function));
   }
 
   @Override
   public void exitArgument(ArgumentContext ctx) {
     var argument = this.stack.pop(TypedExpression.class);        // pop the argument
-    var functionArguments = this.stack.pop(ArgumentList.class);  // pop the function arguments
+    var functionArguments = this.stack.pop(StrictArguments.class);  // pop the function arguments
     functionArguments.addArgument(argument);                                  // add the argument to the list of arguments
     this.stack.push(functionArguments);                                       // push the updated list of arguments
   }
 
   @Override
   public void exitArgumentList(ArgumentListContext ctx) {
-    var arguments = this.stack.pop(ArgumentList.class); // pop the function arguments
-    var countExpectedArguments = arguments.parameters.size();
+    var arguments = this.stack.pop(StrictArguments.class); // pop the function arguments
+    var countExpectedArguments = arguments.identifier.parameters.size();
     var countPassedArguments = arguments.size();
     if (countExpectedArguments != countPassedArguments) { // check if the number of passed arguments is correct
-      throw new ParseCancellationException("The function " + arguments.identifier + " expects "
-          + countExpectedArguments + " arguments, but " + countPassedArguments + " were passed.");
+      throw InvalidArgumentException.argumentNumberMismatch(arguments.identifier, countExpectedArguments, countPassedArguments);
     }
     this.stack.push(arguments); // push the list of arguments back to the stack
   }
 
   @Override
   public void exitStringFunctionInvocation(StringFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, StringExpression.class));
   }
 
   @Override
   public void exitNumericFunctionInvocation(NumericFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, NumericExpression.class));
   }
 
   @Override
   public void exitBooleanFunctionInvocation(BooleanFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, BooleanExpression.class));
   }
 
   @Override
   public void exitDateFunctionInvocation(DateFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, DateExpression.class));
   }
 
   @Override
   public void exitTimeFunctionInvocation(TimeFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, TimeExpression.class));
   }
 
   @Override
   public void exitDurationFunctionInvocation(DurationFunctionInvocationContext ctx) {
-    var parameters = this.stack.pop(ArgumentList.class).getArguments();
+    var parameters = this.stack.pop(ParsedArguments.class).getArgumentValues();
     this.stack.push(this.script.composeFunctionInvocation(getFunctionName(ctx), parameters, DurationExpression.class));
   }
 
@@ -1316,41 +1312,41 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), StringExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), NumericExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), BooleanExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DateExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), TimeExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DurationExpression.class);
+    this.exitParameterDeclaration(getParameterName(ctx), DurationExpression.class);
   }
 
   private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
-    if (this.expressionParameters.isEmpty()) {
-      throw new ParseCancellationException("No parameter passed for " + parameterName);
+    if (this.expressionArguments.isEmpty()) {
+      throw InvalidArgumentException.missingArgument(parameterName);
     }
 
-    Parameter parameter = new Parameter(parameterName,
-        this.translateParameter(this.expressionParameters.pop(), parameterType));
+    ParsedParameter parameter = new ParsedParameter(parameterName,
+        this.translateArgument(this.expressionArguments.pop(), parameterType));
     this.stack.declareIdentifier(parameter);
   }
 
@@ -1441,7 +1437,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitConcatFunction(ConcatFunctionContext ctx) {
-    if (this.stack.empty() || ctx.stringExpression().size() == 0) {
+    if (this.stack.empty() || ctx.stringExpression().isEmpty()) {
       this.stack.push(this.script.composeStringConcatenation(Collections.emptyList()));
       return;
     }
@@ -1562,8 +1558,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.DistinctValuesFunction));
     }
   }
 
@@ -1591,8 +1587,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitUnionFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.UnionFunction));
     }
   }
 
@@ -1621,8 +1617,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitIntersectFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.IntersectFunction));
     }
   }
 
@@ -1651,8 +1647,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitExceptFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ExceptFunction));
     }
   }
 
@@ -1737,27 +1733,27 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(StringParameterDeclarationContext ctx) {
+  protected static String getParameterName(StringParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(NumericParameterDeclarationContext ctx) {
+  protected static String getParameterName(NumericParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(BooleanParameterDeclarationContext ctx) {
+  protected static String getParameterName(BooleanParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(DateParameterDeclarationContext ctx) {
+  protected static String getParameterName(DateParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(TimeParameterDeclarationContext ctx) {
+  protected static String getParameterName(TimeParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  protected static String getVariableName(DurationParameterDeclarationContext ctx) {
+  protected static String getParameterName(DurationParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
@@ -2047,43 +2043,43 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     @Override
     public void exitStringVariableDeclaration(StringVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, StringExpression.empty(), StringExpression.empty(), StringExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName,  StringExpression.empty(), StringExpression.empty()));
     }
   
     @Override
     public void exitBooleanVariableDeclaration(BooleanVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, BooleanExpression.empty(), BooleanExpression.empty(), BooleanExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, BooleanExpression.empty(), BooleanExpression.empty()));
     }
   
     @Override
     public void exitNumericVariableDeclaration(NumericVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, NumericExpression.empty(), NumericExpression.empty(), NumericExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, NumericExpression.empty(), NumericExpression.empty()));
     }
   
     @Override
     public void exitDateVariableDeclaration(DateVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, DateExpression.empty(), DateExpression.empty(), DateExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, DateExpression.empty(), DateExpression.empty()));
     }
   
     @Override
     public void exitTimeVariableDeclaration(TimeVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, TimeExpression.empty(), TimeExpression.empty(), TimeExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, TimeExpression.empty(), TimeExpression.empty()));
     }
   
     @Override
     public void exitDurationVariableDeclaration(DurationVariableDeclarationContext ctx) {
       String variableName = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(variableName, DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, DurationExpression.empty(), DurationExpression.empty()));
     }
 
     @Override
     public void exitContextIteratorExpression(ContextIteratorExpressionContext ctx) {
       var variableName = getVariableName(ctx.contextVariableDeclaration()); 
-      this.stack.declareIdentifier(new Variable(variableName, DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
+      this.stack.declareIdentifier(new Variable(variableName, DurationExpression.empty(), DurationExpression.empty()));
     }
 
     // #endregion Variable declarations ---------------------------------------
@@ -2092,38 +2088,38 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     @Override
     public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, StringExpression.empty(), StringExpression.empty(), StringExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, StringExpression.empty()));
     }
 
     @Override
     public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, NumericExpression.empty(), NumericExpression.empty(), NumericExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, NumericExpression.empty()));
     }
 
     @Override
     public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, BooleanExpression.empty(), BooleanExpression.empty(), BooleanExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, BooleanExpression.empty()));
     }
 
     @Override
     public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, DateExpression.empty(), DateExpression.empty(), DateExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, DateExpression.empty()));
     }
 
     @Override
     public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, TimeExpression.empty(), TimeExpression.empty(), TimeExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, TimeExpression.empty()));
     }
 
     @Override
     public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-      String identifier = getVariableName(ctx);
-      this.stack.declareIdentifier(new Variable(identifier, DurationExpression.empty(), DurationExpression.empty(), DurationExpression.empty()));
+      String identifier = getParameterName(ctx);
+      this.stack.declareIdentifier(new ParsedParameter(identifier, DurationExpression.empty()));
 
     }
 
@@ -2134,39 +2130,39 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     @Override
     public void exitStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.String.class, new ParameterList(), StringExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.String.class, new ParsedParameters(), StringExpression.empty()));
     }
 
     @Override
     public void exitNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.Number.class, new ParameterList(), NumericExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Number.class, new ParsedParameters(), NumericExpression.empty()));
     }
 
     @Override
     public void exitBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.Boolean.class, new ParameterList(), BooleanExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Boolean.class, new ParsedParameters(), BooleanExpression.empty()));
     }
 
 
     @Override
     public void exitDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.Date.class, new ParameterList(), DateExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Date.class, new ParsedParameters(), DateExpression.empty()));
     }
 
 
     @Override
     public void exitTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.Time.class, new ParameterList(), TimeExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Time.class, new ParsedParameters(), TimeExpression.empty()));
     }
 
     @Override
     public void exitDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
       String functionName = getFunctionName(ctx);
-      this.stack.declareFunction(new Function(functionName, EfxDataType.Duration.class, new ParameterList(), DurationExpression.empty()));
+      this.stack.declareFunction(new Function(functionName, EfxDataType.Duration.class, new ParsedParameters(), DurationExpression.empty()));
     }
 
     // #endregion Function declarations ---------------------------------------

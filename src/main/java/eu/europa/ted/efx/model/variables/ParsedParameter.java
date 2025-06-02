@@ -4,13 +4,17 @@ import java.util.Objects;
 
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 
-public class Parameter extends Identifier {
+public class ParsedParameter extends Identifier {
 
   public final TypedExpression referenceExpression;
 
-  public Parameter(String parameterName, TypedExpression referenceExpression) {
+  public ParsedParameter(String parameterName, TypedExpression referenceExpression) {
     super(parameterName, referenceExpression.getDataType());
     this.referenceExpression = referenceExpression;
+  }
+
+  public ParsedParameter(Variable variable) {
+    this(variable.name, variable.referenceExpression);
   }
 
   public Class<? extends TypedExpression> getParameterType() {
@@ -35,7 +39,7 @@ public class Parameter extends Identifier {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    Parameter other = (Parameter) obj;
+    ParsedParameter other = (ParsedParameter) obj;
     return Objects.equals(referenceExpression, other.referenceExpression);
   }
 }

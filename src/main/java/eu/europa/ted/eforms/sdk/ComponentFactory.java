@@ -1,7 +1,6 @@
 package eu.europa.ted.eforms.sdk;
 
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -84,20 +83,23 @@ public class ComponentFactory extends SdkComponentFactory {
    *        SDK.
    * @throws InstantiationException If the SDK version is not supported.
    */
-  public static SymbolResolver getSymbolResolver(final String sdkVersion, final String qualifier,
+  public static synchronized SymbolResolver getSymbolResolver(final String sdkVersion, final String qualifier,
       final Path sdkRootPath) throws InstantiationException {
     VersionQualifier key = ComponentFactory.INSTANCE.new VersionQualifier(sdkVersion, qualifier);
 
-    return instances.computeIfAbsent(key, k -> {
-      try {
-        return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
-            SdkComponentType.SYMBOL_RESOLVER, qualifier, SymbolResolver.class, sdkVersion,
-            sdkRootPath);
-      } catch (InstantiationException e) {
-        throw new RuntimeException(MessageFormat.format(
-            "Failed to instantiate SDK Symbol Resolver for SDK version [{0}]", sdkVersion), e);
-      }
-    });
+    // Check if already exists
+    SymbolResolver existing = instances.get(key);
+    if (existing != null) {
+      return existing;
+    }
+
+    // Create new instance (this can throw InstantiationException)
+    SymbolResolver newInstance = ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
+        SdkComponentType.SYMBOL_RESOLVER, qualifier, SymbolResolver.class, sdkVersion, sdkRootPath);
+    
+    // Store and return
+    instances.put(key, newInstance);
+    return newInstance;
   }
 
   public static MarkupGenerator getMarkupGenerator(final String sdkVersion, TranslatorOptions options)

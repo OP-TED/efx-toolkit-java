@@ -5,12 +5,10 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
@@ -18,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -34,12 +34,13 @@ import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
-import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.templates.Conditionals;
+import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.variables.Variable;
-import eu.europa.ted.efx.model.variables.VariableList;
+import eu.europa.ted.efx.model.variables.Variables;
 import eu.europa.ted.efx.sdk1.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk1.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk1.EfxParser.ContextDeclarationBlockContext;
@@ -70,13 +71,6 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   private static final Logger logger = LoggerFactory.getLogger(EfxTemplateTranslatorV1.class);
 
-  private static final String INCONSISTENT_INDENTATION_SPACES =
-      "Inconsistent indentation. Expected a multiple of %d spaces.";
-  private static final String INDENTATION_LEVEL_SKIPPED = "Indentation level skipped.";
-  private static final String START_INDENT_AT_ZERO =
-      "Incorrect indentation. Please do not indent the first level in your template.";
-  private static final String MIXED_INDENTATION =
-      "Do not mix indentation methods. Stick with either tabs or spaces.";
   private static final String UNEXPECTED_INDENTATION = "Unexpected indentation tracker state.";
 
   private static final String LABEL_TYPE_NAME = getLexerSymbol(EfxLexer.LABEL_TYPE_NAME);
@@ -206,9 +200,9 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
     List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
-    for (ContentBlock rootBlock : this.rootBlock.getChildren()) {
-      templateCalls.add(rootBlock.renderCallTemplate(markup));
-      rootBlock.renderTemplate(markup, templates);
+    for (ContentBlock block : this.rootBlock.getChildren()) {
+      templateCalls.add(block.renderInvocation(markup));
+      templates.addAll(block.renderDefinition(markup));
     }
     Markup file = this.markup.composeOutputFile(templateCalls, templates);
     this.stack.push(file);
@@ -223,7 +217,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    this.stack.push(this.markup.renderFreeText(text).join(template));
+    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text)).join(template));
   }
 
   @Override
@@ -407,9 +401,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 StringSequenceExpression.class)));
         break;
       default:
-        throw new ParseCancellationException(String.format(
-            "Unexpected field type '%s'. Expected a field of either type 'code' or 'indicator'.",
-            fieldType));
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(fieldId, fieldType);
     }
   }
 
@@ -454,8 +446,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void exitShorthandIndirectLabelReferenceFromContextField(
       ShorthandIndirectLabelReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new ParseCancellationException(
-          "The #value shorthand syntax can only be used if a field is declared as context.");
+      throw InvalidUsageException.shorthandRequiresFieldContext("#value");
     }
     this.shorthandIndirectLabelReference(this.efxContext.symbol());
   }
@@ -536,8 +527,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void exitShorthandFieldValueReferenceFromContextField(
       ShorthandFieldValueReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw new ParseCancellationException(
-          "The $value shorthand syntax can only be used when a field is declared as the context.");
+      throw InvalidUsageException.shorthandRequiresFieldContext("$value");
     }
     this.stack.push(this.script.composeFieldValueReference(
         this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath())));
@@ -576,10 +566,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     if (indentChange > 1) {
-      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      throw InvalidIndentationException.indentationLevelSkipped();
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
       }
       this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
@@ -606,32 +596,32 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
-    final VariableList variables = new VariableList(); // template variables not supported in EFX-1
+    final Variables variables = new Variables(); // template variables not supported in EFX-1
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
     assert this.stack.empty() : "Stack should be empty at this point.";
     this.stack.clear(); // Variable scope boundary. Clear declared variables
 
     if (indentChange > 1) {
-      throw new ParseCancellationException(INDENTATION_LEVEL_SKIPPED);
+      throw InvalidIndentationException.indentationLevelSkipped();
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-        throw new ParseCancellationException(START_INDENT_AT_ZERO);
+          throw InvalidIndentationException.startIndentAtZero();
       }
-      this.blockStack.pushChild(outlineNumber, content,
-          this.relativizeContext(lineContext, this.blockStack.currentContext()), variables);
+      this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
+          new Conditionals(), content);
     } else if (indentChange < 0) {
-      this.blockStack.pushSibling(outlineNumber, content,
-          this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+      this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
+          new Conditionals(), content);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, content,
-            this.relativizeContext(lineContext, this.rootBlock.getContext()), variables));
+        this.blockStack.push(this.rootBlock.addChild(outlineNumber, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables,
+            new Conditionals(), content));
       } else {
-        this.blockStack.pushSibling(outlineNumber, content,
-            this.relativizeContext(lineContext, this.blockStack.parentContext()), variables);
+        this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
+            new Conditionals(), content);
       }
     }
   }
@@ -658,7 +648,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {
-      throw new ParseCancellationException(MIXED_INDENTATION);
+          throw InvalidIndentationException.mixedIndentation();
     }
 
     if (ctx.Spaces() != null) {
@@ -666,19 +656,18 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.indentWith = Indent.SPACES;
         this.indentSpaces = ctx.Spaces().getText().length();
       } else if (this.indentWith == Indent.TABS) {
-        throw new ParseCancellationException(MIXED_INDENTATION);
+          throw InvalidIndentationException.mixedIndentation();
       }
 
       if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-        throw new ParseCancellationException(
-            String.format(INCONSISTENT_INDENTATION_SPACES, this.indentSpaces));
+          throw InvalidIndentationException.inconsistentSpaces(this.indentSpaces);
       }
       return ctx.Spaces().getText().length() / this.indentSpaces;
     } else if (ctx.Tabs() != null) {
       if (this.indentWith == Indent.UNDETERMINED) {
         this.indentWith = Indent.TABS;
       } else if (this.indentWith == Indent.SPACES) {
-        throw new ParseCancellationException(MIXED_INDENTATION);
+          throw InvalidIndentationException.mixedIndentation();
       }
 
       return ctx.Tabs().getText().length();

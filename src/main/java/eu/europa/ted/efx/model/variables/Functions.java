@@ -4,8 +4,4 @@ import java.util.LinkedList;
 
 import eu.europa.ted.efx.model.ParsedEntity;
 
-public class VariableList extends LinkedList<Variable> implements ParsedEntity {
-
-  public VariableList() {
-  }
-}
+public class Functions extends LinkedList<Function> implements ParsedEntity {}

@@ -1,5 +1,6 @@
 package eu.europa.ted.efx.model.templates;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -9,68 +10,141 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.commons.lang3.tuple.Pair;
 
+import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
+import eu.europa.ted.efx.interfaces.Parameter;
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.variables.Variable;
-import eu.europa.ted.efx.model.variables.VariableList;
+import eu.europa.ted.efx.model.variables.ParsedArgument;
+import eu.europa.ted.efx.model.variables.ParsedArguments;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
+import eu.europa.ted.efx.model.variables.ParsedParameters;
+import eu.europa.ted.efx.model.variables.Variables;
 
 public class ContentBlock {
-  private final ContentBlock parent;
-  private final String id;
-  private final Integer indentationLevel;
-  private final Markup content;
-  private final Context context;
-  private final Queue<ContentBlock> children = new LinkedList<>();
   private final int number;
-  private final VariableList variables;
+
+  protected final ContentBlock parent;
+  protected final String id;
+  protected final Integer indentationLevel;
+  protected final Conditionals conditionals;
+  protected final Markup content;
+  protected final Context context;
+  protected final Queue<ContentBlock> children = new LinkedList<>();
+  protected final ParsedParameters parameters;
+  protected final ParsedArguments arguments;
 
   private ContentBlock() {
     this.parent = null;
     this.id = "block";
     this.indentationLevel = -1;
+    this.conditionals = new Conditionals();
     this.content = new Markup("");
     this.context = null;
     this.number = 0;
-    this.variables = new VariableList();
+    this.parameters = new ParsedParameters();
+    this.arguments = new ParsedArguments(this.parameters);
   }
 
   public ContentBlock(final ContentBlock parent, final String id, final int number,
-      final Markup content, Context contextPath, VariableList variables) {
+      final Conditionals conditionals, final Markup content, Context contextPath, ParsedParameters parameters,
+      ParsedArguments arguments) {
     this.parent = parent;
     this.id = id;
     this.indentationLevel = parent.indentationLevel + 1;
+    this.conditionals = conditionals;
     this.content = content;
     this.context = contextPath;
     this.number = number;
-    this.variables = variables;
+    this.parameters = parameters;
+    this.arguments = arguments;
+  }
+
+  public ContentBlock(final ContentBlock parent, final String id, final int number,
+      final Conditionals conditionals, final Markup content, Context contextPath, Variables variables) {
+    this(parent, id, number, conditionals, content, contextPath, new ParsedParameters(variables),
+        new ParsedArguments(variables));
   }
 
   public static ContentBlock newRootBlock() {
     return new ContentBlock();
   }
 
-  public ContentBlock addChild(final int number, final Markup content, final Context context,
-      final VariableList variables) {
-    // number < 0 means "autogenerate", number == 0 means "no number", number > 0 means "use this
-    // number"
-    final int outlineNumber = number >= 0 ? number
-        : children.stream().map(b -> b.number).max(Comparator.naturalOrder()).orElse(0) + 1;
+  // #region Add Children
 
-    String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
-    ContentBlock newBlock =
-        new ContentBlock(this, newBlockId, outlineNumber, content, context, variables);
+  public TemplateDefinition addChild(final String blockId, final Conditionals conditionals,
+      final Markup defaultContent, final ParsedParameters parameters) {
+    TemplateDefinition newBlock = new TemplateDefinition(this, blockId, conditionals, defaultContent, parameters);
     this.children.add(newBlock);
     return newBlock;
   }
 
-  public ContentBlock addSibling(final int number, final Markup content, final Context context,
-      final VariableList variables) {
+  public ContentBlock addChild(final String blockId, final int number, final Context context,
+      final Variables variables, final Conditionals conditionals,
+      final Markup defaultContent) {
+    // number < 0 means "autogenerate", number == 0 means "no number", number > 0
+    // means "use this number"
+    final int actualNumber = number >= 0 ? number
+        : children.stream()
+            .filter(ContentBlock.class::isInstance)
+            .map(ContentBlock::getNumber)
+            .max(Comparator.naturalOrder())
+            .orElse(0) + 1;
+
+    ContentBlock newBlock = new ContentBlock(this, blockId, actualNumber, conditionals, defaultContent, context,
+        variables);
+    this.children.add(newBlock);
+    return newBlock;
+  }
+
+  public ContentBlock addChild(final int number, final Context context, final Variables variables,
+      final TemplateDefinition template) {
+    // number < 0 means "autogenerate", number == 0 means "no number", number > 0
+    // means "use this number"
+    final int actualNumber = number >= 0 ? number
+        : children.stream()
+            .filter(ContentBlock.class::isInstance)
+            .map(ContentBlock::getNumber)
+            .max(Comparator.naturalOrder())
+            .orElse(0) + 1;
+
+    ContentBlock newBlock = new TemplateInvocation(this, template, actualNumber, context, variables);
+    this.children.add(newBlock);
+    return newBlock;
+  }
+
+  public ContentBlock addChild(final int number, final Context context, final Variables variables,
+      final Conditionals conditionals,
+      final Markup defaultContent) {
+    String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
+    return this.addChild(newBlockId, number, context, variables, conditionals, defaultContent);
+  }
+
+  // #endregion Add Children
+
+  // #region Add Siblings
+
+  public ContentBlock addSibling(final int number, final Context context, final Variables variables,
+      final Conditionals conditionals,
+      final Markup defaultContent) {
     if (this.parent == null) {
       throw new ParseCancellationException("Cannot add sibling to root block");
     }
-    return this.parent.addChild(number, content, context, variables);
+    return this.parent.addChild(number, context, variables, conditionals, defaultContent);
+  }
+
+  public ContentBlock addSibling(final int number, final Context context, final Variables variables,
+      final TemplateDefinition template) {
+    if (this.parent == null) {
+      throw new ParseCancellationException("Cannot add sibling to root block");
+    }
+    return this.parent.addChild(number, context, variables, template);
+  }
+
+  // #endregion Add Siblings
+
+  public int getNumber() {
+    return this.number;
   }
 
   public ContentBlock findParentByLevel(final int parentIndentationLevel) {
@@ -84,16 +158,25 @@ public class ContentBlock {
     return targetBlock;
   }
 
+  public TemplateDefinition get(final String blockId) {
+    for (ContentBlock child : this.children) {
+      if (child instanceof TemplateDefinition && child.id.equals(blockId)) {
+        return (TemplateDefinition) child;
+      }
+    }
+    return null;
+  }
+
   public Queue<ContentBlock> getChildren() {
     return this.children;
   }
 
   public String getOutlineNumber() {
-    if (this.number == 0 || this.children.size() == 0) {
+    if (this.number == 0 || this.children.isEmpty()) {
       return "";
     }
 
-    if (this.parent == null || this.parent.number == 0) {
+    if (this.parent == null || (this.parent.number == 0)) {
       return String.format("%d", this.number);
     }
 
@@ -120,52 +203,70 @@ public class ContentBlock {
     return this.parent.getContext();
   }
 
-  public Set<Variable> getOwnVariables() {
-    Set<Variable> variables = new LinkedHashSet<>();
-    variables.addAll(this.variables);
-    return variables;
+  protected Set<ParsedArgument> getOwnArguments() {
+    return this.arguments.toSet();
   }
 
-  public Set<Variable> getAllVariables() {
+  protected Set<ParsedParameter> getOwnParameters() {
+    return this.parameters.toSet();
+  }
+
+  protected Set<ParsedParameter> getAllParameters() {
     if (this.parent == null) {
-      return new LinkedHashSet<>(this.getOwnVariables());
+      return new LinkedHashSet<>(this.getOwnArguments());
     }
-    final Set<Variable> merged = new LinkedHashSet<>();
-    merged.addAll(parent.getAllVariables());
-    merged.addAll(this.getOwnVariables());
+    final Set<ParsedParameter> merged = new LinkedHashSet<>();
+    merged.addAll(parent.getAllArguments());
+    merged.addAll(this.getOwnArguments());
     return merged;
   }
 
-  public Set<String> getTemplateParameters() {
-    return this.getAllVariables().stream().map(v -> v.name).collect(Collectors.toCollection(LinkedHashSet::new));
-  }
-
-  public Markup renderContent(MarkupGenerator markupGenerator) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(this.content.script);
-    for (ContentBlock child : this.children) {
-      sb.append('\n').append(child.renderCallTemplate(markupGenerator).script);
+  protected Set<ParsedArgument> getAllArguments() {
+    if (this.parent == null) {
+      return new LinkedHashSet<>(this.getOwnArguments());
     }
-    return new Markup(sb.toString());
+    final Set<ParsedArgument> merged = new LinkedHashSet<>();
+    merged.addAll(parent.getAllArguments());
+    merged.addAll(this.getOwnArguments());
+    return merged;
   }
 
-  public void renderTemplate(MarkupGenerator markupGenerator, List<Markup> templates) {
+  // #region Render -----------------------------------------------------------
+
+  public Markup renderChildren(MarkupGenerator markupGenerator) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (ContentBlock child : this.children) {
+      stringBuilder.append('\n').append(child.renderInvocation(markupGenerator).script);
+    }
+    return new Markup(stringBuilder.toString());
+  }
+
+  public List<Markup> renderDefinition(MarkupGenerator markupGenerator) {
+    Set<Parameter> params = this.getAllParameters().stream()
+        .map(param -> new Parameter.Impl(param.name, markupGenerator.getEfxDataTypeEquivalent(param.dataType)))
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+    List<Markup> templates = new ArrayList<>();
     templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(),
-        this.renderContent(markupGenerator), this.getTemplateParameters()));
+        this.conditionals.stream().collect(Collectors.toCollection(LinkedHashSet::new)),
+        this.content, this.renderChildren(markupGenerator), params));
     for (ContentBlock child : this.children) {
-      child.renderTemplate(markupGenerator, templates);
+      templates.addAll(child.renderDefinition(markupGenerator));
     }
+    return templates;
   }
 
-  public Markup renderCallTemplate(MarkupGenerator markupGenerator) {
-    Set<Pair<String, String>> variables = new LinkedHashSet<>();
+  public Markup renderInvocation(MarkupGenerator markupGenerator) {
+    Set<Argument> args = new LinkedHashSet<>();
     if (this.parent != null) {
-      variables.addAll(parent.getAllVariables().stream()
-          .map(v -> Pair.of(v.name, v.referenceExpression.getScript())).collect(Collectors.toList()));
+      args.addAll(parent.getAllArguments().stream()
+          .map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.referenceExpression))
+          .collect(Collectors.toCollection(LinkedHashSet::new)));
     }
-    variables.addAll(this.getOwnVariables().stream()
-        .map(v -> Pair.of(v.name, v.initializationExpression.getScript())).collect(Collectors.toList()));
-    return markupGenerator.renderFragmentInvocation(this.id, this.context.relativePath(),
-        variables);
+    args.addAll(this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
+        .collect(Collectors.toCollection(LinkedHashSet::new)));
+    var invocation = markupGenerator.renderFragmentInvocation(this.id, args);
+    return markupGenerator.renderContextLoop(this.id, this.context.relativePath(), invocation, args);
   }
+
+  // #endregion Render --------------------------------------------------------
 }

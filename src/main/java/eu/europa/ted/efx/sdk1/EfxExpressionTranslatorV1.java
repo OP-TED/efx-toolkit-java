@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -20,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.exceptions.InvalidArgumentException;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -51,7 +52,7 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
-import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 
@@ -78,12 +79,6 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   private static final String BEGIN_EXPRESSION_BLOCK = "{";
   private static final String END_EXPRESSION_BLOCK = "}";
-
-  /**
-   *
-   */
-  private static final String TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES =
-      "Type mismatch. Cannot compare values of different types: ";
 
   /**
    * The stack is used by the methods of this listener to pass data to each other as the parse tree
@@ -307,8 +302,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     ScalarExpression right = this.stack.pop(ScalarExpression.class);
     ScalarExpression left = this.stack.pop(ScalarExpression.class);
     if (!left.getClass().isAssignableFrom(right.getClass()) && !right.getClass().isAssignableFrom(left.getClass()) && !left.getDataType().isAssignableFrom(right.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !left.getDataType().isAssignableFrom(right.getDataType())) {
-      throw new ParseCancellationException(TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES
-          + left.getClass() + " and " + right.getClass());
+      throw TypeMismatchException.cannotCompare(left, right);
     }
     this.stack.push(this.script.composeComparisonOperation(left, ctx.operator.getText(), right));
   }
@@ -1205,10 +1199,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionParameters.isEmpty()) {
-      throw new ParseCancellationException("No parameter passed for " + parameterName);
+      throw InvalidArgumentException.missingArgument(parameterName);
     }
 
-    Parameter parameter = new Parameter(parameterName,
+    ParsedParameter parameter = new ParsedParameter(parameterName,
         this.translateParameter(this.expressionParameters.pop(), parameterType));
     this.stack.declareIdentifier(parameter);
   }
@@ -1376,7 +1370,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitDistinctValuesFunction(DistinctValuesFunctionContext ctx) {
     var sequence = this.stack.peek();
     assert sequence instanceof TypedExpression : "Expected a TypedExpression at the top of the stack.";
-    final Class<?> sequenceType = ((TypedExpression)sequence).getDataType();
+    final Class<?> sequenceType = ((TypedExpression) sequence).getDataType();
     if (EfxDataType.String.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(StringSequenceExpression.class);
     } else if (EfxDataType.Number.class.isAssignableFrom(sequenceType)) {
@@ -1390,8 +1384,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.DistinctValuesFunction));
     }
   }
 
@@ -1419,8 +1413,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitUnionFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.UnionFunction));
     }
   }
 
@@ -1449,8 +1443,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitIntersectFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.IntersectFunction));
     }
   }
 
@@ -1479,8 +1473,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitExceptFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ExceptFunction));
     }
   }
 
@@ -1500,63 +1494,63 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
   // #region Variable Names ---------------------------------------------------
 
-  static private String getVariableName(String efxVariableIdentifier) {
+  private static String getVariableName(String efxVariableIdentifier) {
     return StringUtils.stripStart(efxVariableIdentifier, "$");
   }
 
-  static private String getVariableName(VariableReferenceContext ctx) {
+  private static String getVariableName(VariableReferenceContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static protected String getVariableName(ContextVariableDeclarationContext ctx) {
+  protected static String getVariableName(ContextVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringVariableDeclarationContext ctx) {
+  private static String getVariableName(StringVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericVariableDeclarationContext ctx) {
+  private static String getVariableName(NumericVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanVariableDeclarationContext ctx) {
+  private static String getVariableName(BooleanVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateVariableDeclarationContext ctx) {
+  private static String getVariableName(DateVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeVariableDeclarationContext ctx) {
+  private static String getVariableName(TimeVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationVariableDeclarationContext ctx) {
+  private static String getVariableName(DurationVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringParameterDeclarationContext ctx) {
+  private static String getVariableName(StringParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericParameterDeclarationContext ctx) {
+  private static String getVariableName(NumericParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanParameterDeclarationContext ctx) {
+  private static String getVariableName(BooleanParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateParameterDeclarationContext ctx) {
+  private static String getVariableName(DateParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeParameterDeclarationContext ctx) {
+  private static String getVariableName(TimeParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationParameterDeclarationContext ctx) {
+  private static String getVariableName(DurationParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 

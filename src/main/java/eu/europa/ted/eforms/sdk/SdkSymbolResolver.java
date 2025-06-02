@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
@@ -46,7 +46,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   public final List<String> expandCodelist(final String codelistId) {
     final SdkCodelist codelist = codelistById.get(codelistId);
     if (codelist == null) {
-      throw new ParseCancellationException(String.format("Codelist '%s' not found.", codelistId));
+      throw SymbolResolutionException.unknownCodelist(codelistId);
     }
     return codelist.getCodes();
   }
@@ -87,7 +87,7 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (sdkField != null) {
       return sdkField.getParentNodeId();
     }
-    throw new ParseCancellationException(String.format("Unknown field '%s'", fieldId));
+    throw SymbolResolutionException.unknownField(fieldId);
   }
 
   /**
@@ -98,8 +98,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   public PathExpression getAbsolutePathOfField(final String fieldId) {
     final SdkField sdkField = fieldById.get(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(
-          String.format("Unknown field identifier '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     return PathExpression.instantiate(sdkField.getXpathAbsolute(), FieldTypes.fromString(sdkField.getType()));
   }
@@ -112,7 +111,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   public PathExpression getAbsolutePathOfNode(final String nodeId) {
     final SdkNode sdkNode = nodeById.get(nodeId);
     if (sdkNode == null) {
-      throw new ParseCancellationException(String.format("Unknown node identifier '%s'.", nodeId));
+      throw SymbolResolutionException.unknownNode(nodeId);
     }
     return new NodePathExpression(sdkNode.getXpathAbsolute());
   }
@@ -154,7 +153,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   public String getTypeOfField(String fieldId) {
     final SdkField sdkField = fieldById.get(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     return sdkField.getType();
   }
@@ -163,16 +162,16 @@ public class SdkSymbolResolver implements SymbolResolver {
   public String getRootCodelistOfField(final String fieldId) {
     final SdkField sdkField = fieldById.get(fieldId);
     if (sdkField == null) {
-      throw new ParseCancellationException(String.format("Unknown field '%s'.", fieldId));
+      throw SymbolResolutionException.unknownField(fieldId);
     }
     final String codelistId = sdkField.getCodelistId();
     if (codelistId == null) {
-      throw new ParseCancellationException(String.format("No codelist for field '%s'.", fieldId));
+      throw SymbolResolutionException.noCodelistForField(fieldId);
     }
 
     final SdkCodelist sdkCodelist = codelistById.get(codelistId);
     if (sdkCodelist == null) {
-      throw new ParseCancellationException(String.format("Unknown codelist '%s'.", codelistId));
+      throw SymbolResolutionException.unknownCodelist(codelistId);
     }
 
     return sdkCodelist.getRootCodelistId();

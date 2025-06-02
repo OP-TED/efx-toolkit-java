@@ -9,13 +9,16 @@ import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
 import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.Identifier;
-import eu.europa.ted.efx.model.variables.IdentifierList;
-import eu.europa.ted.efx.model.variables.ParameterList;
+import eu.europa.ted.efx.model.variables.Identifiers;
+import eu.europa.ted.efx.model.variables.ParsedParameters;
+import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 
 /**
@@ -25,9 +28,6 @@ import eu.europa.ted.efx.model.variables.Variable;
  */
 public class CallStack {
 
-  private static final String TYPE_MISMATCH = "Type mismatch. Expected %s instead of %s.";
-  private static final String UNDECLARED_IDENTIFIER = "Identifier not declared: ";
-  private static final String IDENTIFIER_ALREADY_DECLARED = "Identifier already declared: ";
   private static final String STACK_UNDERFLOW = "Stack underflow. Return values were available in the dropped frame, but no stack frame is left to consume them.";
 
   /**
@@ -76,10 +76,26 @@ public class CallStack {
         if (TypedExpression.canConvert(actual, expected)) {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.pop(), expected));
         }
+        throw TypeMismatchException.cannotConvert(expected, actual);
       }
 
-      throw new ParseCancellationException(
-          String.format(TYPE_MISMATCH, expectedType.getSimpleName(), actualType.getSimpleName()));
+      throw TypeMismatchException.cannotConvert(expectedType, actualType);
+    }
+
+    synchronized <T extends ParsedEntity> T peek(Class<T> expectedType) {
+      Class<? extends ParsedEntity> actualType = this.peek().getClass();
+      if (expectedType.isAssignableFrom(actualType)) {
+        return expectedType.cast(this.peek());
+      }
+
+      if (TypedExpression.class.isAssignableFrom(actualType) && TypedExpression.class.isAssignableFrom(expectedType)) {
+        var actual = actualType.asSubclass(TypedExpression.class);
+        var expected = expectedType.asSubclass(TypedExpression.class);
+        if (TypedExpression.canConvert(actual, expected)) {
+          return expectedType.cast(TypedExpression.from((TypedExpression) this.peek(), expected));
+        }
+      }
+      throw TypeMismatchException.cannotConvert(expectedType, actualType);
     }
 
     /**
@@ -151,7 +167,7 @@ public class CallStack {
    */
   public void declareIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(identifier.name);
     }
     this.frames.peek().declareIdentifier(identifier);
   }
@@ -163,16 +179,23 @@ public class CallStack {
    */
   public void declareGlobalIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(identifier.name);
     }
     this.globalIdentifierRegistry.put(identifier.name, identifier);
   }
 
   public void declareFunction(Function function) {
     if (this.inScope(function.name)) {
-      throw new ParseCancellationException(IDENTIFIER_ALREADY_DECLARED + function.name);
+      throw InvalidIdentifierException.alreadyDeclared(function.name);
     }
     this.globalIdentifierRegistry.put(function.name, function);
+  }
+
+  public void declareTemplate(Template template) {
+    if (this.inScope(template.name)) {
+      throw InvalidIdentifierException.alreadyDeclared(template.name);
+    }
+    this.globalIdentifierRegistry.put(template.name, template);
   }
 
   /**
@@ -200,8 +223,8 @@ public class CallStack {
         .findFirst().orElse(null);
   }
 
-  public IdentifierList getGlobals() {
-    IdentifierList globals = new IdentifierList();
+  public Identifiers getGlobals() {
+    Identifiers globals = new Identifiers();
     for (Identifier identifier : globalIdentifierRegistry.values()) {
         globals.add(identifier);
     }
@@ -218,9 +241,9 @@ public class CallStack {
   Optional<TypedExpression> getParameter(String parameterName) {
     return this.frames.stream()
         .filter(f -> f.identifierRegistry.containsKey(parameterName)
-            && Parameter.class.isAssignableFrom(f.identifierRegistry.get(parameterName).getClass()))
+            && ParsedParameter.class.isAssignableFrom(f.identifierRegistry.get(parameterName).getClass()))
         .findFirst()
-        .map(x -> ((Parameter) x.identifierRegistry.get(parameterName)).referenceExpression);
+        .map(x -> ((ParsedParameter) x.identifierRegistry.get(parameterName)).referenceExpression);
   }
 
   /**
@@ -263,7 +286,14 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
         .filter(Function.class::isInstance)
         .map(Function.class::cast)
-        .orElseThrow(() -> new ParseCancellationException(UNDECLARED_IDENTIFIER + functionName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(functionName));
+  }
+
+  public Template getTemplate(String templateName) {
+    return Optional.ofNullable(this.globalIdentifierRegistry.get(templateName))
+        .filter(Template.class::isInstance)
+        .map(Template.class::cast)
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(templateName));
   }
 
   /**
@@ -273,11 +303,11 @@ public class CallStack {
    * @return the list of parameters associated with the specified function
    * @throws ParseCancellationException if the function name is not declared in the registry
    */
-  public ParameterList getFunctionParameters(String functionName) {
+  public ParsedParameters getFunctionParameters(String functionName) {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
       .filter(Function.class::isInstance)
       .map(identifier -> ((Function) identifier).parameters)
-      .orElseThrow(() -> new ParseCancellationException(UNDECLARED_IDENTIFIER + functionName));
+      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(functionName));
   }
 
   /**
@@ -296,7 +326,7 @@ public class CallStack {
     Optional<Identifier> identifier = this.getIdentifier(identifierName)
         .or(() -> Optional.ofNullable((Identifier) this.getFunction(identifierName)));
     if (!identifier.isPresent()) {
-      throw new ParseCancellationException(UNDECLARED_IDENTIFIER + identifierName);
+      throw InvalidIdentifierException.undeclaredIdentifier(identifierName);
     }
     return identifier.get().dataType;
   }
@@ -315,7 +345,7 @@ public class CallStack {
         () -> getVariable(identifierName).ifPresentOrElse(
             variable -> this.push(variable.referenceExpression),
             () -> {
-              throw new ParseCancellationException(UNDECLARED_IDENTIFIER + identifierName);
+              throw InvalidIdentifierException.undeclaredIdentifier(identifierName);
             }));
   }
 
@@ -341,6 +371,10 @@ public class CallStack {
    */
   public synchronized <T extends ParsedEntity> T pop(Class<T> expectedType) {
     return this.frames.peek().pop(expectedType);
+  }
+
+  public synchronized <T extends ParsedEntity> T peek(Class<T> expectedType) {
+    return this.frames.peek().peek(expectedType);
   }
 
   /**
