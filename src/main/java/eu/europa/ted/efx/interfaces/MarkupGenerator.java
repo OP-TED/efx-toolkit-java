@@ -176,7 +176,7 @@ public interface MarkupGenerator {
     /**
      * Returns the markup that represents a line break in the target template.
      * 
-     * For example, in EFX to XSLT, translation this would return a <br/> HTML
+     * For example, in EFX to XSLT, translation this would return a <br> HTML
      * element if your target is rendering HTML, or an <xsl:text>&#10;</xsl:text>
      * (which is the XSLT equivalent of a line feed) if you are not targeting HTML.
      * 
