@@ -188,10 +188,8 @@ public interface MarkupGenerator {
      * Given a fragment name (identifier) and some pre-rendered content, this method
      * returns the code
      * that encapsulates it in the target template
-     * 
-     * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeFragmentDefinition(String, String,
-     *             Set<Conditional>, Markup, Markup, Set<Parameter>)} instead.
+     *     * @deprecated This method is deprecated and will be removed in future versions.
+     *             Use {@link #composeFragmentDefinition(String, String, Set, Markup, Markup, Set)} instead.
      *             We are keeping the method temporarily to prevent build errors.
      *             This method is being deprecated as of version 2.0.0-alpha.4 and
      *             will be removed before version 2.0.0 is released
@@ -210,8 +208,8 @@ public interface MarkupGenerator {
             Set<String> parameters) {
         throw new UnsupportedOperationException(
                 "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, String, Set<Conditional>, Markup, Markup, Set<Parameter>) instead.");
-    }
-
+    }    
+    
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
      * returns the code
@@ -219,7 +217,9 @@ public interface MarkupGenerator {
      * 
      * @param name          the name of the fragment.
      * @param number        the outline number of the fragment.
+     * @param conditionals  the conditionals of the fragment.
      * @param content       the content of the fragment.
+     * @param children      the children of the fragment.
      * @param parameters    the parameters of the fragment.
      * @return              the code that encapsulates the fragment in the target template.
      */
