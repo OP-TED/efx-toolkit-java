@@ -39,9 +39,4 @@ public class ParsedArgument extends ParsedParameter {
         ParsedArgument other = (ParsedArgument) obj;
         return Objects.equals(value, other.value);
     }
-
-    // @Override
-    // public String getValue() {
-    //     return value.getScript();
-    // }
 }

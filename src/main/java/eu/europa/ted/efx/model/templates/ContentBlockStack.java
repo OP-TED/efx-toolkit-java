@@ -8,15 +8,17 @@ import eu.europa.ted.efx.model.variables.Variables;
 public class ContentBlockStack extends Stack<ContentBlock> {
 
   /**
-   * Adds a new child block to the top of the stack. When the child is later removed, its parent
-   * will return to the top of the stack again.
+   * Adds a new child block to the top of the stack. When the child is later
+   * removed, its parent will return to the top of the stack again.
    * 
-   * @param number the outline number of the child block.
- * @param context the context of the child block.
- * @param variables the variables of the child block.
- * @param defaultContent the content of the child block.
+   * @param number         the outline number of the child block.
+   * @param context        the context of the child block.
+   * @param variables      the variables of the child block.
+   * @param conditionals   the conditionals of the child block.
+   * @param defaultContent the content of the child block.
    */
-  public void pushChild(final int number, final Context context, final Variables variables, final Conditionals conditionals,
+  public void pushChild(final int number, final Context context, final Variables variables,
+      final Conditionals conditionals,
       final Markup defaultContent) {
     this.push(this.peek().addChild(number, context, variables, conditionals, defaultContent));
   }

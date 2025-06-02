@@ -44,8 +44,8 @@ public interface MarkupGenerator {
      * 
      * @deprecated This method is deprecated and will be removed in future versions.
      *             Use {@link #composeOutputFile(List, List, List)} instead.
-     *             We are keeping the method temporarily to prevent build errors and
-     *             This method is being deprecated as of version 2.0.0-alpha.4 ane
+     *             We are keeping the method temporarily to prevent build errors.
+     *             This method is being deprecated as of version 2.0.0-alpha.4 and
      *             will be removed before version 2.0.0 is released
      *  
      * @param content   the body (main content) of the template.
