@@ -291,13 +291,12 @@ public interface MarkupGenerator {
      * In EFX to XSLT translation, this method would generate the xsl:for-each that will loop
      * over the context path expression and invoke the fragment for each item in the loop.
      * 
-     * @param name      the name of the fragment.
      * @param context   the context path expression for the loop.
      * @param content   the content of the fragment.
      * @param arguments the arguments to pass to the fragment.
      * @return the code that invokes (uses) the fragment in a context loop.
      */
-    Markup renderContextLoop(final String name, final PathExpression context, final Markup content,
+    Markup renderContextLoop(final PathExpression context, final Markup content,
             final Set<Argument> arguments);
 
     /**

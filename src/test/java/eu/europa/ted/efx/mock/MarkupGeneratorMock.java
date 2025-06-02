@@ -138,7 +138,7 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderContextLoop(String name, PathExpression context, final Markup content,
+  public Markup renderContextLoop(PathExpression context, final Markup content,
       Set<Argument> arguments) {
     return new Markup(String.format("for-each(%s).%s", context.getScript(), content.script));
   }

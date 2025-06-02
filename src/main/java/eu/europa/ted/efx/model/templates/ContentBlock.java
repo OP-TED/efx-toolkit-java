@@ -265,7 +265,7 @@ public class ContentBlock {
     args.addAll(this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new)));
     var invocation = markupGenerator.renderFragmentInvocation(this.id, args);
-    return markupGenerator.renderContextLoop(this.id, this.context.relativePath(), invocation, args);
+    return markupGenerator.renderContextLoop(this.context.relativePath(), invocation, args);
   }
 
   // #endregion Render --------------------------------------------------------
