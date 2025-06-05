@@ -425,6 +425,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeToStringConversion(DurationExpression measure) {
+    return new StringExpression("format-number(" + measure.script + ", '0.##########')");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

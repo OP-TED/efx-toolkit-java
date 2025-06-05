@@ -392,6 +392,8 @@ public interface ScriptGenerator {
    */
   public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference);
 
+  public StringExpression composeToStringConversion(DurationExpression measure);
+
   /*
    * Boolean Functions
    */
