@@ -75,4 +75,16 @@ public class SymbolResolverMockV1
     XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
     return Expression.instantiate(xpathInfo.getPathToLastElement(), NodePathExpression.class);
   }
+
+  @Override
+  public String getFieldIdFromAlias(String alias) {
+    throw new UnsupportedOperationException(
+        "Alias resolution is not supported in SDK-1.");
+  }
+
+  @Override
+  public String getNodeIdFromAlias(String alias) {
+    throw new UnsupportedOperationException(
+        "Alias resolution is not supported in SDK-1.");
+  }
 }

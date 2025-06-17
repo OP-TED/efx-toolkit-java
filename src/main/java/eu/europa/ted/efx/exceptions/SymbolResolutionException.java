@@ -13,6 +13,7 @@ public class SymbolResolutionException extends ParseCancellationException {
     private static final String UNKNOWN_FIELD = "Unknown field '%s'.";
     private static final String UNKNOWN_NODE = "Unknown node '%s'.";
     private static final String UNKNOWN_CODELIST = "Unknown codelist '%s'.";
+    private static final String UNKNOWN_ALIAS = "Unknown field or node alias '%s'.";
     private static final String NO_CODELIST_FOR_FIELD = "Field '%s' is not associated with a codelist.";
 
     private SymbolResolutionException(String message) {
@@ -29,6 +30,10 @@ public class SymbolResolutionException extends ParseCancellationException {
 
     public static SymbolResolutionException unknownCodelist(String codelistId) {
         return new SymbolResolutionException(String.format(UNKNOWN_CODELIST, codelistId));
+    }
+
+    public static SymbolResolutionException unknownAlias(String alias) {
+        return new SymbolResolutionException(String.format(UNKNOWN_ALIAS, alias));
     }
 
     public static SymbolResolutionException noCodelistForField(String fieldId) {

@@ -101,4 +101,21 @@ public class SymbolResolverMockV2
     XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
     return Expression.instantiate(xpathInfo.getPathToLastElement(), NodePathExpression.class);
   }
+
+  @Override
+  public String getFieldIdFromAlias(String alias) {
+    if (this.fieldByAlias.containsKey(alias)) {
+      return this.fieldByAlias.get(alias).getId();
+    }
+    return null;
+
+  }
+
+  @Override
+  public String getNodeIdFromAlias(String alias) {
+    if (this.nodeByAlias.containsKey(alias)) {
+      return this.nodeByAlias.get(alias).getId();
+    }
+    return null;
+  }
 }
