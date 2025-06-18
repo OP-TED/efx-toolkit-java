@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 
@@ -23,13 +25,19 @@ import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.types.FieldTypes;
+import eu.europa.ted.efx.sdk2.entity.SdkFieldV2;
+import eu.europa.ted.efx.sdk2.entity.SdkNodeV2;
 import eu.europa.ted.efx.xpath.XPathContextualizer;
 
 @SdkComponent(versions = { "1", "2" }, componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkField> fieldById;
 
+  protected Map<String, SdkField> fieldByAlias;
+
   protected Map<String, SdkNode> nodeById;
+
+  protected Map<String, SdkNode> nodeByAlias;
 
   protected Map<String, SdkCodelist> codelistById;
 
@@ -71,7 +79,9 @@ public class SdkSymbolResolver implements SymbolResolver {
         SdkConstants.SdkResource.CODELISTS, sdkRootPath);
 
     this.fieldById = new SdkFieldRepository(sdkVersion, jsonPath);
+    this.fieldByAlias = indexFieldsByAlias();
     this.nodeById = new SdkNodeRepository(sdkVersion, jsonPath);
+    this.nodeByAlias = indexNodesByAlias();
     this.codelistById = new SdkCodelistRepository(sdkVersion, codelistsPath);
   }
 
@@ -199,6 +209,49 @@ public class SdkSymbolResolver implements SymbolResolver {
       this.cacheAdditionalFieldInfo(fieldId);
     }
     return Expression.instantiate(additionalFieldInfoMap.get(fieldId).getPathToLastElement(), NodePathExpression.class);
+  }
+
+  @Override
+  public String getFieldIdFromAlias(String alias) {
+    if (this.fieldByAlias.containsKey(alias)) {
+      return this.fieldByAlias.get(alias).getId();
+    }
+    return null;
+  }
+
+  @Override
+  public String getNodeIdFromAlias(String alias) {
+    if (this.nodeByAlias.containsKey(alias)) {
+      return this.nodeByAlias.get(alias).getId();
+    }
+    return null;
+  }
+
+
+  private HashMap<String, SdkField> indexFieldsByAlias() {
+    return this.fieldById.values().stream()
+      .filter(SdkFieldV2.class::isInstance)
+      .map(SdkFieldV2.class::cast)
+      .filter(field -> field.getAlias() != null)
+      .collect(Collectors.toMap(
+        SdkFieldV2::getAlias,
+        Function.identity(),
+        (existing, replacement) -> existing,
+        HashMap::new
+      ));
+  }
+
+  private HashMap<String, SdkNode> indexNodesByAlias() {
+    return this.nodeById.values().stream()
+      .filter(SdkNodeV2.class::isInstance)
+      .map(SdkNodeV2.class::cast)
+      .filter(node -> node.getAlias() != null)
+      .collect(Collectors.toMap(
+        SdkNodeV2::getAlias,
+        Function.identity(),
+        (existing, replacement) -> existing,
+        HashMap::new
+      ));
   }
 
   // #region Temporary helpers ------------------------------------------------

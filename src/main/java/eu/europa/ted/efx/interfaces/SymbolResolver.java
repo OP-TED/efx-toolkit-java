@@ -151,4 +151,8 @@ public interface SymbolResolver {
    * @return The list of codes in the given codelist.
    */
   public List<String> expandCodelist(final String codelistId);
+
+  public String getFieldIdFromAlias(final String alias);
+
+  public String getNodeIdFromAlias(final String alias);
 }
