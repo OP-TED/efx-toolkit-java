@@ -14,6 +14,7 @@ import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.variables.ParsedParameter;
+import eu.europa.ted.efx.model.variables.Dictionary;
 import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.Identifier;
 import eu.europa.ted.efx.model.variables.Identifiers;
@@ -275,11 +276,11 @@ public class CallStack {
   }
 
   /**
-   * Retrieves a function from the function registry by its name.
+   * Retrieves a function from the global identifier registry by its name.
    *
    * @param functionName the name of the function to retrieve
    * @return the {@link Function} associated with the given name
-   * @throws ParseCancellationException if the function name is not found in the registry,
+   * @throws InvalidIdentifierException if the function name is not found in the registry,
    *         with a message indicating the undeclared identifier
    */
   public Function getFunction(String functionName) {
@@ -289,11 +290,34 @@ public class CallStack {
         .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(functionName));
   }
 
+  /**
+   * Retrieves a template from the global identifier registry by its name.
+   *
+   * @param templateName the name of the template to retrieve
+   * @return the {@link Template} associated with the given name
+   * @throws InvalidIdentifierException if the template name is not found in the registry,
+   *         with a message indicating the undeclared identifier
+   */
   public Template getTemplate(String templateName) {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(templateName))
         .filter(Template.class::isInstance)
         .map(Template.class::cast)
         .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(templateName));
+  }
+
+  /**
+   * Retrieves a dictionary from the global identifier registry by its name.
+   *
+   * @param dictionaryName the name of the dictionary to retrieve
+   * @return the {@link Dictionary} associated with the given name
+   * @throws InvalidIdentifierException if the dictionary name is not found in the registry,
+   *         with a message indicating the undeclared identifier
+   */
+  public Dictionary getDictionary(String dictionaryName) {
+    return Optional.ofNullable(this.globalIdentifierRegistry.get(dictionaryName))
+        .filter(Dictionary.class::isInstance)
+        .map(Dictionary.class::cast)
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(dictionaryName));
   }
 
   /**
