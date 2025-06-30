@@ -1489,6 +1489,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringPathExpression.class)));
   }
 
+  @Override
+  public void exitDictionaryLookup(DictionaryLookupContext ctx) {
+
+    var dictionary = this.stack.getDictionary(ctx.dictionaryName.getText());
+    this.stack.push(this.script.composeDictionaryLookup(
+        dictionary.name, this.stack.pop(StringExpression.class),
+        dictionary.type));
+
+  }
+
   // #endregion New in EFX-2 --------------------------------------------------
 
   // #endregion String functions ----------------------------------------------
@@ -1868,6 +1878,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       if (variableType != null) {
         // Insert the type cast
         this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + variableType + ")");
+      }
+    }
+
+    @Override
+    public void exitDictionaryLookup(DictionaryLookupContext ctx) {
+      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
+        return;
+      }
+
+      String dictionaryName = ctx.dictionaryName.getText();
+      String dictionaryType = javaToEfxTypeMap.get(this.stack.getTypeOfIdentifier(dictionaryName));
+
+      if (dictionaryType != null) {
+        // Insert the type cast
+        this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + dictionaryType + ")");
       }
     }
 

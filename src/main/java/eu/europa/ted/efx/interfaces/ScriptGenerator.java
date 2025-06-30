@@ -116,6 +116,8 @@ public interface ScriptGenerator {
 
   public <T extends TypedExpression> T composeParameterDeclaration(String parameterName, Class<T> type);
 
+  public <T extends TypedExpression> T composeDictionaryLookup(String dictionaryName, StringExpression keyExpression, Class<T> type);
+
   /**
    * Takes a list of expressions and returns the target language script that corresponds to a
    * list of expressions.

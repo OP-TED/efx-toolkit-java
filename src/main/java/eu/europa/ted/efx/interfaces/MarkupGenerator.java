@@ -81,6 +81,20 @@ public interface MarkupGenerator {
     Markup renderVariableDeclaration(final Class<? extends EfxDataType> type, final String name, final Expression initialiser);
 
     /**
+     * Renders the markup necessary to declare and initialise a dictionary .
+     *
+     * @param name  The name of the dictionary to be declared.
+     * @param match The path expression to be indexed.
+     *              Each of the values matched by this path will be added
+     *              to the dictionary with the corresponding key.
+     * @param key   The expression to calculate the keys. To initialise the
+     *              dictionary the key needs to be calculated relative to
+     *              the match.
+     * @return A {@link Markup} object that declares the dictionary.
+     */
+    Markup renderDictionaryDeclaration(final String name, final PathExpression match, final StringExpression key);
+
+    /**
      * Renders the Markup necessary to make the function available at runtime.
      *
      * @param type       A sub-class of EfxDataType that represents the return type

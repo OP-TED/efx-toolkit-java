@@ -55,6 +55,7 @@ import eu.europa.ted.efx.model.templates.TemplateInvocation;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
+import eu.europa.ted.efx.model.variables.Dictionary;
 import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.StrictArguments;
 import eu.europa.ted.efx.model.variables.Identifier;
@@ -76,6 +77,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.ContextVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DictionaryDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
@@ -358,6 +360,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       } else if (identifier instanceof Function) {
         Function function = (Function) identifier;
         globals.add(this.markup.renderFunctionDeclaration(function.dataType, function.name, function.parameters.toMap(), function.expression));
+      } else if (identifier instanceof Dictionary) {
+        Dictionary dictionary = (Dictionary) identifier;
+        globals.add(this.markup.renderDictionaryDeclaration(dictionary.name, dictionary.pathExpression, dictionary.keyExpression));
       }
     }
 
@@ -669,6 +674,16 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : NumericExpression.empty();
     StringExpression expression = this.stack.pop(StringExpression.class);
     this.stack.push(this.markup.renderLabelFromExpression(expression, quantity));
+  }
+
+  @Override
+  public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
+    String name = ctx.dictionaryName.getText();
+    StringExpression key = this.stack.pop(StringExpression.class);
+    var match = this.stack.pop(PathExpression.class);
+
+    // Declare the dictionary in the script
+    this.stack.declareGlobalIdentifier(new Dictionary(name, match, key));
   }
 
   // #endregion New in EFX-2 --------------------------------------------------
@@ -1271,6 +1286,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     // #endregion Scope management --------------------------------------------
 
+    @Override
+    public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
+      var dictionaryName = ctx.dictionaryName.getText();
+      var fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.fieldContext());
+      var field = this.symbols.getAbsolutePathOfField(fieldId);
+      this.stack.declareGlobalIdentifier(new Dictionary(dictionaryName, field, StringExpression.empty()));
+    }
   }
 
   // #endregion Pre-processing ------------------------------------------------

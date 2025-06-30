@@ -168,4 +168,11 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   public Markup getEfxDataTypeEquivalent(Class<? extends EfxDataType> type) {
     return typeFromEfxDataType.getOrDefault(type, Markup.empty());
   }
+
+  @Override
+  public Markup renderDictionaryDeclaration(final String name, final PathExpression match,
+      final StringExpression key) {
+        return new Markup(String.format("let %s index %s by %s;", name, match.getScript(), key.getScript()));
+  }
+
 }

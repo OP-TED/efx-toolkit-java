@@ -341,6 +341,18 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let text:$t4= ?test($t3, 22);")));
   }
 
+  @Test
+  void testGlobals_DictionaryDeclaration() {
+    assertEquals(
+        lines(
+            "let dic index /*/PathNode/NumberField by /*/PathNode/TextField/normalize-space(text());",
+            "let block01() -> { eval(key('dic', 'key')) }",
+            "for-each(/*).call(block01())"),
+        translateTemplate(lines(
+            "let $dic index BT-00-Number by BT-00-Text;",
+            "display ${$dic['key']};")));
+  }
+
   // #endregion Globals -------------------------------------------------------
 
   @Test

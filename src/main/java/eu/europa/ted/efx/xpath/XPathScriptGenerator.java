@@ -140,6 +140,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T extends TypedExpression> T composeDictionaryLookup(String dictionaryName, StringExpression keyExpression,
+      Class<T> type) {
+        return Expression.instantiate(
+            String.format("key(%s, %s)", quoted(dictionaryName), keyExpression.getScript()), type);
+  }
+
+  @Override
   public <T extends SequenceExpression> T composeList(List<? extends ScalarExpression> list,
       Class<T> type) {
     if (list == null || list.isEmpty()) {
