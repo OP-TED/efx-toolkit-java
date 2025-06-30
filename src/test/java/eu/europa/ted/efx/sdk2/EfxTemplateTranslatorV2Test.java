@@ -345,7 +345,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testGlobals_DictionaryDeclaration() {
     assertEquals(
         lines(
-            "let dic index /*/PathNode/NumberField by /*/PathNode/TextField/normalize-space(text());)",
+            "let dic index /*/PathNode/NumberField by /*/PathNode/TextField/normalize-space(text());",
             "let block01() -> { eval(key('dic', 'key')) }",
             "for-each(/*).call(block01())"),
         translateTemplate(lines(

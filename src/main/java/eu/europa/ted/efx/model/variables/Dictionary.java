@@ -23,13 +23,17 @@ public class Dictionary extends Identifier {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
     Dictionary dictionary = (Dictionary) o;
-    return java.util.Objects.equals(keyExpression, dictionary.keyExpression);
+    return java.util.Objects.equals(keyExpression, dictionary.keyExpression)
+        && java.util.Objects.equals(pathExpression, dictionary.pathExpression)
+        && java.util.Objects.equals(type, dictionary.type);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + java.util.Objects.hashCode(keyExpression);
+    result = 31 * result + (keyExpression != null ? keyExpression.hashCode() : 0);
+    result = 31 * result + (pathExpression != null ? pathExpression.hashCode() : 0);
+    result = 31 * result + (type != null ? type.hashCode() : 0);
     return result;
   }
 }
