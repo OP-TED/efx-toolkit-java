@@ -432,4 +432,18 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "let block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' blah blah') }\nfor-each(/*).call(block01())",
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
+
+    @Test
+  void testContextulizer_WithPredicate() {
+    assertEquals(
+        lines("let block01() -> { #1: text('line1: ')eval(.[1 = 1]/normalize-space(text()))",
+        "for-each(.[1 = 2]).call(block0101()) }",
+        "let block0101() -> { #1.1: text('line2: ')eval(.[1 = 4]/normalize-space(text()))",
+        "for-each(.[1 = 4]).call(block010101()) }",
+        "let block010101() -> { text('line3: ')eval(.[1 = 5]/normalize-space(text())) }",
+        "for-each(/*/SubNode/SubSubNode/SubTextField[0 = 0]).call(block01())"),
+        translateTemplate(lines("{BT-01-SubSubNode-Text} line1: ${BT-01-SubSubNode-Text[1==1]}",
+            "  {BT-01-SubSubNode-Text[1==2]} line2: ${BT-01-SubSubNode-Text[1==4]}",
+            "    {BT-01-SubSubNode-Text[1==4]} line3: ${BT-01-SubSubNode-Text[1==5]}")));
+  }
 }

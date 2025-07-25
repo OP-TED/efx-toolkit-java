@@ -833,15 +833,19 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       return childContext;
     }
 
+    PathExpression parentContextAbsolutePath = parentContext.isFieldContext()
+        ? this.symbols.getAbsolutePathOfField(parentContext.symbol())
+        : this.symbols.getAbsolutePathOfNode(parentContext.symbol());
+
     if (childContext.isFieldContext()) {
       return new FieldContext(childContext.symbol(), childContext.absolutePath(),
-          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()), childContext.variable());
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
     }
 
     assert childContext.isNodeContext() : "Child context should be either a FieldContext NodeContext.";
 
     return new NodeContext(childContext.symbol(), childContext.absolutePath(),
-        this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+        this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath));
   }
 
   // #endregion Template lines  -----------------------------------------------
