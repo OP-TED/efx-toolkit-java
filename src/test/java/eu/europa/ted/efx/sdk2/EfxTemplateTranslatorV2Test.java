@@ -446,4 +446,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "  {BT-01-SubSubNode-Text[1==2]} line2: ${BT-01-SubSubNode-Text[1==4]}",
             "    {BT-01-SubSubNode-Text[1==4]} line3: ${BT-01-SubSubNode-Text[1==5]}")));
   }
+
+  @Test
+  void testContextualizer_WithFieldInPredicate() {
+    assertEquals(
+        lines("let block01() -> { #1: text('line1')",
+        "for-each(SubTextField).call(block0101()) }",
+        "let block0101() -> { text('line2') }",
+        "for-each(/*/SubNode[SubTextField]).call(block01())"),
+        translateTemplate(lines("{ND-SubNode[BT-01-SubNode-Text is present]} line1",
+            "  {BT-01-SubNode-Text} line2")));
+  }
 }
