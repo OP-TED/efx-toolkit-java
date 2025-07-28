@@ -626,18 +626,23 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         break;
       default:
         PathExpression contextPath = this.stack.pop(PathExpression.class);
-        String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-        if (fieldId != null) {
-          Variable contextVariable = this.getContextVariable(ctx, contextPath);
-          if (contextVariable != null) {
-            VariableList variables = this.stack.pop(VariableList.class);
-            variables.add(contextVariable);
-            this.stack.push(variables);
+        if (ctx.fieldContext() != null) {
+          String fieldId = getFieldId(ctx.fieldContext());
+          assert fieldId != null : "We should have been able to locate the FieldId declared as context.";
+          this.exitFieldContextDeclaration(fieldId, contextPath, null);
+        } else if (ctx.contextVariableInitializer() != null) {
+          Variable contextVariable = this.getContextVariable(ctx.contextVariableInitializer(), contextPath);
+          assert contextVariable != null : "We should have been able to locate the ContextVariable declared as context.";
+          VariableList localVariables = this.stack.pop(VariableList.class);
+          localVariables.add(contextVariable);
+          this.stack.push(localVariables);
+          if (ctx.contextVariableInitializer().fieldContext() != null) {
+            String fieldId = getFieldId(ctx.contextVariableInitializer().fieldContext());
+            this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
           }
-          this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
-        } else {
-          String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-          assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
+        } else if (ctx.nodeContext() != null) {
+          String nodeId = getNodeId(ctx.nodeContext());
+          assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
           this.exitNodeContextDeclaration(nodeId, contextPath);
         }
         break;
@@ -683,13 +688,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.efxContext.push(new NodeContext(nodeId, contextPath));
   }
 
-  private Variable getContextVariable(ContextDeclarationContext ctx,
+  private Variable getContextVariable(ContextVariableInitializerContext ctx,
       PathExpression contextPath) {
-    if (ctx.contextVariableInitializer() == null) {
+    if (ctx == null) {
       return null;
     }
 
-    final String variableName = getVariableName(ctx.contextVariableInitializer());
+    final String variableName = getVariableName(ctx);
     final Class<? extends TypedExpression> variableType = contextPath.getClass();
 
     return new Variable(variableName,
@@ -935,14 +940,14 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   
     @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
-      final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-      if (filedId != null) {
-        final ContextVariableInitializerContext initializer = ctx.contextVariableInitializer();
-        if (initializer != null) {
-          var t = FieldTypes.fromString(this.symbols.getTypeOfField(filedId));
-                this.stack.declareIdentifier(new Variable(getVariableName(initializer), PathExpression.instantiate("", t), PathExpression.instantiate("", t), PathExpression.instantiate("", t)));
-        }
+      final var initializer = ctx.contextVariableInitializer();
+      if (initializer == null || initializer.fieldContext() == null) {
+        return; // No context variable initializer, nothing to do during pre-processing.
       }
+      final String fieldId = getFieldId(initializer.fieldContext());
+      var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
+      this.stack.declareIdentifier(new Variable(getVariableName(initializer), PathExpression.instantiate("", fieldType),
+          PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
     }
 
     @Override
