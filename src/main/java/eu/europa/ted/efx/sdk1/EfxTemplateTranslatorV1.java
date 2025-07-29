@@ -555,14 +555,15 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    */
   @Override
   public void exitContextDeclarationBlock(ContextDeclarationBlockContext ctx) {
-
-    final String filedId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-    if (filedId != null) {
-      this.efxContext.push(new FieldContext(filedId, this.stack.pop(PathExpression.class)));
-    } else {
-      final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-      assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
-      this.efxContext.push(new NodeContext(nodeId, this.stack.pop(PathExpression.class)));
+    PathExpression contextPath = this.stack.pop(PathExpression.class);
+    if (ctx.fieldContext() != null) {
+      String fieldId = getFieldId(ctx.fieldContext());
+      assert fieldId != null : "We should have been able to locate the FieldId declared as context.";
+      this.efxContext.push(new FieldContext(fieldId, contextPath));
+    } else if (ctx.nodeContext() != null) {
+      String nodeId = getNodeId(ctx.nodeContext());
+      assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
+      this.efxContext.push(new NodeContext(nodeId, contextPath));
     }
   }
 
@@ -641,15 +642,19 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       return childContext;
     }
 
+    PathExpression parentContextAbsolutePath = parentContext.isFieldContext()
+        ? this.symbols.getAbsolutePathOfField(parentContext.symbol())
+        : this.symbols.getAbsolutePathOfNode(parentContext.symbol());
+
     if (childContext.isFieldContext()) {
       return new FieldContext(childContext.symbol(), childContext.absolutePath(),
-          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
     }
 
     assert childContext.isNodeContext() : "Child context should be either a FieldContext NodeContext.";
 
     return new NodeContext(childContext.symbol(), childContext.absolutePath(),
-        this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+        this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath));
   }
 
   // #endregion Template lines  -----------------------------------------------
