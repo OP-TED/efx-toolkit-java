@@ -17,6 +17,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -194,77 +195,99 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return sb.toString().trim();
   }
 
-  /**
-   * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
-   * {@link SimpleFieldReferenceContext} to locate a field identifier.
-   * 
-   * @param ctx The context to start from.
-   * @return The field identifier, or null if none was found.
-   */
-  protected static String getFieldIdFromChildSimpleFieldReferenceContext(ParserRuleContext ctx) {
-
-    if (ctx instanceof SimpleFieldReferenceContext) {
-      return ((SimpleFieldReferenceContext) ctx).fieldId.getText();
+  protected static String getFieldId(FieldReferenceContext ctx) {
+    if (ctx == null) {
+      return null;
     }
 
-    if (ctx instanceof AbsoluteFieldReferenceContext) {
-      return ((AbsoluteFieldReferenceContext) ctx).reference.reference.simpleFieldReference()
-          .fieldId
-          .getText();
+    if (ctx.absoluteFieldReference() != null) {
+      return getFieldId(ctx.absoluteFieldReference());
     }
 
-    if (ctx instanceof FieldReferenceWithFieldContextOverrideContext) {
-      return ((FieldReferenceWithFieldContextOverrideContext) ctx).reference.reference
-          .simpleFieldReference()
-          .fieldId.getText();
+    if (ctx.fieldReferenceInOtherNotice() != null) {
+      return getFieldId(ctx.fieldReferenceInOtherNotice());
     }
-
-    if (ctx instanceof FieldReferenceWithNodeContextOverrideContext) {
-      return ((FieldReferenceWithNodeContextOverrideContext) ctx).reference.reference.reference
-          .simpleFieldReference().fieldId.getText();
-    }
-
-    SimpleFieldReferenceContext fieldReferenceContext =
-        ctx.getChild(SimpleFieldReferenceContext.class, 0);
-    if (fieldReferenceContext != null) {
-      return fieldReferenceContext.fieldId.getText();
-    }
-
-    for (ParseTree child : ctx.children) {
-      if (child instanceof ParserRuleContext) {
-        String fieldId = getFieldIdFromChildSimpleFieldReferenceContext((ParserRuleContext) child);
-        if (fieldId != null) {
-          return fieldId;
-        }
-      }
-    }
-
+    assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
   }
 
-  /**
-   * Helper method that starts from a given {@link ParserRuleContext} and recursively searches for a
-   * {@link SimpleNodeReferenceContext} to locate a node identifier.
-   * 
-   * @param ctx The context to start from.
-   * @return The node identifier, or null if none was found.
-   */
-  protected static String getNodeIdFromChildSimpleNodeReferenceContext(ParserRuleContext ctx) {
+  protected static String getFieldId(AbsoluteFieldReferenceContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    return ctx.reference.reference.simpleFieldReference().fieldId.getText();
+  }
 
-    if (ctx instanceof SimpleNodeReferenceContext) {
-      return ((SimpleNodeReferenceContext) ctx).NodeId().getText();
+  protected static String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    return ctx.reference.reference.reference.reference.reference.simpleFieldReference().fieldId.getText();
+  }
+
+  protected static String getFieldId(FieldContextContext ctx) {
+    if (ctx == null) {
+      return null;
     }
 
-    for (ParseTree child : ctx.children) {
-      if (child instanceof ParserRuleContext) {
-        String nodeId = getNodeIdFromChildSimpleNodeReferenceContext((ParserRuleContext) child);
-        if (nodeId != null) {
-          return nodeId;
-        }
-      }
+    if (ctx.absoluteFieldReference() != null) {
+      return getFieldId(ctx.absoluteFieldReference());
     }
 
+    if (ctx.fieldReferenceWithPredicate() != null) {
+      return getFieldId(ctx.fieldReferenceWithPredicate());
+    }
+
+    assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
+  }
+
+  protected static String getFieldId(FieldReferenceWithPredicateContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    return ctx.fieldReferenceWithAxis().simpleFieldReference().fieldId.getText();
+  }
+
+  protected static String getNodeId(NodeReferenceContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+
+    if (ctx.absoluteNodeReference() != null) {
+      return getNodeId(ctx.absoluteNodeReference().nodeReferenceWithPredicate());
+    }
+
+    if (ctx.nodeReferenceInOtherNotice() != null) {
+      return getNodeId(ctx.nodeReferenceInOtherNotice().nodeReferenceWithPredicate());
+    }
+
+    assert false : "Unexpected context type for node reference: " + ctx.getClass().getSimpleName();
+    return null;
+  }
+
+  protected static String getNodeId(NodeContextContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+
+    if (ctx.absoluteNodeReference() != null) {
+      return getNodeId(ctx.absoluteNodeReference().nodeReferenceWithPredicate());
+    }
+
+    if (ctx.nodeReferenceWithPredicate() != null) {
+      return getNodeId(ctx.nodeReferenceWithPredicate());
+    }
+
+    assert false : "Unexpected context type for node reference: " + ctx.getClass().getSimpleName();
+    return null;
+  }
+
+  protected static String getNodeId(NodeReferenceWithPredicateContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    return ctx.simpleNodeReference().NodeId().getText();
   }
 
   @Override
@@ -734,14 +757,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path));
     if (ctx.fieldContext() != null) {
-      final String contextFieldId =
-          getFieldIdFromChildSimpleFieldReferenceContext(ctx.fieldContext());
+      final String contextFieldId = getFieldId(ctx.fieldContext());
       this.efxContext.declareContextVariable(variable.name,
           new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
               this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
     } else if (ctx.nodeContext() != null) {
       final String contextNodeId =
-          getNodeIdFromChildSimpleNodeReferenceContext(ctx.nodeContext());
+          getNodeId(ctx.nodeContext());
       this.efxContext.declareContextVariable(variable.name,
           new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
               this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
@@ -994,12 +1016,15 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    */
   @Override
   public void enterPredicate(EfxParser.PredicateContext ctx) {
-    final String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.getParent());
-    if (nodeId != null) {
+    var parent = ctx.getParent();
+    if (parent instanceof NodeReferenceWithPredicateContext) {
+      final String nodeId = getNodeId((NodeReferenceWithPredicateContext) parent);
       this.efxContext.pushNodeContext(nodeId);
-    } else {
-      final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.getParent());
+    } else if (parent instanceof FieldReferenceWithPredicateContext) {
+      final String fieldId = getFieldId((FieldReferenceWithPredicateContext) parent);
       this.efxContext.pushFieldContext(fieldId);
+    } else {
+      throw new ParseCancellationException("Unexpected parent context for predicate: " + parent.getClass().getSimpleName());
     }
   }
 
@@ -1056,7 +1081,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
 
     PathExpression path = this.stack.pop(PathExpression.class);
-    String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+    String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
           this.symbols.getRelativePath(
@@ -1071,7 +1096,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
-    String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+    String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
           this.symbols.getRelativePath(
@@ -1107,7 +1132,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitContextFieldSpecifier(ContextFieldSpecifierContext ctx) {
     this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                           // the context field.
-    final String contextFieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.field);
+    final String contextFieldId = getFieldId(ctx.fieldContext());
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
             this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
@@ -1136,7 +1161,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitContextNodeSpecifier(ContextNodeSpecifierContext ctx) {
     this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
                                           // the context node.
-    final String contextNodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx.node);
+    final String contextNodeId = getNodeId(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
             this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
@@ -1793,7 +1818,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         return;
       }
 
-      String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+      String fieldId = getFieldId(ctx.fieldReference());
       String fieldType = eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(fieldId));
 
       // Insert the type cast
@@ -1832,7 +1857,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       }
 
       // Find the referenced field and get its type
-      String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
+      String fieldId = getFieldId(ctx.fieldReference());
       String fieldType = eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(fieldId));
 
       if (fieldType != null) {

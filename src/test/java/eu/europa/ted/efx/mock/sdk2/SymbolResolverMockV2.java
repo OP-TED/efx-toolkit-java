@@ -62,8 +62,8 @@ public class SymbolResolverMockV2
   protected Map<String, SdkNodeV2> createNodeById() {
     return Map.ofEntries(
         entry("ND-Root", new SdkNodeV2("ND-Root", null, "/*", "/*", false, "Root")),
-        entry("ND-SubNode",
-            new SdkNodeV2("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false, "SubNode")));
+        entry("ND-SubNode", new SdkNodeV2("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false, "SubNode")),
+        entry("ND-SubSubNode", new SdkNodeV2("ND-SubSubNode", "ND-SubNode", "/*/SubNode/SubSubNode", "SubSubNode", false, "SubSubNode")));
   }
 
   @Override

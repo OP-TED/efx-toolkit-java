@@ -64,6 +64,7 @@ import eu.europa.ted.efx.model.variables.ParsedParameters;
 import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
+import eu.europa.ted.efx.sdk2.EfxExpressionTranslatorV2.ExpressionPreprocessor;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanFunctionDeclarationContext;
@@ -113,6 +114,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.TimeParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.WhenDisplayTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.WhenInvokeTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxTemplateTranslatorV2.TemplatePreprocessor;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV2} to provide additional
@@ -772,16 +774,21 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         break;
       default:
         PathExpression contextPath = this.stack.pop(PathExpression.class);
-        String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-        if (fieldId != null) {
-          Variable contextVariable = this.getContextVariable(ctx, contextPath);
-          if (contextVariable != null) {
-            this.stack.peek(Variables.class).add(contextVariable);
+        if (ctx.fieldContext() != null) {
+          String fieldId = getFieldId(ctx.fieldContext());
+          assert fieldId != null : "We should have been able to locate the FieldId declared as context.";
+          this.exitFieldContextDeclaration(fieldId, contextPath, null);
+        } else if (ctx.contextVariableInitializer() != null) {
+          Variable contextVariable = this.getContextVariable(ctx.contextVariableInitializer(), contextPath);
+          assert contextVariable != null : "We should have been able to locate the ContextVariable declared as context.";
+          this.stack.peek(Variables.class).add(contextVariable);
+          if (ctx.contextVariableInitializer().fieldContext() != null) {
+            String fieldId = getFieldId(ctx.contextVariableInitializer().fieldContext());
+            this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
           }
-          this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
-        } else {
-          String nodeId = getNodeIdFromChildSimpleNodeReferenceContext(ctx);
-          assert nodeId != null : "We should have been able to locate the FieldId or NodeId declared as context.";
+        } else if (ctx.nodeContext() != null) {
+          String nodeId = getNodeId(ctx.nodeContext());
+          assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
           this.exitNodeContextDeclaration(nodeId, contextPath);
         }
         break;
@@ -827,13 +834,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.efxContext.push(new NodeContext(nodeId, contextPath));
   }
 
-  private Variable getContextVariable(ContextDeclarationContext ctx,
+  private Variable getContextVariable(ContextVariableInitializerContext ctx,
       PathExpression contextPath) {
-    if (ctx.contextVariableInitializer() == null) {
+    if (ctx == null) {
       return null;
     }
 
-    final String variableName = ctx.contextVariableInitializer().variableName.getText();
+    final String variableName = ctx.variableName.getText();
     final Class<? extends TypedExpression> variableType = contextPath.getClass();
 
     return new Variable(variableName,
@@ -1087,15 +1094,19 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       return childContext;
     }
 
+    PathExpression parentContextAbsolutePath = parentContext.isFieldContext()
+        ? this.symbols.getAbsolutePathOfField(parentContext.symbol())
+        : this.symbols.getAbsolutePathOfNode(parentContext.symbol());
+
     if (childContext.isFieldContext()) {
       return new FieldContext(childContext.symbol(), childContext.absolutePath(),
-          this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()), childContext.variable());
+          this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
     }
 
     assert childContext.isNodeContext() : "Child context should be either a FieldContext NodeContext.";
 
     return new NodeContext(childContext.symbol(), childContext.absolutePath(),
-        this.symbols.getRelativePath(childContext.absolutePath(), parentContext.absolutePath()));
+        this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath));
   }
 
   // #endregion Template lines  -----------------------------------------------
@@ -1173,15 +1184,14 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
-      final String fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx);
-      if (fieldId != null) {
-        final ContextVariableInitializerContext initializer = ctx.contextVariableInitializer();
-        if (initializer != null) {
-          var t = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
-          this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), PathExpression.instantiate("", t),
-              PathExpression.instantiate("", t)));
-        }
+      final var initializer = ctx.contextVariableInitializer();
+      if (initializer == null || initializer.fieldContext() == null) {
+        return; // No context variable initializer, nothing to do during pre-processing.
       }
+      final String fieldId = getFieldId(initializer.fieldContext());
+      var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
+      this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
+          PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
     }
 
     @Override
@@ -1289,7 +1299,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
       var dictionaryName = ctx.dictionaryName.getText();
-      var fieldId = getFieldIdFromChildSimpleFieldReferenceContext(ctx.fieldContext());
+      var fieldId = getFieldId(ctx.fieldContext());
       var field = this.symbols.getAbsolutePathOfField(fieldId);
       this.stack.declareGlobalIdentifier(new Dictionary(dictionaryName, field, StringExpression.empty()));
     }
