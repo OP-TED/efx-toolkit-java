@@ -18,7 +18,7 @@ NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit
 
 ## EFX-2 Support
 
-The new version of EFX is still under development and will be released with SDK 2.0.0. For more information of EFX-2 see the release notes of the eForms SDK 2.0.0-alpha.1.
+The new version of EFX is still under development and will be released with SDK 2.0.0. For more information on EFX-2 see the release notes of the eForms SDK 2.0.0-alpha.1.
 
 ## Breaking changes
 
@@ -49,4 +49,4 @@ This version of the EFX Toolkit has a compile-time dependency on the following v
 - eForms SDK 1.x.x
 - eForms SDK 2.0.0-alpha.1
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.4.0.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.5.0.
