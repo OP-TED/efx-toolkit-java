@@ -1,4 +1,4 @@
-# EFX Toolkit 2.0.0-alpha.4 Release Notes
+# EFX Toolkit 2.0.0-alpha.5 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
@@ -6,11 +6,7 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ## In this release
 
-This release fixes an a bug that caused variables and parameters to be in the wrong order in the generated XSL.
-
-A "qualifier" parameter was added in various methods, to allow the use of the corresponding new feature in the eForms Core Library 1.4.0.
-
-The dependency on ANTLR was updated to version 4.13.1.
+This release fixes an a bug that could result in incorrect context computation for EFX template lines when the same field or node was used as both the parent and child line's context using different predicates. The EFX template translator now correctly calculates the child context,  ignoring the predicate of the parent context.
 
 
 ## EFX-1 Support
