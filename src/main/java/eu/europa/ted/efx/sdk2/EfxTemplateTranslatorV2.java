@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
-import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
@@ -52,17 +52,17 @@ import eu.europa.ted.efx.model.templates.Conditional;
 import eu.europa.ted.efx.model.templates.Conditionals;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
-import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.templates.TemplateDefinition;
 import eu.europa.ted.efx.model.templates.TemplateInvocation;
+import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Dictionary;
 import eu.europa.ted.efx.model.variables.Function;
+import eu.europa.ted.efx.model.variables.StrictArguments;
 import eu.europa.ted.efx.model.variables.Identifier;
 import eu.europa.ted.efx.model.variables.ParsedParameter;
 import eu.europa.ted.efx.model.variables.ParsedParameters;
-import eu.europa.ted.efx.model.variables.StrictArguments;
 import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
@@ -80,6 +80,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.DateFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DictionaryDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DictionaryIndexClauseContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DictionaryKeyClauseContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
@@ -89,6 +91,12 @@ import eu.europa.ted.efx.sdk2.EfxParser.IndentationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.InvokeTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedExpressionBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedExpressionTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedLabelBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedLabelTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedTextBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedTextTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NavigationSectionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericParameterDeclarationContext;
@@ -106,8 +114,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.StringFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.SummarySectionContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateDefinitionContext;
+import eu.europa.ted.efx.sdk2.EfxParser.TemplateDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateLineContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableDeclarationContext;
@@ -797,11 +805,15 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           if (ctx.contextVariableInitializer().fieldContext() != null) {
             String fieldId = getFieldId(ctx.contextVariableInitializer().fieldContext());
             this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
+          } else if (ctx.contextVariableInitializer().nodeContext() != null) {
+            String nodeId = getNodeId(ctx.contextVariableInitializer().nodeContext());
+            assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
+            this.exitNodeContextDeclaration(nodeId, contextPath, contextVariable);
           }
         } else if (ctx.nodeContext() != null) {
           String nodeId = getNodeId(ctx.nodeContext());
           assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
-          this.exitNodeContextDeclaration(nodeId, contextPath);
+          this.exitNodeContextDeclaration(nodeId, contextPath, null);
         }
         break;
     }
@@ -814,7 +826,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (currentContext.isFieldContext()) {
       this.exitFieldContextDeclaration(symbol, contextPath, null);
     } else if (currentContext.isNodeContext()) {
-      this.exitNodeContextDeclaration(symbol, contextPath);
+      this.exitNodeContextDeclaration(symbol, contextPath, currentContext.variable());
     }
   }
 
@@ -825,25 +837,30 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (parentContext.isFieldContext()) {
       this.exitFieldContextDeclaration(symbol, contextPath, null);
     } else if (parentContext.isNodeContext()) {
-      this.exitNodeContextDeclaration(symbol, contextPath);
+      this.exitNodeContextDeclaration(symbol, contextPath, parentContext.variable());
     }
   }
 
   private void exitRootContextDeclaration() {
     PathExpression contextPath = new NodePathExpression("/*");
     String symbol = "ND-Root";
-    this.exitNodeContextDeclaration(symbol, contextPath);
+    this.exitNodeContextDeclaration(symbol, contextPath, null);
   }
 
   private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable contextVariable) {
     this.efxContext.push(new FieldContext(fieldId, contextPath, contextVariable));
     if (contextVariable != null) {
       this.stack.declareIdentifier(contextVariable);
+      this.efxContext.declareContextVariable(contextVariable.name, new FieldContext(fieldId, contextPath, contextVariable));
     }
   }
 
-  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath) {
-    this.efxContext.push(new NodeContext(nodeId, contextPath));
+  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath, Variable contextVariable) {
+    this.efxContext.push(new NodeContext(nodeId, contextPath, contextVariable));
+    if (contextVariable != null) {
+      this.stack.declareIdentifier(contextVariable);
+      this.efxContext.declareContextVariable(contextVariable.name, new NodeContext(nodeId, contextPath, contextVariable));
+    }
   }
 
   private Variable getContextVariable(ContextVariableInitializerContext ctx,
@@ -1227,13 +1244,21 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
       final var initializer = ctx.contextVariableInitializer();
-      if (initializer == null || initializer.fieldContext() == null) {
+      if (initializer == null) {
         return; // No context variable initializer, nothing to do during pre-processing.
       }
-      final String fieldId = getFieldId(initializer.fieldContext());
-      var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
-      this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
-          PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
+      if (initializer.fieldContext() != null) {
+        final String fieldId = getFieldId(initializer.fieldContext());
+        var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
+        this.stack.declareIdentifier(
+            new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
+                PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
+      }
+      if (initializer.nodeContext() != null) {
+        this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), NodePathExpression.empty(),
+            NodePathExpression.empty(), NodePathExpression.empty()));
+      }
+      return;
     }
 
     @Override
