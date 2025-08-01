@@ -415,9 +415,23 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   @Override
+  public void exitLinkedTextTemplate(LinkedTextTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup text = this.stack.pop(Markup.class);
+    this.stack.push(text.join(template));
+  }
+
+  @Override
   public void exitLabelTemplate(LabelTemplateContext ctx) {
     Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Markup label = ctx.labelBlock() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    this.stack.push(label.join(template));
+  }
+
+  @Override
+  public void exitLinkedLabelTemplate(LinkedLabelTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup label = this.stack.pop(Markup.class);
     this.stack.push(label.join(template));
   }
 
@@ -426,6 +440,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
     this.stack.push(this.markup.renderVariableExpression(expression, this.translatorContext).join(template));
+  }
+
+  @Override
+  public void exitLinkedExpressionTemplate(LinkedExpressionTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup link = this.stack.pop(Markup.class);
+    this.stack.push(link.join(template));
   }
 
   // #region New in EFX-2: Secondary templates --------------------------------
@@ -697,6 +718,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     StringExpression expression = this.stack.pop(StringExpression.class);
     this.stack.push(this.markup.renderLabelFromExpression(expression, quantity, this.translatorContext));
   }
+
 
   @Override
   public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
@@ -979,6 +1001,31 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   // #endregion Variable Initializers -----------------------------------------
+
+  // #region Hyperlinks -------------------------------------------------------
+
+  @Override
+  public void exitLinkedTextBlock(LinkedTextBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.markup.renderFreeText(ctx.textBlock().getText(), this.translatorContext);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  @Override
+  public void exitLinkedLabelBlock(LinkedLabelBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.stack.pop(Markup.class);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  @Override
+  public void exitLinkedExpressionBlock(LinkedExpressionBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.markup.renderVariableExpression(this.stack.pop(Expression.class), this.translatorContext);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  // #endregion Hyperlinks ----------------------------------------------------
 
   // #endregion New in EFX-2 --------------------------------------------------
 
