@@ -221,6 +221,15 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${version.javadoc.plugin}</version>
+          <configuration>
+            <doclint>all,-missing</doclint>
+            <sourceFileExcludes>
+              <exclude>**/EfxLexer.java</exclude>
+              <exclude>**/EfxParser.java</exclude>
+              <exclude>**/EfxListener.java</exclude>
+              <exclude>**/EfxBaseListener.java</exclude>
+            </sourceFileExcludes>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
