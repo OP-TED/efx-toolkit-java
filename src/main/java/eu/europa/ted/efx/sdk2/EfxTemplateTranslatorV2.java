@@ -708,6 +708,16 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.declareGlobalIdentifier(new Dictionary(name, match, key));
   }
 
+  @Override
+  public void exitDictionaryIndexClause(DictionaryIndexClauseContext ctx) {
+    this.efxContext.pushFieldContext(getFieldId(ctx.fieldContext()));
+  }
+
+  @Override
+  public void exitDictionaryKeyClause(DictionaryKeyClauseContext ctx) {
+    this.efxContext.pop();
+  }
+
   // #endregion New in EFX-2 --------------------------------------------------
 
   // #endregion Label Blocks #{...} -------------------------------------------
@@ -1366,7 +1376,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
       var dictionaryName = ctx.dictionaryName.getText();
-      var fieldId = getFieldId(ctx.fieldContext());
+      var fieldId = getFieldId(ctx.index.fieldContext());
       var field = this.symbols.getAbsolutePathOfField(fieldId);
       this.stack.declareGlobalIdentifier(new Dictionary(dictionaryName, field, StringExpression.empty()));
     }
