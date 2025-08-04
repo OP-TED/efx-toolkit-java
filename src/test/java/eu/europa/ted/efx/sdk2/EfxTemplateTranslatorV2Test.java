@@ -22,7 +22,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDefinition_InvokeTemplate() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let some-template(string:content) -> { text('Content: ')eval($content) }",
+            "TEMPLATES:",
+            "let some-template(string:content) -> { text('Content: ')eval($content) }",
             "let body02() -> { call(some-template(string:content='test')) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -35,7 +36,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDefinition_NestedInvokeTemplate() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let other-template(string:value) -> { text('Value: ')eval($value) }",
+            "TEMPLATES:",
+            "let other-template(string:value) -> { text('Value: ')eval($value) }",
             "let invoke-template(string:param) -> { call(other-template(string:value=$param)) }",
             "let body03() -> { call(invoke-template(string:param='test')) }",
             "MAIN:",
@@ -50,7 +52,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDefinition_ChooseTemplate() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let conditional-template(boolean:condition, string:value) -> { choose { when $condition: text('Condition met: ')eval($value), when $condition = false(): text('Condition not met'), otherwise: text('Unknown condition: ')eval($condition) } }",
+            "TEMPLATES:",
+            "let conditional-template(boolean:condition, string:value) -> { choose { when $condition: text('Condition met: ')eval($value), when $condition = false(): text('Condition not met'), otherwise: text('Unknown condition: ')eval($condition) } }",
             "let body02() -> { call(conditional-template(boolean:condition=true(), string:value='test')) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -66,7 +69,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDefinition_ParameterValidation() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let param-validation-template(string:param1, decimal:param2) -> { text('Valid parameters') }",
+            "TEMPLATES:",
+            "let param-validation-template(string:param1, decimal:param2) -> { text('Valid parameters') }",
             "let body02() -> { call(param-validation-template(string:param1='test', decimal:param2=42)) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -83,7 +87,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDeclaration_NoParameters() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let simple-template() -> { text('Hello World') }",
+            "TEMPLATES:",
+            "let simple-template() -> { text('Hello World') }",
             "let body02() -> { call(simple-template()) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -110,7 +115,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDeclaration_MultipleParameters() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let complex-template(string:first, decimal:second, boolean:third) -> { text('Values: ')eval($first)text(', ')eval($second)text(', ')eval($third) }",
+            "TEMPLATES:",
+            "let complex-template(string:first, decimal:second, boolean:third) -> { text('Values: ')eval($first)text(', ')eval($second)text(', ')eval($third) }",
             "let body02() -> { call(complex-template(string:first='test', decimal:second=42, boolean:third=true())) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -123,7 +129,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDeclaration_AllParameterTypes() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
+            "TEMPLATES:",
+            "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
             "let body02() -> { call(all-types-template(string:str='text', decimal:num=123, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D'))) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -136,7 +143,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTemplateDeclaration_SpecialCharactersInName() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let template-with-dashes(string:param) -> { text('Template: ')eval($param) }",
+            "TEMPLATES:",
+            "let template-with-dashes(string:param) -> { text('Template: ')eval($param) }",
             "let body02() -> { call(template-with-dashes(string:param='test')) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -152,42 +160,66 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateFragment_TextAndExpression() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Value is: ')eval(./normalize-space(text())) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value is: ')eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} Value is: ${BT-00-Text}"));
   }
 
   @Test
   void testTemplateFragment_TextAndLabel() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Field: ')label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Field: ')label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} Field: #{field|name|BT-00-Text}"));
   }
 
   @Test
   void testTemplateFragment_MixedContent() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Label: ')label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' Value: ')eval(./normalize-space(text()))text(' End') }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Label: ')label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' Value: ')eval(./normalize-space(text()))text(' End') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} Label: #{field|name|BT-00-Text} Value: ${BT-00-Text} End"));
   }
 
   @Test
   void testTemplateFragment_OnlyExpression() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { eval(./normalize-space(text())) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} ${BT-00-Text}"));
   }
 
   @Test
   void testTemplateFragment_OnlyLabel() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} #{field|name|BT-00-Text}"));
   }
 
   @Test
   void testTemplateFragment_MultipleExpressions() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { eval(./number())text(' + ')eval(./number())text(' = ')eval(./number() + ./number()) }\nMAIN:\nfor-each(/*/PathNode/NumberField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./number())text(' + ')eval(./number())text(' = ')eval(./number() + ./number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/NumberField).call(body01())"),
         translateTemplate("{BT-00-Number} ${BT-00-Number} + ${BT-00-Number} = ${BT-00-Number + BT-00-Number}"));
   }
 
@@ -196,42 +228,66 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTextBlock_SimpleText() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Simple text content') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Simple text content') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display Simple text content;"));
   }
 
   @Test
   void testTextBlock_WithWhitespace() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Text with   spaces') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Text with   spaces') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display   Text with   spaces  ;"));
   }
 
   @Test
   void testTextBlock_WithSpecialCharacters() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Text with special chars: &#60;&#62;&#38;&#34;&#39;') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Text with special chars: &#60;&#62;&#38;&#34;&#39;') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display Text with special chars: <>&#38;\"';"));
   }
 
   @Test
   void testTextBlock_MultipleTextBlocks() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('First block ')eval('')text(' Second block') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('First block ')eval('')text(' Second block') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display First block ${''} Second block;"));
   }
 
   @Test
   void testTextBlock_WithNewlines() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Line 1')line-break()text('Line 2')line-break()text('Line 3') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Line 1')line-break()text('Line 2')line-break()text('Line 3') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display Line 1 \\nLine 2\\n  Line 3;"));
   }
 
   @Test
   void testTextBlock_WithEscapedCharacters() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Text with quotes: &#34;&#39; and backslash: \\\\') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Text with quotes: &#34;&#39; and backslash: \\\\') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("display Text with quotes: \"' and backslash: \\\\;"));
   }
 
@@ -242,21 +298,33 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLinkedTextBlock() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('here is a ')hyperlink(text('Link'), 'http://example.com')text('. How about it?') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('here is a ')hyperlink(text('Link'), 'http://example.com')text('. How about it?') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("DISPLAY here is a Link@{'http://example.com'}. How about it?;"));
   }
 
   @Test
   void testLinkedLabelBlock() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('here is a linked label: ')hyperlink(label(concat('field', '|', 'name', '|', 'BT-00-Text')), 'http://example.com')text('. How about it?') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('here is a linked label: ')hyperlink(label(concat('field', '|', 'name', '|', 'BT-00-Text')), 'http://example.com')text('. How about it?') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("DISPLAY here is a linked label: #{field|name|BT-00-Text}@{'http://example.com'}. How about it?;"));
   }
 
     @Test
   void testLinkedExpressionBlock() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('here is a ')hyperlink(eval('multi word link'), 'http://example.com')text('. How about it?') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('here is a ')hyperlink(eval('multi word link'), 'http://example.com')text('. How about it?') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("DISPLAY here is a ${'multi word link'}@{'http://example.com'}. How about it?;"));
   }
 
@@ -313,8 +381,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testGlobals_NamedTemplates() {
     assertEquals(
         lines(
-            
-        "GLOBALS:",
+            "GLOBALS:",
             "string:t3='a'",
             "decimal:n1=12",
             "string:t1=$t3",
@@ -354,7 +421,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testInvokeTemplate_Nesting() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let some-template(string:t) -> { text('--')eval($t)text('--') }",
+            "TEMPLATES:",
+            "let some-template(string:t) -> { text('--')eval($t)text('--') }",
             "let body02(string:ctx1, string:tx) -> { #1: call(some-template(string:t=$tx))",
             "for-each(../StartDateField).call(body0201(string:ctx1=$ctx1, string:tx=$tx)) }",
             "let body0201(string:ctx1, string:tx) -> { text('Nested content allowed') }",
@@ -370,7 +438,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testGlobals_NoTemplateLines() {
     assertEquals(
         lines(
-          "GLOBALS:",
+            "GLOBALS:",
             "string:t3='a'",
             "decimal:n1=12",
             "string:t1=$t3",
@@ -408,7 +476,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testDisplayTemplate() {
     assertEquals(
         lines(
-          "GLOBALS:",
+            "GLOBALS:",
             "string:t='test'",
             "TEMPLATES:",
             "let body01() -> { text('this is a ')eval($t) }",
@@ -424,7 +492,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_NoIndentation() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('foo') }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('foo') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text} foo"));
   }
 
@@ -433,15 +505,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
    */
   @Test
   void testTemplateLine_AutogeneratedOutline() {
-    assertEquals(lines("TEMPLATES:",
-    "let body01() -> { #1: text('Implicit 1 (shown)')",
-        "for-each(../..).call(body0101()) }",
-        "let body0101() -> { #1.1: text('Implicit 1.1 (shown)')",
-        "for-each(PathNode/NumberField).call(body010101()) }",
-        "let body010101() -> { text('Implicit 1.1.1 (hidden)') }",
-        "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(lines("{BT-00-Text} Implicit 1 (shown)", "\t{ND-Root} Implicit 1.1 (shown)", "\t\t{BT-00-Number} Implicit 1.1.1 (hidden)")));
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { #1: text('Implicit 1 (shown)')",
+            "for-each(../..).call(body0101()) }",
+            "let body0101() -> { #1.1: text('Implicit 1.1 (shown)')",
+            "for-each(PathNode/NumberField).call(body010101()) }",
+            "let body010101() -> { text('Implicit 1.1.1 (hidden)') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "{BT-00-Text} Implicit 1 (shown)",
+            "\t{ND-Root} Implicit 1.1 (shown)",
+            "\t\t{BT-00-Number} Implicit 1.1.1 (hidden)")));
   }
 
   /**
@@ -450,16 +527,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
    */
   @Test
   void testTemplateLine_ExplicitOutline() {
-    assertEquals(lines("TEMPLATES:",
-        "let body01() -> { #2: text('foo')",
-        "for-each(../..).call(body0101()) }",
-        "let body0101() -> { #2.3: text('bar')",
-        "for-each(PathNode/NumberField).call(body010101()) }",
-        "let body010101() -> { text('foo') }",
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { #2: text('foo')",
+            "for-each(../..).call(body0101()) }",
+            "let body0101() -> { #2.3: text('bar')",
+            "for-each(PathNode/NumberField).call(body010101()) }",
+            "let body010101() -> { text('foo') }",
             "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(
-            lines("2 {BT-00-Text} foo", "\t3{ND-Root} bar", "\t\t{BT-00-Number} foo")));
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "2 {BT-00-Text} foo",
+            "\t3{ND-Root} bar",
+            "\t\t{BT-00-Number} foo")));
   }
 
   /**
@@ -469,15 +550,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
    */
   @Test
   void testTemplateLine_MixedOutline() {
-    assertEquals(lines("TEMPLATES:",
-        "let body01() -> { #2: text('foo')",
-        "for-each(../..).call(body0101()) }",
-        "let body0101() -> { #2.1: text('bar')",
-        "for-each(PathNode/NumberField).call(body010101()) }",
-        "let body010101() -> { text('foo') }",
-        "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(lines("2{BT-00-Text} foo", "\t{ND-Root} bar", "\t\t{BT-00-Number} foo")));
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { #2: text('foo')",
+            "for-each(../..).call(body0101()) }",
+            "let body0101() -> { #2.1: text('bar')",
+            "for-each(PathNode/NumberField).call(body010101()) }",
+            "let body010101() -> { text('foo') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "2{BT-00-Text} foo",
+            "\t{ND-Root} bar",
+            "\t\t{BT-00-Number} foo")));
   }
 
   /**
@@ -487,16 +573,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
    */
   @Test
   void testTemplateLine_SuppressedOutline() {
-    assertEquals(lines("TEMPLATES:",
-        "let body01() -> { #2: text('foo')",
-        "for-each(../..).call(body0101()) }",
-        "let body0101() -> { text('bar')",
-        "for-each(PathNode/NumberField).call(body010101()) }",
-        "let body010101() -> { text('foo') }",
-        "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(
-            lines("2{BT-00-Text} foo", "\t0{ND-Root} bar", "\t\t{BT-00-Number} foo")));
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { #2: text('foo')",
+            "for-each(../..).call(body0101()) }",
+            "let body0101() -> { text('bar')",
+            "for-each(PathNode/NumberField).call(body010101()) }",
+            "let body010101() -> { text('foo') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "2{BT-00-Text} foo",
+            "\t0{ND-Root} bar",
+            "\t\t{BT-00-Number} foo")));
   }
 
   /**
@@ -508,15 +598,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_SuppressedOutlineAtParent() {
     // Outline is ignored if the line has no children
-    assertEquals(lines("TEMPLATES:",
-        "let body01() -> { text('foo')",
-        "for-each(../..).call(body0101()) }",
-        "let body0101() -> { #1: text('bar')",
-        "for-each(PathNode/NumberField).call(body010101()) }",
-        "let body010101() -> { text('foo') }",
-        "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(lines("0{BT-00-Text} foo", "\t{ND-Root} bar", "\t\t{BT-00-Number} foo")));
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('foo')",
+            "for-each(../..).call(body0101()) }",
+            "let body0101() -> { #1: text('bar')",
+            "for-each(PathNode/NumberField).call(body010101()) }",
+            "let body010101() -> { text('foo') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "0{BT-00-Text} foo",
+            "\t{ND-Root} bar",
+            "\t\t{BT-00-Number} foo")));
   }
 
   @Test
@@ -527,7 +622,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body0101() -> { text('bar') }", //
             "MAIN:", //
             "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(lines("{BT-00-Text} foo", "\t{BT-00-Text} bar")));
+        translateTemplate(lines(
+            "{BT-00-Text} foo",
+            "\t{BT-00-Text} bar")));
   }
 
   @Test
@@ -544,49 +641,58 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_LowerIndentation() {
     assertEquals(
-        lines("TEMPLATES:",
+        lines(
+            "TEMPLATES:",
             "let body01() -> { #1: text('foo')", "for-each(.).call(body0101()) }",
             "let body0101() -> { text('bar') }",
             "let body02() -> { text('code') }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())",
             "for-each(/*/PathNode/CodeField).call(body02())"),
-        translateTemplate(lines("{BT-00-Text} foo", "\t{BT-00-Text} bar", "{BT-00-Code} code")));
+        translateTemplate(lines(
+            "{BT-00-Text} foo",
+            "\t{BT-00-Text} bar",
+            "{BT-00-Code} code")));
   }
 
   @Test
   void testTemplateLine_LineJoining() {
     assertEquals(
-        lines("TEMPLATES:",
+        lines(
+            "TEMPLATES:",
             "let body01() -> { #1: text('foo')", "for-each(.).call(body0101()) }",
             "let body0101() -> { text('bar joined more') }",
             "let body02() -> { text('code') }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())",
             "for-each(/*/PathNode/CodeField).call(body02())"),
-        translateTemplate(lines("{BT-00-Text} foo", "\t{BT-00-Text} bar \\ \n  joined \\\n\\\nmore",
+        translateTemplate(lines(
+            "{BT-00-Text} foo",
+            "\t{BT-00-Text} bar \\ \n  joined \\\n\\\nmore",
             "{BT-00-Code} code")));
   }
 
   @Test
   void testTemplateLine_VariableScope() {
     assertEquals(
-        lines("TEMPLATES:", //
+        lines(
+            "TEMPLATES:", //
             "let body01() -> { #1: eval(for $x in ./normalize-space(text()) return $x)", //
             "for-each(.).call(body0101()) }", //
             "let body0101() -> { eval(for $x in ./normalize-space(text()) return $x) }", //
             "MAIN:", //
             "for-each(/*/PathNode/TextField).call(body01())"), //
-        translateTemplate(lines("{BT-00-Text} ${for text:$x in BT-00-Text return $x}",
+        translateTemplate(lines(
+            "{BT-00-Text} ${for text:$x in BT-00-Text return $x}",
             "    {BT-00-Text} ${for text:$x in BT-00-Text return $x}")));
-
   }
 
   @Test
   void testTemplateLine_ContextVariable() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let body01(string:xyz, string:ctx, string:t) -> { #1: eval(for $x in ./normalize-space(text()) return concat($x, $t))", //
+            "TEMPLATES:",
+            "let body01(string:xyz, string:ctx, string:t) -> { #1: eval(for $x in ./normalize-space(text()) return concat($x, $t))", //
             "for-each(.).call(body0101(string:xyz=$xyz, string:ctx=$ctx, string:t=$t, string:t2='test'))", //
             "for-each(.).call(body0102(string:xyz=$xyz, string:ctx=$ctx, string:t=$t, string:t2='test3')) }", //
             "let body0101(string:xyz, string:ctx, string:t, string:t2) -> { #1.1: eval(for $y in ./normalize-space(text()) return concat($y, $t, $t2))", //
@@ -638,21 +744,33 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_SecondaryTemplate() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))line-break()text('some text') }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))line-break()text('some text') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n some text"));
   }
 
   @Test
   void testTemplateLine_LineBreak() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))line-break() }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))line-break() }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text} \\n"));
   }
 
   @Test
   void testTemplateLine_EndOfLineComments() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' blah blah') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' blah blah') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("{ND-Root} #{name|BT-00-Text} blah blah // comment blah blah"));
   }
 
@@ -681,31 +799,32 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testOtherSections_SummarySection() {
     assertEquals(
-        lines("TEMPLATES:",
-        "let body01() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "let summary01() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "let summary02() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "let summary03() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "let nav01() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "let nav02() -> { text('Summary: ')eval(./normalize-space(text())) }",
-        "MAIN:",
-        "for-each(/*/PathNode/TextField).call(body01())",
-        "SUMMARY:",
-        "for-each(/*/PathNode/TextField).call(summary01())",
-        "for-each(/*/PathNode/TextField).call(summary02())",
-        "for-each(/*/PathNode/TextField).call(summary03())",
-        "NAV:",
-        "for-each(/*/PathNode/TextField).call(nav01())",
-        "for-each(/*/PathNode/TextField).call(nav02())"
-        ),
-        translateTemplate(lines("{BT-00-Text} Summary: ${BT-00-Text}",
-        "--- SUMMARY ---",
-        "{BT-00-Text} Summary: ${BT-00-Text}",
-        "{BT-00-Text} Summary: ${BT-00-Text}",
-        "{BT-00-Text} Summary: ${BT-00-Text}",
-        "--- NAVIGATION ---",
-        "{BT-00-Text} Summary: ${BT-00-Text}",
-        "{BT-00-Text} Summary: ${BT-00-Text}")));
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "let summary01() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "let summary02() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "let summary03() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "let nav01() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "let nav02() -> { text('Summary: ')eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())",
+            "SUMMARY:",
+            "for-each(/*/PathNode/TextField).call(summary01())",
+            "for-each(/*/PathNode/TextField).call(summary02())",
+            "for-each(/*/PathNode/TextField).call(summary03())",
+            "NAV:",
+            "for-each(/*/PathNode/TextField).call(nav01())",
+            "for-each(/*/PathNode/TextField).call(nav02())"),
+        translateTemplate(lines(
+            "{BT-00-Text} Summary: ${BT-00-Text}",
+            "--- SUMMARY ---",
+            "{BT-00-Text} Summary: ${BT-00-Text}",
+            "{BT-00-Text} Summary: ${BT-00-Text}",
+            "{BT-00-Text} Summary: ${BT-00-Text}",
+            "--- NAVIGATION ---",
+            "{BT-00-Text} Summary: ${BT-00-Text}",
+            "{BT-00-Text} Summary: ${BT-00-Text}")));
   }
 
   // #endregion otherSections -------------------------------------------------
@@ -715,42 +834,66 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLabelBlock_StandardLabelReference() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text}"));
   }
 
   @Test
   void testLabelBlock_StandardLabelReferenceWithPluraliser() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'), ../NumberField/number()) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text'), ../NumberField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{field|name|BT-00-Text;${BT-00-Number}}"));
   }
 
   @Test
   void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('auxiliary', '|', 'text', '|', 'value')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('auxiliary', '|', 'text', '|', 'value')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{auxiliary|text|value}"));
   }
 
   @Test
   void testLabelBlock_ComputedLabelReference() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(string-join(('field','|','name','|','BT-00-Text'), ', ')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(string-join(('field','|','name','|','BT-00-Text'), ', ')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{${string-join(('field', '|', 'name', '|', 'BT-00-Text'), ', ')}}"));
   }
 
   @Test
   void testLabelBlock_ShorthandBtLabelReference() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('business-term', '|', 'name', '|', 'BT-00')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('business-term', '|', 'name', '|', 'BT-00')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{name|BT-00}"));
   }
 
   @Test
   void testLabelBlock_ShorthandFieldLabelReference() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{name|BT-00-Text}"));
   }
 
@@ -763,42 +906,66 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceForIndicator() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator'))) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator'))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-Indicator}"));
   }
 
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceForCode() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ../CodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../CodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-Code}"));
   }
 
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceForInternalCode() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ../InternalCodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../InternalCodeField/normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-Internal-Code}"));
   }
 
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceForCodeAttribute() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ../CodeField/@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../CodeField/@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceForCodeAttributeWithSameAttributeInContext() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ../@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/CodeField/@attribute).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField/@attribute).call(body01())"),
         translateTemplate("{BT-00-CodeAttribute}  #{BT-00-CodeAttribute}"));
   }
 
   @Test
   void testShorthandIndirectLabelReferenceForCodeAttribute_WithSameElementInContext() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ./@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/CodeField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ./@attribute return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code}  #{BT-00-CodeAttribute}"));
   }
 
@@ -817,14 +984,22 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Indicator')) }\nMAIN:\nfor-each(/*/PathNode/IndicatorField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Indicator')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/IndicatorField).call(body01())"),
         translateTemplate("{BT-00-Indicator}  #{name}"));
   }
 
   @Test
   void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndCodeField() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Code')) }\nMAIN:\nfor-each(/*/PathNode/CodeField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Code')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code}  #{name}"));
   }
 
@@ -837,7 +1012,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testShorthandLabelReferenceFromContext_WithOtherLabelType() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{name}"));
   }
 
@@ -850,14 +1029,22 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLabelBlock_ShorthandLabelReferenceFromContext_WithNodeContext() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(concat('node', '|', 'name', '|', 'ND-Root')) }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(concat('node', '|', 'name', '|', 'ND-Root')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("{ND-Root}  #{name}"));
   }
 
   @Test
   void testLabelBlock_ShorthandIndirectLabelReferenceFromContextField() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }\nMAIN:\nfor-each(/*/PathNode/CodeField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code} #value"));
   }
 
@@ -869,28 +1056,44 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLabelBlock_Expression_AssetId() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:assetId) -> { label(concat('field', '|', 'name', '|', $assetId)) }\nMAIN:\nfor-each(/*).call(body01(string:assetId='BT-00-Text'))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:assetId) -> { label(concat('field', '|', 'name', '|', $assetId)) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:assetId='BT-00-Text'))"),
         translateTemplate("{/, text:$assetId='BT-00-Text'}  #{field|name|${$assetId}}"));
   }
 
   @Test
   void testLabelBlock_Expression_LabelType() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:labelType) -> { label(concat('field', '|', $labelType, '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*).call(body01(string:labelType='name'))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:labelType) -> { label(concat('field', '|', $labelType, '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:labelType='name'))"),
         translateTemplate("{/, text:$labelType='name'}  #{field|${$labelType}|BT-00-Text}"));
   }
 
   @Test
   void testLabelBlock_Expression_AssetType() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:assetType) -> { label(concat($assetType, '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*).call(body01(string:assetType='field'))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:assetType) -> { label(concat($assetType, '|', 'name', '|', 'BT-00-Text')) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:assetType='field'))"),
         translateTemplate("{/, text:$assetType='field'}  #{${$assetType}|name|BT-00-Text}"));
   }
 
   @Test
   void testLabelBlock_Expression_NestedExpressions() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:assetType, string:labelType, string:assetId) -> { label(concat($assetType, '|', $labelType, '|', $assetId)) }\nMAIN:\nfor-each(/*).call(body01(string:assetType='field', string:labelType='name', string:assetId='BT-00-Text'))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:assetType, string:labelType, string:assetId) -> { label(concat($assetType, '|', $labelType, '|', $assetId)) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:assetType='field', string:labelType='name', string:assetId='BT-00-Text'))"),
         translateTemplate(
             "{/, text:$assetType='field', text:$labelType='name', text:$assetId='BT-00-Text'}  #{${$assetType}|${$labelType}|${$assetId}}"));
   }
@@ -902,14 +1105,22 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testExpressionBlock_ShorthandFieldValueReferenceFromContextField() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { eval(./normalize-space(text())) }\nMAIN:\nfor-each(/*/PathNode/CodeField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code} $value"));
   }
 
   @Test
   void testExpressionBlock_ShorthandFieldValueReferenceFromContextField_WithText() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('blah ')label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)))text(' blah ')eval(./normalize-space(text()))text(' blah') }\nMAIN:\nfor-each(/*/PathNode/CodeField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('blah ')label(distinct-values(for $item in ./normalize-space(text()) return concat('code', '|', 'name', '|', 'main-activity', '.', $item)))text(' blah ')eval(./normalize-space(text()))text(' blah') }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code} blah #value blah $value blah"));
   }
 
@@ -925,28 +1136,44 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testContextDeclarationBlock_ContextFieldVariable() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:ctx) -> { text('Context: ')eval($ctx) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01(string:ctx=.))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:ctx) -> { text('Context: ')eval($ctx) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01(string:ctx=.))"),
         translateTemplate("{context:$ctx = BT-00-Text} Context: ${$ctx}"));
   }
 
   @Test
   void testContextDeclarationBlock_ContextNodeVariable() {
     assertEquals(
-        "TEMPLATES:\nlet body01(context:ctx) -> { text('Context: ')eval($ctx/PathNode/TextField/normalize-space(text())) }\nMAIN:\nfor-each(/*).call(body01(context:ctx=.))",
+        lines(
+            "TEMPLATES:",
+            "let body01(context:ctx) -> { text('Context: ')eval($ctx/PathNode/TextField/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01(context:ctx=.))"),
         translateTemplate("{context:$ctx = ND-Root} Context: ${$ctx::BT-00-Text}"));
   }
 
   @Test
   void testContextDeclarationBlock_MultipleVariables() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:var1, decimal:var2) -> { text('Variables: ')eval($var1)text(', ')eval($var2) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01(string:var1='hello', decimal:var2=42))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:var1, decimal:var2) -> { text('Variables: ')eval($var1)text(', ')eval($var2) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01(string:var1='hello', decimal:var2=42))"),
         translateTemplate("{text:$var1='hello', number:$var2=42, BT-00-Text} Variables: ${$var1}, ${$var2}"));
   }
 
   @Test
   void testContextDeclarationBlock_VariableBeforeContext() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:prefix) -> { text('Prefix: ')eval($prefix)text(' Value: ')eval(./normalize-space(text())) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01(string:prefix='test'))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:prefix) -> { text('Prefix: ')eval($prefix)text(' Value: ')eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01(string:prefix='test'))"),
         translateTemplate("{text:$prefix='test', BT-00-Text} Prefix: ${$prefix} Value: ${BT-00-Text}"));
   }
 
@@ -964,7 +1191,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testChooseTemplate_WhenBlock_MultipleConditions() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let multi-when-template(string:status) -> { choose { when $status = 'active': text('Status: Active'), when $status = 'inactive': text('Status: Inactive'), when $status = 'pending': text('Status: Pending'), otherwise: text('Status: Unknown') } }",
+            "TEMPLATES:",
+            "let multi-when-template(string:status) -> { choose { when $status = 'active': text('Status: Active'), when $status = 'inactive': text('Status: Inactive'), when $status = 'pending': text('Status: Pending'), otherwise: text('Status: Unknown') } }",
             "let body02() -> { call(multi-when-template(string:status='active')) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -981,7 +1209,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testChooseTemplate_WhenBlock_ComplexBooleanExpressions() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let complex-when-template(decimal:value) -> { choose { when $value > 0 and $value < 100: text('In range'), when $value <= 0: text('Too low'), otherwise: text('Too high') } }",
+            "TEMPLATES:",
+            "let complex-when-template(decimal:value) -> { choose { when $value > 0 and $value < 100: text('In range'), when $value <= 0: text('Too low'), otherwise: text('Too high') } }",
             "let body02() -> { call(complex-when-template(decimal:value=50)) }",
             "MAIN:",
             "for-each(/*).call(body02())"),
@@ -997,7 +1226,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testChooseTemplate_OtherwiseBlock_InvokeTemplate() {
     assertEquals(
         lines(
-            "TEMPLATES:", "let fallback-template(string:reason) -> { text('Fallback: ')eval($reason) }",
+            "TEMPLATES:",
+            "let fallback-template(string:reason) -> { text('Fallback: ')eval($reason) }",
             "let otherwise-invoke-template(boolean:condition, string:reason) -> { choose { when $condition: text('Condition met'), otherwise: call(fallback-template(string:reason=$reason)) } }",
             "let body03() -> { call(otherwise-invoke-template(boolean:condition=false(), string:reason='default')) }",
             "MAIN:",
@@ -1013,7 +1243,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testChooseTemplate_WhenOtherwise() {
     assertEquals(
-        lines("TEMPLATES:",
+        lines(
+            "TEMPLATES:",
             "let some-template(string:txt) -> { text('&#62;')eval($txt)text('&#60;') }",
             "let body02(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: call(some-template(string:txt='1')), otherwise: text('foo-bar') } }",
             "let body03(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: text('foo-bar'), otherwise: call(some-template(string:txt='2')) } }",
@@ -1038,7 +1269,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testChooseTemplate_WhenNoOtherwise() {
     assertEquals(
-        lines("GLOBALS:",
+        lines(
+            "GLOBALS:",
             "string:t='text'",
             "TEMPLATES:",
             "let body01() -> { choose { when true(): eval(./normalize-space(text()))text(' is a ')eval($t), otherwise nothing } }",
@@ -1052,7 +1284,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testChooseTemplate_WhenNoOtherwiseNoContext() {
     assertEquals(
-        lines("GLOBALS:",
+        lines(
+            "GLOBALS:",
             "string:t='test'",
             "TEMPLATES:",
             "let body01() -> { choose { when true(): text('this is a ')eval($t), otherwise nothing } }",
@@ -1070,7 +1303,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateVariableList_WithAllDataTypes() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }\nMAIN:\nfor-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(
             "{/, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), measure:$dur=day-time-duration('P1D')} All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur}"));
   }
@@ -1078,7 +1315,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateVariableList_ExpressionInitializers() {
     assertEquals(
-        "TEMPLATES:\nlet body01(string:computed) -> { text('Computed: ')eval($computed) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01(string:computed=concat('prefix-', ./normalize-space(text()))))",
+        lines(
+            "TEMPLATES:",
+            "let body01(string:computed) -> { text('Computed: ')eval($computed) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01(string:computed=concat('prefix-', ./normalize-space(text()))))"),
         translateTemplate("{BT-00-Text, text:$computed=concat('prefix-', BT-00-Text)} Computed: ${$computed}"));
   }
 
@@ -1089,14 +1330,22 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateLine_OutlineNumber_Only() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('text') }\nMAIN:\nfor-each(/*).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('text') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
         translateTemplate("1 display text;"));
   }
 
   @Test
   void testTemplateLine_OutlineNumber_WithContext() {
     assertEquals(
-        "TEMPLATES:\nlet body01() -> { text('Value: ')eval(./normalize-space(text())) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(body01())",
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value: ')eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("1 {BT-00-Text} Value: ${BT-00-Text}"));
   }
 
@@ -1189,17 +1438,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   // #endregion IllegalArgumentException --------------------------------------
 
   @Test
-  void testContextulizer_WithPredicate() {
+  void testContextualizer_WithPredicate() {
     assertEquals(
-        lines("TEMPLATES:", 
-        "let body01() -> { #1: text('line1: ')eval(.[1 = 1]/normalize-space(text()))",
+        lines(
+            "TEMPLATES:", 
+            "let body01() -> { #1: text('line1: ')eval(.[1 = 1]/normalize-space(text()))",
             "for-each(.[1 = 2]).call(body0101()) }",
             "let body0101() -> { #1.1: text('line2: ')eval(.[1 = 4]/normalize-space(text()))",
             "for-each(.[1 = 4]).call(body010101()) }",
             "let body010101() -> { text('line3: ')eval(.[1 = 5]/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*/SubNode/SubSubNode/SubTextField[0 = 0]).call(body01())"),
-        translateTemplate(lines("{BT-01-SubSubNode-Text} line1: ${BT-01-SubSubNode-Text[1==1]}",
+        translateTemplate(lines(
+            "{BT-01-SubSubNode-Text} line1: ${BT-01-SubSubNode-Text[1==1]}",
             "  {BT-01-SubSubNode-Text[1==2]} line2: ${BT-01-SubSubNode-Text[1==4]}",
             "    {BT-01-SubSubNode-Text[1==4]} line3: ${BT-01-SubSubNode-Text[1==5]}")));
   }
@@ -1207,15 +1458,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testContextualizer_WithFieldInPredicate() {
     assertEquals(
-        lines("TEMPLATES:",
+        lines(
+            "TEMPLATES:",
             "let body01() -> { #1: text('line1')",
             "for-each(SubTextField).call(body0101()) }",
             "let body0101() -> { text('line2') }",
             "MAIN:",
             "for-each(/*/SubNode[SubTextField]).call(body01())"),
-        translateTemplate(lines("{ND-SubNode[BT-01-SubNode-Text is present]} line1",
+        translateTemplate(lines(
+            "{ND-SubNode[BT-01-SubNode-Text is present]} line1",
             "  {BT-01-SubNode-Text} line2")));
   }
-
-
 }
