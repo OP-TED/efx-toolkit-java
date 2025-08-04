@@ -84,7 +84,7 @@ public class EfxTranslator {
       final Path pathname, TranslatorOptions options)
       throws IOException, InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, dependencyFactory, options)
-        .renderTemplate(pathname);
+        .renderTemplate(pathname, options);
   }
 
   public static String translateTemplate(final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
@@ -98,7 +98,7 @@ public class EfxTranslator {
       final Path pathname, TranslatorOptions options)
       throws IOException, InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
-        .renderTemplate(pathname);
+        .renderTemplate(pathname, options);
   }
 
   /**
@@ -130,7 +130,7 @@ public class EfxTranslator {
       final String qualifier, final String template, TranslatorOptions options)
       throws InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
-        .renderTemplate(template);
+        .renderTemplate(template, options);
   }
 
   /**
@@ -164,7 +164,7 @@ public class EfxTranslator {
       final String qualifier, final InputStream stream, TranslatorOptions options)
       throws IOException, InstantiationException {
     return EfxTranslatorFactory.getEfxTemplateTranslator(sdkVersion, qualifier, dependencyFactory, options)
-        .renderTemplate(stream);
+        .renderTemplate(stream, options);
   }
 
   //#endregion Translate EFX templates ----------------------------------------
