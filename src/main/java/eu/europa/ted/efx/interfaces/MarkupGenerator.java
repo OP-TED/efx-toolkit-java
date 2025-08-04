@@ -355,7 +355,7 @@ public interface MarkupGenerator {
      * Given a fragment name (identifier), and an evaluation context, this method
      * returns the code that invokes the fragment.
      * @deprecated  This method is deprecated and will be removed in future versions.
-     *              Use {@link #renderFragmentInvocation(String, PathExpression, Set)} instead.
+     *              Use {@link #renderFragmentInvocation(String, Set, TranslatorContext)} instead.
      *              We are keeping the method temporarily to prevent build errors.
      *              This method is being deprecated as of version 2.0.0-alpha.6 and
      *              will be removed before version 2.0.0 is released.
