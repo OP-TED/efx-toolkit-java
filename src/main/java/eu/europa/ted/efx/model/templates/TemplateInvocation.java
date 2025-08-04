@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
+import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.variables.Variables;
 
@@ -26,7 +27,7 @@ public class TemplateInvocation extends ContentBlock {
    * Template invocations do not have own content or child content to render.
    */
   @Override
-  public List<Markup> renderDefinition(MarkupGenerator markupGenerator) {
+  public List<Markup> renderDefinition(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     return new ArrayList<Markup>() {
     };
   }
@@ -36,10 +37,10 @@ public class TemplateInvocation extends ContentBlock {
    * should net have access to local variables.
    */
   @Override
-  public Markup renderInvocation(MarkupGenerator markupGenerator) {
+  public Markup renderInvocation(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Argument> arguments = this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new));
-    var content = markupGenerator.renderFragmentInvocation(this.id, arguments);
+    var content = markupGenerator.renderFragmentInvocation(this.id, arguments, translatorContext);
     return markupGenerator.renderContextLoop(this.context.relativePath(), content, arguments);
   }
 }

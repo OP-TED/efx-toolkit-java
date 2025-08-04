@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -188,10 +188,6 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
     if (ctx.absoluteFieldReference() != null) {
       return getFieldId(ctx.absoluteFieldReference());
-    }
-
-    if (ctx.fieldReferenceWithFieldContextOverride() != null) {
-      return getFieldId(ctx.fieldReferenceWithFieldContextOverride().fieldReferenceWithPredicate());
     }
 
     if (ctx.fieldReferenceInOtherNotice() != null) {

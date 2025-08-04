@@ -38,22 +38,6 @@ import eu.europa.ted.efx.model.types.EfxDataType;
  */
 public interface MarkupGenerator {
 
-    /**
-     * Given a body (main content) and a set of fragments, this method returns the
-     * full content of the target template file.
-     * 
-     * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeOutputFile(List, List, List)} instead.
-     *             We are keeping the method temporarily to prevent build errors.
-     *             This method is being deprecated as of version 2.0.0-alpha.4 and
-     *             will be removed before version 2.0.0 is released
-     *  
-     * @param content   the body (main content) of the template.
-     * @param fragments the fragments to be included in the template file.
-     * @return          the full content of the target template file.
-     */
-    @Deprecated(since = "2.0.0-alpha.4", forRemoval = true)
-    Markup composeOutputFile(final List<Markup> content, final List<Markup> fragments);
 
     /**
      * Given a body (main content) and a set of fragments, this method returns the
@@ -62,11 +46,32 @@ public interface MarkupGenerator {
      * 
      * @param globals   the global variables and functions to be included in the
      *                  template file.
+     * @param mainSection   the main section (body) of the template.
+     * @param summarySection the summary section of the template.
+     * @param navigationSection the navigation section of the template.
+     * @param fragments the fragments to be included in the template file.
+     * @return          the full content of the target template file.
+     */
+    Markup composeOutputFile(List<Markup> globals, final List<Markup> mainSection, final List<Markup> summarySection, final List<Markup> navigationSection, final List<Markup> fragments);
+
+    /**
+     * Given a body (main content) and a set of fragments, this method returns the
+     * full content of the target template file.
+     * 
+     * @deprecated This method is deprecated and will be removed in future versions.
+     *             Use {@link #composeOutputFile(List, List, List, List, List)} instead.
+     *             We are keeping the method temporarily to prevent build errors.
+     *             This method is being deprecated as of version 2.0.0-alpha.6 and
+     *             will be removed before version 2.0.0 is released
+     *  
      * @param content   the body (main content) of the template.
      * @param fragments the fragments to be included in the template file.
      * @return          the full content of the target template file.
      */
-    Markup composeOutputFile(List<Markup> globals, final List<Markup> content, final List<Markup> fragments);
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup composeOutputFile(final List<Markup> content, final List<Markup> fragments) {
+        return this.composeOutputFile(List.of(), content, List.of(), List.of(), fragments);
+    }
 
     /**
      * Renders the markup necessary to declare and initialize the variable making it
@@ -116,10 +121,16 @@ public interface MarkupGenerator {
      * template.
      * 
      * @param   variableExpression the expression to be evaluated and rendered.
+     * @param   translatorContext additional context information provided by the template translator.
      * @return  the template code that dereferences the expression in the target
      *          template.
      */
-    Markup renderVariableExpression(final Expression variableExpression);
+    Markup renderVariableExpression(final Expression variableExpression, final TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderVariableExpression(final Expression variableExpression) {
+        return this.renderVariableExpression(variableExpression, TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given a label key (which will eventually, at runtime, be dereferenced to a
@@ -127,11 +138,18 @@ public interface MarkupGenerator {
      * method returns the template code that renders this label in the target
      * template language.
      * 
-     * @param key   the label key to be dereferenced.
-     * @return      the template code that renders the label in the target template
-     *              language.
+     * @param key     the label key to be dereferenced.
+     * @param translatorContext additional context information provided by the template
+     *                translator.
+     * @return the template code that renders the label in the target template
+     *         language.
      */
-    Markup renderLabelFromKey(final StringExpression key);
+    Markup renderLabelFromKey(final StringExpression key, TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderLabelFromKey(final StringExpression key) {
+            return this.renderLabelFromKey(key, TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given a label key (which will eventually, at runtime, be dereferenced to a
@@ -142,10 +160,16 @@ public interface MarkupGenerator {
      * @param key      the label key to be dereferenced.
      * @param quantity a numeric quantity used to decide if the label needs to be
      *                 pluralized.
+     * @param translatorContext  additional context information provided by the template translator.
      * @return         the template code that renders the label in the target template
      *                 language.
      */
-    Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity);
+    Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity, TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity) {
+        return this.renderLabelFromKey(key, quantity, TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given an expression (which will eventually, at runtime, be evaluated to a
@@ -155,10 +179,16 @@ public interface MarkupGenerator {
      * this label in the target template language.
      * 
      * @param   expression the expression that returns the label key.
+     * @param   translatorContext additional context information provided by the template translator.
      * @return  the template code that renders the label in the target template
      *          language.
      */
-    Markup renderLabelFromExpression(final Expression expression);
+    Markup renderLabelFromExpression(final Expression expression, TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderLabelFromExpression(final Expression expression) {
+        return this.renderLabelFromExpression(expression, TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given an expression (which will eventually, at runtime, be evaluated to a
@@ -170,10 +200,16 @@ public interface MarkupGenerator {
      * @param expression the expression that returns the label key.
      * @param quantity   a numeric quantity used to decide if the label needs to be
      *                   pluralized.
+     * @param translatorContext   additional context information provided by the template translator.
      * @return           the template code that renders the label in the target template
      *                   language.
      */
-    Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity);
+    Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity, TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity) {
+        return this.renderLabelFromExpression(expression, quantity, TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given a string of free text, this method returns the template code that adds
@@ -183,9 +219,27 @@ public interface MarkupGenerator {
      * {@link #escapeSpecialCharacters(String)} and then pass the escaped text to this method.
      * 
      * @param   freeText the free text to be rendered.
+     * @param   translatorContext additional context information provided by the template translator.
      * @return  the template code that adds this text in the target template.
      */
-    Markup renderFreeText(final String freeText);
+    Markup renderFreeText(final String freeText, TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderFreeText(final String freeText) {
+        return this.renderFreeText(freeText, TranslatorContext.DEFAULT);
+    }
+
+    /**
+     * Given a label and a URL, this method returns the template code that renders
+     * a hyperlink in the target template language.
+     *
+     * @param label  the label to be displayed for the hyperlink.
+     * @param url    the URL to be linked to.
+     * @param translatorContext additional context information provided by the template translator.
+     * @return the template code that renders the hyperlink in the target template language.
+     */
+    Markup renderHyperlink(final Markup label, final StringExpression url, TranslatorContext translatorContext);
+
 
     /**
      * Returns the markup that represents a line break in the target template.
@@ -196,7 +250,12 @@ public interface MarkupGenerator {
      * 
      * @return the markup that represents a line break in the target template.
      */
-    Markup renderLineBreak();
+    Markup renderLineBreak(TranslatorContext translatorContext);
+
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderLineBreak() {
+        return this.renderLineBreak(TranslatorContext.DEFAULT);
+    }
 
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
@@ -205,7 +264,7 @@ public interface MarkupGenerator {
      *     * @deprecated This method is deprecated and will be removed in future versions.
      *             Use {@link #composeFragmentDefinition(String, String, Set, Markup, Markup, Set)} instead.
      *             We are keeping the method temporarily to prevent build errors.
-     *             This method is being deprecated as of version 2.0.0-alpha.4 and
+     *             This method is being deprecated as of version 2.0.0-alpha.6 and
      *             will be removed before version 2.0.0 is released
      *             The default implementation provided here only throws
      *             UnsupportedOperationException to prevent accidental use of this
@@ -217,7 +276,7 @@ public interface MarkupGenerator {
      * @param parameters    the parameters of the fragment.
      * @return              the code that encapsulates the fragment in the target template.
      */
-    @Deprecated(since = "2.0.0-alpha.4", forRemoval = true)
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default Markup composeFragmentDefinition(final String name, String number, Markup content,
             Set<String> parameters) {
         throw new UnsupportedOperationException(
@@ -235,34 +294,20 @@ public interface MarkupGenerator {
      * @param content       the content of the fragment.
      * @param children      the children of the fragment.
      * @param parameters    the parameters of the fragment.
+     * @param translatorContext       additional context information provided by the template translator.
      * @return              the code that encapsulates the fragment in the target template.
      */
     Markup composeFragmentDefinition(final String name, String number, Set<Conditional> conditionals, Markup content, Markup children,
-            Set<Parameter> parameters);
+            Set<Parameter> parameters, TranslatorContext translatorContext);
 
-    /**
-     * Given a fragment name (identifier), and an evaluation context, this method
-     * returns the code that invokes the fragment.
-     *     * @deprecated  This method is deprecated and will be removed in future versions.
-     *              Use {@link #renderFragmentInvocation(String, PathExpression, Set)} instead.
-     *              We are keeping the method temporarily to prevent build errors.
-     *              This method is being deprecated as of version 2.0.0-alpha.4 and
-     *              will be removed before version 2.0.0 is released.
-     *              The default implementation provided here only throws
-     *              UnsupportedOperationException to prevent accidental use of this method.
-     * .            The EfxTemplateTranslator will not call this method.
-     *
-     * @param name      the name of the fragment.
-     * @param context   the context of the fragment.
-     * @param variables the variables of the fragment.
-     * @return          the code that invokes (uses) the fragment.
-     */
-    @Deprecated(since = "2.0.0-alpha.4", forRemoval = true)
-    default Markup renderFragmentInvocation(final String name, final PathExpression context,
-            final Set<Pair<String, String>> variables) {
-        throw new UnsupportedOperationException(
-                "This method is deprecated and will be removed in future versions. Use renderFragmentInvocation(String, Set<Argument>) instead.");
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup composeFragmentDefinition(final String name, String number, Set<Conditional> conditionals,
+                    Markup content, Markup children,
+                    Set<Parameter> parameters) {
+            return composeFragmentDefinition(name, number, conditionals, content, children, parameters,
+                            TranslatorContext.DEFAULT);
     }
+
 
     /**
      * Given a fragment name (identifier), and an evaluation context, this method
@@ -277,14 +322,64 @@ public interface MarkupGenerator {
      * 
      * @param name      the name of the fragment.
      * @param arguments the arguments of the fragment.
+     * @param translatorContext   additional context information provided by the template translator.
      * @return          the code that invokes (uses) the fragment.
      */
-    Markup renderFragmentInvocation(final String name, final Set<Argument> arguments);
+    Markup renderFragmentInvocation(final String name, final Set<Argument> arguments, TranslatorContext translatorContext);
+
+    /**
+     * Given a fragment name (identifier), and an evaluation context, this method
+     * returns the code that invokes the fragment.
+     * 
+     * The EfxTemplateTranslator will call this method to generate the
+     * fragment invocation code and then will pass the generated Markup to the
+     * {@link #renderContextLoop(PathExpression, Markup, Set)}.
+     * 
+     * In EFX to XSLT translation, this method would generate the xsl:call-template
+     * that will invoke the fragment.
+     * 
+     * @deprecated This method is deprecated and will be removed in future versions.
+     *             Use {@link #renderFragmentInvocation(String, Set, TranslatorContext)}
+     *             instead.
+     * 
+     * @param name      the name of the fragment.
+     * @param arguments the arguments of the fragment.
+     * @return          the code that invokes (uses) the fragment.
+     */
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default public Markup renderFragmentInvocation(final String name, final Set<Argument> arguments) {
+        return this.renderFragmentInvocation(name, arguments, TranslatorContext.DEFAULT);
+    }
+
+    /**
+     * Given a fragment name (identifier), and an evaluation context, this method
+     * returns the code that invokes the fragment.
+     * @deprecated  This method is deprecated and will be removed in future versions.
+     *              Use {@link #renderFragmentInvocation(String, PathExpression, Set)} instead.
+     *              We are keeping the method temporarily to prevent build errors.
+     *              This method is being deprecated as of version 2.0.0-alpha.6 and
+     *              will be removed before version 2.0.0 is released.
+     *              The default implementation provided here only throws
+     *              UnsupportedOperationException to prevent accidental use of this method.
+     * .            The EfxTemplateTranslator will not call this method.
+     *
+     * @param name      the name of the fragment.
+     * @param context   the context of the fragment.
+     * @param variables the variables of the fragment.
+     * @return          the code that invokes (uses) the fragment.
+     */
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default Markup renderFragmentInvocation(final String name, final PathExpression context,
+            final Set<Pair<String, String>> variables) {
+        throw new UnsupportedOperationException(
+                "This method is deprecated and will be removed in future versions. Use renderFragmentInvocation(String, Set<Argument>) instead.");
+    }
+
 
     /**
      * Given an evaluation context, and some pre-rendered content, this method returns the code that 
      * iterates over the context and repeats the content for each item in the context.
-     * As of version 2.0.0-alpha.4, the method composeFragmentInvocation(String, Set)
+     * As of version 2.0.0-alpha.6, the method composeFragmentInvocation(String, Set)
      * has been split into two methods:
      * 1. {@link #renderFragmentInvocation(String, Set)}
      *    for rendering the fragment invocation itself, which is the used by the

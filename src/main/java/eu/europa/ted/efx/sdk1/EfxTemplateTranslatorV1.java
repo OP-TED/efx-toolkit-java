@@ -22,6 +22,7 @@ import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
@@ -97,7 +98,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    */
   MarkupGenerator markup;
 
-  final ContentBlock rootBlock = ContentBlock.newRootBlock();
+  final ContentBlock rootBlock = ContentBlock.newRootBlock("block");
 
   /**
    * The block stack is used to keep track of the indentation of template lines and adjust the EFX
@@ -201,8 +202,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
     for (ContentBlock block : this.rootBlock.getChildren()) {
-      templateCalls.add(block.renderInvocation(markup));
-      templates.addAll(block.renderDefinition(markup));
+      templateCalls.add(block.renderInvocation(markup, TranslatorContext.DEFAULT));
+      templates.addAll(block.renderDefinition(markup, TranslatorContext.DEFAULT));
     }
     Markup file = this.markup.composeOutputFile(templateCalls, templates);
     this.stack.push(file);
@@ -217,7 +218,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text)).join(template));
+    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text), TranslatorContext.DEFAULT).join(template));
   }
 
   @Override
@@ -233,7 +234,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     Markup template =
         ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
-    this.stack.push(this.markup.renderVariableExpression(expression).join(template));
+    this.stack.push(this.markup.renderVariableExpression(expression, TranslatorContext.DEFAULT).join(template));
   }
 
 
@@ -280,7 +281,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), TranslatorContext.DEFAULT));
   }
 
   /**
@@ -312,7 +313,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                     this.script.getStringLiteralFromUnquotedString("|"),
                     new StringExpression(loopVariable.referenceExpression.getScript()))),
                 StringSequenceExpression.class),
-            StringSequenceExpression.class)));
+            StringSequenceExpression.class), TranslatorContext.DEFAULT));
   }
 
 
@@ -324,7 +325,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
             this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId))));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), TranslatorContext.DEFAULT));
   }
 
   @Override
@@ -340,7 +341,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
               this.script.getStringLiteralFromUnquotedString("|"), labelType,
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId)))));
+              this.script.getStringLiteralFromUnquotedString(fieldId))), TranslatorContext.DEFAULT));
     }
   }
 
@@ -378,7 +379,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                             this.script.getStringLiteralFromUnquotedString("|"),
                             this.script.getStringLiteralFromUnquotedString(fieldId))),
                     StringSequenceExpression.class),
-                StringSequenceExpression.class)));
+                StringSequenceExpression.class), TranslatorContext.DEFAULT));
         break;
       case "code":
       case "internal-code":
@@ -398,7 +399,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                         this.script.getStringLiteralFromUnquotedString("."),
                         new StringExpression(loopVariable.referenceExpression.getScript()))),
                     StringSequenceExpression.class),
-                StringSequenceExpression.class)));
+                StringSequenceExpression.class), TranslatorContext.DEFAULT));
         break;
       default:
         throw InvalidUsageException.shorthandRequiresCodeOrIndicator(fieldId, fieldType);
@@ -425,7 +426,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.getStringLiteralFromUnquotedString("|"),
                 this.script.getStringLiteralFromUnquotedString(labelType),
                 this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
+                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), TranslatorContext.DEFAULT));
       }
     } else if (this.efxContext.isNodeContext()) {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
@@ -433,7 +434,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
               this.script.getStringLiteralFromUnquotedString("|"),
               this.script.getStringLiteralFromUnquotedString(labelType),
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())))));
+              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), TranslatorContext.DEFAULT));
     }
   }
 

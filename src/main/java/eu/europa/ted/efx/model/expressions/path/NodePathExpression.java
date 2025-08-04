@@ -9,4 +9,8 @@ public class NodePathExpression extends PathExpression.Impl<EfxDataType.Node> {
   public NodePathExpression(final String script) {
     super(script, EfxDataType.Node.class);
   }
+
+  public static NodePathExpression empty() {
+    return new NodePathExpression("");
+  }
 }

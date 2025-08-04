@@ -50,6 +50,10 @@ public abstract class Context {
       super(nodeId, absolutePath, relativePath);
     }
 
+    public NodeContext(final String nodeId, final PathExpression absolutePath, final Variable variable) {
+      super(nodeId, absolutePath, variable);
+    }
+
     public NodeContext(final String nodeId, final PathExpression absolutePath) {
       super(nodeId, absolutePath);
     }

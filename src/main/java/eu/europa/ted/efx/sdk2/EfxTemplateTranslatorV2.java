@@ -28,6 +28,8 @@ import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TemplateSection;
+import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
@@ -64,7 +66,6 @@ import eu.europa.ted.efx.model.variables.ParsedParameters;
 import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
-import eu.europa.ted.efx.sdk2.EfxExpressionTranslatorV2.ExpressionPreprocessor;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetIdContext;
 import eu.europa.ted.efx.sdk2.EfxParser.AssetTypeContext;
 import eu.europa.ted.efx.sdk2.EfxParser.BooleanFunctionDeclarationContext;
@@ -79,6 +80,8 @@ import eu.europa.ted.efx.sdk2.EfxParser.DateFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DateVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DictionaryDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DictionaryIndexClauseContext;
+import eu.europa.ted.efx.sdk2.EfxParser.DictionaryKeyClauseContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
@@ -88,6 +91,13 @@ import eu.europa.ted.efx.sdk2.EfxParser.IndentationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.InvokeTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTypeContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedExpressionBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedExpressionTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedLabelBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedLabelTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedTextBlockContext;
+import eu.europa.ted.efx.sdk2.EfxParser.LinkedTextTemplateContext;
+import eu.europa.ted.efx.sdk2.EfxParser.NavigationSectionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.NumericVariableInitializerContext;
@@ -103,6 +113,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.StandardLabelReferenceContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.StringVariableInitializerContext;
+import eu.europa.ted.efx.sdk2.EfxParser.SummarySectionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateDefinitionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
@@ -114,7 +125,6 @@ import eu.europa.ted.efx.sdk2.EfxParser.TimeParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.WhenDisplayTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.WhenInvokeTemplateContext;
-import eu.europa.ted.efx.sdk2.EfxTemplateTranslatorV2.TemplatePreprocessor;
 
 /**
  * The EfxTemplateTranslator extends the {@link EfxExpressionTranslatorV2} to provide additional
@@ -154,7 +164,12 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    */
   MarkupGenerator markup;
 
-  final ContentBlock rootBlock = ContentBlock.newRootBlock();
+  TranslatorContext translatorContext = TranslatorContext.DEFAULT;
+
+  final ContentBlock bodySectionRoot = ContentBlock.newRootBlock("body");
+  final ContentBlock summarySectionRoot = ContentBlock.newRootBlock("summary");
+  final ContentBlock navigationSectionRoot = ContentBlock.newRootBlock("nav");
+  ContentBlock rootBlock = bodySectionRoot;
 
   /**
    * The block stack is used to keep track of the indentation of template lines and adjust the EFX
@@ -368,16 +383,24 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       }
     }
 
-    List<Markup> templateCalls = new ArrayList<>();
-    List<Markup> templates = new ArrayList<>();
-    for (ContentBlock block : this.rootBlock.getChildren()) {
-      if (!(block instanceof TemplateDefinition)) {
-        templateCalls.add(block.renderInvocation(markup));
-      }
-      templates.addAll(block.renderDefinition(markup));
-    }
-    Markup file = this.markup.composeOutputFile(globals, templateCalls, templates);
+    List<Markup> fragments = new ArrayList<>();
+    List<Markup> mainSection = renderSection(TemplateSection.DEFAULT, bodySectionRoot, fragments);
+    List<Markup> summarySection = renderSection(TemplateSection.SUMMARY, summarySectionRoot, fragments);
+    List<Markup> navigationSection = renderSection(TemplateSection.NAVIGATION, navigationSectionRoot, fragments);
+    Markup file = this.markup.composeOutputFile(globals, mainSection, summarySection, navigationSection, fragments);
     this.stack.push(file);
+  }
+
+  private List<Markup> renderSection(TemplateSection section, ContentBlock sectionRoot, List<Markup> templates) {
+    List<Markup> markupList = new ArrayList<>();
+    this.translatorContext.setCurrentSection(section);
+    for (ContentBlock block : sectionRoot.getChildren()) {
+      if (!(block instanceof TemplateDefinition)) {
+        markupList.add(block.renderInvocation(markup, this.translatorContext));
+      }
+      templates.addAll(block.renderDefinition(markup, this.translatorContext));
+    }
+    return markupList;
   }
 
   // #endregion Template File -------------------------------------------------
@@ -386,26 +409,44 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text)).join(template));
+    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text), this.translatorContext).join(template));
+  }
+
+  @Override
+  public void exitLinkedTextTemplate(LinkedTextTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup text = this.stack.pop(Markup.class);
+    this.stack.push(text.join(template));
   }
 
   @Override
   public void exitLabelTemplate(LabelTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Markup label = ctx.labelBlock() != null ? this.stack.pop(Markup.class) : Markup.empty();
     this.stack.push(label.join(template));
   }
 
   @Override
+  public void exitLinkedLabelTemplate(LinkedLabelTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup label = this.stack.pop(Markup.class);
+    this.stack.push(label.join(template));
+  }
+
+  @Override
   public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
     Expression expression = this.stack.pop(Expression.class);
-    this.stack.push(this.markup.renderVariableExpression(expression).join(template));
+    this.stack.push(this.markup.renderVariableExpression(expression, this.translatorContext).join(template));
+  }
+
+  @Override
+  public void exitLinkedExpressionTemplate(LinkedExpressionTemplateContext ctx) {
+    Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    Markup link = this.stack.pop(Markup.class);
+    this.stack.push(link.join(template));
   }
 
   // #region New in EFX-2: Secondary templates --------------------------------
@@ -413,7 +454,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void exitSecondaryTemplate(SecondaryTemplateContext ctx) {
     Markup template = ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
-    this.stack.push(this.markup.renderLineBreak().join(template));
+    this.stack.push(this.markup.renderLineBreak(this.translatorContext).join(template));
   }
 
   // #endregion New in EFX-2: Secondary templates -----------------------------
@@ -467,7 +508,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity, this.translatorContext));
   }
 
   /**
@@ -499,7 +540,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                     this.script.getStringLiteralFromUnquotedString("|"),
                     new StringExpression(loopVariable.referenceExpression.getScript()))),
                 StringSequenceExpression.class),
-            StringSequenceExpression.class)));
+            StringSequenceExpression.class), this.translatorContext));
   }
 
 
@@ -512,7 +553,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
         List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
             this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId)), quantity, this.translatorContext));
   }
 
   @Override
@@ -529,7 +570,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
               this.script.getStringLiteralFromUnquotedString("|"), labelType,
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId))), quantity));
+              this.script.getStringLiteralFromUnquotedString(fieldId))), quantity, this.translatorContext));
     }
   }
 
@@ -570,7 +611,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                             this.script.getStringLiteralFromUnquotedString("|"),
                             this.script.getStringLiteralFromUnquotedString(fieldId))),
                     StringSequenceExpression.class),
-                StringSequenceExpression.class), quantity));
+                StringSequenceExpression.class), quantity, this.translatorContext));
         break;
       case "code":
       case "internal-code":
@@ -591,7 +632,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                         new StringExpression(loopVariable.referenceExpression.getScript()))),
                     StringSequenceExpression.class),
                 StringSequenceExpression.class),
-            quantity));
+            quantity, this.translatorContext));
         break;
       default:
         throw InvalidUsageException.shorthandRequiresCodeOrIndicator(fieldId, fieldType);
@@ -622,7 +663,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                 this.script.getStringLiteralFromUnquotedString("|"),
                 this.script.getStringLiteralFromUnquotedString(labelType),
                 this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity));
+                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity, this.translatorContext));
       }
     } else if (this.efxContext.isNodeContext()) {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
@@ -630,7 +671,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
               this.script.getStringLiteralFromUnquotedString("|"),
               this.script.getStringLiteralFromUnquotedString(labelType),
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity));
+              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), quantity, this.translatorContext));
     }
   }
 
@@ -675,8 +716,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitComputedLabelReference(ComputedLabelReferenceContext ctx) {
     NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : NumericExpression.empty();
     StringExpression expression = this.stack.pop(StringExpression.class);
-    this.stack.push(this.markup.renderLabelFromExpression(expression, quantity));
+    this.stack.push(this.markup.renderLabelFromExpression(expression, quantity, this.translatorContext));
   }
+
 
   @Override
   public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
@@ -686,6 +728,16 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     // Declare the dictionary in the script
     this.stack.declareGlobalIdentifier(new Dictionary(name, match, key));
+  }
+
+  @Override
+  public void exitDictionaryIndexClause(DictionaryIndexClauseContext ctx) {
+    this.efxContext.pushFieldContext(getFieldId(ctx.fieldContext()));
+  }
+
+  @Override
+  public void exitDictionaryKeyClause(DictionaryKeyClauseContext ctx) {
+    this.efxContext.pop();
   }
 
   // #endregion New in EFX-2 --------------------------------------------------
@@ -785,11 +837,15 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           if (ctx.contextVariableInitializer().fieldContext() != null) {
             String fieldId = getFieldId(ctx.contextVariableInitializer().fieldContext());
             this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
+          } else if (ctx.contextVariableInitializer().nodeContext() != null) {
+            String nodeId = getNodeId(ctx.contextVariableInitializer().nodeContext());
+            assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
+            this.exitNodeContextDeclaration(nodeId, contextPath, contextVariable);
           }
         } else if (ctx.nodeContext() != null) {
           String nodeId = getNodeId(ctx.nodeContext());
           assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
-          this.exitNodeContextDeclaration(nodeId, contextPath);
+          this.exitNodeContextDeclaration(nodeId, contextPath, null);
         }
         break;
     }
@@ -802,7 +858,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (currentContext.isFieldContext()) {
       this.exitFieldContextDeclaration(symbol, contextPath, null);
     } else if (currentContext.isNodeContext()) {
-      this.exitNodeContextDeclaration(symbol, contextPath);
+      this.exitNodeContextDeclaration(symbol, contextPath, currentContext.variable());
     }
   }
 
@@ -813,25 +869,30 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (parentContext.isFieldContext()) {
       this.exitFieldContextDeclaration(symbol, contextPath, null);
     } else if (parentContext.isNodeContext()) {
-      this.exitNodeContextDeclaration(symbol, contextPath);
+      this.exitNodeContextDeclaration(symbol, contextPath, parentContext.variable());
     }
   }
 
   private void exitRootContextDeclaration() {
     PathExpression contextPath = new NodePathExpression("/*");
     String symbol = "ND-Root";
-    this.exitNodeContextDeclaration(symbol, contextPath);
+    this.exitNodeContextDeclaration(symbol, contextPath, null);
   }
 
   private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable contextVariable) {
     this.efxContext.push(new FieldContext(fieldId, contextPath, contextVariable));
     if (contextVariable != null) {
       this.stack.declareIdentifier(contextVariable);
+      this.efxContext.declareContextVariable(contextVariable.name, new FieldContext(fieldId, contextPath, contextVariable));
     }
   }
 
-  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath) {
-    this.efxContext.push(new NodeContext(nodeId, contextPath));
+  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath, Variable contextVariable) {
+    this.efxContext.push(new NodeContext(nodeId, contextPath, contextVariable));
+    if (contextVariable != null) {
+      this.stack.declareIdentifier(contextVariable);
+      this.efxContext.declareContextVariable(contextVariable.name, new NodeContext(nodeId, contextPath, contextVariable));
+    }
   }
 
   private Variable getContextVariable(ContextVariableInitializerContext ctx,
@@ -885,7 +946,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     final Set<Argument> args = arguments.stream()
         .map(a -> new Argument.Impl(a.name, this.markup.getEfxDataTypeEquivalent(a.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new));
-    this.stack.push(this.markup.renderFragmentInvocation(templateName, args));
+    this.stack.push(this.markup.renderFragmentInvocation(templateName, args, this.translatorContext));
   }
   
   // #endregion Conditional template blocks ---------------------------------
@@ -941,6 +1002,31 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #endregion Variable Initializers -----------------------------------------
 
+  // #region Hyperlinks -------------------------------------------------------
+
+  @Override
+  public void exitLinkedTextBlock(LinkedTextBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.markup.renderFreeText(ctx.textBlock().getText(), this.translatorContext);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  @Override
+  public void exitLinkedLabelBlock(LinkedLabelBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.stack.pop(Markup.class);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  @Override
+  public void exitLinkedExpressionBlock(LinkedExpressionBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var text = this.markup.renderVariableExpression(this.stack.pop(Expression.class), this.translatorContext);
+    this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
+  }
+
+  // #endregion Hyperlinks ----------------------------------------------------
+
   // #endregion New in EFX-2 --------------------------------------------------
 
   @Override
@@ -993,6 +1079,36 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   // #endregion Parameter Declarations ----------------------------------------
+
+  @Override
+  public void enterSummarySection(SummarySectionContext ctx) {
+    this.rootBlock = this.summarySectionRoot;
+    while (!this.blockStack.isEmpty()) {
+      this.blockStack.pop();
+    }
+    this.translatorContext.setCurrentSection(TemplateSection.SUMMARY);
+  }
+
+  @Override
+    public void exitSummarySection(SummarySectionContext ctx) {
+
+      this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
+    }
+
+  @Override
+  public void enterNavigationSection(NavigationSectionContext ctx) {
+    this.rootBlock = this.navigationSectionRoot;
+    while (!this.blockStack.isEmpty()) {
+      this.blockStack.pop();
+    }
+    this.translatorContext.setCurrentSection(TemplateSection.NAVIGATION);
+  }
+
+  @Override
+  public void exitNavigationSection(NavigationSectionContext ctx) {
+      this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
+  }
+
   // #region Template lines  --------------------------------------------------
 
   @Override
@@ -1103,7 +1219,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
           this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
     }
 
-    assert childContext.isNodeContext() : "Child context should be either a FieldContext NodeContext.";
+    assert childContext.isNodeContext() : "Child context should be either a FieldContext or a NodeContext.";
 
     return new NodeContext(childContext.symbol(), childContext.absolutePath(),
         this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath));
@@ -1185,13 +1301,21 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
       final var initializer = ctx.contextVariableInitializer();
-      if (initializer == null || initializer.fieldContext() == null) {
+      if (initializer == null) {
         return; // No context variable initializer, nothing to do during pre-processing.
       }
-      final String fieldId = getFieldId(initializer.fieldContext());
-      var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
-      this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
-          PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
+      if (initializer.fieldContext() != null) {
+        final String fieldId = getFieldId(initializer.fieldContext());
+        var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
+        this.stack.declareIdentifier(
+            new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
+                PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
+      }
+      if (initializer.nodeContext() != null) {
+        this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), NodePathExpression.empty(),
+            NodePathExpression.empty(), NodePathExpression.empty()));
+      }
+      return;
     }
 
     @Override
@@ -1299,7 +1423,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {
       var dictionaryName = ctx.dictionaryName.getText();
-      var fieldId = getFieldId(ctx.fieldContext());
+      var fieldId = getFieldId(ctx.index.fieldContext());
       var field = this.symbols.getAbsolutePathOfField(fieldId);
       this.stack.declareGlobalIdentifier(new Dictionary(dictionaryName, field, StringExpression.empty()));
     }

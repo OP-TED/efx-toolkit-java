@@ -48,7 +48,7 @@
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.13.0</version.eforms-sdk-1>
     <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
-    <version.eforms-core>1.5.0-SNAPSHOT</version.eforms-core>
+    <version.eforms-core>1.5.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
@@ -221,6 +221,15 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${version.javadoc.plugin}</version>
+          <configuration>
+            <doclint>all,-missing</doclint>
+            <sourceFileExcludes>
+              <exclude>**/EfxLexer.java</exclude>
+              <exclude>**/EfxParser.java</exclude>
+              <exclude>**/EfxListener.java</exclude>
+              <exclude>**/EfxBaseListener.java</exclude>
+            </sourceFileExcludes>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

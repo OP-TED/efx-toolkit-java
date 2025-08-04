@@ -1,6 +1,5 @@
 package eu.europa.ted.efx.mock;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.Parameter;
+import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
@@ -28,8 +28,10 @@ public class MarkupGeneratorMock implements MarkupGenerator {
           Map.entry(EfxDataType.Number.class, new Markup("decimal")), //
           Map.entry(EfxDataType.Date.class, new Markup("date")), //
           Map.entry(EfxDataType.Time.class, new Markup("time")), //
-          Map.entry(EfxDataType.Duration.class, new Markup("duration")) //
+          Map.entry(EfxDataType.Duration.class, new Markup("duration")), //
+          Map.entry(EfxDataType.Node.class, new Markup("context")) //
       );
+
 
   @Override
   public Markup renderVariableDeclaration(Class<? extends EfxDataType> dataType, String variableName,
@@ -49,17 +51,17 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderVariableExpression(Expression valueReference) {
+  public Markup renderVariableExpression(Expression valueReference, TranslatorContext translatorContext) {
     return new Markup(String.format("eval(%s)", valueReference.getScript()));
   }
 
   @Override
-  public Markup renderLabelFromKey(StringExpression key) {
-    return this.renderLabelFromKey(key, NumericExpression.empty());
+  public Markup renderLabelFromKey(StringExpression key, TranslatorContext translatorContext) {
+    return this.renderLabelFromKey(key, NumericExpression.empty(), translatorContext);
   }
 
   @Override
-  public Markup renderLabelFromKey(StringExpression key, NumericExpression quantity) {
+  public Markup renderLabelFromKey(StringExpression key, NumericExpression quantity, TranslatorContext translatorContext) {
     if (quantity.isEmpty()) {
       return new Markup(String.format("label(%s)", key.getScript()));
     }
@@ -67,12 +69,12 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderLabelFromExpression(Expression expression) {
-    return this.renderLabelFromExpression(expression, NumericExpression.empty()); 
+  public Markup renderLabelFromExpression(Expression expression, TranslatorContext translatorContext) {
+    return this.renderLabelFromExpression(expression, NumericExpression.empty(), TranslatorContext.DEFAULT); 
   }
 
   @Override
-  public Markup renderLabelFromExpression(Expression expression, NumericExpression quantity) {
+  public Markup renderLabelFromExpression(Expression expression, NumericExpression quantity, TranslatorContext translatorContext) {
     if (quantity.isEmpty()) {
       return new Markup(String.format("label(%s)", expression.getScript()));
     }
@@ -80,8 +82,13 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderFreeText(String freeText) {
+  public Markup renderFreeText(String freeText, TranslatorContext translatorContext) {
     return new Markup(String.format("text('%s')", freeText));
+  }
+
+  @Override
+  public Markup renderHyperlink(Markup label, StringExpression url, TranslatorContext translatorContext) {
+    return new Markup(String.format("hyperlink(%s, %s)", label.script, url.getScript()));
   }
 
   @Override
@@ -100,13 +107,13 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderLineBreak() {
+  public Markup renderLineBreak(TranslatorContext translatorContext) {
     return new Markup("line-break()");
   }
 
   @Override
   public Markup composeFragmentDefinition(String name, String number, Set<Conditional> conditionals,
-      Markup content, Markup children, Set<Parameter> parameters) {
+      Markup content, Markup children, Set<Parameter> parameters, TranslatorContext translatorContext) {
     String contents = "";
 
     if (conditionals != null && !conditionals.isEmpty()) {
@@ -144,7 +151,7 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderFragmentInvocation(String name, Set<Argument> arguments) {
+  public Markup renderFragmentInvocation(String name, Set<Argument> arguments, TranslatorContext translatorContext) {
     return new Markup(String.format("call(%s(%s))", name,
         arguments.stream()
             .map(arg -> String.format("%s:%s=%s", arg.getType(), arg.getName(), arg.getValue()))
@@ -152,16 +159,25 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeOutputFile(List<Markup> body, List<Markup> templates) {
-    return this.composeOutputFile(new ArrayList<Markup>(), body, templates);
+  public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> summary, List<Markup> navigation, final List<Markup> fragments) {
+    var renderedGlobals = renderSection("GLOBALS", globals);
+    var renderedTemplates = renderSection("TEMPLATES", fragments);
+    var renderedMain = renderSection("MAIN", body);
+    var renderedSummary = renderSection("SUMMARY", summary);
+    var renderedNavigation = renderSection("NAV", navigation);
+
+    return new Markup(String.format("%1$s%6$s%2$s%6$s%3$s%6$s%4$s%6$s%5$s",
+        renderedGlobals,
+        renderedTemplates,
+        renderedMain,
+        renderedSummary,
+        renderedNavigation, "\n").trim());
   }
 
-  @Override
-  public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> templates) {
-    return new Markup(String.format("%1$s%4$s%2$s%4$s%3$s",
-        globals.stream().map(t -> t.script).collect(Collectors.joining("\n")),
-        templates.stream().map(t -> t.script).collect(Collectors.joining("\n")),
-        body.stream().map(t -> t.script).collect(Collectors.joining("\n")), "\n").trim());
+  private String renderSection(String heading, List<Markup> markupList) {
+    return markupList.size() > 0
+        ? String.format("%1$s:\n%2$s", heading, markupList.stream().map(t -> t.script).collect(Collectors.joining("\n")))
+        : "";
   }
 
   @Override
@@ -174,5 +190,4 @@ public class MarkupGeneratorMock implements MarkupGenerator {
       final StringExpression key) {
         return new Markup(String.format("let %s index %s by %s;", name, match.getScript(), key.getScript()));
   }
-
 }

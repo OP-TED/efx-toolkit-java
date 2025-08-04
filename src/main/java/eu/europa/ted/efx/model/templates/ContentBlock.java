@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.Parameter;
+import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.variables.ParsedArgument;
 import eu.europa.ted.efx.model.variables.ParsedArguments;
@@ -34,9 +35,9 @@ public class ContentBlock {
   protected final ParsedParameters parameters;
   protected final ParsedArguments arguments;
 
-  private ContentBlock() {
+  private ContentBlock(String id) {
     this.parent = null;
-    this.id = "block";
+    this.id = id;
     this.indentationLevel = -1;
     this.conditionals = new Conditionals();
     this.content = new Markup("");
@@ -66,8 +67,8 @@ public class ContentBlock {
         new ParsedArguments(variables));
   }
 
-  public static ContentBlock newRootBlock() {
-    return new ContentBlock();
+  public static ContentBlock newRootBlock(String id) {
+    return new ContentBlock(id);
   }
 
   // #region Add Children
@@ -233,29 +234,29 @@ public class ContentBlock {
 
   // #region Render -----------------------------------------------------------
 
-  public Markup renderChildren(MarkupGenerator markupGenerator) {
+  public Markup renderChildren(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     StringBuilder stringBuilder = new StringBuilder();
     for (ContentBlock child : this.children) {
-      stringBuilder.append('\n').append(child.renderInvocation(markupGenerator).script);
+      stringBuilder.append('\n').append(child.renderInvocation(markupGenerator, translatorContext).script);
     }
     return new Markup(stringBuilder.toString());
   }
 
-  public List<Markup> renderDefinition(MarkupGenerator markupGenerator) {
+  public List<Markup> renderDefinition(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Parameter> params = this.getAllParameters().stream()
         .map(param -> new Parameter.Impl(param.name, markupGenerator.getEfxDataTypeEquivalent(param.dataType)))
         .collect(Collectors.toCollection(LinkedHashSet::new));
     List<Markup> templates = new ArrayList<>();
     templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(),
         this.conditionals.stream().collect(Collectors.toCollection(LinkedHashSet::new)),
-        this.content, this.renderChildren(markupGenerator), params));
+        this.content, this.renderChildren(markupGenerator, translatorContext), params, translatorContext));
     for (ContentBlock child : this.children) {
-      templates.addAll(child.renderDefinition(markupGenerator));
+      templates.addAll(child.renderDefinition(markupGenerator, translatorContext));
     }
     return templates;
   }
 
-  public Markup renderInvocation(MarkupGenerator markupGenerator) {
+  public Markup renderInvocation(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Argument> args = new LinkedHashSet<>();
     if (this.parent != null) {
       args.addAll(parent.getAllArguments().stream()
@@ -264,7 +265,7 @@ public class ContentBlock {
     }
     args.addAll(this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new)));
-    var invocation = markupGenerator.renderFragmentInvocation(this.id, args);
+    var invocation = markupGenerator.renderFragmentInvocation(this.id, args, translatorContext);
     return markupGenerator.renderContextLoop(this.context.relativePath(), invocation, args);
   }
 
