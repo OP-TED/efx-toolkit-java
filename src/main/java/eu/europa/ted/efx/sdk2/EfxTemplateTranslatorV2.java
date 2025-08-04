@@ -359,6 +359,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
     assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+    this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
   }
 
   @Override
