@@ -160,21 +160,11 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
   @Override
   public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> summary, List<Markup> navigation, final List<Markup> fragments) {
-    var renderedGlobals = globals.size() > 0
-        ? String.format("GLOBALS:%2$s%1$s",globals.stream().map(t -> t.script).collect(Collectors.joining("\n")), '\n')
-        : "";
-    var renderedTemplates = fragments.size() > 0
-        ? String.format("TEMPLATES:%2$s%1$s", fragments.stream().map(t -> t.script).collect(Collectors.joining("\n")), '\n')
-        : "";
-    var renderedMain = body.size() > 0
-        ? String.format("MAIN:%2$s%1$s", body.stream().map(t -> t.script).collect(Collectors.joining("\n")), '\n')
-        : "";
-    var renderedSummary = summary.size() > 0
-        ? String.format("SUMMARY:%2$s%1$s", summary.stream().map(t -> t.script).collect(Collectors.joining("\n")), '\n')
-        : "";
-    var renderedNavigation = navigation.size() > 0
-        ? String.format("NAV:%2$s%1$s", navigation.stream().map(t -> t.script).collect(Collectors.joining("\n")), '\n')
-        : "";
+    var renderedGlobals = renderSection("GLOBALS", globals);
+    var renderedTemplates = renderSection("TEMPLATES", fragments);
+    var renderedMain = renderSection("MAIN", body);
+    var renderedSummary = renderSection("SUMMARY", summary);
+    var renderedNavigation = renderSection("NAV", navigation);
 
     return new Markup(String.format("%1$s%6$s%2$s%6$s%3$s%6$s%4$s%6$s%5$s",
         renderedGlobals,
@@ -182,6 +172,12 @@ public class MarkupGeneratorMock implements MarkupGenerator {
         renderedMain,
         renderedSummary,
         renderedNavigation, "\n").trim());
+  }
+
+  private String renderSection(String heading, List<Markup> markupList) {
+    return markupList.size() > 0
+        ? String.format("%1$s:\n%2$s", heading, markupList.stream().map(t -> t.script).collect(Collectors.joining("\n")))
+        : "";
   }
 
   @Override
