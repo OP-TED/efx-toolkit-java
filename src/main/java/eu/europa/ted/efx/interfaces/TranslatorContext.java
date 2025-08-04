@@ -24,7 +24,7 @@ public class TranslatorContext {
      * Default instance of {@link TranslatorContext} with the section set to {@link TemplateSection#DEFAULT}.
      * This is used throughout the code for EFX-1 processing where only the default section is relevant.
      */
-    final public static TranslatorContext DEFAULT = new TranslatorContext();
+    public static final TranslatorContext DEFAULT = new TranslatorContext();
 
     public TranslatorContext() {
         this(TemplateSection.DEFAULT);
