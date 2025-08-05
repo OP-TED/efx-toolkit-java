@@ -1,5 +1,6 @@
 package eu.europa.ted.efx;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,39 +20,59 @@ public class EfxTranslatorOptions implements TranslatorOptions {
      */
     public static final String DEFAULT_UDF_NAMESPACE = "efx-udf";
 
+    /**
+     * Default value for EFX profiling enablement.
+     * By default, profiling is disabled for performance reasons.
+     */
+    public static final boolean DEFAULT_PROFILER_ENABLED = false;
+
+    /**
+     * Default value for EFX profiling output path.
+     * By default, no profiling output file is generated.
+     */
+    public static final Path DEFAULT_PROFILER_OUTPUT_PATH = null;
+
     // Change to EfxDecimalFormatSymbols.EFX_DEFAULT to use the decimal format
     // preferred by OP (space as thousands separator and comma as decimal separator).
-    public static final EfxTranslatorOptions DEFAULT = new EfxTranslatorOptions(DEFAULT_UDF_NAMESPACE, DecimalFormat.XSL_DEFAULT, Locale.ENGLISH);
+    public static final EfxTranslatorOptions DEFAULT = new EfxTranslatorOptions(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, DEFAULT_UDF_NAMESPACE, DecimalFormat.XSL_DEFAULT, Locale.ENGLISH);
 
     private final DecimalFormat symbols;
     private final Locale primaryLocale;
     private final ArrayList<Locale> otherLocales;
     private final String userDefinedFunctionNamespace;
+    private final boolean profilerEnabled;
+    private final Path profilerOutputPath;
 
     public EfxTranslatorOptions(DecimalFormat symbols) {
-        this(DEFAULT_UDF_NAMESPACE, symbols);
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, DEFAULT_UDF_NAMESPACE, symbols, Locale.ENGLISH);
     }
 
     public EfxTranslatorOptions(String udfNamespace, DecimalFormat symbols) {
-        this(udfNamespace, symbols, Locale.ENGLISH);
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, udfNamespace, symbols, Locale.ENGLISH);
     }
 
     public EfxTranslatorOptions(DecimalFormat symbols, String primaryLanguage, String... otherLanguages) {
-        this(symbols, Locale.forLanguageTag(primaryLanguage), Arrays.stream(otherLanguages).map(Locale::forLanguageTag).toArray(Locale[]::new));
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, DEFAULT_UDF_NAMESPACE, symbols, Locale.forLanguageTag(primaryLanguage), Arrays.stream(otherLanguages).map(Locale::forLanguageTag).toArray(Locale[]::new));
     }
 
     public EfxTranslatorOptions(String udfNamespace, DecimalFormat symbols, String primaryLanguage, String... otherLanguages) {
-        this(udfNamespace, symbols, Locale.forLanguageTag(primaryLanguage), Arrays.stream(otherLanguages).map(Locale::forLanguageTag).toArray(Locale[]::new));
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, udfNamespace, symbols, Locale.forLanguageTag(primaryLanguage), Arrays.stream(otherLanguages).map(Locale::forLanguageTag).toArray(Locale[]::new));
     }
 
     public EfxTranslatorOptions(DecimalFormat symbols, Locale primaryLocale, Locale... otherLocales) {
-        this(DEFAULT_UDF_NAMESPACE, symbols, primaryLocale, otherLocales);
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, DEFAULT_UDF_NAMESPACE, symbols, primaryLocale, otherLocales);
     }
     
     public EfxTranslatorOptions(String udfNamespace, DecimalFormat symbols, Locale primaryLocale, Locale... otherLocales) {
+        this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, udfNamespace, symbols, primaryLocale, otherLocales);
+    }
+
+    public EfxTranslatorOptions(boolean profilerEnabled, Path profilerOutputPath, String udfNamespace, DecimalFormat symbols, Locale primaryLocale, Locale... otherLocales) {
         this.userDefinedFunctionNamespace = udfNamespace;
         this.symbols = symbols;
         this.primaryLocale = primaryLocale;
+        this.profilerEnabled = profilerEnabled;
+        this.profilerOutputPath = profilerOutputPath;
         this.otherLocales = new ArrayList<>(Arrays.asList(otherLocales));
     }
 
@@ -98,5 +119,15 @@ public class EfxTranslatorOptions implements TranslatorOptions {
     @Override
     public String getUserDefinedFunctionNamespace() {
         return this.userDefinedFunctionNamespace;
+    }
+
+    @Override
+    public boolean isProfilerEnabled() {
+        return this.profilerEnabled;
+    }
+
+    @Override
+    public Path getProfilerOutputPath() {
+        return this.profilerOutputPath;
     }
 }

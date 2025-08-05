@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
+import eu.europa.ted.efx.EfxTranslatorOptions;
+
 /**
  * Defines the API of an EFX template translator.
  * 
@@ -29,10 +31,31 @@ public interface EfxTemplateTranslator extends EfxExpressionTranslator {
    * Translate the EFX template stored in a file, given the pathname of the file.
    * 
    * @param pathname The path and filename of the EFX template file to translate.
+   * @param options The options to be used by the EFX template translator.
    * @return A string containing the translated template.
    * @throws IOException If the file cannot be read.
    */
-  String renderTemplate(Path pathname) throws IOException;
+  String renderTemplate(Path pathname, TranslatorOptions options) throws IOException;
+
+  /**
+   * Translate the EFX template stored in a file, given the pathname of the file.
+   * 
+   * @param pathname The path and filename of the EFX template file to translate.
+   * @return A string containing the translated template.
+   * @throws IOException If the file cannot be read.
+   */
+  default String renderTemplate(Path pathname) throws IOException {
+    return renderTemplate(pathname, EfxTranslatorOptions.DEFAULT);
+  }
+
+  /**
+   * Translate the EFX template stored in the given string.
+   * 
+   * @param template A string containing an EFX template to be translated.
+   * @param options The options to be used by the EFX template translator.
+   * @return A string containing the translated template.
+   */
+  String renderTemplate(String template, TranslatorOptions options);
 
   /**
    * Translate the EFX template stored in the given string.
@@ -40,7 +63,19 @@ public interface EfxTemplateTranslator extends EfxExpressionTranslator {
    * @param template A string containing an EFX template to be translated.
    * @return A string containing the translated template.
    */
-  String renderTemplate(String template);
+  default String renderTemplate(String template) {
+    return renderTemplate(template, EfxTranslatorOptions.DEFAULT);
+  }
+
+  /**
+   * Translate the EFX template given as an InputStream.
+   * 
+   * @param stream An InputStream with the EFX template to be translated.
+   * @param options The options to be used by the EFX template translator.
+   * @return A string containing the translated template.
+   * @throws IOException If the InputStream cannot be read.
+   */
+  String renderTemplate(InputStream stream, TranslatorOptions options) throws IOException;
 
   /**
    * Translate the EFX template given as an InputStream.
@@ -49,5 +84,7 @@ public interface EfxTemplateTranslator extends EfxExpressionTranslator {
    * @return A string containing the translated template.
    * @throws IOException If the InputStream cannot be read.
    */
-  String renderTemplate(InputStream stream) throws IOException;
+  default String renderTemplate(InputStream stream) throws IOException {
+    return renderTemplate(stream, EfxTranslatorOptions.DEFAULT);
+  }
 }

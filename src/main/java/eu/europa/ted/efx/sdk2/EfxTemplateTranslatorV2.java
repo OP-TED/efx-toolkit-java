@@ -14,6 +14,9 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.atn.DecisionInfo;
+import org.antlr.v4.runtime.atn.ParseInfo;
+import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
@@ -28,9 +31,12 @@ import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.interfaces.TemplateSection;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.util.EfxProfilerReportGenerator;
+import eu.europa.ted.efx.util.TranslatorTimings;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -196,35 +202,44 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    * Opens the indicated EFX file and translates the EFX template it contains.
    */
   @Override
-  public String renderTemplate(final Path pathname) throws IOException {
-
-    return renderTemplate(CharStreams.fromPath(pathname));
+  public String renderTemplate(final Path pathname, TranslatorOptions options) throws IOException {
+    return renderTemplate(CharStreams.fromPath(pathname), options);
   }
 
   /**
    * Translates the template contained in the string passed as a parameter.
    */
   @Override
-  public String renderTemplate(final String template) {
-    return renderTemplate(CharStreams.fromString(template));
+  public String renderTemplate(final String template, TranslatorOptions options) {
+    return renderTemplate(CharStreams.fromString(template), options);
   }
 
   @Override
-  public String renderTemplate(final InputStream stream) throws IOException {
-    return renderTemplate(CharStreams.fromStream(stream));
+  public String renderTemplate(final InputStream stream, TranslatorOptions options) throws IOException {
+    return renderTemplate(CharStreams.fromStream(stream), options);
   }
 
-  private String renderTemplate(final CharStream charStream) {
+  private String renderTemplate(final CharStream charStream, TranslatorOptions options) {
     logger.debug("Rendering template");
+    final long startTime = System.currentTimeMillis();
 
     // New in EFX-2: template preprocessing
+    final long preprocessingStartTime = System.currentTimeMillis();
     final TemplatePreprocessor preprocessor = this.new TemplatePreprocessor(charStream);
     final String preprocessedTemplate = preprocessor.processTemplate();
+    final long preprocessingEndTime = System.currentTimeMillis();
+    final long preprocessingDuration = preprocessingEndTime - preprocessingStartTime;
 
     // Now parse the preprocessed template
+    final long translationStartTime = System.currentTimeMillis();
     final EfxLexer lexer = new EfxLexer(CharStreams.fromString(preprocessedTemplate));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
+
+    // Enable profiling if requested
+    if (options != null && options.isProfilerEnabled()) {
+      parser.setInterpreter(new ProfilingATNSimulator(parser));
+    }
 
     if (errorListener != null) {
       lexer.removeErrorListeners();
@@ -237,6 +252,18 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
+    
+    final long translationEndTime = System.currentTimeMillis();
+    final long translationDuration = translationEndTime - translationStartTime;
+    
+    final long endTime = System.currentTimeMillis();
+    final long totalDuration = endTime - startTime;
+    
+    // Log profiling information if enabled
+    if (options != null && options.isProfilerEnabled()) {
+      TranslatorTimings timingData = new TranslatorTimings(preprocessingDuration, translationDuration, totalDuration);
+      this.generateAndSaveProfilerReport(parser, options.getProfilerOutputPath(), timingData);
+    }
 
     logger.debug("Finished rendering template");
 
@@ -263,6 +290,35 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
     return sb.toString().trim();
   }
+
+  /**
+   * Logs ANTLR4 profiling results showing which grammar rules took the most time.
+   * Only active when profiling is enabled via system property.
+   * 
+   * @param parser The EfxParser instance to extract profiling data from
+   * @param profilingOutputPath Path where the HTML report should be saved
+   * @param timingData Timing measurements for different processing phases
+   */
+  private void generateAndSaveProfilerReport(final EfxParser parser, final Path profilingOutputPath, final TranslatorTimings timingData) {
+    final ParseInfo parseInfo = parser.getParseInfo();
+    if (parseInfo == null) {
+      logger.warn("ParseInfo not available - profiling may not be enabled in parser");
+      return;
+    }
+
+    final DecisionInfo[] decisions = parseInfo.getDecisionInfo();
+    
+    // Sort decisions by time descending
+    java.util.Arrays.sort(decisions, (a, b) -> Long.compare(b.timeInPrediction, a.timeInPrediction));
+    
+    long totalTime = java.util.Arrays.stream(decisions)
+        .mapToLong(d -> d.timeInPrediction)
+        .sum();
+
+    // Write HTML report to file if path is provided
+    EfxProfilerReportGenerator.generateAndSaveProfilerReport(parser, decisions, totalTime, timingData, profilingOutputPath);
+  }
+
 
   // #region Global declarationExpressions ---------------------------------------
 
@@ -359,6 +415,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
     assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+    this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
   }
 
   @Override

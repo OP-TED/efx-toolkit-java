@@ -23,6 +23,7 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
@@ -125,26 +126,29 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
    * Opens the indicated EFX file and translates the EFX template it contains.
    */
   @Override
-  public String renderTemplate(final Path pathname) throws IOException {
-
-    return renderTemplate(CharStreams.fromPath(pathname));
+  public String renderTemplate(final Path pathname, TranslatorOptions options) throws IOException {
+    return renderTemplate(CharStreams.fromPath(pathname), options);
   }
 
   /**
    * Translates the template contained in the string passed as a parameter.
    */
   @Override
-  public String renderTemplate(final String template) {
-    return renderTemplate(CharStreams.fromString(template));
+  public String renderTemplate(final String template, TranslatorOptions options) {
+    return renderTemplate(CharStreams.fromString(template), options);
   }
 
   @Override
-  public String renderTemplate(final InputStream stream) throws IOException {
-    return renderTemplate(CharStreams.fromStream(stream));
+  public String renderTemplate(final InputStream stream, TranslatorOptions options) throws IOException {
+    return renderTemplate(CharStreams.fromStream(stream), options);
   }
 
-  private String renderTemplate(final CharStream charStream) {
+  private String renderTemplate(final CharStream charStream, TranslatorOptions options) {
     logger.debug("Rendering template");
+
+    if (options != null && options.isProfilerEnabled()) {
+      logger.warn("EFX profiling is not available for EFX-1 templates. No profiler output will be generated.");
+    }
 
     final EfxLexer lexer = new EfxLexer(charStream);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
