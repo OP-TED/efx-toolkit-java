@@ -11,7 +11,7 @@ public class TranslatorTimings {
     private final long totalTimeMs;
     
     /**
-     * Creates a new TimingData instance with the specified timing measurements.
+     * Creates a new TranslatorTimings instance with the specified timing measurements.
      * 
      * @param preprocessingTimeMs Time spent in EFX preprocessing phase (milliseconds)
      * @param translationTimeMs Time spent in EFX translation phase (milliseconds)

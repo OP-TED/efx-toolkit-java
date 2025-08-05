@@ -182,6 +182,9 @@ public class EfxProfilerReportGenerator {
    * @return HTML-escaped text
    */
   private static String escapeHtml(String text) {
+    if (text == null) {
+      return "";
+    }
     return text.replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
