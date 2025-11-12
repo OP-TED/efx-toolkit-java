@@ -48,11 +48,12 @@
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.13.0</version.eforms-sdk-1>
     <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
-    <version.eforms-core>1.5.0</version.eforms-core>
+    <version.eforms-core>1.6.0-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
     <version.commons-lang3>3.18.0</version.commons-lang3>
+    <version.freemarker>2.3.31</version.freemarker>
     <version.logback>1.5.18</version.logback>
     <version.jackson>2.18.3</version.jackson>
     <version.jackson-databind>2.18.3</version.jackson-databind>
@@ -121,6 +122,11 @@
         <artifactId>antlr4-runtime</artifactId>
         <version>${version.antlr4}</version>
       </dependency>
+      <dependency>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>${version.freemarker}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -145,6 +151,10 @@
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

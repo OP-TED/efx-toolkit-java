@@ -16,6 +16,7 @@ package eu.europa.ted.efx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Map;
 
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
@@ -168,4 +169,105 @@ public class EfxTranslator {
   }
 
   //#endregion Translate EFX templates ----------------------------------------
+
+  //#region Translate EFX rules -----------------------------------------------
+
+  /**
+   * Instantiates an EFX rules translator and translates the EFX rules contained in the given file.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the EFX rules translator.
+   * @param sdkVersion The version of the eForms SDK that defines the EFX grammar used by the EFX
+   *        rules to be translated.
+   * @param pathname The path to the file containing the EFX rules to translate.
+   * @param options The options to be used by the EFX rules translator.
+   * @return A map where keys are output file paths (relative) and values are the generated Schematron content.
+   * @throws IOException If the file cannot be read.
+   * @throws InstantiationException If the EFX rules translator cannot be instantiated.
+   */
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final Path pathname, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxRulesTranslator(sdkVersion, dependencyFactory, options)
+        .translateRules(pathname, options);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final Path pathname)
+      throws IOException, InstantiationException {
+    return translateRules(dependencyFactory, sdkVersion, pathname, defaultOptions);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String qualifier, final Path pathname, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxRulesTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .translateRules(pathname, options);
+  }
+
+  /**
+   * Instantiates an EFX rules translator and translates the given EFX rules.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the EFX rules translator.
+   * @param sdkVersion The version of the eForms SDK that defines the EFX grammar used by the EFX
+   *        rules to be translated.
+   * @param rules A string containing the EFX rules to translate.
+   * @param options The options to be used by the EFX rules translator.
+   * @return A map where keys are output file paths (relative) and values are the generated Schematron content.
+   * @throws InstantiationException If the EFX rules translator cannot be instantiated.
+   */
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String rules, TranslatorOptions options)
+      throws InstantiationException {
+    return translateRules(dependencyFactory, sdkVersion, "", rules, options);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String rules)
+      throws InstantiationException {
+    return translateRules(dependencyFactory, sdkVersion, rules, defaultOptions);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String qualifier, final String rules, TranslatorOptions options)
+      throws InstantiationException {
+    return EfxTranslatorFactory.getEfxRulesTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .translateRules(rules, options);
+  }
+
+  /**
+   * Instantiates an EFX rules translator and translates the EFX rules contained in the given
+   * InputStream.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the EFX rules translator.
+   * @param sdkVersion The version of the eForms SDK that defines the EFX grammar used by the EFX
+   *        rules to be translated.
+   * @param stream An InputStream containing the EFX rules to be translated.
+   * @param options The options to be used by the EFX rules translator.
+   * @return A map where keys are output file paths (relative) and values are the generated Schematron content.
+   * @throws IOException If the InputStream cannot be read.
+   * @throws InstantiationException If the EFX rules translator cannot be instantiated.
+   */
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final InputStream stream, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return translateRules(dependencyFactory, sdkVersion, "", stream, options);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final InputStream stream)
+      throws IOException, InstantiationException {
+    return translateRules(dependencyFactory, sdkVersion, stream, defaultOptions);
+  }
+
+  public static Map<String, String> translateRules(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String qualifier, final InputStream stream, TranslatorOptions options)
+      throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxRulesTranslator(sdkVersion, qualifier, dependencyFactory, options)
+        .translateRules(stream, options);
+  }
+
+  //#endregion Translate EFX rules --------------------------------------------
 }
