@@ -14,9 +14,11 @@ import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.eforms.sdk.repository.SdkCodelistRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
+import eu.europa.ted.eforms.sdk.repository.SdkNoticeTypeRepository;
 import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
 import eu.europa.ted.eforms.xpath.XPathInfo;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
@@ -40,6 +42,8 @@ public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkNode> nodeByAlias;
 
   protected Map<String, SdkCodelist> codelistById;
+
+  protected Map<String, SdkNoticeSubtype> noticeTypesById;
 
   /**
    * Builds EFX list from the passed codelist reference. This will lazily compute
@@ -77,12 +81,15 @@ public class SdkSymbolResolver implements SymbolResolver {
         SdkConstants.SdkResource.FIELDS_JSON, sdkRootPath);
     Path codelistsPath = SdkResourceLoader.getResourceAsPath(sdkVersion,
         SdkConstants.SdkResource.CODELISTS, sdkRootPath);
+    Path noticeTypesPath = SdkResourceLoader.getResourceAsPath(sdkVersion,
+        SdkConstants.SdkResource.NOTICE_TYPES_JSON, sdkRootPath);
 
     this.fieldById = new SdkFieldRepository(sdkVersion, jsonPath);
     this.fieldByAlias = indexFieldsByAlias();
     this.nodeById = new SdkNodeRepository(sdkVersion, jsonPath);
     this.nodeByAlias = indexNodesByAlias();
     this.codelistById = new SdkCodelistRepository(sdkVersion, codelistsPath);
+    this.noticeTypesById = new SdkNoticeTypeRepository(sdkVersion, noticeTypesPath);
   }
 
   /**
@@ -227,6 +234,10 @@ public class SdkSymbolResolver implements SymbolResolver {
     return null;
   }
 
+  @Override
+  public List<String> getAllNoticeSubtypeIds() {
+    return noticeTypesById.keySet().stream().map(String::toUpperCase).sorted().toList();
+  }
 
   private HashMap<String, SdkField> indexFieldsByAlias() {
     return this.fieldById.values().stream()
@@ -268,8 +279,8 @@ public class SdkSymbolResolver implements SymbolResolver {
     }
     XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
     additionalFieldInfoMap.put(fieldId, xpathInfo);
-  }  
-  
+  }
+
   // #endregion Temporary helpers ------------------------------------------------
 
 }
