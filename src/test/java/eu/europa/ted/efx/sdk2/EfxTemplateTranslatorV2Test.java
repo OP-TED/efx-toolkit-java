@@ -1298,10 +1298,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   // #endregion chooseTemplate ---------------------------------
 
-  // #region templateVariableList ---------------------------------------------
+  // #region variableList ---------------------------------------------
 
   @Test
-  void testTemplateVariableList_WithAllDataTypes() {
+  void testVariableList_WithAllDataTypes() {
     assertEquals(
         lines(
             "TEMPLATES:",
@@ -1313,7 +1313,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testTemplateVariableList_ExpressionInitializers() {
+  void testVariableList_ExpressionInitializers() {
     assertEquals(
         lines(
             "TEMPLATES:",
@@ -1323,7 +1323,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{BT-00-Text, text:$computed=concat('prefix-', BT-00-Text)} Computed: ${$computed}"));
   }
 
-  // #endregion templateVariableList ------------------------------------------
+  // #endregion variableList ------------------------------------------
 
   // #region templateLine edge cases ------------------------------------------
 

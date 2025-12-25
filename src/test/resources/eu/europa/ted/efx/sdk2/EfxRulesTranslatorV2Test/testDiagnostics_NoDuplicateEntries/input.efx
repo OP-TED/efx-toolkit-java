@@ -1,0 +1,16 @@
+// Test: Same field used in multiple rules
+// Verifies no duplicate diagnostics when same field referenced twice
+// Both rules use BT-00-Text as context and subject
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2
+
+WITH BT-00-Text
+    WHEN BT-00-Text is not empty
+        ASSERT TRUE
+        AS ERROR R-D4K-P9M
+        FOR BT-00-Text IN 1, 2

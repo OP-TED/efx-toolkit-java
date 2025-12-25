@@ -1,0 +1,91 @@
+{
+  "schematrons" : [ {
+    "name" : "complete-validation",
+    "type" : "dynamic",
+    "filename" : "dynamic/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-1-1",
+    "type" : "dynamic",
+    "stage" : "1",
+    "filename" : "dynamic/validation-stage-1-1.sch"
+  }, {
+    "name" : "validation-stage-1-2",
+    "type" : "dynamic",
+    "stage" : "1",
+    "filename" : "dynamic/validation-stage-1-2.sch"
+  }, {
+    "name" : "validation-stage-1-3",
+    "type" : "dynamic",
+    "stage" : "1",
+    "filename" : "dynamic/validation-stage-1-3.sch"
+  }, {
+    "name" : "validation-stage-2-1",
+    "type" : "dynamic",
+    "stage" : "2",
+    "filename" : "dynamic/validation-stage-2-1.sch"
+  }, {
+    "name" : "validation-stage-2-3",
+    "type" : "dynamic",
+    "stage" : "2",
+    "filename" : "dynamic/validation-stage-2-3.sch"
+  }, {
+    "name" : "validation-stage-2-2",
+    "type" : "dynamic",
+    "stage" : "2",
+    "filename" : "dynamic/validation-stage-2-2.sch"
+  }, {
+    "name" : "validation-stage-3-1",
+    "type" : "dynamic",
+    "stage" : "3",
+    "filename" : "dynamic/validation-stage-3-1.sch"
+  }, {
+    "name" : "validation-stage-3-3",
+    "type" : "dynamic",
+    "stage" : "3",
+    "filename" : "dynamic/validation-stage-3-3.sch"
+  }, {
+    "name" : "complete-validation",
+    "type" : "static",
+    "filename" : "static/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-1-1",
+    "type" : "static",
+    "stage" : "1",
+    "filename" : "static/validation-stage-1-1.sch"
+  }, {
+    "name" : "validation-stage-1-2",
+    "type" : "static",
+    "stage" : "1",
+    "filename" : "static/validation-stage-1-2.sch"
+  }, {
+    "name" : "validation-stage-1-3",
+    "type" : "static",
+    "stage" : "1",
+    "filename" : "static/validation-stage-1-3.sch"
+  }, {
+    "name" : "validation-stage-2-1",
+    "type" : "static",
+    "stage" : "2",
+    "filename" : "static/validation-stage-2-1.sch"
+  }, {
+    "name" : "validation-stage-2-3",
+    "type" : "static",
+    "stage" : "2",
+    "filename" : "static/validation-stage-2-3.sch"
+  }, {
+    "name" : "validation-stage-2-2",
+    "type" : "static",
+    "stage" : "2",
+    "filename" : "static/validation-stage-2-2.sch"
+  }, {
+    "name" : "validation-stage-3-1",
+    "type" : "static",
+    "stage" : "3",
+    "filename" : "static/validation-stage-3-1.sch"
+  }, {
+    "name" : "validation-stage-3-3",
+    "type" : "static",
+    "stage" : "3",
+    "filename" : "static/validation-stage-3-3.sch"
+  } ]
+}

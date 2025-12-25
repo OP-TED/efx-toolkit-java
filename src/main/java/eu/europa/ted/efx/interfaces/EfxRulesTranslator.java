@@ -38,7 +38,6 @@ public interface EfxRulesTranslator extends EfxExpressionTranslator {
    * @param pathname The path and filename of the EFX rules file to translate.
    * @param options The options to be used by the EFX rules translator.
    * @return A map where keys are output file paths (relative) and values are the generated content.
-   *         For example: {"validation-stage-1a.sch" -> "<?xml...", "complete-validation.sch" -> "<?xml...", ...}
    * @throws IOException If the file cannot be read.
    */
   Map<String, String> translateRules(Path pathname, TranslatorOptions options) throws IOException;

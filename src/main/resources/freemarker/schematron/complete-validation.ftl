@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<#-- Template for complete-validation.sch master file -->
+<#--
+  Template for complete-validation.sch master file.
+
+  Parameters:
+    title           - Schema title (e.g., "eForms validation (dynamic)")
+    globalVariables - List<SchematronLet> of schema-level variables
+    phases          - List<SchematronPhase> defining validation phases per notice type
+    diagnostics     - List<SchematronDiagnostic> for subject path information
+    includes        - List<String> of pattern file paths to include
+-->
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" queryBinding="xslt2">
 
     <title>${title}</title>
@@ -20,17 +29,25 @@
 
     <#-- Global variables from schema-level LET statements -->
 <#list globalVariables as variable>
-    <let name="${variable.name}" value="${variable.value}"/>
+    <let name="${variable.name}" value="${variable.value?xml?replace("&apos;", "'")}"/>
 </#list>
 
     <#-- Phases for each notice type -->
 <#list phases as phase>
     <phase id="${phase.id}">
     <#list phase.activePatterns as pattern>
-        <active pattern="${pattern}" />
+        <active pattern="EFORMS-${pattern}" />
     </#list>
     </phase>
 </#list>
+<#if diagnostics?has_content>
+
+    <diagnostics>
+    <#list diagnostics as diagnostic>
+        <diagnostic id="${diagnostic.id}" see="${diagnostic.seeAttribute}">${diagnostic.xpath}</diagnostic>
+    </#list>
+    </diagnostics>
+</#if>
 
     <#-- Includes for all pattern files -->
 <#list includes as include>

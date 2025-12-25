@@ -1,0 +1,81 @@
+// Sample EFX Rules file for testing the EFX Rules to Schematron transpiler
+// This file tests all major features of the transpiler implementation
+// Uses only fields and nodes available in the mock symbol resolver
+
+// Schema-level variable declarations (global variables)
+LET text : $sdkVersion = "2.0.0";
+LET text : $testValue = "test";
+
+---- STAGE 1a ----
+
+// Simple rule with FOR clause
+WITH ND-Root
+ASSERT BT-00-Text is present
+AS ERROR R-K7P-M2Q
+FOR BT-00-Text IN *;
+
+// Rule with WHEN clause
+WITH ND-SubNode
+WHEN BT-00-Indicator is present
+ASSERT BT-00-Text is present
+AS ERROR R-X3F-N8W
+FOR BT-00-Text IN *;
+
+// Rule with WHEN/OTHERWISE
+WITH ND-SubNode
+WHEN BT-00-Indicator
+ASSERT BT-00-Text is present
+AS ERROR R-H9T-V5L
+FOR BT-00-Text IN *
+OTHERWISE
+ASSERT BT-00-Text is not present
+AS WARNING R-B6J-C4R
+FOR BT-00-Text IN *;
+
+---- STAGE 1b ----
+
+// Rule with IN clause - single notice type
+WITH ND-Root
+ASSERT BT-00-Code is present
+AS ERROR R-Y2N-G7S
+FOR BT-00-Code
+IN 1;
+
+// Rule with IN clause - multiple notice types
+WITH ND-SubNode
+ASSERT BT-00-Indicator is present
+AS ERROR R-D4K-P9M
+FOR BT-00-Indicator
+IN 1, 2, 3;
+
+---- STAGE 2a ----
+
+LET text : $rootText = BT-00-Text;
+
+// Complex WHEN condition with variable
+WITH ND-SubNode
+WHEN $rootText is not empty
+ASSERT BT-00-Indicator is present
+AS ERROR R-F5V-T6B
+FOR BT-00-Indicator IN *;
+
+// Rule checking boolean value
+WITH ND-Root
+ASSERT BT-00-Indicator
+AS ERROR R-W1D-J2Y
+FOR BT-00-Indicator IN *;
+
+---- STAGE 3a ----
+
+// Rule with text comparison
+WITH ND-SubSubNode
+WHEN BT-00-Text == "expected"
+ASSERT BT-00-Indicator is present
+AS WARNING R-M3C-U8N
+FOR BT-00-Indicator IN *;
+
+// Rule with code check
+WITH ND-Root
+ASSERT BT-00-Code in ("code1", "code2", "code3")
+AS ERROR R-S9L-R5K
+FOR BT-00-Code IN *;

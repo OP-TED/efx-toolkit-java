@@ -1,0 +1,10 @@
+// Test: Root context declaration syntax (WITH /)
+// Verifies the root context '/' resolves to '/*' in XPath
+// Diagnostics generated because context (/) != subject (BT-00-Text)
+
+---- STAGE 1a ----
+
+WITH /
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2

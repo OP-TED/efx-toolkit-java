@@ -1,0 +1,15 @@
+// Test: Multiple WITH statements with different fields
+// Verifies no diagnostics are generated when context == subject field
+// (BT-00-Text context with BT-00-Text subject = no diagnostics)
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2
+
+WITH BT-00-Indicator
+    ASSERT BT-00-Indicator is present
+    AS ERROR R-D4K-P9M
+    FOR BT-00-Indicator IN 1, 2

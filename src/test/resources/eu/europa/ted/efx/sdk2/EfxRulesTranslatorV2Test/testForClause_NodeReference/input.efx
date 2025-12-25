@@ -1,0 +1,10 @@
+// Test: FOR clause with node reference instead of field
+// Verifies FOR ND-SubNode uses node path in diagnostics
+// Node reference works same as field reference
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR ND-SubNode IN 1, 2

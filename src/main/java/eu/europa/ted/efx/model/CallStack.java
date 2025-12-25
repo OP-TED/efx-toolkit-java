@@ -2,9 +2,11 @@ package eu.europa.ted.efx.model;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -232,6 +234,12 @@ public class CallStack {
     return globals;
   }
 
+  public List<Variable> getGlobalVariables() {
+    return this.globalIdentifierRegistry.values().stream()
+        .filter(Variable.class::isInstance)
+        .map(Variable.class::cast)
+        .collect(Collectors.toList());
+  }
 
   /**
    * Gets the value of a parameter.

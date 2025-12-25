@@ -1,0 +1,13 @@
+// Test: Global (schema-level) variable declarations
+// Verifies LET declarations before stages become <let> elements in schema root
+// Global variables appear before <include> elements in complete-validation.sch
+
+LET text : $sdkVersion = "2.0.0";
+LET text : $noticeType = "16";
+
+---- STAGE 1a ----
+
+WITH ND-Root
+    ASSERT $sdkVersion is not empty
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2
