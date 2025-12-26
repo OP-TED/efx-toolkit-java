@@ -27,9 +27,9 @@ import eu.europa.ted.efx.model.rules.CompleteValidation;
  *
  * The typical workflow is:
  * 1. EFX Rules are parsed and translated into an intermediate model (List of ValidationStage)
- * 2. The ValidatorMarkupGenerator transforms this intermediate model into the target format
+ * 2. The ValidatorGenerator transforms this intermediate model into the target format
  */
-public interface ValidatorMarkupGenerator {
+public interface ValidatorGenerator {
 
     /**
      * Generates validation output files from the intermediate model.

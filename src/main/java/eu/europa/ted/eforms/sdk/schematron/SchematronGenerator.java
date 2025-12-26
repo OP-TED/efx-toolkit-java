@@ -28,7 +28,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import eu.europa.ted.efx.interfaces.ValidatorMarkupGenerator;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 import eu.europa.ted.efx.model.rules.CompleteValidation;
 import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.efx.model.variables.Variable;
@@ -41,21 +43,22 @@ import freemarker.template.TemplateExceptionHandler;
  * Generates Schematron XML markup using Freemarker templates.
  *
  * This class is responsible for transforming the intermediate validation model
- * (ValidationStage) into Schematron XML format. It implements ValidatorMarkupGenerator
+ * (ValidationStage) into Schematron XML format. It implements ValidatorGenerator
  * to provide a clean separation between translation and output generation.
  */
-public class SchematronMarkupGenerator implements ValidatorMarkupGenerator {
+@SdkComponent(versions = {"2"}, componentType = SdkComponentType.VALIDATOR_GENERATOR)
+public class SchematronGenerator implements ValidatorGenerator {
 
-  private static final Logger logger = LoggerFactory.getLogger(SchematronMarkupGenerator.class);
+  private static final Logger logger = LoggerFactory.getLogger(SchematronGenerator.class);
 
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
       .enable(SerializationFeature.INDENT_OUTPUT);
 
   private final Configuration freemarkerConfig;
 
-  public SchematronMarkupGenerator() {
+  public SchematronGenerator() {
     this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_31);
-    this.freemarkerConfig.setClassForTemplateLoading(SchematronMarkupGenerator.class,
+    this.freemarkerConfig.setClassForTemplateLoading(SchematronGenerator.class,
         "/freemarker/schematron");
     this.freemarkerConfig.setDefaultEncoding("UTF-8");
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -77,10 +80,10 @@ public class SchematronMarkupGenerator implements ValidatorMarkupGenerator {
 
     // Add global variables to schema
     for (Variable variable : completeValidation.getGlobalVariables()) {
-        String xpathValue = variable.initializationExpression.getScript();
-        SchematronLet globalVar = new SchematronLet(variable.name, xpathValue);
-        schema.addGlobalVariable(globalVar);
-        logger.debug("Added global variable: {} = {}", variable.name, xpathValue);
+      String xpathValue = variable.initializationExpression.getScript();
+      SchematronLet globalVar = new SchematronLet(variable.name, xpathValue);
+      schema.addGlobalVariable(globalVar);
+      logger.debug("Added global variable: {} = {}", variable.name, xpathValue);
     }
 
     // Transform intermediate model (ValidationStage) to Schematron model (SchematronPattern)

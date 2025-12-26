@@ -36,7 +36,7 @@ import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
-import eu.europa.ted.eforms.sdk.schematron.SchematronMarkupGenerator;
+import eu.europa.ted.eforms.sdk.schematron.SchematronGenerator;
 
 /**
  * Unit tests for EfxRulesTranslatorV2.
@@ -55,7 +55,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   @BeforeEach
   void setUp() throws InstantiationException {
     translator = new EfxRulesTranslatorV2(
-        new SchematronMarkupGenerator(),
+        new SchematronGenerator(),
         DependencyFactoryMock.INSTANCE.createSymbolResolver(SDK_VERSION, ""),
         DependencyFactoryMock.INSTANCE.createScriptGenerator(SDK_VERSION, "",
             new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT)),

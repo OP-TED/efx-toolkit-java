@@ -11,6 +11,7 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 
 public class ComponentFactory extends SdkComponentFactory {
   public static final ComponentFactory INSTANCE = new ComponentFactory();
@@ -96,7 +97,7 @@ public class ComponentFactory extends SdkComponentFactory {
     // Create new instance (this can throw InstantiationException)
     SymbolResolver newInstance = ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
         SdkComponentType.SYMBOL_RESOLVER, qualifier, SymbolResolver.class, sdkVersion, sdkRootPath);
-    
+
     // Store and return
     instances.put(key, newInstance);
     return newInstance;
@@ -111,6 +112,18 @@ public class ComponentFactory extends SdkComponentFactory {
       TranslatorOptions options) throws InstantiationException {
     return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
         SdkComponentType.MARKUP_GENERATOR, qualifier, MarkupGenerator.class, options);
+  }
+
+  public static ValidatorGenerator getValidatorGenerator(final String sdkVersion,
+      TranslatorOptions options) throws InstantiationException {
+    return getValidatorGenerator(sdkVersion, "", options);
+  }
+
+  public static ValidatorGenerator getValidatorGenerator(final String sdkVersion,
+      final String qualifier, TranslatorOptions options) throws InstantiationException {
+    return ComponentFactory.INSTANCE.getComponentImpl(sdkVersion,
+        SdkComponentType.VALIDATOR_GENERATOR, qualifier, ValidatorGenerator.class,
+        options);
   }
 
   public static ScriptGenerator getScriptGenerator(final String sdkVersion, TranslatorOptions options)

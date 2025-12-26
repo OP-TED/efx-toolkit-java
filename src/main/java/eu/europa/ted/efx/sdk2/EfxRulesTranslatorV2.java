@@ -33,7 +33,7 @@ import eu.europa.ted.efx.interfaces.EfxRulesTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
-import eu.europa.ted.efx.interfaces.ValidatorMarkupGenerator;
+import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
@@ -81,7 +81,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.WithClauseContext;
  * EFX Rules translator for SDK version 2.
  *
  * This translator parses EFX Rules files and produces an intermediate model
- * (List of ValidationStage) which is then passed to a ValidatorMarkupGenerator
+ * (List of ValidationStage) which is then passed to a ValidatorGenerator
  * for output generation.
  *
  * It extends EfxExpressionTranslatorV2 to reuse XPath expression generation and
@@ -94,29 +94,29 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   private static final Logger logger = LoggerFactory.getLogger(EfxRulesTranslatorV2.class);
 
   /**
-   * The ValidatorMarkupGenerator is used to generate validation output from the intermediate model.
+   * The ValidatorGenerator is used to generate validation output from the intermediate model.
    */
-  private final ValidatorMarkupGenerator markupGenerator;
+  private final ValidatorGenerator validatorGenerator;
 
   /**
    * List of validation stages collected during parsing.
-   * This is the intermediate model passed to the markup generator.
+   * This is the intermediate model passed to the validator generator.
    */
   private CompleteValidation completeValidation = new CompleteValidation();
 
   /**
    * Constructor for EfxRulesTranslatorV2.
    *
-   * @param markupGenerator The generator for creating validation output.
+   * @param validatorGenerator The generator for creating validation output.
    * @param symbolResolver The symbol resolver for looking up fields, nodes, and codelists.
    * @param scriptGenerator The script generator for creating XPath expressions.
    * @param errorListener The error listener for capturing parse errors.
    */
-  public EfxRulesTranslatorV2(final ValidatorMarkupGenerator markupGenerator,
+  public EfxRulesTranslatorV2(final ValidatorGenerator validatorGenerator,
       final SymbolResolver symbolResolver, final ScriptGenerator scriptGenerator,
       final BaseErrorListener errorListener) {
     super(symbolResolver, scriptGenerator, errorListener);
-    this.markupGenerator = markupGenerator;
+    this.validatorGenerator = validatorGenerator;
   }
 
   @Override
@@ -186,8 +186,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
 
-    // Generate output using the markup generator
-    return this.markupGenerator.generateOutput(this.completeValidation);
+    // Generate output using the validator generator
+    return this.validatorGenerator.generateOutput(this.completeValidation);
   }
 
   // #region ANTLR Listener Methods for EFX Rules Grammar
@@ -252,7 +252,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   /**
    * Called when exiting a schema-level variable declaration.
    * Declares the variable as a global identifier so it can be referenced later.
-   * The variable will be passed to the markup generator for output generation.
+   * The variable will be passed to the validator generator for output generation.
    */
   @Override
   public void exitGlobalVariableDeclaration(GlobalVariableDeclarationContext ctx) {
@@ -264,7 +264,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
       Variable variable = this.stack.pop(Variable.class);
 
       // Declare the variable in the stack so it can be referenced later
-      // and retrieved via stack.getGlobals() for the markup generator
+      // and retrieved via stack.getGlobals() for the validator generator
       this.stack.declareGlobalIdentifier(variable);
       this.completeValidation.addGlobalVariable(variable);
       logger.debug("Declared global variable: {}", variable.name);
@@ -327,7 +327,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.push(new RuleSet());
   }
 
-    /**
+  /**
    * Called when exiting a rule block.
    * Pops all rule components from the stack, assembles them into a RuleSet,
    * and adds the rule set to the current stage.
@@ -388,7 +388,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     }
   }
 
-    private void exitRootContextDeclaration() {
+  private void exitRootContextDeclaration() {
     PathExpression contextPath = new NodePathExpression("/*");
     String symbol = "ND-Root";
     this.exitNodeContextDeclaration(symbol, contextPath, null);
@@ -493,8 +493,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     logger.debug("Processing IN clause");
 
     String compressedList = ctx.noticeTypeList() instanceof AnyNoticeTypesContext ? "*" : ctx.noticeTypeList().getText();
-    var noticeSubtypes =
-         new NoticeSubtypeRange(compressedList, this.symbols.getAllNoticeSubtypeIds());
+    var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.symbols.getAllNoticeSubtypeIds());
     this.stack.peek(ValidationRule.class).setNoticeSubtypes(noticeSubtypes);
     this.completeValidation.addNoticeSubtypes(noticeSubtypes.asList());
   }
@@ -552,8 +551,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
       return left;
     }
     return this.script.composeLogicalOr(
-      this.script.composeParenthesizedExpression(left, BooleanExpression.class),
-      this.script.composeParenthesizedExpression(right, BooleanExpression.class));
+        this.script.composeParenthesizedExpression(left, BooleanExpression.class),
+        this.script.composeParenthesizedExpression(right, BooleanExpression.class));
   }
 
   @Override

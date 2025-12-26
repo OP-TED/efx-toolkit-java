@@ -77,7 +77,7 @@ public class SchematronPattern {
 
   /**
    * Returns all notice types referenced in the given stage.
-   * Used by SchematronMarkupGenerator to determine which patterns to create.
+   * Used by SchematronGenerator to determine which patterns to create.
    */
   public static Set<String> getNoticeTypesInStage(ValidationStage stage) {
     Set<String> types = new LinkedHashSet<>();

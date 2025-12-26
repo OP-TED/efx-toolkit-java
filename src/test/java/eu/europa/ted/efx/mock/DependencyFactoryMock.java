@@ -12,19 +12,21 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import eu.europa.ted.efx.interfaces.ValidatorGenerator; // Import
 
 /**
  * Provides EfxTranslator dependencies used for unit testing.
  */
 public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
-  private DependencyFactoryMock() {}
+  private DependencyFactoryMock() {
+  }
 
   final public static DependencyFactoryMock INSTANCE = new DependencyFactoryMock();
 
   Map<String, ScriptGenerator> scriptGenerators = new HashMap<>();
   Map<String, MarkupGenerator> markupGenerators = new HashMap<>();
-  
+
   @Override
   public SymbolResolver createSymbolResolver(String sdkVersion, String qualifier) {
     // Ignore the qualifier for unit tests
@@ -50,6 +52,13 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
   public MarkupGenerator createMarkupGenerator(String sdkVersion, String qualifier, TranslatorOptions options) {
     String key = sdkVersion + qualifier;
     return this.markupGenerators.computeIfAbsent(key, k -> new MarkupGeneratorMock());
+  }
+
+  @Override
+  public ValidatorGenerator createValidatorGenerator(String sdkVersion, String qualifier,
+      TranslatorOptions options) {
+    // Return null or a mock implementation as needed for tests
+    return null;
   }
 
   @Override
