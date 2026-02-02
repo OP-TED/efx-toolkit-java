@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pattern id="EFORMS-validation-stage-1a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
-    <rule context="/*/PathNode/TextField">
-        <assert id="R-K7P-M2Q" role="ERROR" test=".">rule|text|R-K7P-M2Q</assert>
+    <rule context="/*">
+        <assert id="R-K7P-M2Q" role="ERROR" diagnostics="ND-Root_BT-00-Text" test="PathNode/TextField">rule|text|R-K7P-M2Q</assert>
     </rule>
-    <rule context="/*/PathNode/TextField">
-        <assert id="R-D4K-P9M" role="ERROR" test="(not(./normalize-space(text()) != '')) or (true())">rule|text|R-D4K-P9M</assert>
+    <rule context="/*">
+        <assert id="R-D4K-P9M" role="ERROR" diagnostics="ND-Root_BT-00-Text" test="(not(PathNode/NumberField)) or (PathNode/TextField)">rule|text|R-D4K-P9M</assert>
     </rule>
 </pattern>

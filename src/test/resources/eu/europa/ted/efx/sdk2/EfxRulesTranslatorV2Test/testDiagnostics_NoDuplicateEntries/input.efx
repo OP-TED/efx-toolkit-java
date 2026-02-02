@@ -1,16 +1,16 @@
-// Test: Same field used in multiple rules
+// Test: Same field used as subject in multiple rules with different context
 // Verifies no duplicate diagnostics when same field referenced twice
-// Both rules use BT-00-Text as context and subject
+// Both rules use ND-Root as context but BT-00-Text as subject
 
 ---- STAGE 1a ----
 
-WITH BT-00-Text
+WITH ND-Root
     ASSERT BT-00-Text is present
     AS ERROR R-K7P-M2Q
     FOR BT-00-Text IN 1, 2
 
-WITH BT-00-Text
-    WHEN BT-00-Text is not empty
-        ASSERT TRUE
+WITH ND-Root
+    WHEN BT-00-Number is present
+        ASSERT BT-00-Text is present
         AS ERROR R-D4K-P9M
         FOR BT-00-Text IN 1, 2
