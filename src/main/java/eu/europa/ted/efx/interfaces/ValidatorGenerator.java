@@ -13,7 +13,6 @@
  */
 package eu.europa.ted.efx.interfaces;
 
-import java.io.IOException;
 import java.util.Map;
 
 import eu.europa.ted.efx.model.rules.CompleteValidation;
@@ -37,9 +36,6 @@ public interface ValidatorGenerator {
      * @param completeValidation The complete validation model containing stages,
      *                           global variables, and notice subtypes.
      * @return A map of filename to file content for all generated validation files.
-     * @throws IOException If an error occurs during file generation.
      */
-    Map<String, String> generateOutput(
-        CompleteValidation completeValidation
-    ) throws IOException;
+    Map<String, String> generateOutput(CompleteValidation completeValidation);
 }

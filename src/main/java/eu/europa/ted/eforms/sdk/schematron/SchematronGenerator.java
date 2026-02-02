@@ -68,9 +68,7 @@ public class SchematronGenerator implements ValidatorGenerator {
   // #region ValidatorMarkupGenerator Implementation
 
   @Override
-  public Map<String, String> generateOutput(
-      CompleteValidation completeValidation
-  ) throws IOException {
+  public Map<String, String> generateOutput(CompleteValidation completeValidation) {
     logger.debug("Generating Schematron output from {} stages", completeValidation.getStages().size());
 
     // Create local state for this generation run
@@ -93,7 +91,11 @@ public class SchematronGenerator implements ValidatorGenerator {
     addDiagnosticsToSchema(diagnosticsMap, schema);
 
     // Generate all output files
-    return generateOutputFiles(completeValidation.getNoticeSubtypes(), patterns, schema);
+    try {
+      return generateOutputFiles(completeValidation.getNoticeSubtypes(), patterns, schema);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to generate Schematron output", e);
+    }
   }
 
   // #endregion ValidatorMarkupGenerator Implementation
