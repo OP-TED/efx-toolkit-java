@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,7 +139,7 @@ public class SchematronGenerator implements ValidatorGenerator {
     model.put("rules", pattern.getRules());
     model.put("tags", config.ruleNatures().stream()
         .map(Enum::name)
-        .toList());
+        .collect(Collectors.toList()));
 
     template.process(model, writer);
     return writer.toString();
