@@ -40,8 +40,8 @@ public abstract class SchematronTest {
   /** Used by pattern.ftl */
   public String getRole() {
     return this.rule.getSeverity() != null
-        ? this.rule.getSeverity().toString().toLowerCase()
-        : "error";
+        ? this.rule.getSeverity().toString().toUpperCase()
+        : "ERROR";
   }
 
   /** Used by pattern.ftl */
