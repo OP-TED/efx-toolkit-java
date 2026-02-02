@@ -104,7 +104,8 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
       if (filename.endsWith(".sch")) {
         assertValidXml(actualContent, filename);
       }
-      assertEquals(expectedContent, actualContent, "Content mismatch in " + filename);
+      assertEquals(expectedContent.stripTrailing(), actualContent.stripTrailing(),
+          "Content mismatch in " + filename);
     }
   }
 

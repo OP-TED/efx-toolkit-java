@@ -53,7 +53,7 @@
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
     <version.commons-lang3>3.18.0</version.commons-lang3>
-    <version.freemarker>2.3.31</version.freemarker>
+    <version.freemarker>2.3.34</version.freemarker>
     <version.logback>1.5.18</version.logback>
     <version.jackson>2.18.3</version.jackson>
     <version.jackson-databind>2.18.3</version.jackson-databind>

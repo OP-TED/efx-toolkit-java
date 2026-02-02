@@ -508,7 +508,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var condition = this.stack.pop(BooleanExpression.class);
     var rule = this.stack.pop(ValidationRule.class);
     var invertedCondition = this.script.composeLogicalNot(condition);
-    rule.setCondition(condition, invertedCondition, this.combineWithOrParenthesized(invertedCondition, rule.getExpression()));
+    rule.setCondition(condition, invertedCondition, this.combineWithOrParenthesized(rule.getExpression(), invertedCondition));
     this.stack.push(rule);
   }
 
@@ -563,7 +563,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var test = this.stack.pop(BooleanExpression.class);
     var rule = this.stack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(invertedCondition, test));
+    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
     this.stack.push(new AssertRule(rule));
   }
 
@@ -572,7 +572,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var test = this.stack.pop(BooleanExpression.class);
     var rule = this.stack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(invertedCondition, test));
+    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
     this.stack.push(new ReportRule(rule));
   }
 
@@ -585,7 +585,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var test = this.stack.pop(BooleanExpression.class);
     var rule = this.stack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(invertedCondition, test));
+    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
     this.stack.push(new AssertRule(rule));
   }
 
@@ -594,7 +594,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var test = this.stack.pop(BooleanExpression.class);
     var rule = this.stack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(invertedCondition, test));
+    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
     this.stack.push(new ReportRule(rule));
   }
 
@@ -650,7 +650,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     }
     var invertedCombined = this.script.composeLogicalNot(combined);
 
-    fallbackRule.setCondition(combined, invertedCombined, this.combineWithOrParenthesized(invertedCombined, fallbackRule.getExpression()));
+    fallbackRule.setCondition(combined, invertedCombined, this.combineWithOrParenthesized(fallbackRule.getExpression(), invertedCombined));
 
     ruleSet.setFallbackRule(fallbackRule);
     this.stack.push(ruleSet);
