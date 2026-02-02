@@ -92,7 +92,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.DurationFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationParameterDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.DurationVariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ExpressionTemplateContext;
-import eu.europa.ted.efx.sdk2.EfxParser.GlobalVariableDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.VariableDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.IndentationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.InvokeTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.LabelTemplateContext;
@@ -124,7 +124,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.TemplateDefinitionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateFileContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TemplateLineContext;
-import eu.europa.ted.efx.sdk2.EfxParser.TemplateVariableDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.VariableInitializerContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TextTemplateContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeFunctionDeclarationContext;
 import eu.europa.ted.efx.sdk2.EfxParser.TimeParameterDeclarationContext;
@@ -323,7 +323,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   // #region Global declarationExpressions ---------------------------------------
 
   @Override
-  public void exitGlobalVariableDeclaration(GlobalVariableDeclarationContext ctx) {
+  public void exitVariableDeclaration(VariableDeclarationContext ctx) {
     var variable = this.stack.pop(Variable.class);
     this.stack.declareGlobalIdentifier(variable);
   }
@@ -937,18 +937,20 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable contextVariable) {
-    this.efxContext.push(new FieldContext(fieldId, contextPath, contextVariable));
+    var context = new FieldContext(fieldId, contextPath, contextVariable);
+    this.efxContext.push(context);
     if (contextVariable != null) {
       this.stack.declareIdentifier(contextVariable);
-      this.efxContext.declareContextVariable(contextVariable.name, new FieldContext(fieldId, contextPath, contextVariable));
+      this.efxContext.declareContextVariable(contextVariable.name, context);
     }
   }
 
   private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath, Variable contextVariable) {
-    this.efxContext.push(new NodeContext(nodeId, contextPath, contextVariable));
+    var context = new NodeContext(nodeId, contextPath, contextVariable);
+    this.efxContext.push(context);
     if (contextVariable != null) {
       this.stack.declareIdentifier(contextVariable);
-      this.efxContext.declareContextVariable(contextVariable.name, new NodeContext(nodeId, contextPath, contextVariable));
+      this.efxContext.declareContextVariable(contextVariable.name, context);
     }
   }
 
@@ -1051,7 +1053,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   @Override
-  public void exitTemplateVariableDeclaration(TemplateVariableDeclarationContext arg0) {
+  public void exitVariableInitializer(VariableInitializerContext arg0) {
     var variable = this.stack.pop(Variable.class);
     this.stack.declareIdentifier(variable);
     this.stack.peek(Variables.class).add(variable);
@@ -1344,13 +1346,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     // #region Template Variables ---------------------------------------------
   
     @Override
-    public void exitGlobalVariableDeclaration(GlobalVariableDeclarationContext arg0) {
+    public void exitVariableDeclaration(VariableDeclarationContext arg0) {
       var variable = this.stack.pop(Variable.class);
       this.stack.declareGlobalIdentifier(variable);
     }
 
     @Override
-    public void exitTemplateVariableDeclaration(TemplateVariableDeclarationContext arg0) {
+    public void exitVariableInitializer(VariableInitializerContext arg0) {
       var variable = this.stack.pop(Variable.class);
       this.stack.declareIdentifier(variable);
     }

@@ -1,0 +1,95 @@
+// Test: Variable declarations in WITH clause and at stage level
+// Each WITH has multiple asserts with different IN clauses to verify
+// variables work correctly when rules end up in different phases.
+// Also tests stage-level variables declared at beginning of stage.
+
+---- STAGE 1a ----
+
+// Stage variables at beginning of stage (pattern-level, available to all rules)
+LET text : $stageVar1 = "S1";
+LET text : $stageVar2 = "S2";
+
+// Case 1: No variables (baseline) - uses stage variable
+WITH BT-00-Text
+    ASSERT $stageVar1 is not empty
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1
+
+    ASSERT BT-00-Text is not empty
+    AS ERROR R-X3F-N8W
+    FOR BT-00-Text IN 2
+
+// Case 2: Single variable before context (pattern-level)
+WITH text : $before1 = "b1", BT-00-Number
+    ASSERT $before1 is not empty
+    AS ERROR R-Y2N-G7S
+    FOR BT-00-Number IN 1
+
+    ASSERT $before1 != "x"
+    AS ERROR R-D4K-P9M
+    FOR BT-00-Number IN 2
+
+// Case 3: Multiple variables before context (pattern-level)
+WITH text : $preA = "A", text : $preB = "B", BT-00-Indicator
+    ASSERT $preA is not empty and $preB is not empty
+    AS ERROR R-F5V-T6B
+    FOR BT-00-Indicator IN 1
+
+    ASSERT $preA != $preB
+    AS ERROR R-W1D-J2Y
+    FOR BT-00-Indicator IN 2
+
+// Case 4: Single variable after context (rule-level) - uses stage variable
+WITH BT-00-Text, text : $after1 = "a1"
+    ASSERT $stageVar2 is not empty and $after1 is not empty
+    AS ERROR R-M3C-U8N
+    FOR BT-00-Text IN 1
+
+    ASSERT $after1 != "x"
+    AS ERROR R-S9L-R5K
+    FOR BT-00-Text IN 2
+
+// Case 5: Multiple variables after context (rule-level)
+WITH BT-00-Number, text : $postX = "X", text : $postY = "Y"
+    ASSERT $postX is not empty and $postY is not empty
+    AS ERROR R-V4T-O7J
+    FOR BT-00-Number IN 1
+
+    ASSERT $postX != $postY
+    AS ERROR R-A8Q-H3W
+    FOR BT-00-Number IN 2
+
+// Case 6: One before, one after (mixed pattern/rule level)
+WITH text : $left = "L", BT-00-Indicator, text : $right = "R"
+    ASSERT $left is not empty and $right is not empty
+    AS ERROR R-G2M-X6D
+    FOR BT-00-Indicator IN 1
+
+    ASSERT $left != $right
+    AS ERROR R-J5B-Y9S
+    FOR BT-00-Indicator IN 2
+
+// Case 7: Multiple before and after (full mixed) - uses both stage variables
+WITH text : $p1 = "P1", text : $p2 = "P2", BT-00-Text, text : $r1 = "R1", text : $r2 = "R2"
+    ASSERT $stageVar1 is not empty and $stageVar2 is not empty and $p1 is not empty
+    AS ERROR R-C1V-Z4H
+    FOR BT-00-Text IN 1
+
+    ASSERT $p1 != $r1 and $p2 != $r2
+    AS ERROR R-T6N-K8R
+    FOR BT-00-Text IN 2
+
+---- STAGE 1b ----
+
+// Different stage variables - should only appear in stage 1b patterns
+LET text : $stage1bVar = "1B";
+
+// Simple rule using stage 1b variable
+WITH BT-00-Text
+    ASSERT $stage1bVar is not empty
+    AS ERROR R-E3F-L2G
+    FOR BT-00-Text IN 1
+
+    ASSERT BT-00-Text is present
+    AS ERROR R-P9C-W5Y
+    FOR BT-00-Text IN 2

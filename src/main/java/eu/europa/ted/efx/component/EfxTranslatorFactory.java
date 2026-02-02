@@ -3,12 +3,14 @@ package eu.europa.ted.efx.component;
 import eu.europa.ted.eforms.sdk.component.SdkComponentFactory;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
+import eu.europa.ted.efx.interfaces.EfxRulesTranslator;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 
 public class EfxTranslatorFactory extends SdkComponentFactory {
   public static final EfxTranslatorFactory INSTANCE = new EfxTranslatorFactory();
@@ -50,5 +52,23 @@ public class EfxTranslatorFactory extends SdkComponentFactory {
     return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
         SdkComponentType.EFX_TEMPLATE_TRANSLATOR, qualifier, EfxTemplateTranslator.class,
         markupGenerator, symbolResolver, scriptGenerator, factory.createErrorListener());
+  }
+
+  public static EfxRulesTranslator getEfxRulesTranslator(final String sdkVersion,
+      final TranslatorDependencyFactory factory, TranslatorOptions options) throws InstantiationException {
+    return getEfxRulesTranslator(sdkVersion, "", factory, options);
+  }
+
+  public static EfxRulesTranslator getEfxRulesTranslator(final String sdkVersion,
+      final String qualifier, final TranslatorDependencyFactory factory, TranslatorOptions options)
+      throws InstantiationException {
+
+    ValidatorGenerator validatorGenerator = factory.createValidatorGenerator(sdkVersion, qualifier, options);
+    SymbolResolver symbolResolver = factory.createSymbolResolver(sdkVersion, qualifier);
+    ScriptGenerator scriptGenerator = factory.createScriptGenerator(sdkVersion, qualifier, options);
+
+    return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
+        SdkComponentType.EFX_RULES_TRANSLATOR, qualifier, EfxRulesTranslator.class,
+        validatorGenerator, symbolResolver, scriptGenerator, factory.createErrorListener());
   }
 }

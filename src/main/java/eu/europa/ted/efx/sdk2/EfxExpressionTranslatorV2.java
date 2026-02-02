@@ -1720,14 +1720,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     assert false: "This should have been handled by the preprocessor: " + ctx.getText() +". Check any changes that you might have made in the EFX grammar that may have broken this assumption.";
   }
 
-  private static String textTypeName = getLexerSymbol(EfxLexer.Text);
-  private static String booleanTypeName = getLexerSymbol(EfxLexer.Indicator);
-  private static String numericTypeName = getLexerSymbol(EfxLexer.Number);
-  private static String dateTypeName = getLexerSymbol(EfxLexer.Date);
-  private static String timeTypeName = getLexerSymbol(EfxLexer.Time);
-  private static String durationTypeName = getLexerSymbol(EfxLexer.Measure);
+  // Type name constants - made protected for reuse in subclasses
+  protected static String textTypeName = getLexerSymbol(EfxLexer.Text);
+  protected static String booleanTypeName = getLexerSymbol(EfxLexer.Indicator);
+  protected static String numericTypeName = getLexerSymbol(EfxLexer.Number);
+  protected static String dateTypeName = getLexerSymbol(EfxLexer.Date);
+  protected static String timeTypeName = getLexerSymbol(EfxLexer.Time);
+  protected static String durationTypeName = getLexerSymbol(EfxLexer.Measure);
 
-  private static final Map<String, String> eFormsToEfxTypeMap = Map.ofEntries( //
+  // Map from eForms field types to EFX type names - made protected for reuse in subclasses
+  protected static final Map<String, String> eFormsToEfxTypeMap = Map.ofEntries( //
       entry(FieldTypes.ID.getName(), textTypeName), //
       entry(FieldTypes.ID_REF.getName(), textTypeName), //
       entry(FieldTypes.TEXT.getName(), textTypeName), //
@@ -1747,7 +1749,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       entry(FieldTypes.PHONE.getName(), textTypeName), //
       entry(FieldTypes.EMAIL.getName(), textTypeName));
 
-  private static final Map<Class<? extends EfxDataType>, String> javaToEfxTypeMap = Map.ofEntries(
+  // Map from Java EfxDataType classes to EFX type names - made protected for reuse in subclasses
+  protected static final Map<Class<? extends EfxDataType>, String> javaToEfxTypeMap = Map.ofEntries(
       entry(EfxDataType.String.class, textTypeName), //
       entry(EfxDataType.Boolean.class, booleanTypeName), //
       entry(EfxDataType.Number.class, numericTypeName), //

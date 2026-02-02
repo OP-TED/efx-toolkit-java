@@ -1,0 +1,10 @@
+// Test: IN clause with notice type ranges
+// Verifies range expansion: 1-3 -> (1,2,3), 5, E1-E2 -> (E1,E2)
+// Total: 6 notice types generate 6 pattern files
+
+---- STAGE 1a ----
+
+WITH ND-SubNode
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1-3, 5, E1-E2

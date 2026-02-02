@@ -1,0 +1,10 @@
+// Test: Field IDs with parentheses in diagnostics
+// Verifies parentheses are sanitized: BT-00(a)-Text -> BT-00_a_-Text
+// Original ID preserved in 'see' attribute, sanitized in diagnostic ID
+
+---- STAGE 1a ----
+
+WITH ND-Root
+    ASSERT BT-00(a)-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00(a)-Text IN 1, 2

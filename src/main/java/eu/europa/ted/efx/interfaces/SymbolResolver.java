@@ -9,7 +9,7 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the Licence for the specific language governing permissions and limitations under
- * the Lic
+ * the Licence.
  */
 package eu.europa.ted.efx.interfaces;
 
@@ -152,6 +152,14 @@ public interface SymbolResolver {
    */
   public List<String> expandCodelist(final String codelistId);
 
+  /**
+   * Gets a list of all valid notice subtype IDs.
+   * Used for validating notice subtype references in EFX.
+   *
+   * @return List of notice type IDs (e.g., ["1", "2", ..., "40", "CEI", "E1", ..., "X02"])
+   */
+  public List<String> getAllNoticeSubtypeIds();
+  
   public String getFieldIdFromAlias(final String alias);
 
   public String getNodeIdFromAlias(final String alias);

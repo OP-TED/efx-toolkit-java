@@ -87,4 +87,16 @@ public class SymbolResolverMockV1
     throw new UnsupportedOperationException(
         "Alias resolution is not supported in SDK-1.");
   }
+
+  /**
+   * Returns a list of all valid notice type IDs for testing.
+   * Uses a small set that covers all testing scenarios:
+   * - Numeric types (1-5) for basic testing and ranges
+   * - Alphanumeric types (E1, E2, X01) for non-numeric ID testing
+   */
+  @Override
+  public java.util.List<String> getAllNoticeSubtypeIds() {
+    return java.util.Arrays.asList("1", "2", "3", "4", "5", "E1", "E2", "X01");
+  }
+
 }

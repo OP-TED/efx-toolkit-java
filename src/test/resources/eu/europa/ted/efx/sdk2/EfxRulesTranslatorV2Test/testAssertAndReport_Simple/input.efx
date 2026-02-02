@@ -1,0 +1,13 @@
+// Test: Simple ASSERT and REPORT rules
+// Verifies both rule types generate correct Schematron elements
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1
+
+    REPORT BT-00-Text is empty
+    AS WARNING R-X3F-N8W
+    FOR BT-00-Text IN 1

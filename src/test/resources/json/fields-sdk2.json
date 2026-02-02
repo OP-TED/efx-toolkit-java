@@ -219,4 +219,12 @@
     "parentNodeId": "ND-SubSubNode",
     "xpathAbsolute": "/*/SubNode/SubSubNode/SubTextField[0 = 0]",
     "xpathRelative": "SubTextField"
+  },
+  {
+    "id": "BT-00(a)-Text",
+    "alias": "textFieldWithParens",
+    "type": "text",
+    "parentNodeId": "ND-Root",
+    "xpathAbsolute": "/*/PathNode/TextFieldA",
+    "xpathRelative": "PathNode/TextFieldA"
   }]
