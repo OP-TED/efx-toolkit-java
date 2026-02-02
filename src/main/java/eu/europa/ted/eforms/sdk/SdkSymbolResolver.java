@@ -236,7 +236,8 @@ public class SdkSymbolResolver implements SymbolResolver {
 
   @Override
   public List<String> getAllNoticeSubtypeIds() {
-    return noticeTypesById.keySet().stream().map(String::toUpperCase).sorted().toList();
+    return noticeTypesById.keySet().stream().map(String::toUpperCase).sorted()
+        .collect(Collectors.toList());
   }
 
   private HashMap<String, SdkField> indexFieldsByAlias() {
