@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.xpath;
 
 import static java.util.Map.entry;
@@ -18,18 +31,25 @@ import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
-import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.LiteralExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
+import eu.europa.ted.efx.model.expressions.scalar.BooleanLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
+import eu.europa.ted.efx.model.expressions.scalar.DateLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
+import eu.europa.ted.efx.model.expressions.scalar.DurationLiteral;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
+import eu.europa.ted.efx.model.expressions.scalar.TimeLiteral;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
@@ -63,38 +83,38 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeNodeReferenceWithPredicate(PathExpression nodeReference,
       BooleanExpression predicate) {
-    return PathExpression.instantiate(nodeReference.getScript() + '[' + predicate.getScript() + ']', EfxDataType.Node.class);
+    return Expression.instantiate(nodeReference.getScript() + '[' + predicate.getScript() + ']', nodeReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldReferenceWithPredicate(PathExpression fieldReference,
       BooleanExpression predicate) {
-    return PathExpression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getDataType());
+    return Expression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
       final String axis) {
     String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
-    return PathExpression.instantiate(resultXPath, fieldReference.getDataType());
+    return Expression.instantiate(resultXPath, fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldValueReference(PathExpression fieldReference) {
     if (fieldReference.is(EfxDataType.String.class)) {
-      return PathExpression.instantiate(fieldReference.getScript() + "/normalize-space(text())", fieldReference.getDataType());
+      return Expression.instantiate(fieldReference.getScript() + "/normalize-space(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Number.class)) {
-      return PathExpression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getDataType());
+      return Expression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Date.class)) {
-      return PathExpression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getDataType());
+      return Expression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Time.class)) {
-      return PathExpression.instantiate(fieldReference.getScript() + "/xs:time(text())", fieldReference.getDataType());
+      return Expression.instantiate(fieldReference.getScript() + "/xs:time(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Duration.class)) {
-      return PathExpression.instantiate("(for $F in " + fieldReference.getScript() + " return (if ($F/@unitCode='WEEK')" + //
+      return Expression.instantiate("(for $F in " + fieldReference.getScript() + " return (if ($F/@unitCode='WEEK')" + //
           " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
           " else if ($F/@unitCode='DAY')" + //
           " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
@@ -104,10 +124,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
           " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
           // " else if (" + fieldReference.script + ")" + //
           // " then fn:error('Invalid @unitCode')" + //
-          " else ()))", fieldReference.getDataType());
+          " else ()))", fieldReference.getClass());
     }
 
-    return PathExpression.instantiate(fieldReference.getScript(), fieldReference.getDataType());
+    return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
   }
 
   @Override
@@ -161,41 +181,41 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public NumericExpression getNumericLiteralEquivalent(String literal) {
-    return new NumericExpression(literal, true);
+  public NumericLiteral getNumericLiteralEquivalent(String literal) {
+    return new NumericLiteral(literal);
   }
 
   @Override
-  public StringExpression getStringLiteralEquivalent(String literal) {
-    return new StringExpression(literal, true);
+  public StringLiteral getStringLiteralEquivalent(String literal) {
+    return new StringLiteral(literal);
   }
 
   @Override
-  public BooleanExpression getBooleanEquivalent(boolean value) {
-    return new BooleanExpression(value ? "true()" : "false()", true);
+  public BooleanLiteral getBooleanEquivalent(boolean value) {
+    return new BooleanLiteral(value ? "true()" : "false()");
   }
 
   @Override
-  public DateExpression getDateLiteralEquivalent(String literal) {
-    return new DateExpression("xs:date(" + quoted(literal) + ")", true);
+  public DateLiteral getDateLiteralEquivalent(String literal) {
+    return new DateLiteral("xs:date(" + quoted(literal) + ")");
   }
 
   @Override
-  public TimeExpression getTimeLiteralEquivalent(String literal) {
-    return new TimeExpression("xs:time(" + quoted(literal) + ")", true);
+  public TimeLiteral getTimeLiteralEquivalent(String literal) {
+    return new TimeLiteral("xs:time(" + quoted(literal) + ")");
   }
 
   @Override
-  public DurationExpression getDurationLiteralEquivalent(final String literal) {
+  public DurationLiteral getDurationLiteralEquivalent(final String literal) {
     if (literal.contains("M") || literal.contains("Y")) {
-      return new DurationExpression("xs:yearMonthDuration(" + quoted(literal) + ")", true);
+      return new DurationLiteral("xs:yearMonthDuration(" + quoted(literal) + ")");
     }
     if (literal.contains("W")) {
       final int weeks = this.getWeeksFromDurationLiteral(literal);
-      return new DurationExpression(
-          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")", true);
+      return new DurationLiteral(
+          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
     }
-    return new DurationExpression("xs:dayTimeDuration(" + quoted(literal) + ")", true);
+    return new DurationLiteral("xs:dayTimeDuration(" + quoted(literal) + ")");
   }
 
   @Override
@@ -245,12 +265,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new IteratorExpression(variableDeclarationExpression.getScript() + " in " + sourceList.getScript());
   }
 
-  // @Override
-  // public IteratorExpression composeIteratorExpression(
-  //     String variableName, EfxPathExpression pathExpression) {
-  //   return new IteratorExpression(variableName + " in " + pathExpression.getScript());
-  // }
-
   @Override
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators) {
     return new IteratorListExpression(
@@ -269,7 +283,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression composeExternalReference(StringExpression externalReference) {
-    return new NodePathExpression(
+    return new NodePath(
         "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
   }
 
@@ -277,13 +291,19 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeFieldInExternalReference(PathExpression externalReference,
       PathExpression fieldReference) {
-    return PathExpression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getDataType());
+    return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
   }
 
 
   @Override
   public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
     return XPathContextualizer.join(first, second);
+  }
+
+  @Override
+  public PathExpression contextualizePath(final PathExpression absolutePath,
+      final PathExpression contextPath) {
+    return XPathContextualizer.contextualize(contextPath, absolutePath);
   }
 
   //#region Indexers ----------------------------------------------------------
@@ -451,13 +471,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format) {
-        String formatString = format.isLiteral() ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.getScript()) : format.getScript();
+        String formatString = format instanceof LiteralExpression ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.getScript()) : format.getScript();
         return new StringExpression("format-number(" + number.getScript() + ", " + formatString + ")");
   }
 
   @Override
-  public StringExpression getStringLiteralFromUnquotedString(String value) {
-    return new StringExpression("'" + value + "'", true);
+  public StringLiteral getStringLiteralFromUnquotedString(String value) {
+    return new StringLiteral("'" + value + "'");
   }
 
   @Override

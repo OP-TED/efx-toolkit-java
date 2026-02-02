@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model;
 
 import java.util.HashMap;
@@ -13,6 +26,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
+import eu.europa.ted.efx.interfaces.TypeChecker;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.variables.ParsedParameter;
@@ -32,6 +46,11 @@ import eu.europa.ted.efx.model.variables.Variable;
 public class CallStack {
 
   private static final String STACK_UNDERFLOW = "Stack underflow. Return values were available in the dropped frame, but no stack frame is left to consume them.";
+
+  /**
+   * The type checker used for type conversion checks.
+   */
+  private final TypeChecker typeChecker;
 
   /**
    * Stack frames are means of controlling the scope of variables and parameters.
@@ -63,7 +82,7 @@ public class CallStack {
      * Returns the object at the top of the stack and removes it from the stack. The
      * object must be
      * of the expected type.
-     * 
+     *
      * @param expectedType The type that the returned object is expected to have.
      * @return The object removed from the top of the stack.
      */
@@ -76,7 +95,7 @@ public class CallStack {
       if (TypedExpression.class.isAssignableFrom(actualType) && TypedExpression.class.isAssignableFrom(expectedType)) {
         var actual = actualType.asSubclass(TypedExpression.class);
         var expected = expectedType.asSubclass(TypedExpression.class);
-        if (TypedExpression.canConvert(actual, expected)) {
+        if (typeChecker.canConvert(actual, expected)) {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.pop(), expected));
         }
         throw TypeMismatchException.cannotConvert(expected, actual);
@@ -94,7 +113,7 @@ public class CallStack {
       if (TypedExpression.class.isAssignableFrom(actualType) && TypedExpression.class.isAssignableFrom(expectedType)) {
         var actual = actualType.asSubclass(TypedExpression.class);
         var expected = expectedType.asSubclass(TypedExpression.class);
-        if (TypedExpression.canConvert(actual, expected)) {
+        if (typeChecker.canConvert(actual, expected)) {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.peek(), expected));
         }
       }
@@ -123,11 +142,21 @@ public class CallStack {
   Map<String, Identifier> globalIdentifierRegistry = new LinkedHashMap<>();
 
   /**
-   * Default and only constructor. Adds a global scope to the stack.
+   * Creates a CallStack with a specific type checker.
+   *
+   * @param typeChecker The type checker to use for type conversion checks.
    */
-  public CallStack() {
+  public CallStack(TypeChecker typeChecker) {
+    this.typeChecker = typeChecker;
     this.frames = new Stack<>();
     this.frames.push(new StackFrame()); // The global scope
+  }
+
+  /**
+   * Default constructor. Uses TypeCheckerV2 for strict type checking.
+   */
+  public CallStack() {
+    this(TypeChecker.V2);
   }
 
   /**

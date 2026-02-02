@@ -1,19 +1,38 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model.expressions.sequence;
 
 import eu.europa.ted.efx.model.types.EfxDataTypeAssociation;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
 /**
- * Used to represent a list of numbers in the target language.
+ * A numeric-typed sequence AST node in the expression tree built during EFX translation.
+ *
+ * Wraps a target-language script fragment that evaluates to a sequence of numeric values.
  */
-@EfxDataTypeAssociation(dataType = EfxDataType.Number.class)
-public class NumericSequenceExpression extends SequenceExpression.Impl<EfxDataType.Number> {
+@EfxDataTypeAssociation(dataType = EfxDataType.NumberSequence.class)
+public class NumericSequenceExpression extends SequenceExpression.Impl<EfxDataType.NumberSequence> {
 
   public NumericSequenceExpression(final String script) {
-    super(script, EfxDataType.Number.class);
+    super(script, EfxDataType.NumberSequence.class);
   }
 
-  public NumericSequenceExpression(final String script, final Boolean isLiteral) {
-    super(script, isLiteral, EfxDataType.Number.class);
+  protected NumericSequenceExpression(final String script, Class<? extends EfxDataType.NumberSequence> type) {
+    super(script, type);
+  }
+
+  public static NumericSequenceExpression empty() {
+    return new NumericSequenceExpression("");
   }
 }

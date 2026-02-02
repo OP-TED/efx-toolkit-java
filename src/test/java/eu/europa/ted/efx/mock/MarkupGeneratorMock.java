@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.mock;
 
 import java.util.List;
@@ -11,16 +24,18 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.Parameter;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.expressions.Expression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 
 public class MarkupGeneratorMock implements MarkupGenerator {
 
-  static final Map<Class<? extends EfxDataType>, Markup> typeFromEfxDataType = Map
+  static final Map<Class<? extends EfxDataType.Primitive>, Markup> typeFromEfxDataType = Map
       .ofEntries(
           Map.entry(EfxDataType.String.class, new Markup("string")), //
           Map.entry(EfxDataType.MultilingualString.class, new Markup("string")), //
@@ -34,19 +49,33 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
 
   @Override
-  public Markup renderVariableDeclaration(Class<? extends EfxDataType> dataType, String variableName,
-          Expression initialiser) {
-      return new Markup(String.format("%s:%s=%s", this.getEfxDataTypeEquivalent(dataType).script, variableName, initialiser.getScript()));
+  public Markup renderVariableDeclaration(String variableName, TypedExpression initialiser) {
+      Class<? extends EfxDataType> dataType = initialiser.getDataType();
+      String typeName = this.getEfxDataTypeEquivalent(EfxTypeLattice.toPrimitive(dataType)).script;
+      if (EfxTypeLattice.isSequence(dataType)) {
+          typeName += "*";
+      }
+      return new Markup(String.format("%s:%s=%s", typeName, variableName, initialiser.getScript()));
   }
 
   @Override
-  public Markup renderFunctionDeclaration(Class<? extends EfxDataType> type, String name, Map<String, Class<? extends EfxDataType>> parameters,
-      Expression expression) {
+  public Markup renderFunctionDeclaration(String name, Map<String, Class<? extends EfxDataType>> parameters, TypedExpression expression) {
+    Class<? extends EfxDataType> type = expression.getDataType();
+    String typeName = this.getEfxDataTypeEquivalent(EfxTypeLattice.toPrimitive(type)).script;
+    if (EfxTypeLattice.isSequence(type)) {
+        typeName += "*";
+    }
     return new Markup(
-        String.format("%s:%s(%s) -> { %s }", this.getEfxDataTypeEquivalent(type).script, name, 
+        String.format("%s:%s(%s) -> { %s }", typeName, name,
             parameters.entrySet().stream()
-                .map(entry -> this.getEfxDataTypeEquivalent(entry.getValue()).script + ":" + entry.getKey())
-                .collect(Collectors.joining(", ")), 
+                .map(entry -> {
+                    String paramType = this.getEfxDataTypeEquivalent(EfxTypeLattice.toPrimitive(entry.getValue())).script;
+                    if (EfxTypeLattice.isSequence(entry.getValue())) {
+                        paramType += "*";
+                    }
+                    return paramType + ":" + entry.getKey();
+                })
+                .collect(Collectors.joining(", ")),
             expression.getScript()));
   }
 
@@ -182,7 +211,8 @@ public class MarkupGeneratorMock implements MarkupGenerator {
 
   @Override
   public Markup getEfxDataTypeEquivalent(Class<? extends EfxDataType> type) {
-    return typeFromEfxDataType.getOrDefault(type, Markup.empty());
+    // Use toPrimitive() to handle both scalar and sequence types
+    return typeFromEfxDataType.getOrDefault(EfxTypeLattice.toPrimitive(type), Markup.empty());
   }
 
   @Override

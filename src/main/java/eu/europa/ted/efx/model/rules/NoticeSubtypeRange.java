@@ -16,6 +16,8 @@ package eu.europa.ted.efx.model.rules;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.model.ParsedEntity;
 
 public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
@@ -47,9 +49,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                 case 1: {
                     int idx = validNoticeSubtypes.indexOf(parts[0]);
                     if (idx < 0) {
-                        throw new IllegalArgumentException(
-                                String.format("Invalid notice type ID '%s' in compressed list '%s'",
-                                        parts[0], rangeString));
+                        throw SymbolResolutionException.unknownNoticeSubtype(parts[0], rangeString);
                     }
                     noticeSubtypes.add(validNoticeSubtypes.get(idx));
                     break;
@@ -57,20 +57,14 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                 case 2: {
                     int startIdx = validNoticeSubtypes.indexOf(parts[0]);
                     if (startIdx < 0) {
-                        throw new IllegalArgumentException(
-                                String.format("Invalid notice subtype '%s' in range '%s-%s'.",
-                                        parts[0], parts[0], parts[1]));
+                        throw SymbolResolutionException.unknownNoticeSubtype(parts[0], parts[0] + "-" + parts[1]);
                     }
                     int endIdx = validNoticeSubtypes.indexOf(parts[1]);
                     if (endIdx < 0) {
-                        throw new IllegalArgumentException(
-                                String.format("Invalid notice subtype '%s' in range '%s-%s'.",
-                                        parts[1], parts[0], parts[1]));
+                        throw SymbolResolutionException.unknownNoticeSubtype(parts[1], parts[0] + "-" + parts[1]);
                     }
                     if (startIdx > endIdx) {
-                        throw new IllegalArgumentException(
-                                String.format("Notice subtype range '%s-%s' is not in ascending order.", parts[0],
-                                        parts[1]));
+                        throw InvalidUsageException.invalidNoticeSubtypeRangeOrder(parts[0], parts[1]);
                     }
 
                     for (int i = startIdx; i <= endIdx; i++) {
@@ -79,9 +73,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                     break;
                 }
                 default:
-                    throw new IllegalArgumentException(
-                            String.format("Invalid notice subtype token '%s'.",
-                                    item));
+                    throw InvalidUsageException.invalidNoticeSubtypeToken(item);
             }
         }
 

@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk1;
 
 import java.util.ArrayList;
@@ -21,27 +34,30 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
+import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TypeChecker;
 import eu.europa.ted.efx.model.CallStack;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
-import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
-import eu.europa.ted.efx.model.expressions.path.StringPathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
+import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
@@ -51,6 +67,7 @@ import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.ParsedParameter;
 import eu.europa.ted.efx.model.variables.Variable;
@@ -84,7 +101,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * The stack is used by the methods of this listener to pass data to each other as the parse tree
    * is being walked.
    */
-  protected CallStack stack = new CallStack();
+  protected CallStack stack = new CallStack(TypeChecker.V1);
 
   /**
    * The context stack is used to keep track of context switching in nested expressions.
@@ -608,7 +625,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitUntypedConditionalExpression(UntypedConditionalExpressionContext ctx) {
     var topOfStack = this.stack.peek();
     assert topOfStack instanceof TypedExpression : "Expected a TypedExpression at the top of the stack.";
-    final Class<?> typeWhenFalse = ((TypedExpression)topOfStack).getDataType();
+    final Class<? extends EfxDataType> typeWhenFalse = EfxTypeLattice.toPrimitive(((TypedExpression)topOfStack).getDataType());
     if (typeWhenFalse == EfxDataType.Boolean.class) {
       this.exitConditionalBooleanExpression();
     } else if (typeWhenFalse == EfxDataType.Number.class) {
@@ -622,7 +639,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (typeWhenFalse == EfxDataType.Duration.class) {
       this.exitConditionalDurationExpression();
     } else {
-      throw new IllegalStateException("Unknown type " + typeWhenFalse);
+      throw ConsistencyCheckException.unsupportedTypeInConditional(typeWhenFalse);
     }
   }
 
@@ -742,7 +759,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitContextIteratorExpression(ContextIteratorExpressionContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
 
-    var variableType = path.getClass();
+    // Iterator variable holds the current item (scalar), not the sequence
+    var variableType = path.asScalar().getClass();
     var variableName = getVariableName(ctx.contextVariableDeclaration());
     Variable variable = new Variable(variableName,
         this.script.composeVariableDeclaration(variableName, variableType),
@@ -750,18 +768,18 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
         this.script.composeVariableReference(variableName, variableType));
     this.stack.declareIdentifier(variable);
 
-    this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path));
+    this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path.asSequence()));
     if (ctx.fieldContext() != null) {
       final String contextFieldId = getFieldId(ctx.fieldContext());
       this.efxContext.declareContextVariable(variable.name,
           new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
     } else if (ctx.nodeContext() != null) {
       final String contextNodeId =
           getNodeId(ctx.nodeContext());
       this.efxContext.declareContextVariable(variable.name,
           new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-              this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+              this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
     }
   }
 
@@ -908,13 +926,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   @Override
   public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
     this.stack.push(
-        this.symbols.getRelativePathOfNode(ctx.NodeId().getText(), this.efxContext.absolutePath()));
+        this.symbols.getRelativePathOfNode(ctx.NodeId().getText(), this.efxContext.symbol()));
   }
 
   @Override
   public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
     this.stack.push(
-        symbols.getRelativePathOfField(ctx.FieldId().getText(), this.efxContext.absolutePath()));
+        symbols.getRelativePathOfField(ctx.FieldId().getText(), this.efxContext.symbol()));
   }
 
   @Override
@@ -952,7 +970,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
     if (ctx.predicate() != null) {
       BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
-      PathExpression nodeReference = this.stack.pop(NodePathExpression.class);
+      PathExpression nodeReference = this.stack.pop(NodePath.class);
       this.stack.push(this.script.composeNodeReferenceWithPredicate(nodeReference, predicate));
     }
   }
@@ -1043,10 +1061,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
-          this.symbols.getRelativePath(
+          this.script.contextualizePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
           this.symbols.getAttributeNameFromAttributeField(fieldId),
-          PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
+          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
       this.stack.push(this.script.composeFieldValueReference(path));
     }
@@ -1058,10 +1076,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
-          this.symbols.getRelativePath(
+          this.script.contextualizePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
           this.symbols.getAttributeNameFromAttributeField(fieldId),
-          PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
+          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
       this.stack.push(this.script.composeFieldValueReference(path));
     }
@@ -1070,13 +1088,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.attributeReference().Identifier().getText(), StringPathExpression.class));
+        ctx.attributeReference().Identifier().getText(), StringPath.class));
   }
 
   @Override
   public void exitSequenceFromAttributeReference(SequenceFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.attributeReference().Identifier().getText(), StringPathExpression.class));
+        ctx.attributeReference().Identifier().getText(), StringPath.class));
   }
 
   // #endregion Value References ----------------------------------------------
@@ -1094,7 +1112,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     final String contextFieldId = getFieldId(ctx.fieldContext());
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
   }
 
 
@@ -1123,7 +1141,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     final String contextNodeId = getNodeId(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
   }
 
   /**
@@ -1146,13 +1164,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     if (variableContext.isFieldContext()) {
       this.efxContext.push(new FieldContext(variableContext.symbol(),
           this.symbols.getAbsolutePathOfField(variableContext.symbol()), this.symbols
-              .getRelativePathOfField(variableContext.symbol(), this.efxContext.absolutePath())));
+              .getRelativePathOfField(variableContext.symbol(), this.efxContext.symbol())));
     } else if (variableContext.isNodeContext()) {
       this.efxContext.push(new NodeContext(variableContext.symbol(),
           this.symbols.getAbsolutePathOfNode(variableContext.symbol()), this.symbols
-              .getRelativePathOfNode(variableContext.symbol(), this.efxContext.absolutePath())));
+              .getRelativePathOfNode(variableContext.symbol(), this.efxContext.symbol())));
     } else {
-      throw new IllegalStateException("Variable context is neither a field nor a node context.");
+      throw ConsistencyCheckException.invalidVariableContext();
     }
   }
 

@@ -152,6 +152,15 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertAllOutputs(testName, outputFiles);
   }
 
+  @Test
+  void testWithClause_ContextVariableOverride() throws IOException {
+    String testName = "testWithClause_ContextVariableOverride";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
   //#endregion WITH clause tests
 
   //#region ASSERT and REPORT tests
@@ -271,6 +280,64 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion Variable tests (output verification)
+
+  //#region Sequence variable tests
+
+  @Test
+  void testVariable_TextSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_TextSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testVariable_NumericSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_NumericSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testVariable_BooleanSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_BooleanSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testVariable_DateSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_DateSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testVariable_TimeSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_TimeSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testVariable_DurationSequence_GlobalLevel() throws IOException {
+    String testName = "testVariable_DurationSequence_GlobalLevel";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  //#endregion Sequence variable tests
 
   //#region Variable tests (error verification)
 
@@ -438,4 +505,22 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion Comprehensive/Integration tests
+
+  //#region Context variable type tests
+
+  /**
+   * Context variables should always be scalar, even when pointing to a repeatable field.
+   * This is because the context iterates, so the variable holds the current iteration value.
+   * Using $ctx in scalar arithmetic ($ctx + 1) should work.
+   */
+  @Test
+  void testContextVariable_RepeatableField_UsedAsScalar() throws IOException {
+    String testName = "testContextVariable_RepeatableField_UsedAsScalar";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  //#endregion Context variable type tests
 }

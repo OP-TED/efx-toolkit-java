@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model;
 
 import java.util.HashMap;
@@ -7,7 +20,7 @@ import java.util.Stack;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 
 /**
  * Used to keep track of the current evaluation context. Extends Stack&lt;Context&gt; to provide
@@ -44,7 +57,7 @@ public class ContextStack extends Stack<Context> {
       this.push(context);
       return context;
     }
-    PathExpression relativePath = symbols.getRelativePathOfField(fieldId, this.absolutePath());
+    PathExpression relativePath = symbols.getRelativePathOfField(fieldId, this.symbol());
     FieldContext context = new FieldContext(fieldId, absolutePath, relativePath);
     this.push(context);
     return context;
@@ -64,7 +77,7 @@ public class ContextStack extends Stack<Context> {
       this.push(context);
       return context;
     }
-    PathExpression relativePath = symbols.getRelativePathOfNode(nodeId, this.absolutePath());
+    PathExpression relativePath = symbols.getRelativePathOfNode(nodeId, this.symbol());
     NodeContext context = new NodeContext(nodeId, absolutePath, relativePath);
     this.push(context);
     return context;
@@ -137,7 +150,7 @@ public class ContextStack extends Stack<Context> {
   /**
    * Returns the relative path of the context that is currently at the top of the stack. Does not
    * remove the context from the stack.
-   * 
+   *
    * @return the relative path of the context that is currently at the top of the stack.
    */
   public PathExpression relativePath() {
@@ -146,5 +159,18 @@ public class ContextStack extends Stack<Context> {
     }
 
     return this.peek().relativePath();
+  }
+
+  /**
+   * Returns the parent context (second from top of the stack) without removing it.
+   * This is useful for the ".." context shortcut which refers to the grandparent context.
+   *
+   * @return the parent context, or null if there are fewer than 2 contexts on the stack.
+   */
+  public Context peekParentContext() {
+    if (this.size() < 2) {
+      return null;
+    }
+    return this.get(this.size() - 2);
   }
 }

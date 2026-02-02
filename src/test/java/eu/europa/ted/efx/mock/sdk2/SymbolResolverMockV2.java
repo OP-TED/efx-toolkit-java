@@ -1,73 +1,69 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.mock.sdk2;
 
 import static java.util.Map.entry;
 
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import eu.europa.ted.eforms.xpath.XPathInfo;
-import eu.europa.ted.eforms.xpath.XPathProcessor;
-import eu.europa.ted.efx.mock.AbstractSymbolResolverMock;
-import eu.europa.ted.efx.model.expressions.Expression;
-import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
-import eu.europa.ted.efx.sdk2.entity.SdkCodelistV2;
-import eu.europa.ted.efx.sdk2.entity.SdkFieldV2;
-import eu.europa.ted.efx.sdk2.entity.SdkNodeV2;
+import eu.europa.ted.eforms.sdk.SdkSymbolResolver;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
+import eu.europa.ted.eforms.sdk.entity.v2.SdkCodelistV2;
+import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
+import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
 
-public class SymbolResolverMockV2
-    extends AbstractSymbolResolverMock<SdkFieldV2, SdkNodeV2, SdkCodelistV2> {
-  protected Map<String, SdkFieldV2> fieldByAlias;
-  protected Map<String, SdkNodeV2> nodeByAlias;
+@SdkComponent(versions = {"2"}, componentType = SdkComponentType.SYMBOL_RESOLVER, qualifier = "mock")
+public class SymbolResolverMockV2 extends SdkSymbolResolver {
 
-  public SymbolResolverMockV2() throws IOException {
+  private static final String SDK_VERSION = "eforms-sdk-2.0";
+  private static final Path JSON_PATH = Path.of("src", "test", "resources", "json", "sdk2-fields.json");
+
+  public SymbolResolverMockV2() throws InstantiationException {
     super();
+    loadTestData();
   }
 
-  private static Entry<String, SdkCodelistV2> buildCodelistMock(final String codelistId,
+  private void loadTestData() throws InstantiationException {
+    // Load nodes and fields using SDK repositories
+    this.nodeById = new SdkNodeRepository(SDK_VERSION, JSON_PATH);
+    this.nodeByAlias = indexNodesByAlias();
+
+    this.fieldById = new SdkFieldRepository(SDK_VERSION, JSON_PATH, this.nodeById);
+    this.fieldByAlias = indexFieldsByAlias();
+
+    // Mock codelists
+    this.codelistById = createMockCodelists();
+
+    // Mock notice types - not needed, we override getAllNoticeSubtypeIds()
+    this.noticeTypesById = new HashMap<>();
+  }
+
+  private static Entry<String, SdkCodelist> buildCodelistMock(final String codelistId,
       final Optional<String> parentId) {
     return entry(codelistId, new SdkCodelistV2(codelistId, "0.0.1",
         Arrays.asList("code1", "code2", "code3"), parentId));
   }
 
-  @Override
-  public void loadMapData() throws IOException {
-    super.loadMapData();
-
-    this.fieldByAlias = this.fieldById.entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getValue().getAlias(), e -> e.getValue()));
-
-    this.nodeByAlias = this.nodeById.entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getValue().getAlias(), e -> e.getValue()));
-  }
-
-  @Override
-  public SdkFieldV2 getFieldById(final String fieldId) {
-    return this.fieldById.containsKey(fieldId) ? this.fieldById.get(fieldId)
-        : this.fieldByAlias.get(fieldId);
-  }
-
-  @Override
-  public SdkNodeV2 getNodeById(final String nodeId) {
-    return this.nodeById.containsKey(nodeId) ? this.nodeById.get(nodeId)
-        : this.nodeByAlias.get(nodeId);
-  }
-
-  @Override
-  protected Map<String, SdkNodeV2> createNodeById() {
-    return Map.ofEntries(
-        entry("ND-Root", new SdkNodeV2("ND-Root", null, "/*", "/*", false, "Root")),
-        entry("ND-SubNode", new SdkNodeV2("ND-SubNode", "ND-Root", "/*/SubNode", "SubNode", false, "SubNode")),
-        entry("ND-SubSubNode", new SdkNodeV2("ND-SubSubNode", "ND-SubNode", "/*/SubNode/SubSubNode", "SubSubNode", false, "SubSubNode")));
-  }
-
-  @Override
-  protected Map<String, SdkCodelistV2> createCodelistById() {
+  private Map<String, SdkCodelist> createMockCodelists() {
     return new HashMap<>(Map.ofEntries(
         buildCodelistMock("accessibility", Optional.empty()),
         buildCodelistMock("authority-activity", Optional.of("main-activity")),
@@ -75,58 +71,7 @@ public class SymbolResolverMockV2
   }
 
   @Override
-  protected Class<SdkFieldV2> getSdkFieldClass() {
-    return SdkFieldV2.class;
-  }
-
-  @Override
-  protected String getFieldsJsonFilename() {
-    return "fields-sdk2.json";
-  }
-
-  @Override
-  public boolean isAttributeField(final String fieldId) {
-    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
-    return xpathInfo.isAttribute();
-  }
-
-  @Override
-  public String getAttributeNameFromAttributeField(String fieldId) {
-    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
-    return xpathInfo.getAttributeName();
-  }
-
-  @Override
-  public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(String fieldId) {
-    XPathInfo xpathInfo = XPathProcessor.parse(this.getAbsolutePathOfField(fieldId).getScript());
-    return Expression.instantiate(xpathInfo.getPathToLastElement(), NodePathExpression.class);
-  }
-
-  @Override
-  public String getFieldIdFromAlias(String alias) {
-    if (this.fieldByAlias.containsKey(alias)) {
-      return this.fieldByAlias.get(alias).getId();
-    }
-    return null;
-
-  }
-
-  @Override
-  public String getNodeIdFromAlias(String alias) {
-    if (this.nodeByAlias.containsKey(alias)) {
-      return this.nodeByAlias.get(alias).getId();
-    }
-    return null;
-  }
-
-  /**
-   * Returns a list of all valid notice type IDs for testing.
-   * Uses a small set that covers all testing scenarios:
-   * - Numeric types (1-5) for basic testing and ranges
-   * - Alphanumeric types (E1, E2, X01) for non-numeric ID testing
-   */
-  @Override
-  public java.util.List<String> getAllNoticeSubtypeIds() {
-    return java.util.Arrays.asList("1", "2", "3", "4", "5", "E1", "E2", "X01");
+  public List<String> getAllNoticeSubtypeIds() {
+    return Arrays.asList("1", "2", "3", "4", "5", "E1", "E2", "X01");
   }
 }

@@ -19,7 +19,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import eu.europa.ted.efx.model.expressions.Expression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
@@ -77,13 +78,33 @@ public interface MarkupGenerator {
      * Renders the markup necessary to declare and initialize the variable making it
      * available at runtime.
      *
+     * The type and whether the variable is a sequence are derived from the initialiser's data type.
+     *
+     * @param name        The name of the variable to be declared.
+     * @param initialiser The typed expression used to initialize the variable.
+     * @return            A {@link Markup} object that contains the variable declaration.
+     */
+    Markup renderVariableDeclaration(final String name, final TypedExpression initialiser);
+
+    /**
+     * Renders the markup necessary to declare and initialize the variable making it
+     * available at runtime.
+     *
+     * @deprecated Use {@link #renderVariableDeclaration(String, TypedExpression)} instead.
+     *             This method is being deprecated as of version 2.0.0-alpha.6 and
+     *             will be removed before version 2.0.0 is released.
+     *
      * @param type        A subclass of {@link EfxDataType} specifying the type of
      *                    the variable.
      * @param name        The name of the variable to be declared.
      * @param initialiser The expression used to initialize the variable.
      * @return            A {@link Markup} object that contains the variable declaration.
      */
-    Markup renderVariableDeclaration(final Class<? extends EfxDataType> type, final String name, final Expression initialiser);
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default Markup renderVariableDeclaration(final Class<? extends EfxDataType> type, final String name, final Expression initialiser) {
+        assert initialiser instanceof TypedExpression : "Initialiser must be a TypedExpression";
+        return renderVariableDeclaration(name, (TypedExpression) initialiser);
+    }
 
     /**
      * Renders the markup necessary to declare and initialise a dictionary .
@@ -101,17 +122,34 @@ public interface MarkupGenerator {
 
     /**
      * Renders the Markup necessary to make the function available at runtime.
+     * The return type is derived from the expression's data type.
      *
-     * @param type       A sub-class of EfxDataType that represents the return type
-     *                   of the function.
      * @param name       The name of the function.
-     * @param parameters The function parameters as a map of parameter names to
-     *                   their corresponding EfxDataType.
-     * @param expression The function body (the expression that must be evaluated
-     *                   when the function is invoked).
+     * @param parameters The parameters of the function as a map from parameter name to its EFX data type.
+     * @param expression The function body expression (typed, so return type can be derived).
      * @return           A Markup object that declares the function.
      */
-    Markup renderFunctionDeclaration(final Class<? extends EfxDataType> type, final String name, final Map<String, Class<? extends EfxDataType>> parameters, final Expression expression);
+    Markup renderFunctionDeclaration(final String name, final Map<String, Class<? extends EfxDataType>> parameters, final TypedExpression expression);
+
+    /**
+     * Renders the Markup necessary to make the function available at runtime.
+     *
+     * @deprecated Use {@link #renderFunctionDeclaration(String, Map, TypedExpression)} instead.
+     *             This method is being deprecated as of version 2.0.0-alpha.6 and
+     *             will be removed before version 2.0.0 is released.
+     *
+     * @param type       The return type of the function.
+     * @param name       The name of the function.
+     * @param parameters The parameters of the function as a map from parameter name to its EFX data type.
+     * @param expression The function body expression.
+     * @return           A Markup object that declares the function.
+     */
+    @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
+    default Markup renderFunctionDeclaration(final Class<? extends EfxDataType> type, final String name, final Map<String, Class<? extends EfxDataType>> parameters, final Expression expression) {
+        assert expression instanceof TypedExpression : "Expression must be a TypedExpression";
+        return renderFunctionDeclaration(name, parameters, (TypedExpression) expression);
+    }
+
 
     /**
      * Given an expression (which will eventually, at runtime, evaluate to the value
@@ -144,7 +182,7 @@ public interface MarkupGenerator {
      * @return the template code that renders the label in the target template
      *         language.
      */
-    Markup renderLabelFromKey(final StringExpression key, TranslatorContext translatorContext);
+    Markup renderLabelFromKey(final StringExpression key, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderLabelFromKey(final StringExpression key) {
@@ -164,7 +202,7 @@ public interface MarkupGenerator {
      * @return         the template code that renders the label in the target template
      *                 language.
      */
-    Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity, TranslatorContext translatorContext);
+    Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderLabelFromKey(final StringExpression key, final NumericExpression quantity) {
@@ -183,7 +221,7 @@ public interface MarkupGenerator {
      * @return  the template code that renders the label in the target template
      *          language.
      */
-    Markup renderLabelFromExpression(final Expression expression, TranslatorContext translatorContext);
+    Markup renderLabelFromExpression(final Expression expression, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderLabelFromExpression(final Expression expression) {
@@ -204,7 +242,7 @@ public interface MarkupGenerator {
      * @return           the template code that renders the label in the target template
      *                   language.
      */
-    Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity, TranslatorContext translatorContext);
+    Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderLabelFromExpression(final Expression expression, final NumericExpression quantity) {
@@ -222,7 +260,7 @@ public interface MarkupGenerator {
      * @param   translatorContext additional context information provided by the template translator.
      * @return  the template code that adds this text in the target template.
      */
-    Markup renderFreeText(final String freeText, TranslatorContext translatorContext);
+    Markup renderFreeText(final String freeText, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderFreeText(final String freeText) {
@@ -238,7 +276,7 @@ public interface MarkupGenerator {
      * @param translatorContext additional context information provided by the template translator.
      * @return the template code that renders the hyperlink in the target template language.
      */
-    Markup renderHyperlink(final Markup label, final StringExpression url, TranslatorContext translatorContext);
+    Markup renderHyperlink(final Markup label, final StringExpression url, final TranslatorContext translatorContext);
 
 
     /**
@@ -250,7 +288,7 @@ public interface MarkupGenerator {
      * 
      * @return the markup that represents a line break in the target template.
      */
-    Markup renderLineBreak(TranslatorContext translatorContext);
+    Markup renderLineBreak(final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup renderLineBreak() {
@@ -259,17 +297,16 @@ public interface MarkupGenerator {
 
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
-     * returns the code
-     * that encapsulates it in the target template
-     *     * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeFragmentDefinition(String, String, Set, Markup, Markup, Set)} instead.
-     *             We are keeping the method temporarily to prevent build errors.
-     *             This method is being deprecated as of version 2.0.0-alpha.6 and
-     *             will be removed before version 2.0.0 is released
-     *             The default implementation provided here only throws
-     *             UnsupportedOperationException to prevent accidental use of this
-     *             method. The EfxTemplateTranslator will not call this method.
-     * 
+     * returns the code that encapsulates it in the target template.
+     *
+     * @deprecated This method is deprecated and will be removed in future versions.
+     *             Use {@link #composeFragmentDefinition(String, String, Set, Markup, Markup, Set,
+     *             TranslatorContext)} instead. We are keeping the method temporarily to prevent
+     *             build errors. This method is being deprecated as of version 2.0.0-alpha.6 and
+     *             will be removed before version 2.0.0 is released. The default implementation
+     *             provided here only throws UnsupportedOperationException to prevent accidental
+     *             use of this method. The EfxTemplateTranslator will not call this method.
+     *
      * @param name          the name of the fragment.
      * @param number        the outline number of the fragment.
      * @param content       the content of the fragment.
@@ -285,20 +322,19 @@ public interface MarkupGenerator {
     
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
-     * returns the code
-     * that encapsulates it in the target template
-     * 
-     * @param name          the name of the fragment.
-     * @param number        the outline number of the fragment.
-     * @param conditionals  the conditionals of the fragment.
-     * @param content       the content of the fragment.
-     * @param children      the children of the fragment.
-     * @param parameters    the parameters of the fragment.
-     * @param translatorContext       additional context information provided by the template translator.
-     * @return              the code that encapsulates the fragment in the target template.
+     * returns the code that encapsulates it in the target template.
+     *
+     * @param name              the name of the fragment.
+     * @param number            the outline number of the fragment.
+     * @param conditionals      the conditionals of the fragment.
+     * @param content           the content of the fragment.
+     * @param children          the children of the fragment.
+     * @param parameters        the parameters of the fragment.
+     * @param translatorContext additional context information provided by the template translator.
+     * @return                  the code that encapsulates the fragment in the target template.
      */
-    Markup composeFragmentDefinition(final String name, String number, Set<Conditional> conditionals, Markup content, Markup children,
-            Set<Parameter> parameters, TranslatorContext translatorContext);
+    Markup composeFragmentDefinition(final String name, final String number, final Set<Conditional> conditionals, final Markup content, final Markup children,
+            final Set<Parameter> parameters, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
     default public Markup composeFragmentDefinition(final String name, String number, Set<Conditional> conditionals,
@@ -325,7 +361,7 @@ public interface MarkupGenerator {
      * @param translatorContext   additional context information provided by the template translator.
      * @return          the code that invokes (uses) the fragment.
      */
-    Markup renderFragmentInvocation(final String name, final Set<Argument> arguments, TranslatorContext translatorContext);
+    Markup renderFragmentInvocation(final String name, final Set<Argument> arguments, final TranslatorContext translatorContext);
 
     /**
      * Given a fragment name (identifier), and an evaluation context, this method
@@ -361,7 +397,7 @@ public interface MarkupGenerator {
      *              will be removed before version 2.0.0 is released.
      *              The default implementation provided here only throws
      *              UnsupportedOperationException to prevent accidental use of this method.
-     * .            The EfxTemplateTranslator will not call this method.
+     *              The EfxTemplateTranslator will not call this method.
      *
      * @param name      the name of the fragment.
      * @param context   the context of the fragment.
@@ -379,10 +415,10 @@ public interface MarkupGenerator {
     /**
      * Given an evaluation context, and some pre-rendered content, this method returns the code that 
      * iterates over the context and repeats the content for each item in the context.
-     * As of version 2.0.0-alpha.6, the method composeFragmentInvocation(String, Set)
-     * has been split into two methods:
-     * 1. {@link #renderFragmentInvocation(String, Set)}
-     *    for rendering the fragment invocation itself, which is the used by the
+     * As of version 2.0.0-alpha.6, the method composeFragmentInvocation has been
+     * split into two methods:
+     * 1. {@link #renderFragmentInvocation(String, Set, TranslatorContext)}
+     *    for rendering the fragment invocation itself, which is used by the
      *    context loop.
      * 2. {@link #renderContextLoop(PathExpression, Markup, Set)}
      *    for rendering the context loop that invokes the fragment.
@@ -407,7 +443,7 @@ public interface MarkupGenerator {
      * Returns the target template language equivalent for the given EFX data type.
      * 
      * For example, in EFX to XSLT translation this would be used to specify 
-     * the type of an xsl:variable ore the return type of an xsl:function by returning 
+     * the type of an xsl:variable or the return type of an xsl:function by returning 
      * "xs:string" for {@link eu.europa.ted.efx.model.types.EfxDataType.String}, or
      * "xs:decimal" for {@link eu.europa.ted.efx.model.types.EfxDataType.Number}.
      * 
@@ -422,7 +458,7 @@ public interface MarkupGenerator {
      * special characters in free-text do not interfere with the target template.
      * 
      * The EfxTemplateTranslator will call this method to escape special characters
-     * in free-text before passing it to {@link #renderFreeText(String)}.
+     * in free-text before passing it to {@link #renderFreeText(String, TranslatorContext)}.
      * 
      * @param   text the text containing characters that may need to be escaped.
      * @return  the text with special characters properly escaped for the target

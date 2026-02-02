@@ -1,0 +1,8 @@
+LET date* : $dates = (2024-01-01Z, 2024-06-01Z);
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT count($dates) > 0
+AS ERROR R-SEQ-004
+FOR BT-00-Text IN 1, 2

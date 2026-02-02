@@ -3,6 +3,13 @@ package eu.europa.ted.efx.model.types;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Enumeration of eForms SDK field types.
+ *
+ * Maps the field type strings from the SDK (e.g., "text", "indicator", "date")
+ * to enum constants. Expression classes use this to determine the appropriate
+ * EFX type for a given field.
+ */
 public enum FieldTypes {
     ID("id"), //
     ID_REF("id-ref"), //
