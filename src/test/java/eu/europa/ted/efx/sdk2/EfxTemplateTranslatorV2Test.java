@@ -1,7 +1,22 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
@@ -14,9 +29,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     return "eforms-sdk-2.0";
   }
 
-  // #region Core Template Structure ------------------------------------------
+  // #region Core Template Structure -------------------------------------------
 
-  // #region templateDefinition -----------------------------------------------
+  // #region templateDefinition ------------------------------------------------
 
   @Test
   void testTemplateDefinition_InvokeTemplate() {
@@ -79,9 +94,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "invoke param-validation-template('test', 42);")));
   }
 
-  // #endregion templateDefinition --------------------------------------------
+  // #endregion templateDefinition ---------------------------------------------
 
-  // #region templateDeclaration ----------------------------------------------
+  // #region templateDeclaration -----------------------------------------------
 
   @Test
   void testTemplateDeclaration_NoParameters() {
@@ -153,9 +168,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "invoke template-with-dashes('test');")));
   }
 
-  // #endregion templateDeclaration -------------------------------------------
+  // #endregion templateDeclaration --------------------------------------------
 
-  // #region templateFragment -------------------------------------------------
+  // #region templateFragment --------------------------------------------------
 
   @Test
   void testTemplateFragment_TextAndExpression() {
@@ -223,7 +238,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{BT-00-Number} ${BT-00-Number} + ${BT-00-Number} = ${BT-00-Number + BT-00-Number}"));
   }
 
-  // #region textBlock -------------------------------------------------------
+  // #region textBlock ---------------------------------------------------------
 
   @Test
   void testTextBlock_SimpleText() {
@@ -291,9 +306,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("display Text with quotes: \"' and backslash: \\\\;"));
   }
 
-  // #endregion textBlock -----------------------------------------------------
+  // #endregion textBlock ------------------------------------------------------
 
-  // #region linkedTextBlock --------------------------------------------------
+  // #region linkedTextBlock ---------------------------------------------------
   
   @Test
   void testLinkedTextBlock() {
@@ -328,9 +343,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("DISPLAY here is a ${'multi word link'}@{'http://example.com'}. How about it?;"));
   }
 
-  // #endregion linkedTextBlock -----------------------------------------------
+  // #endregion linkedTextBlock ------------------------------------------------
 
-  // #endregion templateFragment ----------------------------------------------
+  // #endregion templateFragment -----------------------------------------------
 
   @Test
   void testTemplate_ComplexNesting() {
@@ -346,9 +361,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "invoke complex-template('BT-00-Text');")));
   }
 
-  // #endregion Core Template Structure ---------------------------------------
+  // #endregion Core Template Structure ----------------------------------------
 
-  // #region Globals ----------------------------------------------------------
+  // #region Globals -----------------------------------------------------------
 
   @Test
   void testGlobals_VariableDeclaration() {
@@ -470,7 +485,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "display ${$dic['key']};")));
   }
 
-  // #endregion Globals -------------------------------------------------------
+  // #endregion Globals --------------------------------------------------------
 
   @Test
   void testDisplayTemplate() {
@@ -487,7 +502,289 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "display this is a ${$t};")));
   }
 
-  // #region templateLine -----------------------------------------------------
+  // #region Sequence variable declarations ------------------------------------
+
+  @Test
+  void testDisplayTemplate_WithTextSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "string*:items=('a','b','c')",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($items)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let text*:$items = ('a', 'b', 'c');",
+            "display count: ${count($items)};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithNumericSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "decimal*:nums=(1,2,3)",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($nums)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let number*:$nums = (1, 2, 3);",
+            "display count: ${count($nums)};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithBooleanSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "boolean*:flags=(true(),false())",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($flags)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let indicator*:$flags = (TRUE, FALSE);",
+            "display count: ${count($flags)};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDateSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "date*:dates=(xs:date('2024-01-01Z'),xs:date('2024-12-31Z'))",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($dates)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let date*:$dates = (2024-01-01Z, 2024-12-31Z);",
+            "display count: ${count($dates)};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithTimeSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "time*:times=(xs:time('10:00:00Z'),xs:time('18:00:00Z'))",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($times)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let time*:$times = (10:00:00Z, 18:00:00Z);",
+            "display count: ${count($times)};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDurationSequenceVariable() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "duration*:durs=(xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M'))",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count($durs)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let measure*:$durs = (P1Y, P2M);",
+            "display count: ${count($durs)};")));
+  }
+
+  // #endregion Sequence variable declarations ---------------------------------
+
+  // #region Sequence function declarations ------------------------------------
+
+  @Test
+  void testDisplayTemplate_WithTextSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "string*:getItems() -> { ('a','b','c') }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getItems())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let text*:?getItems() = ('a', 'b', 'c');",
+            "display count: ${count(?getItems())};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithNumericSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "decimal*:getNumbers() -> { (1,2,3) }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getNumbers())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let number*:?getNumbers() = (1, 2, 3);",
+            "display count: ${count(?getNumbers())};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithBooleanSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "boolean*:getFlags() -> { (true(),false()) }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getFlags())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let indicator*:?getFlags() = (TRUE, FALSE);",
+            "display count: ${count(?getFlags())};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDateSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "date*:getDates() -> { (xs:date('2024-01-01Z'),xs:date('2024-12-31Z')) }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getDates())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let date*:?getDates() = (2024-01-01Z, 2024-12-31Z);",
+            "display count: ${count(?getDates())};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithTimeSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "time*:getTimes() -> { (xs:time('10:00:00Z'),xs:time('18:00:00Z')) }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getTimes())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let time*:?getTimes() = (10:00:00Z, 18:00:00Z);",
+            "display count: ${count(?getTimes())};")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDurationSequenceFunction() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "duration*:getDurations() -> { (xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) }",
+            "TEMPLATES:",
+            "let body01() -> { text('count: ')eval(count(udf:getDurations())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let measure*:?getDurations() = (P1Y, P2M);",
+            "display count: ${count(?getDurations())};")));
+  }
+
+  // #endregion Sequence function declarations ---------------------------------
+
+  // #region Sequence parameter declarations -----------------------------------
+
+  @Test
+  void testDisplayTemplate_WithTextSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "string*:processItems(string*:items) -> { $items }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let text*:?processItems(text*:$items) = $items;",
+            "display done;")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithNumericSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "decimal*:processNumbers(decimal*:nums) -> { $nums }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let number*:?processNumbers(number*:$nums) = $nums;",
+            "display done;")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithBooleanSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "boolean*:processFlags(boolean*:flags) -> { $flags }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let indicator*:?processFlags(indicator*:$flags) = $flags;",
+            "display done;")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDateSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "date*:processDates(date*:dates) -> { $dates }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let date*:?processDates(date*:$dates) = $dates;",
+            "display done;")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithTimeSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "time*:processTimes(time*:times) -> { $times }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let time*:?processTimes(time*:$times) = $times;",
+            "display done;")));
+  }
+
+  @Test
+  void testDisplayTemplate_WithDurationSequenceParameter() {
+    assertEquals(
+        lines(
+            "GLOBALS:",
+            "duration*:processDurations(duration*:durs) -> { $durs }",
+            "TEMPLATES:",
+            "let body01() -> { text('done') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "let measure*:?processDurations(measure*:$durs) = $durs;",
+            "display done;")));
+  }
+
+  // #endregion Sequence parameter declarations --------------------------------
+
+  // #region templateLine ------------------------------------------------------
 
   @Test
   void testTemplateLine_NoIndentation() {
@@ -791,10 +1088,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "    {BT-00-Text} Level 3")));
   }
 
-  // #endregion templateLine -------------------------------------------------
+  // #endregion templateLine ---------------------------------------------------
 
 
-  // #region otherSections ----------------------------------------------------
+  // #region otherSections -----------------------------------------------------
 
   @Test
   void testOtherSections_SummarySection() {
@@ -827,9 +1124,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{BT-00-Text} Summary: ${BT-00-Text}")));
   }
 
-  // #endregion otherSections -------------------------------------------------
+  // #endregion otherSections --------------------------------------------------
 
-  // #region Labels -----------------------------------------------------------
+  // #region Labels ------------------------------------------------------------
 
   @Test
   void testLabelBlock_StandardLabelReference() {
@@ -1098,9 +1395,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{/, text:$assetType='field', text:$labelType='name', text:$assetId='BT-00-Text'}  #{${$assetType}|${$labelType}|${$assetId}}"));
   }
 
-  // #endregion Labels --------------------------------------------------------
+  // #endregion Labels ---------------------------------------------------------
 
-  // #region Expression block -------------------------------------------------
+  // #region Expression block --------------------------------------------------
 
   @Test
   void testExpressionBlock_ShorthandFieldValueReferenceFromContextField() {
@@ -1129,9 +1426,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(ParseCancellationException.class, () -> translateTemplate("{ND-Root} $value"));
   }
 
-  // #endregion Expression block ----------------------------------------------
+  // #endregion Expression block -----------------------------------------------
 
-  // #region contextDeclarationBlock ------------------------------------------
+  // #region contextDeclarationBlock -------------------------------------------
 
   @Test
   void testContextDeclarationBlock_ContextFieldVariable() {
@@ -1183,9 +1480,31 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "{text:$var1='test', number:$var2=123, indicator:$var3=TRUE} Only vars: ${$var1}, ${$var2}, ${$var3}"));
   }
 
-  // #endregion contextDeclarationBlock ---------------------------------------
+  /**
+   * Context variables are always scalar even when the context field is repeatable,
+   * because the template iterates over values and the variable holds each iteration's value.
+   */
+  @Test
+  void testContextDeclarationBlock_RepeatableFieldContextVariable_UsedAsScalar() {
+    String result = translateTemplate("{context:$ctx = BT-13-Number} Value plus one: ${$ctx + 1}");
 
-  // #region chooseTemplate ------------------------------------
+    assertTrue(result.contains("decimal:ctx"),
+        "Context variable should be scalar (decimal:ctx), not sequence. Actual: " + result);
+    assertFalse(result.contains("decimal*:ctx"),
+        "Context variable should NOT be typed as sequence. Actual: " + result);
+
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01(decimal:ctx) -> { text('Value plus one: ')eval($ctx + 1) }",
+            "MAIN:",
+            "for-each(/*/SubNode/RepeatableInSubNode/Number).call(body01(decimal:ctx=.))"),
+        result);
+  }
+
+  // #endregion contextDeclarationBlock ----------------------------------------
+
+  // #region chooseTemplate ----------------------------------------------------
 
   @Test
   void testChooseTemplate_WhenBlock_MultipleConditions() {
@@ -1296,9 +1615,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "when TRUE display this is a ${$t};")));
   }
 
-  // #endregion chooseTemplate ---------------------------------
+  // #endregion chooseTemplate -------------------------------------------------
 
-  // #region variableList ---------------------------------------------
+  // #region variableList ------------------------------------------------------
 
   @Test
   void testVariableList_WithAllDataTypes() {
@@ -1323,9 +1642,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{BT-00-Text, text:$computed=concat('prefix-', BT-00-Text)} Computed: ${$computed}"));
   }
 
-  // #endregion variableList ------------------------------------------
+  // #endregion variableList ---------------------------------------------------
 
-  // #region templateLine edge cases ------------------------------------------
+  // #region templateLine edge cases -------------------------------------------
 
   @Test
   void testTemplateLine_OutlineNumber_Only() {
@@ -1349,9 +1668,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("1 {BT-00-Text} Value: ${BT-00-Text}"));
   }
 
-  // #endregion templateLine edge cases ---------------------------------------
+  // #endregion templateLine edge cases ----------------------------------------
 
-  // #region InvalidIndentationException --------------------------------------
+  // #region InvalidIndentationException ---------------------------------------
 
   @Test
   void testTemplateLine_InvalidIndentation_FirstIndentation() {
@@ -1403,9 +1722,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
   }
 
-  // #endregion InvalidIndentationException -----------------------------------
+  // #endregion InvalidIndentationException ------------------------------------
 
-  // #region TypeMismatchException --------------------------------------------
+  // #region TypeMismatchException ---------------------------------------------
 
   @Test
   void testTemplateDefinition_InvalidParameters() {
@@ -1415,9 +1734,79 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
   }
 
-  // #endregion TypeMismatchException -----------------------------------------
+  // #endregion TypeMismatchException ------------------------------------------
 
-  // #region IllegalArgumentException -----------------------------------------
+  // #region Repeatable Fields in Expression Blocks ----------------------------
+
+  @Test
+  void testExpressionBlock_RepeatableFieldDirect() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value: ')eval(PathNode/RepeatableTextField/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Value: ${BT-00-Repeatable-Text}"));
+  }
+
+  @Test
+  void testExpressionBlock_RepeatableFieldWithForLoop() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value: ')eval(for $x in PathNode/RepeatableTextField/normalize-space(text()) return $x) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Value: ${for text:$x in BT-00-Repeatable-Text return $x}"));
+  }
+
+  @Test
+  void testExpressionBlock_RepeatableFieldWithExplicitCast() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value: ')eval(PathNode/RepeatableTextField/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Value: ${(text*)BT-00-Repeatable-Text}"));
+  }
+
+  @Test
+  void testExpressionBlock_ScalarField() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Value: ')eval(PathNode/TextField/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Value: ${BT-00-Text}"));
+  }
+
+  @Test
+  void testExpressionBlock_LiteralNumericSequence() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Values: ')eval((1,2,3)) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Values: ${(1,2,3)}"));
+  }
+
+  @Test
+  void testExpressionBlock_MixedSequenceWithField() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Values: ')eval((1,2,PathNode/NumberField/number())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} Values: ${(1,2,BT-00-Number)}"));
+  }
+
+  // #endregion Repeatable Fields in Expression Blocks -------------------------
+
+  // #region IllegalArgumentException ------------------------------------------
 
   @Test
   void testTemplateDefinition_InvalidTooManyParameters() {
@@ -1435,7 +1824,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
   }
 
-  // #endregion IllegalArgumentException --------------------------------------
+  // #endregion IllegalArgumentException ---------------------------------------
 
   @Test
   void testContextualizer_WithPredicate() {

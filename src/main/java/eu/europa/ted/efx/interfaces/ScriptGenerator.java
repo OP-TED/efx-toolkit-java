@@ -16,10 +16,10 @@ package eu.europa.ted.efx.interfaces;
 import java.util.List;
 
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
@@ -132,7 +132,7 @@ public interface ScriptGenerator {
 
   /**
    * Takes a Java Boolean value and returns the corresponding target language script.
-   * 
+   *
    * @param value The Java Boolean value.
    * @return The target language script that corresponds to the given Java Boolean value.
    */
@@ -214,7 +214,7 @@ public interface ScriptGenerator {
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType);
 
-  public  IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList);
+  public IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList);
 
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
 
@@ -251,8 +251,20 @@ public interface ScriptGenerator {
   public PathExpression joinPaths(PathExpression first, PathExpression second);
 
   /**
+   * Makes the given absolute path relative to the given context path.
+   *
+   * This is target-language-specific because different target languages (XPath, JavaScript, etc.)
+   * may have different path contextualization semantics.
+   *
+   * @param absolutePath The absolute path to contextualize.
+   * @param contextPath The context path to make the result relative to.
+   * @return The path relative to the given context.
+   */
+  public PathExpression contextualizePath(PathExpression absolutePath, PathExpression contextPath);
+
+  /**
    * Gets a piece of text and returns it inside quotes as expected by the target language.
-   * 
+   *
    * @param value The text to be quoted.
    * @return The quoted text.
    */
@@ -285,7 +297,7 @@ public interface ScriptGenerator {
 
   /**
    * Returns the numeric literal passed in target language script. The passed literal is in EFX.
-   * 
+   *
    * @param efxLiteral The numeric literal in EFX.
    * @return The numeric literal in the target language.
    */
@@ -294,7 +306,7 @@ public interface ScriptGenerator {
   /**
    * Returns the string literal in the target language. Note that the string literal passed as a
    * parameter is already between quotes in EFX.
-   * 
+   *
    * @param efxLiteral The string literal in EFX.
    * @return The string literal in the target language.
    */

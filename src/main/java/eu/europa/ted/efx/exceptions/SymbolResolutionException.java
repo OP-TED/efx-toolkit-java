@@ -1,3 +1,16 @@
+/*
+ * Copyright 2025 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.exceptions;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -10,33 +23,49 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
  */
 @SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
 public class SymbolResolutionException extends ParseCancellationException {
-    private static final String UNKNOWN_FIELD = "Unknown field '%s'.";
-    private static final String UNKNOWN_NODE = "Unknown node '%s'.";
+
+    public enum ErrorCode {
+        UNKNOWN_SYMBOL,
+        UNKNOWN_CODELIST,
+        NO_CODELIST_FOR_FIELD,
+        ROOT_NODE_NOT_FOUND,
+        UNKNOWN_NOTICE_SUBTYPE
+    }
+
+    private static final String UNKNOWN_SYMBOL = "Unknown symbol '%s'.";
     private static final String UNKNOWN_CODELIST = "Unknown codelist '%s'.";
-    private static final String UNKNOWN_ALIAS = "Unknown field or node alias '%s'.";
     private static final String NO_CODELIST_FOR_FIELD = "Field '%s' is not associated with a codelist.";
+    private static final String ROOT_NODE_NOT_FOUND = "Could not find the root node. Check that node metadata is loaded correctly.";
+    private static final String UNKNOWN_NOTICE_SUBTYPE = "Unknown notice subtype '%s' in range '%s'.";
 
-    private SymbolResolutionException(String message) {
+    private final ErrorCode errorCode;
+
+    private SymbolResolutionException(ErrorCode errorCode, String message) {
         super(message);
+        this.errorCode = errorCode;
     }
 
-    public static SymbolResolutionException unknownField(String fieldId) {
-        return new SymbolResolutionException(String.format(UNKNOWN_FIELD, fieldId));
-    }
-
-    public static SymbolResolutionException unknownNode(String nodeId) {
-        return new SymbolResolutionException(String.format(UNKNOWN_NODE, nodeId));
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 
     public static SymbolResolutionException unknownCodelist(String codelistId) {
-        return new SymbolResolutionException(String.format(UNKNOWN_CODELIST, codelistId));
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_CODELIST, String.format(UNKNOWN_CODELIST, codelistId));
     }
 
-    public static SymbolResolutionException unknownAlias(String alias) {
-        return new SymbolResolutionException(String.format(UNKNOWN_ALIAS, alias));
+    public static SymbolResolutionException unknownSymbol(String symbol) {
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_SYMBOL, String.format(UNKNOWN_SYMBOL, symbol));
     }
 
     public static SymbolResolutionException noCodelistForField(String fieldId) {
-        return new SymbolResolutionException(String.format(NO_CODELIST_FOR_FIELD, fieldId));
+        return new SymbolResolutionException(ErrorCode.NO_CODELIST_FOR_FIELD, String.format(NO_CODELIST_FOR_FIELD, fieldId));
+    }
+
+    public static SymbolResolutionException rootNodeNotFound() {
+        return new SymbolResolutionException(ErrorCode.ROOT_NODE_NOT_FOUND, ROOT_NODE_NOT_FOUND);
+    }
+
+    public static SymbolResolutionException unknownNoticeSubtype(String noticeSubtype, String rangeString) {
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, String.format(UNKNOWN_NOTICE_SUBTYPE, noticeSubtype, rangeString));
     }
 }

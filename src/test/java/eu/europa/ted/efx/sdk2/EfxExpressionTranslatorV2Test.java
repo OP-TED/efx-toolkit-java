@@ -1,3 +1,16 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -5,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
 
 class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Override
@@ -541,6 +556,15 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "'a' = (for $x in PathNode/TextField/normalize-space(text()) return concat($x, 'text'))", "ND-Root",
         "'a' in (for text:$x in BT-00-Text return concat($x, 'text'))");
+  }
+
+  @Test
+  void testStringsFromStringIteration_UsingMultilingualFieldReference() {
+    // This test verifies that iterating over a multilingual text field with a text iterator works correctly
+    // The iterator variable should inherit the actual type (multilingual string) from the sequence
+    testExpressionTranslationWithContext(
+        "'a' = (for $x in PathNode/TextMultilingualField/normalize-space(text()) return concat($x, 'text'))", "ND-Root",
+        "'a' in (for text:$x in BT-00-Text-Multilingual return concat($x, 'text'))");
   }
 
 
@@ -1679,6 +1703,42 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "{ND-Root, measure:$p1, measure:$p2} ${$p1 == $p2}", "P1Y", "P2Y");
   }
 
+  @Test
+  void testParameterizedExpression_WithTextSequenceParameter() {
+    testExpressionTranslation("count(('a','b','c'))",
+        "{ND-Root, text*:$items} ${count($items)}", "('a', 'b', 'c')");
+  }
+
+  @Test
+  void testParameterizedExpression_WithNumericSequenceParameter() {
+    testExpressionTranslation("count((1,2,3))",
+        "{ND-Root, number*:$items} ${count($items)}", "(1, 2, 3)");
+  }
+
+  @Test
+  void testParameterizedExpression_WithBooleanSequenceParameter() {
+    testExpressionTranslation("count((true(),false(),true()))",
+        "{ND-Root, indicator*:$items} ${count($items)}", "(TRUE, FALSE, ALWAYS)");
+  }
+
+  @Test
+  void testParameterizedExpression_WithDateSequenceParameter() {
+    testExpressionTranslation("count((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))",
+        "{ND-Root, date*:$items} ${count($items)}", "(2024-01-01Z, 2024-12-31Z)");
+  }
+
+  @Test
+  void testParameterizedExpression_WithTimeSequenceParameter() {
+    testExpressionTranslation("count((xs:time('10:00:00Z'),xs:time('18:00:00Z')))",
+        "{ND-Root, time*:$items} ${count($items)}", "(10:00:00Z, 18:00:00Z)");
+  }
+
+  @Test
+  void testParameterizedExpression_WithDurationSequenceParameter() {
+    testExpressionTranslation("count((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')))",
+        "{ND-Root, measure*:$items} ${count($items)}", "(P1Y, P2M)");
+  }
+
   // #endregion: Compare sequences
 
   // #endregion Sequence Functions
@@ -1686,15 +1746,35 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   // #region: Indexers --------------------------------------------------------
 
   @Test
-  void testIndexer_WithFieldReference() {
-    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text())[1]", "ND-Root", "(text)BT-00-Text[1]");
+  void testIndexer_WithNonRepeatableField() {
+    // Indexing a non-repeatable field - currently allowed (semantically odd but syntactically valid)
+    testExpressionTranslationWithContext("(PathNode/TextField/normalize-space(text()))[1]", "ND-Root",
+        "BT-00-Text[1]");
   }
 
   @Test
-  void testIndexer_WithFieldReferenceAndPredicate() {
+  void testIndexer_WithNonRepeatableFieldAndPredicate() {
+    // Indexing a non-repeatable field with predicate
     testExpressionTranslationWithContext(
-        "PathNode/TextField[./normalize-space(text()) = 'hello']/normalize-space(text())[1]", "ND-Root",
-        "(text)BT-00-Text[BT-00-Text == 'hello'][1]");
+        "(PathNode/TextField[./normalize-space(text()) = 'hello']/normalize-space(text()))[1]", "ND-Root",
+        "BT-00-Text[BT-00-Text == 'hello'][1]");
+  }
+
+  @Test
+  void testIndexer_WithRepeatableField() {
+    // Indexing a repeatable field should work - BT-00-Repeatable-Text is repeatable
+    // No explicit cast - preprocessor inserts (text*) making it stringSequence[indexer]
+    testExpressionTranslationWithContext("(PathNode/RepeatableTextField/normalize-space(text()))[1]", "ND-Root",
+        "BT-00-Repeatable-Text[1]");
+  }
+
+  @Test
+  void testIndexer_WithRepeatableFieldAndPredicate() {
+    // Indexing a repeatable field with predicate should work
+    // No explicit cast - preprocessor handles typing
+    testExpressionTranslationWithContext(
+        "(PathNode/RepeatableTextField[(./normalize-space(text()))[1] = 'hello']/normalize-space(text()))[1]", "ND-Root",
+        "BT-00-Repeatable-Text[BT-00-Repeatable-Text[1] == 'hello'][1]");
   }
 
   @Test
@@ -1703,4 +1783,292 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   // #endregion: Indexers
+
+  // #region: Scalar/Sequence Validation --------------------------------------
+
+  @Test
+  void testScalarFromRepeatableField_ThrowsError() {
+    // A repeatable field used as scalar should throw TypeMismatchException.fieldMayRepeat()
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testScalarFromFieldInRepeatableNode_ThrowsErrorFromRootContext() {
+    // Field in ND-RepeatableNode (repeatable) used as scalar from ND-Root should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-Repeatable-Node == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testScalarFromFieldInRepeatableNode_OkFromSameContext() {
+    // Field in ND-RepeatableNode used as scalar from ND-RepeatableNode context should NOT throw
+    testExpressionTranslationWithContext("TextField/normalize-space(text()) = 'test'",
+        "ND-RepeatableNode", "BT-00-Text-In-Repeatable-Node == 'test'");
+  }
+
+  @Test
+  void testScalarFromFieldInNestedRepeatableNode_ThrowsErrorFromRootContext() {
+    // Field in ND-RepeatableSubSubNode (inside ND-NonRepeatableSubNode inside ND-RepeatableNode) used from root should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testScalarFromFieldInNestedRepeatableNode_ThrowsErrorFromRepeatableNodeContext() {
+    // Field in ND-RepeatableSubSubNode used from ND-RepeatableNode should still throw (ND-RepeatableSubSubNode is also repeatable)
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-RepeatableNode", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testScalarFromFieldInNestedRepeatableNode_OkFromRepeatableSubSubNodeContext() {
+    // Field in ND-RepeatableSubSubNode used from ND-RepeatableSubSubNode context should NOT throw
+    testExpressionTranslationWithContext("TextField/normalize-space(text()) = 'test'",
+        "ND-RepeatableSubSubNode", "BT-00-Text-In-RepeatableSubSubNode == 'test'");
+  }
+
+  @Test
+  void testScalarFromFieldInNonRepeatableNestedInRepeatable_ThrowsErrorFromRootContext() {
+    // Field in ND-NonRepeatableSubNode (non-repeatable) inside ND-RepeatableNode (repeatable) used from root should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-NonRepeatableSubNode == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testScalarFromFieldInNonRepeatableNestedInRepeatable_OkFromRepeatableNodeContext() {
+    // Field in ND-NonRepeatableSubNode used from ND-RepeatableNode context should NOT throw
+    testExpressionTranslationWithContext("NonRepeatableSubNode/TextField/normalize-space(text()) = 'test'",
+        "ND-RepeatableNode", "BT-00-Text-In-NonRepeatableSubNode == 'test'");
+  }
+
+  // #endregion: Scalar/Sequence Validation
+
+  // #region: InvalidIdentifierException Tests --------------------------------
+
+  @Test
+  void testContextSpecifier_WithRegularVariable_ThrowsNotAContextVariable() {
+    // A regular variable (not declared with context:) used as context specifier should throw
+    InvalidIdentifierException ex = assertThrows(InvalidIdentifierException.class,
+        () -> translateExpressionWithContext("ND-Root", "for text:$x in BT-00-Text return $x::BT-00-Number"));
+    assertEquals(InvalidIdentifierException.ErrorCode.NOT_A_CONTEXT_VARIABLE, ex.getErrorCode());
+  }
+
+  @Test
+  void testContextSpecifier_UndeclaredVariable_ThrowsNotAContextVariable() {
+    // An undeclared variable used as context specifier should throw (NOT_A_CONTEXT_VARIABLE
+    // because the lookup for context variables fails before checking if the variable exists)
+    InvalidIdentifierException ex = assertThrows(InvalidIdentifierException.class,
+        () -> translateExpressionWithContext("ND-Root", "$undefined::BT-00-Text"));
+    assertEquals(InvalidIdentifierException.ErrorCode.NOT_A_CONTEXT_VARIABLE, ex.getErrorCode());
+  }
+
+  // #endregion: InvalidIdentifierException Tests
+
+  // #region: TypeMismatchException - nodeCannotBeValue -------------------------
+
+  @Test
+  void testScalarFromNodeContextVariable_ThrowsNodeCannotBeValue() {
+    // A node context variable used as scalar value should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "for context:$n in ND-SubNode return $n == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_FIELD_CONTEXT, ex.getErrorCode());
+  }
+
+  @Test
+  void testSequenceFromNodeContextVariable_ThrowsNodeCannotBeValue() {
+    // A node context variable used in count() should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "for context:$n in ND-SubNode return count($n)"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_FIELD_CONTEXT, ex.getErrorCode());
+  }
+
+  // #endregion: TypeMismatchException - nodeCannotBeValue
+
+  // #region: TypeMismatchException - fieldMayRepeat (Context Variables) --------
+
+  @Test
+  void testScalarFromFieldContextVariable_NonRepeatable_Works() {
+    // A non-repeatable field context variable used as scalar should work
+    testExpressionTranslationWithContext(
+        "for $f in PathNode/TextField return $f = 'test'",
+        "ND-Root",
+        "for context:$f in BT-00-Text return $f == 'test'");
+  }
+
+  @Test
+  void testScalarFromFieldContextVariable_Repeatable_ThrowsFieldMayRepeat() {
+    // A repeatable field context variable used as scalar should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "for context:$f in BT-00-Repeatable-Text return $f == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  // #endregion: TypeMismatchException - fieldMayRepeat (Context Variables)
+
+  // #region: Context Override Syntax Tests ------------------------------------
+
+  @Test
+  void testContextOverride_NodeContextVariable_Works() {
+    // A node context variable used with context specifier syntax should work
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return $n/SubTextField/normalize-space(text())",
+        "ND-Root",
+        "for context:$n in ND-SubNode return $n::BT-01-SubNode-Text");
+  }
+
+  // Note: Test 4.2 (regular variable as context specifier) is already covered by
+  // testContextSpecifier_WithRegularVariable_ThrowsNotAContextVariable above
+
+  // #endregion: Context Override Syntax Tests
+
+  // #region: For Loop Iterator Sequence Validation -----------------------------
+  // These tests verify that repeatable fields are correctly allowed when used as
+  // sequences in for loop iterators, even though they would fail as scalars in return.
+
+  @Test
+  void testForLoopIterator_RepeatableFieldAsSequence_Works() {
+    // A repeatable field used as a sequence in a for loop iterator should work.
+    // The return expression uses the iterator variable which is scalar.
+    // This is the correct way to handle repeatable fields in for loops.
+    testExpressionTranslationWithContext(
+        "for $b in PathNode/RepeatableTextField/normalize-space(text()) return $b",
+        "ND-Root",
+        "for text:$b in BT-00-Repeatable-Text return $b");
+  }
+
+  @Test
+  void testForLoopIterator_RepeatableFieldWithPredicate_Works() {
+    // A repeatable field with a predicate used as sequence in iterator should work.
+    // This pattern is equivalent to the problematic SDK template rewritten correctly.
+    testExpressionTranslationWithContext(
+        "for $a in PathNode/TextField/normalize-space(text()), $b in SubNode/RepeatableInSubNode/Text[./normalize-space(text()) = $a]/normalize-space(text()) return $b",
+        "ND-Root",
+        "for text:$a in BT-00-Text, text:$b in BT-13-Text[BT-13-Text == $a] return $b");
+  }
+
+  // #endregion: For Loop Iterator Sequence Validation
+
+  // #region: Predicate Comparison with Repeatable Fields -------------------------
+  // These tests verify that repeatable fields in predicate comparisons are handled correctly.
+
+  @Test
+  void testPredicateComparison_RepeatableFieldAsScalar_ThrowsError() {
+    // A repeatable field used as scalar in a predicate comparison should throw.
+    // Pattern: FIELD[REPEATABLE_FIELD == $var] - the repeatable field is used as scalar
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text[BT-00-Repeatable-Text == 'test']"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+  }
+
+  @Test
+  void testPredicateComparison_RepeatableFieldWithSomeSatisfies_Works() {
+    // Using "some ... satisfies" to check if any value matches should work.
+    // This is the correct way to compare against a repeatable field.
+    // Pattern: FIELD[some text:$x in REPEATABLE_FIELD satisfies $x == $var]
+    testExpressionTranslationWithContext(
+        "PathNode/TextField[some $x in ../RepeatableTextField/normalize-space(text()) satisfies $x = 'test']/normalize-space(text())",
+        "ND-Root",
+        "BT-00-Text[some text:$x in BT-00-Repeatable-Text satisfies $x == 'test']");
+  }
+
+  // #endregion: Predicate Comparison with Repeatable Fields
+
+  // #region: B1 Grammar Issue - Parentheses in some...in expressions --------
+  // These tests verify that parentheses around field references in some...in
+  // expressions are correctly parsed as sequences, not as single-element lists.
+  //
+  // The issue: (FIELD) in "some text:$x in (FIELD) satisfies ..." was previously
+  // parsed as a scalar list instead of a parenthesized sequence reference.
+  // This has been fixed by the scalar/sequence grammar separation (TEDEFO-4808).
+
+  @Test
+  void testSomeSatisfies_ParenthesizedFieldReference_String() {
+    // Parentheses around a string field reference should still be treated as a sequence.
+    // The parentheses are preserved in the XPath output.
+    testExpressionTranslationWithContext(
+        "some $x in (PathNode/RepeatableTextField/normalize-space(text())) satisfies $x = 'test'",
+        "ND-Root",
+        "some text:$x in (BT-00-Repeatable-Text) satisfies $x == 'test'");
+  }
+
+  @Test
+  void testSomeSatisfies_ParenthesizedFieldReferenceWithPredicate_String() {
+    // Parentheses around a field reference with predicate should work as sequence.
+    // Note: The predicate comparison still needs some...satisfies pattern for repeatable fields.
+    testExpressionTranslationWithContext(
+        "some $x in (PathNode/TextField[some $y in ../RepeatableTextField/normalize-space(text()) satisfies $y = 'filter']/normalize-space(text())) satisfies $x = 'test'",
+        "ND-Root",
+        "some text:$x in (BT-00-Text[some text:$y in BT-00-Repeatable-Text satisfies $y == 'filter']) satisfies $x == 'test'");
+  }
+
+  @Test
+  void testSomeSatisfies_ParenthesizedFieldFromRepeatableNode_String() {
+    // A field from a repeatable node, wrapped in parentheses, should work as sequence.
+    testExpressionTranslationWithContext(
+        "some $x in (RepeatableNode/TextField/normalize-space(text())) satisfies $x = 'test'",
+        "ND-Root",
+        "some text:$x in (BT-00-Text-In-Repeatable-Node) satisfies $x == 'test'");
+  }
+
+  @Test
+  void testSomeSatisfies_NestedParenthesizedFieldReference_String() {
+    // Double parentheses should also work.
+    testExpressionTranslationWithContext(
+        "some $x in ((PathNode/RepeatableTextField/normalize-space(text()))) satisfies $x = 'test'",
+        "ND-Root",
+        "some text:$x in ((BT-00-Repeatable-Text)) satisfies $x == 'test'");
+  }
+
+  @Test
+  void testForLoop_ParenthesizedFieldReference_String() {
+    // Parentheses around a field reference in a for loop should work as sequence.
+    testExpressionTranslationWithContext(
+        "for $x in (PathNode/RepeatableTextField/normalize-space(text())) return $x",
+        "ND-Root",
+        "for text:$x in (BT-00-Repeatable-Text) return $x");
+  }
+
+  @Test
+  void testEverySatisfies_ParenthesizedFieldReference_String() {
+    // "every" quantifier with parenthesized field reference should work as sequence.
+    testExpressionTranslationWithContext(
+        "every $x in (PathNode/RepeatableTextField/normalize-space(text())) satisfies $x != ''",
+        "ND-Root",
+        "every text:$x in (BT-00-Repeatable-Text) satisfies $x != ''");
+  }
+
+  @Test
+  void testCount_ParenthesizedFieldReference() {
+    // count() with parenthesized field reference should work as sequence.
+    testExpressionTranslationWithContext(
+        "count((PathNode/RepeatableTextField/normalize-space(text())))",
+        "ND-Root",
+        "count((BT-00-Repeatable-Text))");
+  }
+
+  @Test
+  void testDistinctValues_ParenthesizedFieldReference_String() {
+    // distinct-values() with parenthesized field reference should work as sequence.
+    testExpressionTranslationWithContext(
+        "distinct-values((PathNode/RepeatableTextField/normalize-space(text())))",
+        "ND-Root",
+        "distinct-values((BT-00-Repeatable-Text))");
+  }
+
+  @Test
+  void testStringJoin_ParenthesizedFieldReference() {
+    // string-join() with parenthesized field reference should work as sequence.
+    testExpressionTranslationWithContext(
+        "string-join((PathNode/RepeatableTextField/normalize-space(text())), ', ')",
+        "ND-Root",
+        "string-join((BT-00-Repeatable-Text), ', ')");
+  }
+
+  // #endregion: B1 Grammar Issue
 }

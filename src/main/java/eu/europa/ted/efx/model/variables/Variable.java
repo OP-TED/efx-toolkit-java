@@ -1,16 +1,40 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model.variables;
 
 import eu.europa.ted.efx.model.expressions.DeclarationExpression;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 
+/**
+ * A variable declared in EFX source code.
+ *
+ * Tracks three expressions: the initialization expression (determines the variable's type),
+ * the reference expression (target-language code for accessing the variable), and the
+ * declaration expression (target-language code for declaring the variable).
+ *
+ * For iterator variables, the initialization expression may be a sequence while the reference
+ * expression is scalar (since the iterator yields one element at a time).
+ */
 public class Variable extends Identifier {
   public final Expression declarationExpression;
   public final TypedExpression initializationExpression;
   public final TypedExpression referenceExpression;
 
   public Variable(String variableName, TypedExpression initializationExpression, TypedExpression referenceExpression) {
-    this(variableName, DeclarationExpression.empty(), initializationExpression, referenceExpression);  
+    this(variableName, DeclarationExpression.empty(), initializationExpression, referenceExpression);
   }
 
   public Variable(String variableName, Expression declarationExpression, TypedExpression initializationExpression, TypedExpression referenceExpression) {
@@ -18,7 +42,10 @@ public class Variable extends Identifier {
     this.declarationExpression = declarationExpression;
     this.initializationExpression = initializationExpression;
     this.referenceExpression = referenceExpression;
-    assert referenceExpression.getDataType() == initializationExpression.getDataType();
+    // Compare primitive types (without cardinality) since iterator variables have sequence initializers but scalar references
+    // Use isAssignableFrom to allow compatible types (e.g., MultilingualString is assignable to String)
+    assert EfxTypeLattice.toPrimitive(referenceExpression.getDataType())
+        .isAssignableFrom(EfxTypeLattice.toPrimitive(initializationExpression.getDataType()));
   }
 
   @Override

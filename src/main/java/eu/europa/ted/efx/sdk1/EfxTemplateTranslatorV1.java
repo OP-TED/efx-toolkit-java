@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk1;
 
 import java.io.IOException;
@@ -28,11 +41,11 @@ import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
-import eu.europa.ted.efx.model.expressions.path.StringPathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
@@ -359,10 +372,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final PathExpression valueReference = this.symbols.isAttributeField(fieldId)
         ? this.script.composeFieldAttributeReference(
-            this.symbols.getRelativePath(this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), currentContext.absolutePath()),
-            this.symbols.getAttributeNameFromAttributeField(fieldId), StringPathExpression.class)
+            this.script.contextualizePath(this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), currentContext.absolutePath()),
+            this.symbols.getAttributeNameFromAttributeField(fieldId), StringPath.class)
         : this.script.composeFieldValueReference(
-        this.symbols.getRelativePathOfField(fieldId, currentContext.absolutePath()));
+        this.symbols.getRelativePathOfField(fieldId, currentContext.symbol()));
     Variable loopVariable = new Variable("item",
         this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
         this.script.composeVariableReference("item", StringExpression.class));
@@ -373,7 +386,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.composeForExpression(
                     this.script.composeIteratorList(
                         List.of(
-                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
+                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
                     this.script.composeStringConcatenation(
                         List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
                             this.script.getStringLiteralFromUnquotedString("|"),
@@ -392,7 +405,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.composeForExpression(
                     this.script.composeIteratorList(
                         List.of(
-                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference))),
+                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
                     this.script.composeStringConcatenation(List.of(
                         this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
                         this.script.getStringLiteralFromUnquotedString("|"),
@@ -535,7 +548,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       throw InvalidUsageException.shorthandRequiresFieldContext("$value");
     }
     this.stack.push(this.script.composeFieldValueReference(
-        this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.absolutePath())));
+        this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.symbol())));
   }
 
   // #endregion Expression Blocks ${...} --------------------------------------
@@ -643,13 +656,13 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
     if (childContext.isFieldContext()) {
       return new FieldContext(childContext.symbol(), childContext.absolutePath(),
-          this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
+          this.script.contextualizePath(childContext.absolutePath(), parentContextAbsolutePath), childContext.variable());
     }
 
     assert childContext.isNodeContext() : "Child context should be either a FieldContext NodeContext.";
 
     return new NodeContext(childContext.symbol(), childContext.absolutePath(),
-        this.symbols.getRelativePath(childContext.absolutePath(), parentContextAbsolutePath));
+        this.script.contextualizePath(childContext.absolutePath(), parentContextAbsolutePath));
   }
 
   // #endregion Template lines  -----------------------------------------------

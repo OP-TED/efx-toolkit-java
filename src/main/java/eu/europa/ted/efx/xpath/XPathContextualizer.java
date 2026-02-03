@@ -1,13 +1,27 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.xpath;
 
 import eu.europa.ted.eforms.xpath.XPathProcessor;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 
 public class XPathContextualizer {
 
   /**
    * Makes the given xpath relative to the given context xpath.
-   * 
+   *
    * @param contextXpath the context xpath
    * @param xpath        the xpath to contextualize
    * @return the contextualized xpath
@@ -22,13 +36,13 @@ public class XPathContextualizer {
 
     String result = XPathProcessor.contextualize(contextXpath.getScript(), xpath.getScript());
 
-    return PathExpression.instantiate(result, xpath.getDataType());
+    return Expression.instantiate(result, xpath.getClass());
   }
 
   public static PathExpression join(final PathExpression first, final PathExpression second) {
 
     String joinedXPath = XPathProcessor.join(first.getScript(), second.getScript());
 
-    return PathExpression.instantiate(joinedXPath, second.getDataType());
+    return Expression.instantiate(joinedXPath, second.getClass());
   }
 }

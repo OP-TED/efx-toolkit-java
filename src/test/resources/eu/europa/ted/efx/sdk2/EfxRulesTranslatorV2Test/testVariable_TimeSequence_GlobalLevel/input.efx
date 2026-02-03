@@ -1,0 +1,8 @@
+LET time* : $times = (09:00:00Z, 17:00:00Z);
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT count($times) > 0
+AS ERROR R-SEQ-005
+FOR BT-00-Text IN 1, 2

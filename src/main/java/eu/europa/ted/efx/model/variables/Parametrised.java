@@ -2,6 +2,12 @@ package eu.europa.ted.efx.model.variables;
 
 import eu.europa.ted.efx.model.types.EfxDataType;
 
+/**
+ * An identifier that accepts parameters.
+ *
+ * Base class for parameterized identifiers like functions and templates. Extends {@link Identifier}
+ * to add parsed parameter information.
+ */
 public class Parametrised extends Identifier {
 
     public final ParsedParameters parameters;
@@ -19,8 +25,8 @@ public class Parametrised extends Identifier {
             return false;
         if (!super.equals(o))
             return false;
-        Parametrised function = (Function) o;
-        return parameters != null ? parameters.equals(function.parameters) : function.parameters == null;
+        Parametrised other = (Parametrised) o;
+        return parameters != null ? parameters.equals(other.parameters) : other.parameters == null;
     }
 
     @Override

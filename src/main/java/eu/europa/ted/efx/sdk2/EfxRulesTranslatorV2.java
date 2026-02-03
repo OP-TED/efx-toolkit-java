@@ -36,16 +36,24 @@ import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
-import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
+import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
+import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.rules.AssertRule;
 import eu.europa.ted.efx.model.rules.CompleteValidation;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
@@ -245,6 +253,56 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     this.exitVariableInitializer(ctx.variableName.getText(), DurationExpression.class);
   }
 
+  /**
+   * Helper method to handle sequence variable initializers.
+   * Pops the expression from the stack and creates a Variable object.
+   */
+  private void exitSequenceVariableInitializer(String variableName,
+      Class<? extends SequenceExpression> expressionType) {
+    var expression = this.stack.pop(expressionType);
+    var variable = new Variable(variableName,
+        this.script.composeVariableDeclaration(variableName, expression.getClass()),
+        expression,
+        this.script.composeVariableReference(variableName, expression.getClass()));
+    this.stack.push(variable);
+  }
+
+  @Override
+  public void exitStringSequenceVariableInitializer(
+      EfxParser.StringSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanSequenceVariableInitializer(
+      EfxParser.BooleanSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericSequenceVariableInitializer(
+      EfxParser.NumericSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateSequenceVariableInitializer(
+      EfxParser.DateSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeSequenceVariableInitializer(
+      EfxParser.TimeSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationSequenceVariableInitializer(
+      EfxParser.DurationSequenceVariableInitializerContext ctx) {
+    this.exitSequenceVariableInitializer(ctx.variableName.getText(), DurationSequenceExpression.class);
+  }
+
   // #endregion Variable Initializers
 
   // #region Schema-level Variables
@@ -389,9 +447,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   private void exitRootContextDeclaration() {
-    PathExpression contextPath = new NodePathExpression("/*");
-    String symbol = "ND-Root";
-    this.exitNodeContextDeclaration(symbol, contextPath, null);
+    this.exitNodeContextDeclaration(this.symbols.getRootNodeId(), this.symbols.getRootPath(), null);
   }
 
   private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable contextVariable) {
@@ -421,11 +477,11 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     }
 
     final String variableName = ctx.variableName.getText();
-    final Class<? extends TypedExpression> variableType = contextPath.getClass();
+    final Class<? extends TypedExpression> variableType = contextPath.asScalar().getClass();
 
     return new Variable(variableName,
         this.script.composeVariableDeclaration(variableName, variableType),
-        this.symbols.getRelativePath(contextPath, contextPath),
+        this.script.contextualizePath(contextPath, contextPath),
         this.script.composeVariableReference(variableName, variableType));
 
   }
@@ -669,22 +725,71 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
     @Override
     public void exitContextDeclaration(ContextDeclarationContext ctx) {
+      // Handle context shortcuts (., .., /) - these don't have context variable initializers
+      String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
+      switch (shortcut) {
+        case "/":
+          this.efxContext.push(new NodeContext(this.symbols.getRootNodeId(), this.symbols.getRootPath()));
+          return;
+        case ".":
+        case "..":
+          // Same/parent context not supported in rules, but still need to push something
+          return;
+        default:
+          break;
+      }
+
+      // Handle field or node context without variable
+      if (ctx.fieldContext() != null) {
+        final String fieldId = getFieldId(ctx.fieldContext());
+        this.efxContext.push(new FieldContext(fieldId, this.symbols.getAbsolutePathOfField(fieldId),
+            this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol())));
+        return;
+      }
+      if (ctx.nodeContext() != null) {
+        final String nodeId = getNodeId(ctx.nodeContext());
+        this.efxContext.push(new NodeContext(nodeId, this.symbols.getAbsolutePathOfNode(nodeId),
+            this.symbols.getRelativePathOfNode(nodeId, this.efxContext.symbol())));
+        return;
+      }
+
+      // Handle context variable initializer
       final var initializer = ctx.contextVariableInitializer();
       if (initializer == null) {
-        return; // No context variable initializer, nothing to do during pre-processing.
+        return;
       }
+      final String variableName = initializer.variableName.getText();
       if (initializer.fieldContext() != null) {
         final String fieldId = getFieldId(initializer.fieldContext());
         var fieldType = FieldTypes.fromString(this.symbols.getTypeOfField(fieldId));
         this.stack.declareIdentifier(
-            new Variable(initializer.variableName.getText(), PathExpression.instantiate("", fieldType),
-                PathExpression.instantiate("", fieldType), PathExpression.instantiate("", fieldType)));
+            new Variable(variableName, ScalarPath.empty(fieldType),
+                ScalarPath.empty(fieldType), ScalarPath.empty(fieldType)));
+        var context = new FieldContext(fieldId, this.symbols.getAbsolutePathOfField(fieldId),
+            this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol()));
+        this.efxContext.push(context);
+        this.efxContext.declareContextVariable(variableName, context);
       }
       if (initializer.nodeContext() != null) {
-        this.stack.declareIdentifier(new Variable(initializer.variableName.getText(), NodePathExpression.empty(),
-            NodePathExpression.empty(), NodePathExpression.empty()));
+        final String nodeId = getNodeId(initializer.nodeContext());
+        this.stack.declareIdentifier(new Variable(variableName, NodePath.empty(),
+            NodePath.empty(), NodePath.empty()));
+        var context = new NodeContext(nodeId, this.symbols.getAbsolutePathOfNode(nodeId),
+            this.symbols.getRelativePathOfNode(nodeId, this.efxContext.symbol()));
+        this.efxContext.push(context);
+        this.efxContext.declareContextVariable(variableName, context);
       }
-      return;
+    }
+
+    @Override
+    public void enterRuleSet(RuleSetContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitRuleSet(RuleSetContext ctx) {
+      this.stack.popStackFrame();
+      this.efxContext.pop();
     }
 
     /**
@@ -693,10 +798,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     @Override
     public void exitVariableInitializer(
         EfxParser.VariableInitializerContext ctx) {
-      if (!this.stack.empty()) {
         Variable variable = this.stack.pop(Variable.class);
         this.stack.declareIdentifier(variable);
-      }
     }
 
     // #endregion Rules-specific variable declarations
@@ -741,6 +844,44 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     public void exitDurationVariableInitializer(EfxParser.DurationVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           DurationExpression.empty(), DurationExpression.empty()));
+    }
+
+    // Sequence variable initializers for type tracking
+
+    @Override
+    public void exitStringSequenceVariableInitializer(EfxParser.StringSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new StringSequenceExpression(""), new StringSequenceExpression("")));
+    }
+
+    @Override
+    public void exitBooleanSequenceVariableInitializer(EfxParser.BooleanSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new BooleanSequenceExpression(""), new BooleanSequenceExpression("")));
+    }
+
+    @Override
+    public void exitNumericSequenceVariableInitializer(EfxParser.NumericSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new NumericSequenceExpression(""), new NumericSequenceExpression("")));
+    }
+
+    @Override
+    public void exitDateSequenceVariableInitializer(EfxParser.DateSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new DateSequenceExpression(""), new DateSequenceExpression("")));
+    }
+
+    @Override
+    public void exitTimeSequenceVariableInitializer(EfxParser.TimeSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new TimeSequenceExpression(""), new TimeSequenceExpression("")));
+    }
+
+    @Override
+    public void exitDurationSequenceVariableInitializer(EfxParser.DurationSequenceVariableInitializerContext ctx) {
+      this.stack.push(new Variable(ctx.variableName.getText(),
+          new DurationSequenceExpression(""), new DurationSequenceExpression("")));
     }
 
     // #endregion Variable initializers for type tracking

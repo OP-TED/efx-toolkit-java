@@ -11,6 +11,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * An ordered collection of parsed parameters for a function or template.
+ *
+ * Preserves parameter order (important for positional arguments) and provides conversions
+ * to Set and Map representations.
+ */
 public class ParsedParameters extends LinkedList<ParsedParameter> implements ParsedEntity {
 
     public ParsedParameters() {
