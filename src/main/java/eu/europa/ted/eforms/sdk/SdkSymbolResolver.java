@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -421,9 +420,9 @@ public class SdkSymbolResolver implements SymbolResolver {
     }
 
     // Use cached ancestry from node
-    Set<String> contextAncestry = context != null
+    List<String> contextAncestry = context != null
         ? context.getParentNode().getAncestry()
-        : Collections.emptySet();
+        : Collections.emptyList();
 
     // Walk up from the field's parent node toward root, looking for a repeatable
     // node
@@ -459,9 +458,9 @@ public class SdkSymbolResolver implements SymbolResolver {
     }
 
     // Use cached ancestry from node
-    Set<String> contextAncestry = context != null
+    List<String> contextAncestry = context != null
         ? context.getAncestry()
-        : Collections.emptySet();
+        : Collections.emptyList();
 
     // Walk up from the field's parent node toward root, looking for a repeatable
     // node
@@ -510,9 +509,9 @@ public class SdkSymbolResolver implements SymbolResolver {
 
   private boolean isNodeRepeatableFromContext(final SdkNode sdkNode, final SdkNode contextNode) {
     // Use cached ancestry from node
-    Set<String> contextAncestry = contextNode != null
+    List<String> contextAncestry = contextNode != null
         ? contextNode.getAncestry()
-        : Collections.emptySet();
+        : Collections.emptyList();
 
     // Walk up from the node toward root, looking for a repeatable node
     String currentNodeId = sdkNode.getId();
