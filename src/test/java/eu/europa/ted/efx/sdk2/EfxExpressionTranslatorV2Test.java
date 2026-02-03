@@ -1983,9 +1983,9 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   // These tests verify that parentheses around field references in some...in
   // expressions are correctly parsed as sequences, not as single-element lists.
   //
-  // The issue: (FIELD) in "some text:$x in (FIELD) satisfies ..." is parsed
-  // as a scalar list instead of a parenthesized sequence reference.
-  // See: EFX-TYPE-SAFETY-FIXES.md Category B1
+  // The issue: (FIELD) in "some text:$x in (FIELD) satisfies ..." was previously
+  // parsed as a scalar list instead of a parenthesized sequence reference.
+  // This has been fixed by the scalar/sequence grammar separation (TEDEFO-4808).
 
   @Test
   void testSomeSatisfies_ParenthesizedFieldReference_String() {
