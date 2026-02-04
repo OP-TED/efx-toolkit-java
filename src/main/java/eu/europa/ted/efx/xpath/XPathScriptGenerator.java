@@ -50,9 +50,13 @@ import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeLiteral;
+import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
 @SdkComponent(versions = {"2"},
@@ -343,11 +347,51 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.getScript());
   }
 
+  /**
+   * EFX 1 uniqueness check - kept for backward compatibility.
+   * EFX 2 uses the typed overloads below.
+   */
   @Override
   public BooleanExpression composeUniqueValueCondition(PathExpression needle,
       PathExpression haystack) {
     return new BooleanExpression("count(for $x in " + needle.getScript() + ", $y in " + haystack.getScript()
         + "[. = $x] return $y) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(StringExpression needle,
+      StringSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(NumericExpression needle,
+      NumericSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(BooleanExpression needle,
+      BooleanSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(DateExpression needle,
+      DateSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(TimeExpression needle,
+      TimeSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+  }
+
+  @Override
+  public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
+      DurationSequenceExpression haystack) {
+    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
   }
 
   //#endregion Boolean Expressions ------------------------------------------

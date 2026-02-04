@@ -414,9 +414,10 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   private boolean isFieldRepeatableFromContext(final SdkField sdkField, final SdkField context) {
-    // If the field itself is repeatable, it returns multiple values
+    // If the field itself is repeatable, it returns multiple values UNLESS it IS the context
+    // (e.g., inside a predicate on this field: BT-Repeatable[BT-Repeatable != ''])
     if (sdkField.isRepeatable()) {
-      return true;
+      return !sdkField.equals(context);
     }
 
     // Use cached ancestry from node

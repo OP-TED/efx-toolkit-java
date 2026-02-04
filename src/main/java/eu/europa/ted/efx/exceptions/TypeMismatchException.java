@@ -30,13 +30,13 @@ public class TypeMismatchException extends ParseCancellationException {
     public enum ErrorCode {
         CANNOT_CONVERT,
         CANNOT_COMPARE,
-        EXPECTED_SEQUENCE,
+        EXPECTED_SCALAR,
         EXPECTED_FIELD_CONTEXT
     }
 
     private static final String CANNOT_CONVERT = "Type mismatch. Expected %s instead of %s.";
     private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s";
-    private static final String EXPECTED_SEQUENCE = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
+    private static final String EXPECTED_SCALAR = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
     private static final String EXPECTED_FIELD_CONTEXT = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
 
     private final ErrorCode errorCode;
@@ -71,7 +71,7 @@ public class TypeMismatchException extends ParseCancellationException {
     }
 
     public static TypeMismatchException fieldMayRepeat(String fieldId, String contextSymbol) {
-        return new TypeMismatchException(ErrorCode.EXPECTED_SEQUENCE, String.format(EXPECTED_SEQUENCE, fieldId,
+        return new TypeMismatchException(ErrorCode.EXPECTED_SCALAR, String.format(EXPECTED_SCALAR, fieldId,
                 contextSymbol != null ? contextSymbol : "root"));
     }
 

@@ -183,6 +183,20 @@ class SdkSymbolResolverTest {
       assertFalse(resolver.isFieldRepeatableFromContext("BT-00-Attribute-In-Repeatable-Node", "ND-RepeatableNode"),
           "Attribute field should not be repeatable when context is its parent repeatable node");
     }
+
+    @Test
+    @DisplayName("Repeatable field from root returns true")
+    void isFieldRepeatableFromContext_repeatableField_fromRoot_returnsTrue() {
+      assertTrue(resolver.isFieldRepeatableFromContext("BT-00-Repeatable-Text", null),
+          "Repeatable field should return true from root context");
+    }
+
+    @Test
+    @DisplayName("Repeatable node from root returns true")
+    void isNodeRepeatableFromContext_repeatableNode_fromRoot_returnsTrue() {
+      assertTrue(resolver.isNodeRepeatableFromContext("ND-RepeatableNode", null),
+          "Repeatable node should return true from root context");
+    }
   }
 
   // =========================================================================
