@@ -361,37 +361,42 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeUniqueValueCondition(StringExpression needle,
       StringSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(NumericExpression needle,
       NumericSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(BooleanExpression needle,
       BooleanSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(DateExpression needle,
       DateSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(TimeExpression needle,
       TimeSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
       DurationSequenceExpression haystack) {
-    return new BooleanExpression("count(" + haystack.getScript() + "[. = " + needle.getScript() + "]) = 1");
+    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+  }
+
+  private BooleanExpression composeTypedUniqueValueCondition(String needle, String haystack) {
+    return new BooleanExpression(
+        "count(for $n in " + needle + ", $x in " + haystack + "[. = $n] return $x) = 1");
   }
 
   //#endregion Boolean Expressions ------------------------------------------

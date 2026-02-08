@@ -78,63 +78,63 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testUniqueValueCondition() {
     testExpressionTranslationWithContext(
-        "count(/*/PathNode/TextField/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/TextField/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in /BT-00-Text");
   }
 
   @Test
   void testUniqueValueCondition_WithNot() {
     testExpressionTranslationWithContext(
-        "not(count(/*/PathNode/TextField/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1)",
+        "not(count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/TextField/normalize-space(text())[. = $n] return $x) = 1)",
         "ND-Root", "BT-00-Text is not unique in /BT-00-Text");
   }
 
   @Test
   void testStringUniqueValueCondition_WithLiteralSequence() {
     testExpressionTranslationWithContext(
-        "count(('a','b','c','b')[. = 'b']) = 1",
+        "count(for $n in 'b', $x in ('a','b','c','b')[. = $n] return $x) = 1",
         "BT-00-Text", "'b' is unique in ('a', 'b', 'c', 'b')");
   }
 
   @Test
   void testNumericUniqueValueCondition_WithLiteralSequence() {
     testExpressionTranslationWithContext(
-        "count((1,2,3,2)[. = 2]) = 1",
+        "count(for $n in 2, $x in (1,2,3,2)[. = $n] return $x) = 1",
         "BT-00-Number", "2 is unique in (1, 2, 3, 2)");
   }
 
   @Test
   void testStringUniqueValueCondition_WithRepeatableField() {
     testExpressionTranslationWithContext(
-        "count(/*/PathNode/RepeatableTextField/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/RepeatableTextField/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in /BT-00-Repeatable-Text");
   }
 
   @Test
   void testStringUniqueValueCondition_WithNot() {
     testExpressionTranslationWithContext(
-        "not(count(('a','b','c')[. = 'x']) = 1)",
+        "not(count(for $n in 'x', $x in ('a','b','c')[. = $n] return $x) = 1)",
         "BT-00-Text", "'x' is not unique in ('a', 'b', 'c')");
   }
 
   @Test
   void testStringUniqueValueCondition_WithRelativeFieldReference() {
     testExpressionTranslationWithContext(
-        "count(PathNode/RepeatableTextField/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in PathNode/RepeatableTextField/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in BT-00-Repeatable-Text");
   }
 
   @Test
   void testStringUniqueValueCondition_WithFieldReferencePredicate() {
     testExpressionTranslationWithContext(
-        "count(/*/PathNode/RepeatableTextField[./normalize-space(text()) != '']/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/RepeatableTextField[./normalize-space(text()) != '']/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in /BT-00-Repeatable-Text[BT-00-Repeatable-Text != '']");
   }
 
   @Test
   void testStringUniqueValueCondition_WithFieldInRepeatableNodePredicate() {
     testExpressionTranslationWithContext(
-        "count(/*/RepeatableNode/TextField[./normalize-space(text()) != '']/normalize-space(text())[. = PathNode/TextField/normalize-space(text())]) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/RepeatableNode/TextField[./normalize-space(text()) != '']/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in /BT-00-Text-In-Repeatable-Node[BT-00-Text-In-Repeatable-Node != '']");
   }
 
