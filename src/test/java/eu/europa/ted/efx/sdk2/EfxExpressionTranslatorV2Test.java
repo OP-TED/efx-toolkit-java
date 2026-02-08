@@ -1309,9 +1309,9 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
-            + "not(" + privacyPath + "/PublicationDate)"
+            + "(not(" + privacyPath + "/PublicationDate)"
             + " or "
-            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()",
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
         "BT-00-Text-In-Repeatable-Node",
         "BT-00-Text-In-Repeatable-Node is withheld");
   }
@@ -1325,9 +1325,9 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
             + " and "
             // NOT stillWithheld
             + "not("
-                + "not(" + privacyPath + "/PublicationDate)"
+                + "(not(" + privacyPath + "/PublicationDate)"
                 + " or "
-                + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
             + " and "
             // NOT masked
@@ -1369,9 +1369,9 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "not("
             + privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
-            + "not(" + privacyPath + "/PublicationDate)"
+            + "(not(" + privacyPath + "/PublicationDate)"
             + " or "
-            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")",
         "ND-Root",
         "BT-00-Text-In-Repeatable-Node is not withheld");
@@ -1386,9 +1386,9 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
             + privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
             + "not("
-                + "not(" + privacyPath + "/PublicationDate)"
+                + "(not(" + privacyPath + "/PublicationDate)"
                 + " or "
-                + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
             + " and "
             + "RepeatableNode/TextField/normalize-space(text()) != 'unpublished'"

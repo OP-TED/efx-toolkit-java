@@ -1717,11 +1717,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     final PathExpression pubDateFieldPath = this.symbols.getRelativePathOfField(publicationDateFieldId,
         this.efxContext.symbol());
 
-    return this.script.composeLogicalOr(
-        this.script.composeLogicalNot(this.script.composeExistsCondition(pubDateFieldPath)),
-        this.script.composeComparisonOperation(
-            new DateExpression(this.script.composeFieldValueReference(pubDateFieldPath).getScript()), ">",
-            this.script.getCurrentDate()));
+    return this.script.composeParenthesizedExpression(
+        this.script.composeLogicalOr(
+            this.script.composeLogicalNot(this.script.composeExistsCondition(pubDateFieldPath)),
+            this.script.composeComparisonOperation(
+                new DateExpression(this.script.composeFieldValueReference(pubDateFieldPath).getScript()), ">",
+                this.script.getCurrentDate())),
+        BooleanExpression.class);
   }
 
   private BooleanExpression composeNotMaskedCondition(String fieldId) {
