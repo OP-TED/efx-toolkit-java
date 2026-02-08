@@ -553,6 +553,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new DateExpression("(" + date.getScript() + " - " + duration.getScript() + ")");
   }
 
+  @Override
+  public DateExpression getCurrentDate() {
+    return new DateExpression("current-date()");
+  }
+
   //#endregion Date functions -------------------------------------------------
 
   //#region Time functions ----------------------------------------------------

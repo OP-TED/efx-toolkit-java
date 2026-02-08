@@ -1280,6 +1280,123 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ends-with(BT-00-Text, 'abc')");
   }
 
+  @Test
+  void testFieldIsWithholdable_nonWithholdable() {
+    testExpressionTranslationWithContext(
+        "false()", "BT-00-Text",
+        "BT-00-Text is withholdable");
+  }
+
+  @Test
+  void testFieldIsWithholdable_withholdable() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node is withholdable");
+  }
+
+  @Test
+  void testFieldWasWithheld() {
+    testExpressionTranslationWithContext(
+        "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']/FieldIdentifierCode/normalize-space(text()) = 'test-priv'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node was withheld");
+  }
+
+  @Test
+  void testFieldIsWithheld() {
+    final String privacyPath = "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node is withheld");
+  }
+
+  @Test
+  void testFieldIsDisclosed() {
+    final String privacyPath = "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        // wasWithheld
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            // NOT stillWithheld
+            + "not("
+                + "not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+            + ")"
+            + " and "
+            // NOT masked
+            + "./normalize-space(text()) != 'unpublished'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node is disclosed");
+  }
+
+  @Test
+  void testFieldIsNotWithholdable_nonWithholdable() {
+    testExpressionTranslationWithContext(
+        "true()", "BT-00-Text",
+        "BT-00-Text is not withholdable");
+  }
+
+  @Test
+  void testFieldIsNotWithholdable_withholdable() {
+    testExpressionTranslationWithContext(
+        "false()",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node is not withholdable");
+  }
+
+  @Test
+  void testFieldWasNotWithheld() {
+    final String fieldPrefix = "RepeatableNode/TextField/";
+    final String privacyPath = fieldPrefix + "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        "not(" + privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv')",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node was not withheld");
+  }
+
+  @Test
+  void testFieldIsNotWithheld() {
+    final String fieldPrefix = "RepeatableNode/TextField/";
+    final String privacyPath = fieldPrefix + "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        "not("
+            + privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+            + ")",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node is not withheld");
+  }
+
+  @Test
+  void testFieldIsNotDisclosed() {
+    final String fieldPrefix = "RepeatableNode/TextField/";
+    final String privacyPath = fieldPrefix + "FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        "not("
+            + privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not("
+                + "not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date()"
+            + ")"
+            + " and "
+            + "RepeatableNode/TextField/normalize-space(text()) != 'unpublished'"
+            + ")",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node is not disclosed");
+  }
+
   // #endregion: Boolean functions
 
   // #region: Numeric functions -----------------------------------------------

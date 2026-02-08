@@ -26,7 +26,8 @@ public class ConsistencyCheckException extends IllegalStateException {
         MISSING_TYPE_MAPPING,
         MISSING_TYPE_ANNOTATION,
         UNKNOWN_EXPRESSION_TYPE,
-        INVALID_VARIABLE_CONTEXT
+        INVALID_VARIABLE_CONTEXT,
+        UNHANDLED_PRIVACY_SETTING
     }
 
     private static final String TYPE_NOT_REGISTERED =
@@ -60,6 +61,11 @@ public class ConsistencyCheckException extends IllegalStateException {
         "Variable context is neither a field nor a node context. " +
         "This indicates a bug in the translator. " +
         "Ensure all variable contexts are properly classified as FieldContext or NodeContext.";
+
+    private static final String UNHANDLED_PRIVACY_SETTING =
+        "Privacy setting '%s' is not handled. " +
+        "This indicates a bug in the translator. " +
+        "Add the missing case to the switch in getPrivacySettingOfField().";
 
     private final ErrorCode errorCode;
 
@@ -99,5 +105,10 @@ public class ConsistencyCheckException extends IllegalStateException {
 
     public static ConsistencyCheckException invalidVariableContext() {
         return new ConsistencyCheckException(ErrorCode.INVALID_VARIABLE_CONTEXT, INVALID_VARIABLE_CONTEXT);
+    }
+
+    public static ConsistencyCheckException unhandledPrivacySetting(Object setting) {
+        return new ConsistencyCheckException(ErrorCode.UNHANDLED_PRIVACY_SETTING,
+                String.format(UNHANDLED_PRIVACY_SETTING, setting));
     }
 }

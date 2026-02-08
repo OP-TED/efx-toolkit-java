@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
@@ -29,14 +31,17 @@ import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
+import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.eforms.sdk.repository.SdkCodelistRepository;
+import eu.europa.ted.eforms.sdk.repository.SdkDataTypeRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNoticeTypeRepository;
 import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
@@ -60,6 +65,8 @@ public class SdkSymbolResolver implements SymbolResolver {
   protected Map<String, SdkCodelist> codelistById;
 
   protected Map<String, SdkNoticeSubtype> noticeTypesById;
+
+  protected SdkDataTypeRepository dataTypeById;
 
   private SdkNode cachedRootNode;
 
@@ -110,6 +117,7 @@ public class SdkSymbolResolver implements SymbolResolver {
 
     this.codelistById = new SdkCodelistRepository(sdkVersion, codelistsPath);
     this.noticeTypesById = new SdkNoticeTypeRepository(sdkVersion, noticeTypesPath);
+    this.dataTypeById = SdkDataTypeRepository.createDefault();
   }
 
   @Override
@@ -159,7 +167,7 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   private PathExpression getAbsolutePathOfNode(final SdkNode sdkNode) {
-    if (this.isNodeRepeatableFromContext(sdkNode, null)) {
+    if (this.isNodeRepeatableFromContext(sdkNode, this.getRootNode())) {
       return new NodeSequencePath(sdkNode.getXpathAbsolute());
     } else {
       return new NodePath(sdkNode.getXpathAbsolute());
@@ -343,13 +351,16 @@ public class SdkSymbolResolver implements SymbolResolver {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
 
-    String pathToElement = sdkField.getXpathInfo().getPathToLastElement();
-    SdkNode parentNode = sdkField.getParentNode();
+    if (!sdkField.getXpathInfo().isAttribute()) {
+      return this.getAbsolutePathOfField(sdkField);
+    }
 
-    if (parentNode != null && this.isNodeRepeatableFromContext(parentNode, null)) {
-      return new NodeSequencePath(pathToElement);
+    String pathToElement = sdkField.getXpathInfo().getPathToLastElement();
+    FieldTypes fieldType = FieldTypes.fromString(sdkField.getType());
+    if (this.isFieldRepeatableFromContext(sdkField, this.getRootNode())) {
+      return SequencePath.instantiate(pathToElement, fieldType);
     } else {
-      return new NodePath(pathToElement);
+      return ScalarPath.instantiate(pathToElement, fieldType);
     }
   }
 
@@ -500,7 +511,7 @@ public class SdkSymbolResolver implements SymbolResolver {
 
     final SdkNode contextNode = contextNodeId != null
         ? this.resolveNode(contextNodeId)
-        : null;
+        : this.getRootNode();
     if (contextNodeId != null && contextNode == null) {
       throw SymbolResolutionException.unknownSymbol(contextNodeId);
     }
@@ -618,5 +629,55 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   // #endregion Identifier Resolution ------------------------------------------------
+
+  @Override
+  public String getPrivacyCodeOfField(final String fieldId) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+
+    return sdkField.getPrivacyCode();
+  }
+
+  @Override
+  public String getPrivacySettingOfField(final String fieldId, final PrivacySetting privacyField) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+
+    final SdkField.PrivacySettings privacy = sdkField.getPrivacySettings();
+    if (privacy == null) {
+      return null;
+    }
+
+    switch (privacyField) {
+      case PRIVACY_CODE_FIELD:
+        return privacy.getPrivacyCodeFieldId();
+      case PUBLICATION_DATE_FIELD:
+        return privacy.getPublicationDateFieldId();
+      case JUSTIFICATION_CODE_FIELD:
+        return privacy.getJustificationCodeFieldId();
+      case JUSTIFICATION_DESCRIPTION_FIELD:
+        return privacy.getJustificationDescriptionFieldId();
+      default:
+        throw ConsistencyCheckException.unhandledPrivacySetting(privacyField);
+    }
+  }
+
+  @Override
+  public String getPrivacyMask(final String fieldId) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+
+    final SdkDataType dataType = this.dataTypeById.get(sdkField.getType());
+    if (dataType == null) {
+      throw SdkInconsistencyException.unknownDataType(sdkField.getType());
+    }
+    return dataType.getPrivacyMask();
+  }
 
 }

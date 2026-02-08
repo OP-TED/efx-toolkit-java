@@ -41,7 +41,6 @@ import eu.europa.ted.efx.model.expressions.scalar.NumericPath;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimePath;
-import eu.europa.ted.efx.model.expressions.sequence.NodeSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.SequencePath;
 
 /**
@@ -309,27 +308,27 @@ class SdkSymbolResolverTest {
     }
 
     @Test
-    @DisplayName("Non-repeatable attribute field without attribute returns NodePath")
-    void nonRepeatableAttributeField_withoutAttribute_shouldReturnNodePath() {
+    @DisplayName("Non-repeatable attribute field without attribute returns ScalarPath")
+    void nonRepeatableAttributeField_withoutAttribute_shouldReturnScalarPath() {
       assertFalse(resolver.isFieldRepeatableFromContext("BT-00-Attribute", null),
           "Precondition: attribute field should NOT be repeatable from root");
 
       PathExpression path = resolver.getAbsolutePathOfFieldWithoutTheAttribute("BT-00-Attribute");
 
-      assertTrue(path instanceof NodePath,
-          "Non-repeatable attribute field without @attribute should return NodePath, got: " + path.getClass().getSimpleName());
+      assertTrue(path instanceof ScalarPath,
+          "Non-repeatable attribute field without @attribute should return ScalarPath, got: " + path.getClass().getSimpleName());
     }
 
     @Test
-    @DisplayName("Attribute field in repeatable node without attribute returns NodeSequencePath")
-    void attributeInRepeatableNode_withoutAttribute_shouldReturnNodeSequencePath() {
+    @DisplayName("Attribute field in repeatable node without attribute returns SequencePath")
+    void attributeInRepeatableNode_withoutAttribute_shouldReturnSequencePath() {
       assertTrue(resolver.isFieldRepeatableFromContext("BT-00-Attribute-In-Repeatable-Node", null),
           "Precondition: attribute field in repeatable node should be repeatable from root");
 
       PathExpression path = resolver.getAbsolutePathOfFieldWithoutTheAttribute("BT-00-Attribute-In-Repeatable-Node");
 
-      assertTrue(path instanceof NodeSequencePath,
-          "Attribute field in repeatable node without @attribute should return NodeSequencePath, got: " + path.getClass().getSimpleName());
+      assertTrue(path instanceof SequencePath,
+          "Attribute field in repeatable node without @attribute should return SequencePath, got: " + path.getClass().getSimpleName());
     }
   }
 
@@ -572,21 +571,21 @@ class SdkSymbolResolverTest {
     }
 
     @Test
-    @DisplayName("Attribute field without attribute returns NodePath")
-    void getAbsolutePathOfFieldWithoutTheAttribute_returnsNodePath() {
+    @DisplayName("Attribute field without attribute returns StringPath")
+    void getAbsolutePathOfFieldWithoutTheAttribute_returnsStringPath() {
       PathExpression path = resolver.getAbsolutePathOfFieldWithoutTheAttribute("BT-00-Attribute");
 
-      assertEquals(NodePath.class, path.getClass(),
-          "Attribute field without attribute should return NodePath");
+      assertEquals(StringPath.class, path.getClass(),
+          "Attribute field without attribute should return StringPath");
     }
 
     @Test
-    @DisplayName("Code attribute field without attribute returns NodePath")
-    void getAbsolutePathOfFieldWithoutTheAttribute_codeAttribute_returnsNodePath() {
+    @DisplayName("Code attribute field without attribute returns StringPath")
+    void getAbsolutePathOfFieldWithoutTheAttribute_codeAttribute_returnsStringPath() {
       PathExpression path = resolver.getAbsolutePathOfFieldWithoutTheAttribute("BT-00-CodeAttribute");
 
-      assertEquals(NodePath.class, path.getClass(),
-          "Code attribute field without attribute should return NodePath");
+      assertEquals(StringPath.class, path.getClass(),
+          "Code attribute field without attribute should return StringPath");
     }
   }
 
