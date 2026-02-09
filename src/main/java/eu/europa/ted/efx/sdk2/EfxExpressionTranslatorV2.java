@@ -430,9 +430,74 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitUniqueValueCondition(EfxParser.UniqueValueConditionContext ctx) {
-    PathExpression haystack = this.stack.pop(PathExpression.class);
-    PathExpression needle = this.stack.pop(haystack.getClass());
+  public void exitStringUniqueValueCondition(EfxParser.StringUniqueValueConditionContext ctx) {
+    StringSequenceExpression haystack = this.stack.pop(StringSequenceExpression.class);
+    StringExpression needle = this.stack.pop(StringExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
+  public void exitNumericUniqueValueCondition(EfxParser.NumericUniqueValueConditionContext ctx) {
+    NumericSequenceExpression haystack = this.stack.pop(NumericSequenceExpression.class);
+    NumericExpression needle = this.stack.pop(NumericExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
+  public void exitBooleanUniqueValueCondition(EfxParser.BooleanUniqueValueConditionContext ctx) {
+    BooleanSequenceExpression haystack = this.stack.pop(BooleanSequenceExpression.class);
+    BooleanExpression needle = this.stack.pop(BooleanExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
+  public void exitDateUniqueValueCondition(EfxParser.DateUniqueValueConditionContext ctx) {
+    DateSequenceExpression haystack = this.stack.pop(DateSequenceExpression.class);
+    DateExpression needle = this.stack.pop(DateExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
+  public void exitTimeUniqueValueCondition(EfxParser.TimeUniqueValueConditionContext ctx) {
+    TimeSequenceExpression haystack = this.stack.pop(TimeSequenceExpression.class);
+    TimeExpression needle = this.stack.pop(TimeExpression.class);
+
+    if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
+      this.stack.push(
+          this.script.composeLogicalNot(this.script.composeUniqueValueCondition(needle, haystack)));
+    } else {
+      this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
+    }
+  }
+
+  @Override
+  public void exitDurationUniqueValueCondition(EfxParser.DurationUniqueValueConditionContext ctx) {
+    DurationSequenceExpression haystack = this.stack.pop(DurationSequenceExpression.class);
+    DurationExpression needle = this.stack.pop(DurationExpression.class);
 
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
       this.stack.push(

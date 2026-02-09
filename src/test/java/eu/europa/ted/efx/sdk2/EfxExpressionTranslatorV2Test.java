@@ -78,15 +78,64 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testUniqueValueCondition() {
     testExpressionTranslationWithContext(
-        "count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1",
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/TextField/normalize-space(text())[. = $n] return $x) = 1",
         "ND-Root", "BT-00-Text is unique in /BT-00-Text");
   }
 
   @Test
   void testUniqueValueCondition_WithNot() {
     testExpressionTranslationWithContext(
-        "not(count(for $x in PathNode/TextField, $y in /*/PathNode/TextField[. = $x] return $y) = 1)",
+        "not(count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/TextField/normalize-space(text())[. = $n] return $x) = 1)",
         "ND-Root", "BT-00-Text is not unique in /BT-00-Text");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithLiteralSequence() {
+    testExpressionTranslationWithContext(
+        "count(for $n in 'b', $x in ('a','b','c','b')[. = $n] return $x) = 1",
+        "BT-00-Text", "'b' is unique in ('a', 'b', 'c', 'b')");
+  }
+
+  @Test
+  void testNumericUniqueValueCondition_WithLiteralSequence() {
+    testExpressionTranslationWithContext(
+        "count(for $n in 2, $x in (1,2,3,2)[. = $n] return $x) = 1",
+        "BT-00-Number", "2 is unique in (1, 2, 3, 2)");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithRepeatableField() {
+    testExpressionTranslationWithContext(
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/RepeatableTextField/normalize-space(text())[. = $n] return $x) = 1",
+        "ND-Root", "BT-00-Text is unique in /BT-00-Repeatable-Text");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithNot() {
+    testExpressionTranslationWithContext(
+        "not(count(for $n in 'x', $x in ('a','b','c')[. = $n] return $x) = 1)",
+        "BT-00-Text", "'x' is not unique in ('a', 'b', 'c')");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithRelativeFieldReference() {
+    testExpressionTranslationWithContext(
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in PathNode/RepeatableTextField/normalize-space(text())[. = $n] return $x) = 1",
+        "ND-Root", "BT-00-Text is unique in BT-00-Repeatable-Text");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithFieldReferencePredicate() {
+    testExpressionTranslationWithContext(
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/RepeatableTextField[./normalize-space(text()) != '']/normalize-space(text())[. = $n] return $x) = 1",
+        "ND-Root", "BT-00-Text is unique in /BT-00-Repeatable-Text[BT-00-Repeatable-Text != '']");
+  }
+
+  @Test
+  void testStringUniqueValueCondition_WithFieldInRepeatableNodePredicate() {
+    testExpressionTranslationWithContext(
+        "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/RepeatableNode/TextField[./normalize-space(text()) != '']/normalize-space(text())[. = $n] return $x) = 1",
+        "ND-Root", "BT-00-Text is unique in /BT-00-Text-In-Repeatable-Node[BT-00-Text-In-Repeatable-Node != '']");
   }
 
 
@@ -1791,7 +1840,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A repeatable field used as scalar should throw TypeMismatchException.fieldMayRepeat()
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test
@@ -1799,7 +1848,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableNode (repeatable) used as scalar from ND-Root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-Repeatable-Node == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test
@@ -1814,7 +1863,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableSubSubNode (inside ND-NonRepeatableSubNode inside ND-RepeatableNode) used from root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test
@@ -1822,7 +1871,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableSubSubNode used from ND-RepeatableNode should still throw (ND-RepeatableSubSubNode is also repeatable)
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-RepeatableNode", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test
@@ -1837,7 +1886,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-NonRepeatableSubNode (non-repeatable) inside ND-RepeatableNode (repeatable) used from root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-NonRepeatableSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test
@@ -1845,6 +1894,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-NonRepeatableSubNode used from ND-RepeatableNode context should NOT throw
     testExpressionTranslationWithContext("NonRepeatableSubNode/TextField/normalize-space(text()) = 'test'",
         "ND-RepeatableNode", "BT-00-Text-In-NonRepeatableSubNode == 'test'");
+  }
+
+  @Test
+  void testRepeatableFieldInUniqueCondition_ThrowsError() {
+    // A repeatable field used as needle (left side) in uniqueness condition should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text is unique in /BT-00-Text"));
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   // #endregion: Scalar/Sequence Validation
@@ -1906,7 +1963,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A repeatable field context variable used as scalar should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "for context:$f in BT-00-Repeatable-Text return $f == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   // #endregion: TypeMismatchException - fieldMayRepeat (Context Variables)
@@ -1963,7 +2020,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Pattern: FIELD[REPEATABLE_FIELD == $var] - the repeatable field is used as scalar
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text[BT-00-Repeatable-Text == 'test']"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SEQUENCE, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   @Test

@@ -27,9 +27,13 @@ import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
+import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 
 /**
  * A ScriptGenerator is used by the EFX expression translator to translate specific computations to
@@ -412,8 +416,41 @@ public interface ScriptGenerator {
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
+  /**
+   * Uniqueness check for EFX 1 syntax.
+   * <p>
+   * This method supports the limited uniqueness syntax available in EFX 1.
+   * It is used exclusively by the EFX 1 translator and is kept for backward
+   * compatibility with EFX 1.
+   * <p>
+   * <b>EFX 2 does not use this method.</b> EFX 2's stricter type checking enables
+   * more powerful uniqueness syntax, supported by the typed overloads below.
+   *
+   * @param needle The value to check for uniqueness
+   * @param haystack The collection to search within
+   * @return A boolean expression evaluating to true if needle appears exactly once in haystack
+   */
   public BooleanExpression composeUniqueValueCondition(PathExpression needle,
       PathExpression haystack);
+
+  // Typed uniqueness conditions (EFX 2)
+  public BooleanExpression composeUniqueValueCondition(StringExpression needle,
+      StringSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(NumericExpression needle,
+      NumericSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(BooleanExpression needle,
+      BooleanSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(DateExpression needle,
+      DateSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(TimeExpression needle,
+      TimeSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
+      DurationSequenceExpression haystack);
 
   public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
       SequenceExpression two);
