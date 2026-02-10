@@ -15,6 +15,7 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
+import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 
 /**
@@ -63,8 +64,7 @@ public interface SymbolResolver {
    * given context (node or field).
    *
    * @param fieldId The identifier of the field to look for.
-   * @param contextId The identifier of the context node or field. If a field ID is provided,
-   *                  its parent node is used as the context.
+   * @param contextId The identifier of the context node or field.
    * @return The path to the given field relative to the given context.
    */
   public PathExpression getRelativePathOfField(final String fieldId, final String contextId);
@@ -89,8 +89,7 @@ public interface SymbolResolver {
    * given context (node or field).
    *
    * @param nodeId The identifier of the node to look for.
-   * @param contextId The identifier of the context node or field. If a field ID is provided,
-   *                  its parent node is used as the context.
+   * @param contextId The identifier of the context node or field.
    * @return The path to the given node relative to the given context.
    */
   public PathExpression getRelativePathOfNode(final String nodeId, final String contextId);
@@ -261,4 +260,35 @@ public interface SymbolResolver {
    * @return The absolute path of the root node as a PathExpression.
    */
   public PathExpression getRootPath();
+
+  /**
+   * Gets the privacy code of the given field. The privacy code is a value from a codelist that
+   * groups fields into withholding categories. Its presence indicates that the field is
+   * withholdable.
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @return The privacy code (e.g., "cod-bus"), or null if the field is not withholdable.
+   */
+  public String getPrivacyCodeOfField(final String fieldId);
+
+  /**
+   * Gets the identifier of a companion privacy field associated with the given field.
+   * Companion fields carry the runtime privacy state (withholding flag, publication date,
+   * justification) for a withholdable field.
+   *
+   * @param fieldId The identifier of the withholdable field.
+   * @param privacyField The type of companion field to look up.
+   * @return The identifier of the companion field, or null if the field has no privacy settings.
+   */
+  public String getPrivacySettingOfField(final String fieldId, final PrivacySetting privacyField);
+
+  /**
+   * Gets the privacy masking value for the given field.
+   * The masking value depends on the field's type (e.g. "unpublished" for text fields,
+   * "1970-01-01Z" for date fields, "-1" for numeric fields).
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @return The masking value as a string.
+   */
+  public String getPrivacyMask(final String fieldId);
 }

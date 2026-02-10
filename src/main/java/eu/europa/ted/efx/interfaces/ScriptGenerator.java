@@ -467,6 +467,13 @@ public interface ScriptGenerator {
   public DateExpression composeSubtraction(final DateExpression date,
       final DurationExpression duration);
 
+  /**
+   * Returns the current date as a date expression in the target language.
+   *
+   * @return A date expression representing today's date.
+   */
+  public DateExpression getCurrentDate();
+
   //#endregion Date Functions -------------------------------------------------
 
   // #region Time Functions ---------------------------------------------------

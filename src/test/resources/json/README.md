@@ -14,11 +14,13 @@ ND-Root (non-rep)
 |   +-- ND-RepeatableInSubNode2 (REP)    <- rep in non-rep (sibling)
 |
 +-- ND-RepeatableNode (REP)
-    +-- ND-NonRepeatableSubNode (non-rep)       <- non-rep in rep
-    |   +-- ND-RepeatableSubSubNode (REP)       <- rep in non-rep in rep
-    +-- ND-NonRepeatableSubNode2 (non-rep)      <- non-rep in rep (sibling)
-    +-- ND-RepeatableInRepeatableNode (REP)     <- rep in rep
-    +-- ND-RepeatableInRepeatableNode2 (REP)    <- rep in rep (sibling)
+|   +-- ND-NonRepeatableSubNode (non-rep)       <- non-rep in rep
+|   |   +-- ND-RepeatableSubSubNode (REP)       <- rep in non-rep in rep
+|   +-- ND-NonRepeatableSubNode2 (non-rep)      <- non-rep in rep (sibling)
+|   +-- ND-RepeatableInRepeatableNode (REP)     <- rep in rep
+|   +-- ND-RepeatableInRepeatableNode2 (REP)    <- rep in rep (sibling)
+|   +-- ND-PrivacyInRepeatableNode (non-rep)   <- privacy code 'test-priv' (text + date fields)
+|   +-- ND-PrivacyInRepeatableNode2 (non-rep)  <- privacy code 'num-priv' (number field)
 ```
 
 ## Repeatability Coverage
@@ -54,10 +56,53 @@ Fields use the pattern `BT-XY-Type` where:
 | BT-24-* | ND-RepeatableInRepeatableNode2 | SEQUENCE (self + ancestor) |
 | BT-25-* | ND-RepeatableSubSubNode | SEQUENCE (self + ancestor) |
 
+## Privacy Test Data
+
+Privacy metadata is stored in `FieldsPrivacy` elements which are **siblings** of the field
+elements they protect (not children — fields are leaf XML elements). Each `FieldsPrivacy` element
+is identified by a `FieldIdentifierCode` predicate matching the privacy code.
+
+### Text and date fields sharing privacy code `test-priv`
+
+Both `BT-00-Text-In-Repeatable-Node` (text) and `BT-00-Date-In-Repeatable-Node` (date) share the
+same privacy code and thus the same `FieldsPrivacy` node, but each has its own companion fields.
+This tests that multiple fields can share a privacy node and that type-specific masking works
+(string mask `'unpublished'` vs date mask `'1970-01-01Z'`).
+
+Privacy node: `ND-PrivacyInRepeatableNode` (parent: `ND-RepeatableNode`)
+
+Text field companions:
+
+| Field ID | Purpose | Type |
+|----------|---------|------|
+| BT-195(BT-00)-Text-In-Repeatable-Node | Unpublished field identifier | code |
+| BT-196(BT-00)-Text-In-Repeatable-Node | Reason description | text-multilingual |
+| BT-197(BT-00)-Text-In-Repeatable-Node | Reason code | code |
+| BT-198(BT-00)-Text-In-Repeatable-Node | Publication date | date |
+
+Date field companions:
+
+| Field ID | Purpose | Type |
+|----------|---------|------|
+| BT-195(BT-00)-Date-In-Repeatable-Node | Unpublished field identifier | code |
+| BT-196(BT-00)-Date-In-Repeatable-Node | Reason description | text-multilingual |
+| BT-197(BT-00)-Date-In-Repeatable-Node | Reason code | code |
+| BT-198(BT-00)-Date-In-Repeatable-Node | Publication date | date |
+
+### Numeric field: `BT-00-Number-In-Repeatable-Node` (code: `num-priv`)
+
+Privacy node: `ND-PrivacyInRepeatableNode2` (parent: `ND-RepeatableNode`)
+
+| Field ID | Purpose | Type |
+|----------|---------|------|
+| BT-195(BT-00)-Number-In-Repeatable-Node | Unpublished field identifier | code |
+| BT-196(BT-00)-Number-In-Repeatable-Node | Reason description | text-multilingual |
+| BT-197(BT-00)-Number-In-Repeatable-Node | Reason code | code |
+| BT-198(BT-00)-Number-In-Repeatable-Node | Publication date | date |
+
 ## Files
 
-- `fields-sdk2.json` - Field definitions with XPath expressions
-- `nodes-sdk2.json` - Node definitions with hierarchy and repeatability
+- `sdk2-fields.json` - Field and node definitions with XPath expressions
 
 ## Test Scenarios Enabled
 
@@ -65,3 +110,4 @@ Fields use the pattern `BT-XY-Type` where:
 2. **Ancestor repeatability** - Fields under repeatable ancestors
 3. **Cross-branch navigation** - Paths that backtrack through parent nodes
 4. **Multiple data types** - Each node has fields of 7 different types
+5. **Privacy settings** - Fields with privacy metadata (withheld/disclosed conditions)

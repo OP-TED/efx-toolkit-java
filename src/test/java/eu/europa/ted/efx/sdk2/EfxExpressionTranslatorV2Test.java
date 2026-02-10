@@ -1280,6 +1280,225 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ends-with(BT-00-Text, 'abc')");
   }
 
+  // Linked field property tests
+
+  @Test
+  void testLinkedFieldProperty_publicationDate() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/PublicationDate",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:publicationDate is present");
+  }
+
+  @Test
+  void testLinkedFieldProperty_justificationCode() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/ReasonCode",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:justificationCode is present");
+  }
+
+  @Test
+  void testLinkedFieldProperty_justificationDescription() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/ReasonDescription",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:justificationDescription is present");
+  }
+
+  @Test
+  void testLinkedFieldProperty_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:publicationDate is present"));
+  }
+
+  @Test
+  void testLinkedFieldProperty_inComparison() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/PublicationDate/xs:date(text()) > xs:date('2025-01-01Z')",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:publicationDate > 2025-01-01Z");
+  }
+
+  // Computed property tests
+
+  @Test
+  void testComputedProperty_wasWithheld() {
+    testExpressionTranslationWithContext(
+        "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']/FieldIdentifierCode/normalize-space(text()) = 'test-priv'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:wasWithheld");
+  }
+
+  @Test
+  void testComputedProperty_wasWithheld_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:wasWithheld"));
+  }
+
+  @Test
+  void testComputedProperty_isWithheld() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "(not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:isWithheld");
+  }
+
+  @Test
+  void testComputedProperty_isWithheld_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:isWithheld"));
+  }
+
+  @Test
+  void testComputedProperty_isWithholdable_true() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:isWithholdable");
+  }
+
+  @Test
+  void testComputedProperty_isWithholdable_false() {
+    testExpressionTranslationWithContext(
+        "false()", "BT-00-Text",
+        "BT-00-Text:isWithholdable");
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not("
+                + "(not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
+            + ")"
+            + " and "
+            + "not(./normalize-space(text()) = 'unpublished')",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:isDisclosed");
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:isDisclosed"));
+  }
+
+  @Test
+  void testComputedProperty_isMasked() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "./normalize-space(text()) = 'unpublished'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:isMasked");
+  }
+
+  @Test
+  void testComputedProperty_isMasked_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:isMasked"));
+  }
+
+  @Test
+  void testComputedProperty_isMasked_numericField() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='num-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'num-priv'"
+            + " and "
+            + "./number() = -1",
+        "BT-00-Number-In-Repeatable-Node",
+        "BT-00-Number-In-Repeatable-Node:isMasked");
+  }
+
+  @Test
+  void testComputedProperty_isMasked_repeatingFieldFromContext() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Text-In-Repeatable-Node:isMasked"));
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed_numericField() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='num-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'num-priv'"
+            + " and "
+            + "not("
+                + "(not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
+            + ")"
+            + " and "
+            + "not(./number() = -1)",
+        "BT-00-Number-In-Repeatable-Node",
+        "BT-00-Number-In-Repeatable-Node:isDisclosed");
+  }
+
+  @Test
+  void testComputedProperty_isMasked_dateField() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "./xs:date(text()) = xs:date('1970-01-01Z')",
+        "BT-00-Date-In-Repeatable-Node",
+        "BT-00-Date-In-Repeatable-Node:isMasked");
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed_dateField() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not("
+                + "(not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
+            + ")"
+            + " and "
+            + "not(./xs:date(text()) = xs:date('1970-01-01Z'))",
+        "BT-00-Date-In-Repeatable-Node",
+        "BT-00-Date-In-Repeatable-Node:isDisclosed");
+  }
+
+  // Metadata property tests
+
+  @Test
+  void testMetadataProperty_privacyCode() {
+    testExpressionTranslationWithContext(
+        "'test-priv'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:privacyCode");
+  }
+
+  @Test
+  void testMetadataProperty_privacyCode_onNonWithholdableField() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:privacyCode"));
+  }
+
   // #endregion: Boolean functions
 
   // #region: Numeric functions -----------------------------------------------

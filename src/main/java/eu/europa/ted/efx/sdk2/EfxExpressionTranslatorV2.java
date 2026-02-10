@@ -38,6 +38,8 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
@@ -49,6 +51,7 @@ import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
+import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
@@ -212,58 +215,91 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return sb.toString().trim();
   }
 
-  protected static String getFieldId(FieldReferenceContext ctx) {
+  private String getLinkedFieldId(String baseFieldId, LinkedFieldPropertyContext ctx) {
+    if (ctx.PublicationDate() != null)
+      return this.symbols.getPrivacySettingOfField(baseFieldId, PrivacySetting.PUBLICATION_DATE_FIELD);
+    else if (ctx.JustificationCode() != null)
+      return this.symbols.getPrivacySettingOfField(baseFieldId, PrivacySetting.JUSTIFICATION_CODE_FIELD);
+    else if (ctx.JustificationDescription() != null)
+      return this.symbols.getPrivacySettingOfField(baseFieldId, PrivacySetting.JUSTIFICATION_DESCRIPTION_FIELD);
+    else
+      throw ConsistencyCheckException.unhandledLinkedFieldProperty(ctx.getText());
+  }
+
+  protected String getFieldId(LinkedFieldReferenceContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    String baseFieldId = ctx.simpleFieldReference().fieldId.getText();
+    if (ctx.linkedFieldProperty() == null) {
+      return baseFieldId;
+    }
+    return this.getLinkedFieldId(baseFieldId, ctx.linkedFieldProperty());
+  }
+
+  protected String getFieldId(EfxParser.FieldMentionContext ctx) {
+    if (ctx == null) {
+      return null;
+    }
+    String baseFieldId = ctx.fieldId.getText();
+    if (ctx.linkedFieldProperty() == null) {
+      return baseFieldId;
+    }
+    return this.getLinkedFieldId(baseFieldId, ctx.linkedFieldProperty());
+  }
+
+  protected String getFieldId(FieldReferenceContext ctx) {
     if (ctx == null) {
       return null;
     }
 
     if (ctx.absoluteFieldReference() != null) {
-      return getFieldId(ctx.absoluteFieldReference());
+      return this.getFieldId(ctx.absoluteFieldReference());
     }
 
     if (ctx.fieldReferenceInOtherNotice() != null) {
-      return getFieldId(ctx.fieldReferenceInOtherNotice());
+      return this.getFieldId(ctx.fieldReferenceInOtherNotice());
     }
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
   }
 
-  protected static String getFieldId(AbsoluteFieldReferenceContext ctx) {
+  protected String getFieldId(AbsoluteFieldReferenceContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return ctx.reference.reference.simpleFieldReference().fieldId.getText();
+    return this.getFieldId(ctx.reference.reference.linkedFieldReference());
   }
 
-  protected static String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
+  protected String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return ctx.reference.reference.reference.reference.reference.simpleFieldReference().fieldId.getText();
+    return this.getFieldId(ctx.reference.reference.reference.reference.reference.linkedFieldReference());
   }
 
-  protected static String getFieldId(FieldContextContext ctx) {
+  protected String getFieldId(FieldContextContext ctx) {
     if (ctx == null) {
       return null;
     }
 
     if (ctx.absoluteFieldReference() != null) {
-      return getFieldId(ctx.absoluteFieldReference());
+      return this.getFieldId(ctx.absoluteFieldReference());
     }
 
     if (ctx.fieldReferenceWithPredicate() != null) {
-      return getFieldId(ctx.fieldReferenceWithPredicate());
+      return this.getFieldId(ctx.fieldReferenceWithPredicate());
     }
 
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
   }
 
-  protected static String getFieldId(FieldReferenceWithPredicateContext ctx) {
+  protected String getFieldId(FieldReferenceWithPredicateContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return ctx.fieldReferenceWithAxis().simpleFieldReference().fieldId.getText();
+    return this.getFieldId(ctx.fieldReferenceWithAxis().linkedFieldReference());
   }
 
   protected static String getNodeId(NodeReferenceContext ctx) {
@@ -1100,6 +1136,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitLinkedFieldReference(LinkedFieldReferenceContext ctx) {
+    if (ctx.linkedFieldProperty() != null) {
+      this.stack.pop(PathExpression.class); // discard base field path
+      String companionFieldId = getFieldId(ctx);
+      this.stack.push(
+          symbols.getRelativePathOfField(companionFieldId, this.efxContext.symbol()));
+    }
+  }
+
+  @Override
   public void enterAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.push(null);
@@ -1624,7 +1670,165 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeEndsWithCondition(text, endsWith));
   }
 
-  // sequence-equal typed handlers
+  // #region Privacy settings ------------------------------------------------
+
+  @Override
+  public void exitFieldWasWithheldProperty(FieldWasWithheldPropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+    }
+
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    if (privacyCode == null || privacyCode.isEmpty()) {
+      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+    }
+
+    this.stack.push(this.composeWasWithheldCondition(fieldId, privacyCode));
+  }
+
+  @Override
+  public void exitFieldIsWithheldProperty(FieldIsWithheldPropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+    }
+
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    if (privacyCode == null || privacyCode.isEmpty()) {
+      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+    }
+
+    this.stack.push(this.script.composeLogicalAnd(
+        this.composeWasWithheldCondition(fieldId, privacyCode),
+        this.composeStillWithheldCondition(fieldId)));
+  }
+
+  @Override
+  public void exitFieldIsWithholdableProperty(FieldIsWithholdablePropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    final boolean isWithholdable = privacyCode != null && !privacyCode.isEmpty();
+    this.stack.push(this.script.getBooleanEquivalent(isWithholdable));
+  }
+
+  @Override
+  public void exitFieldIsDisclosedProperty(FieldIsDisclosedPropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+    }
+
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    if (privacyCode == null || privacyCode.isEmpty()) {
+      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+    }
+
+    // "isDisclosed" = "was withheld" AND NOT "still withheld" AND NOT "masked"
+    this.stack.push(this.script.composeLogicalAnd(
+        this.script.composeLogicalAnd(
+            this.composeWasWithheldCondition(fieldId, privacyCode),
+            this.script.composeLogicalNot(this.composeStillWithheldCondition(fieldId))),
+        this.script.composeLogicalNot(this.composeIsMaskedCondition(fieldId))));
+  }
+
+  @Override
+  public void exitFieldIsMaskedProperty(FieldIsMaskedPropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+    }
+
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    if (privacyCode == null || privacyCode.isEmpty()) {
+      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+    }
+
+    // "isMasked" = was withheld AND field value equals the privacy mask
+    this.stack.push(this.script.composeLogicalAnd(
+        this.composeWasWithheldCondition(fieldId, privacyCode),
+        this.composeIsMaskedCondition(fieldId)));
+  }
+
+  @Override
+  public void exitFieldPrivacyCodeProperty(FieldPrivacyCodePropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
+    if (privacyCode == null || privacyCode.isEmpty()) {
+      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+    }
+    this.stack.push(this.script.getStringLiteralFromUnquotedString(privacyCode));
+  }
+
+  private boolean isFieldRepeatableFromContext(String fieldId, Context context) {
+    String contextNodeId = context.isFieldContext()
+        ? this.symbols.getParentNodeOfField(context.symbol())
+        : context.symbol();
+    return this.symbols.isFieldRepeatableFromContext(fieldId, contextNodeId);
+  }
+
+  private BooleanExpression composeWasWithheldCondition(String fieldId, String privacyCode) {
+    final String privacyCodeFieldId = this.symbols.getPrivacySettingOfField(fieldId, PrivacySetting.PRIVACY_CODE_FIELD);
+    if (privacyCodeFieldId == null) {
+      throw SdkInconsistencyException.missingPrivacyCodeField(fieldId);
+    }
+
+    return this.script.composeComparisonOperation(
+        new StringExpression(this.script.composeFieldValueReference(
+            this.symbols.getRelativePathOfField(privacyCodeFieldId, this.efxContext.symbol())).getScript()),
+        "==",
+        this.script.getStringLiteralFromUnquotedString(privacyCode));
+  }
+
+  private BooleanExpression composeStillWithheldCondition(String fieldId) {
+    final String publicationDateFieldId = this.symbols.getPrivacySettingOfField(fieldId, PrivacySetting.PUBLICATION_DATE_FIELD);
+    if (publicationDateFieldId == null) {
+      throw SdkInconsistencyException.missingPublicationDateField(fieldId);
+    }
+
+    final PathExpression pubDateFieldPath = this.symbols.getRelativePathOfField(publicationDateFieldId,
+        this.efxContext.symbol());
+
+    return this.script.composeParenthesizedExpression(
+        this.script.composeLogicalOr(
+            this.script.composeLogicalNot(this.script.composeExistsCondition(pubDateFieldPath)),
+            this.script.composeComparisonOperation(
+                new DateExpression(this.script.composeFieldValueReference(pubDateFieldPath).getScript()), ">",
+                this.script.getCurrentDate())),
+        BooleanExpression.class);
+  }
+
+  private BooleanExpression composeIsMaskedCondition(String fieldId) {
+    final String maskingValue = this.symbols.getPrivacyMask(fieldId);
+    final PathExpression fieldValue = this.script.composeFieldValueReference(this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol()));
+
+    if (!(fieldValue instanceof ScalarExpression)) {
+      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+    }
+
+    return this.script.composeComparisonOperation(
+        TypedExpression.from(fieldValue, ScalarExpression.class),
+        "==",
+        this.getTypedLiteralFromUnquotedString(maskingValue, fieldValue.getDataType()));
+  }
+
+  private ScalarExpression getTypedLiteralFromUnquotedString(String value, Class<? extends EfxDataType> type) {
+    if (EfxDataType.Number.class.isAssignableFrom(type)) {
+      return this.script.getNumericLiteralEquivalent(value);
+    }
+    if (EfxDataType.Date.class.isAssignableFrom(type)) {
+      return this.script.getDateLiteralEquivalent(value);
+    }
+    if (EfxDataType.Time.class.isAssignableFrom(type)) {
+      return this.script.getTimeLiteralEquivalent(value);
+    }
+    return this.script.getStringLiteralFromUnquotedString(value);
+  }
+
+  // #endregion Privacy settings ---------------------------------------------
+
+  // #region Sequence-equal ----------------------------------------------------
+
   @Override
   public void exitStringSequenceEqualFunction(StringSequenceEqualFunctionContext ctx) {
     exitSequenceEqualFunction(StringSequenceExpression.class);
@@ -1660,6 +1864,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     final T one = this.stack.pop(sequenceType);
     this.stack.push(this.script.composeSequenceEqualFunction(one, two));
   }
+
+  // #endregion Sequence-equal -------------------------------------------------
 
   // #endregion Boolean functions ---------------------------------------------
 
@@ -1848,7 +2054,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #region Sequence Functions -----------------------------------------------
 
-  // distinct-values typed handlers
+  // #region Distinct-values ---------------------------------------------------
+
   @Override
   public void exitStringDistinctValuesFunction(StringDistinctValuesFunctionContext ctx) {
     exitDistinctValuesFunction(StringSequenceExpression.class);
@@ -1884,7 +2091,10 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeDistinctValuesFunction(list, listType));
   }
 
-  // union typed handlers
+  // #endregion Distinct-values ------------------------------------------------
+
+  // #region Union ------------------------------------------------------------
+
   @Override
   public void exitStringUnionFunction(StringUnionFunctionContext ctx) {
     exitUnionFunction(StringSequenceExpression.class);
@@ -1921,7 +2131,10 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeUnionFunction(one, two, listType));
   }
 
-  // intersect typed handlers
+  // #endregion Union ---------------------------------------------------------
+
+  // #region Intersect -------------------------------------------------------
+
   @Override
   public void exitStringIntersectFunction(StringIntersectFunctionContext ctx) {
     exitIntersectFunction(StringSequenceExpression.class);
@@ -1958,7 +2171,10 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeIntersectFunction(one, two, listType));
   }
 
-  // except typed handlers
+  // #endregion Intersect ------------------------------------------------------
+
+  // #region Except ----------------------------------------------------------
+
   @Override
   public void exitStringExceptFunction(StringExceptFunctionContext ctx) {
     exitExceptFunction(StringSequenceExpression.class);
@@ -1994,6 +2210,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     final T one = this.stack.pop(listType);
     this.stack.push(this.script.composeExceptFunction(one, two, listType));
   }
+
+  // #endregion Except ---------------------------------------------------------
 
   // #endregion Sequence Functions --------------------------------------------
 

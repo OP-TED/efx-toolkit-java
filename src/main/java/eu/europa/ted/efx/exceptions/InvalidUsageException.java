@@ -25,13 +25,15 @@ public class InvalidUsageException extends ParseCancellationException {
         SHORTHAND_REQUIRES_CODE_OR_INDICATOR,
         SHORTHAND_REQUIRES_FIELD_CONTEXT,
         INVALID_NOTICE_SUBTYPE_RANGE_ORDER,
-        INVALID_NOTICE_SUBTYPE_TOKEN
+        INVALID_NOTICE_SUBTYPE_TOKEN,
+        FIELD_NOT_WITHHOLDABLE
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
     private static final String SHORTHAND_REQUIRES_FIELD_CONTEXT = "The %s shorthand syntax can only be used when a field is declared as context.";
     private static final String INVALID_NOTICE_SUBTYPE_RANGE_ORDER = "Notice subtype range '%s-%s' is not in ascending order.";
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
+    private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
 
     private final ErrorCode errorCode;
 
@@ -58,5 +60,9 @@ public class InvalidUsageException extends ParseCancellationException {
 
     public static InvalidUsageException invalidNoticeSubtypeToken(String token) {
         return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN, String.format(INVALID_NOTICE_SUBTYPE_TOKEN, token));
+    }
+
+    public static InvalidUsageException fieldNotWithholdable(String fieldId) {
+        return new InvalidUsageException(ErrorCode.FIELD_NOT_WITHHOLDABLE, String.format(FIELD_NOT_WITHHOLDABLE, fieldId));
     }
 }
