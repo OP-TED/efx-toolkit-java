@@ -70,7 +70,8 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
     return new HashMap<>(Map.ofEntries(
         buildCodelistMock("accessibility", Optional.empty()),
         buildCodelistMock("authority-activity", Optional.of("main-activity")),
-        buildCodelistMock("main-activity", Optional.empty())));
+        buildCodelistMock("main-activity", Optional.empty()),
+        buildCodelistMock("legal-basis-1", Optional.empty())));
   }
 
   @Override
