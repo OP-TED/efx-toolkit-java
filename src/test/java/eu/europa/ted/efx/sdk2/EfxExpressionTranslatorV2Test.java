@@ -146,6 +146,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLikePatternCondition_WithEscapedDot() {
+    testExpressionTranslationWithContext(
+        "fn:matches(normalize-space('12.3'), '\\d+\\.\\d+')",
+        "BT-00-Text", "'12.3' like '\\d+\\.\\d+'");
+  }
+
+  @Test
   void testLikePatternCondition_WithNot() {
     testExpressionTranslationWithContext("not(fn:matches(normalize-space('123'), '[0-9]*'))",
         "BT-00-Text", "'123' not like '[0-9]*'");
@@ -1123,6 +1130,12 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testCodeList() {
     testExpressionTranslationWithContext("'a' = ('code1','code2','code3')", "BT-00-Text",
         "'a' in #accessibility");
+  }
+
+  @Test
+  void testCodeList_WithNumericSuffix() {
+    testExpressionTranslationWithContext("'a' = ('code1','code2','code3')", "BT-00-Text",
+        "'a' in #legal-basis-1");
   }
 
   // #endregion: Lists
