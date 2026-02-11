@@ -1138,6 +1138,12 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "'a' in #legal-basis-1");
   }
 
+  @Test
+  void testCodeList_WithKeywordName() {
+    testExpressionTranslationWithContext("'a' = ('code1','code2','code3')", "BT-00-Text",
+        "'a' in #indicator");
+  }
+
   // #endregion: Lists
 
   // #region: References ------------------------------------------------------

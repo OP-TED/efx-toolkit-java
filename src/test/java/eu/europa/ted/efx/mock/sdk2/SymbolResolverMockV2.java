@@ -71,7 +71,8 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
         buildCodelistMock("accessibility", Optional.empty()),
         buildCodelistMock("authority-activity", Optional.of("main-activity")),
         buildCodelistMock("main-activity", Optional.empty()),
-        buildCodelistMock("legal-basis-1", Optional.empty())));
+        buildCodelistMock("legal-basis-1", Optional.empty()),
+        buildCodelistMock("indicator", Optional.empty())));
   }
 
   @Override
