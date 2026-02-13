@@ -491,8 +491,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
-    String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
-    return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
+    return new StringExpression("string(" + number.getScript() + ")");
   }
 
   @Override

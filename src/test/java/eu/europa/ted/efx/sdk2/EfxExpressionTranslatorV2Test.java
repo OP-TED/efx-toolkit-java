@@ -587,7 +587,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
     testExpressionTranslationWithContext(
-        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, format-number($y, '0,##########'), 'text'))",
+        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
         "ND-Root",
         "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))");
   }
@@ -1589,8 +1589,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testToStringFunction() {
-    testExpressionTranslationWithContext("format-number(123, '0,##########')", "ND-Root",
-        "string(123)");
+    testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
+  }
+
+  @Test
+  void testToStringFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("string(PathNode/NumberField/number())", "ND-Root",
+        "string(BT-00-Number)");
   }
 
   @Test

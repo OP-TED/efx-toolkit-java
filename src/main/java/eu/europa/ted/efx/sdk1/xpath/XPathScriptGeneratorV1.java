@@ -20,6 +20,8 @@ import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
@@ -28,6 +30,12 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
 
     public XPathScriptGeneratorV1(TranslatorOptions translatorOptions) {
         super(translatorOptions);
+    }
+
+    @Override
+    public StringExpression composeToStringConversion(NumericExpression number) {
+        String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
+        return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
     }
 
     /***
