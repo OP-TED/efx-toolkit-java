@@ -1634,6 +1634,19 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testDurationToStringFunction() {
+    testExpressionTranslationWithContext("string(xs:dayTimeDuration('P30D'))", "ND-Root",
+        "string(P30D)");
+  }
+
+  @Test
+  void testDurationToStringFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "string((for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
+        "ND-Root", "string(BT-00-Measure)");
+  }
+
+  @Test
   void testConcatFunction() {
     testExpressionTranslationWithContext("concat('abc', 'def')", "ND-Root", "concat('abc', 'def')");
   };

@@ -510,6 +510,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeToStringConversion(DurationExpression duration) {
+    return new StringExpression("string(" + duration.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeToUpperCaseConversion(StringExpression text) {
     return new StringExpression("upper-case(" + text.getScript() + ")");
   }
