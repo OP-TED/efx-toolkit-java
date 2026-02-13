@@ -1945,6 +1945,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitDateToStringFunction(DateToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
   public void exitConcatFunction(ConcatFunctionContext ctx) {
     if (this.stack.empty() || ctx.stringExpression().isEmpty()) {
       this.stack.push(this.script.composeStringConcatenation(Collections.emptyList()));

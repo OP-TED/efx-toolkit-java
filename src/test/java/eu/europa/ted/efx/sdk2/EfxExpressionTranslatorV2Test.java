@@ -1610,6 +1610,18 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testDateToStringFunction() {
+    testExpressionTranslationWithContext("string(xs:date('2024-01-15Z'))", "ND-Root",
+        "string(2024-01-15Z)");
+  }
+
+  @Test
+  void testDateToStringFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("string(PathNode/StartDateField/xs:date(text()))", "ND-Root",
+        "string(BT-00-StartDate)");
+  }
+
+  @Test
   void testConcatFunction() {
     testExpressionTranslationWithContext("concat('abc', 'def')", "ND-Root", "concat('abc', 'def')");
   };
