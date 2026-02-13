@@ -1950,6 +1950,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitTimeToStringFunction(TimeToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
   public void exitConcatFunction(ConcatFunctionContext ctx) {
     if (this.stack.empty() || ctx.stringExpression().isEmpty()) {
       this.stack.push(this.script.composeStringConcatenation(Collections.emptyList()));

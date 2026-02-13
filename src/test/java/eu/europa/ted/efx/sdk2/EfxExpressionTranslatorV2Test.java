@@ -1622,6 +1622,18 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testTimeToStringFunction() {
+    testExpressionTranslationWithContext("string(xs:time('14:30:00Z'))", "ND-Root",
+        "string(14:30:00Z)");
+  }
+
+  @Test
+  void testTimeToStringFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("string(PathNode/StartTimeField/xs:time(text()))", "ND-Root",
+        "string(BT-00-StartTime)");
+  }
+
+  @Test
   void testConcatFunction() {
     testExpressionTranslationWithContext("concat('abc', 'def')", "ND-Root", "concat('abc', 'def')");
   };
