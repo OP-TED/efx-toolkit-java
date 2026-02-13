@@ -495,6 +495,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeToStringConversion(BooleanExpression bool) {
+    return new StringExpression("string(" + bool.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeToUpperCaseConversion(StringExpression text) {
     return new StringExpression("upper-case(" + text.getScript() + ")");
   }

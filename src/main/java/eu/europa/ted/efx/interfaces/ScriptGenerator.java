@@ -357,6 +357,8 @@ public interface ScriptGenerator {
 
   public StringExpression composeToStringConversion(NumericExpression number);
 
+  public StringExpression composeToStringConversion(BooleanExpression bool);
+
   /**
    * Returns the target language script that converts the given text to upper case.
    * 

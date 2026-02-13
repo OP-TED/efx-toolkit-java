@@ -1599,6 +1599,17 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testBooleanToStringFunction() {
+    testExpressionTranslationWithContext("string(true())", "ND-Root", "string(TRUE)");
+  }
+
+  @Test
+  void testBooleanToStringFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("string(PathNode/IndicatorField)", "ND-Root",
+        "string(BT-00-Indicator)");
+  }
+
+  @Test
   void testConcatFunction() {
     testExpressionTranslationWithContext("concat('abc', 'def')", "ND-Root", "concat('abc', 'def')");
   };
