@@ -2243,6 +2243,45 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion Except ---------------------------------------------------------
 
+  // #region Sort --------------------------------------------------------------
+
+  @Override
+  public void exitStringSortFunction(StringSortFunctionContext ctx) {
+    exitSortFunction(StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanSortFunction(BooleanSortFunctionContext ctx) {
+    exitSortFunction(BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericSortFunction(NumericSortFunctionContext ctx) {
+    exitSortFunction(NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateSortFunction(DateSortFunctionContext ctx) {
+    exitSortFunction(DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeSortFunction(TimeSortFunctionContext ctx) {
+    exitSortFunction(TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationSortFunction(DurationSortFunctionContext ctx) {
+    exitSortFunction(DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitSortFunction(Class<T> listType) {
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeSortFunction(list, listType));
+  }
+
+  // #endregion Sort -----------------------------------------------------------
+
   // #endregion Sequence Functions --------------------------------------------
 
   // #region Helpers ----------------------------------------------------------

@@ -2002,6 +2002,54 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   // #endregion: Except
 
+  // #region: Sort
+
+  @Test
+  void testSortFunction_WithStringSequences() {
+    testExpressionTranslationWithContext("sort(('banana','apple','cherry'))", "ND-Root",
+        "sort(('banana', 'apple', 'cherry'))");
+  }
+
+  @Test
+  void testSortFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext("sort((3,1,2))", "ND-Root",
+        "sort((3, 1, 2))");
+  }
+
+  @Test
+  void testSortFunction_WithDateSequences() {
+    testExpressionTranslationWithContext(
+        "sort((xs:date('2022-01-01Z'),xs:date('2018-01-01Z'),xs:date('2020-01-01Z')))",
+        "ND-Root", "sort((2022-01-01Z, 2018-01-01Z, 2020-01-01Z))");
+  }
+
+  @Test
+  void testSortFunction_WithTimeSequences() {
+    testExpressionTranslationWithContext(
+        "sort((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('13:00:00Z')))",
+        "ND-Root", "sort((14:00:00Z, 12:00:00Z, 13:00:00Z))");
+  }
+
+  @Test
+  void testSortFunction_WithDurationSequences() {
+    testExpressionTranslationWithContext("sort((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P7D')))",
+        "ND-Root", "sort((P5D, P2D, P1W))");
+  }
+
+  @Test
+  void testSortFunction_WithBooleanSequences() {
+    testExpressionTranslationWithContext("sort((true(),false(),true()))",
+        "ND-Root", "sort((TRUE, FALSE, TRUE))");
+  }
+
+  @Test
+  void testSortFunction_WithFieldReferences() {
+    testExpressionTranslationWithContext("sort(PathNode/TextField/normalize-space(text()))", "ND-Root",
+        "sort(BT-00-Text)");
+  }
+
+  // #endregion: Sort
+
   // #region: Compare sequences
 
   @Test

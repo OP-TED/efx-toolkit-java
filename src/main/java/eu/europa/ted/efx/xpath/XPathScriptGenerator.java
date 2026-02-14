@@ -661,6 +661,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (every $L2 in " + listTwo.getScript() + " satisfies $L1 != $L2) then $L1 else ())", listType);
   }
 
+  @Override
+  public <T extends SequenceExpression> T composeSortFunction(T list, Class<T> listType) {
+    return Expression.instantiate("sort(" + list.getScript() + ")", listType);
+  }
+
   //#endregion Duration functions ---------------------------------------------
 
   @Override
