@@ -540,6 +540,9 @@ public interface ScriptGenerator {
   public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
       NumericExpression start, NumericExpression length, Class<T> listType);
 
+  public NumericSequenceExpression composeIndexOfFunction(SequenceExpression list,
+      ScalarExpression value);
+
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type);
 

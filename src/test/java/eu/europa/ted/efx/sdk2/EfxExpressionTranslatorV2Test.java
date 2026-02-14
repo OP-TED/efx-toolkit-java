@@ -2155,6 +2155,56 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   // #endregion: Subsequence
 
+  // #region: Index-of
+
+  @Test
+  void testIndexOfFunction_WithStringSequences() {
+    testExpressionTranslationWithContext("index-of(('a','b','c','b'), 'b')", "ND-Root",
+        "index-of(('a', 'b', 'c', 'b'), 'b')");
+  }
+
+  @Test
+  void testIndexOfFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext("index-of((10,20,30,20), 20)", "ND-Root",
+        "index-of((10, 20, 30, 20), 20)");
+  }
+
+  @Test
+  void testIndexOfFunction_WithDateSequences() {
+    testExpressionTranslationWithContext(
+        "index-of((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2022-01-01Z')), xs:date('2022-01-01Z'))",
+        "ND-Root", "index-of((2022-01-01Z, 2023-01-01Z, 2022-01-01Z), 2022-01-01Z)");
+  }
+
+  @Test
+  void testIndexOfFunction_WithBooleanSequences() {
+    testExpressionTranslationWithContext("index-of((true(),false(),true()), true())",
+        "ND-Root", "index-of((TRUE, FALSE, TRUE), TRUE)");
+  }
+
+  @Test
+  void testIndexOfFunction_WithTimeSequences() {
+    testExpressionTranslationWithContext(
+        "index-of((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')), xs:time('14:00:00Z'))",
+        "ND-Root", "index-of((14:00:00Z, 12:00:00Z, 14:00:00Z), 14:00:00Z)");
+  }
+
+  @Test
+  void testIndexOfFunction_WithDurationSequences() {
+    testExpressionTranslationWithContext(
+        "index-of((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')), xs:dayTimeDuration('P5D'))",
+        "ND-Root", "index-of((P5D, P2D, P5D), P5D)");
+  }
+
+  @Test
+  void testIndexOfFunction_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "index-of(PathNode/RepeatableTextField/normalize-space(text()), 'hello')", "ND-Root",
+        "index-of(BT-00-Repeatable-Text, 'hello')");
+  }
+
+  // #endregion: Index-of
+
   // #region: Compare sequences
 
   @Test

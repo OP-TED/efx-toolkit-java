@@ -2368,6 +2368,47 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion Subsequence ----------------------------------------------------
 
+  // #region Index-of ----------------------------------------------------------
+
+  @Override
+  public void exitIndexOfStringFunction(IndexOfStringFunctionContext ctx) {
+    exitIndexOfFunction(StringSequenceExpression.class, StringExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfBooleanFunction(IndexOfBooleanFunctionContext ctx) {
+    exitIndexOfFunction(BooleanSequenceExpression.class, BooleanExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfNumericFunction(IndexOfNumericFunctionContext ctx) {
+    exitIndexOfFunction(NumericSequenceExpression.class, NumericExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfDateFunction(IndexOfDateFunctionContext ctx) {
+    exitIndexOfFunction(DateSequenceExpression.class, DateExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfTimeFunction(IndexOfTimeFunctionContext ctx) {
+    exitIndexOfFunction(TimeSequenceExpression.class, TimeExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfDurationFunction(IndexOfDurationFunctionContext ctx) {
+    exitIndexOfFunction(DurationSequenceExpression.class, DurationExpression.class);
+  }
+
+  private <T extends SequenceExpression, S extends ScalarExpression> void exitIndexOfFunction(
+      Class<T> listType, Class<S> valueType) {
+    final S value = this.stack.pop(valueType);
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeIndexOfFunction(list, value));
+  }
+
+  // #endregion Index-of -------------------------------------------------------
+
   // #endregion Sequence Functions --------------------------------------------
 
   // #region Helpers ----------------------------------------------------------

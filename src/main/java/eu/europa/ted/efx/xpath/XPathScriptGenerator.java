@@ -687,6 +687,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
         listType);
   }
 
+  @Override
+  public NumericSequenceExpression composeIndexOfFunction(SequenceExpression list,
+      ScalarExpression value) {
+    return new NumericSequenceExpression(
+        "index-of(" + list.getScript() + ", " + value.getScript() + ")");
+  }
+
   //#endregion Duration functions ---------------------------------------------
 
   @Override
