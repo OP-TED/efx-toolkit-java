@@ -1945,7 +1945,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitToStringFunction(ToStringFunctionContext ctx) {
+  public void exitNumberToStringFunction(NumberToStringFunctionContext ctx) {
     this.stack.push(this.script.composeToStringConversion(this.stack.pop(NumericExpression.class)));
   }
 

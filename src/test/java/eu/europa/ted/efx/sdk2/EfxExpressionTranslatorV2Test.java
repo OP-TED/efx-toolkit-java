@@ -1610,12 +1610,12 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testToStringFunction() {
+  void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }
 
   @Test
-  void testToStringFunction_WithFieldReference() {
+  void testNumberToStringFunction_WithFieldReference() {
     testExpressionTranslationWithContext("string(PathNode/NumberField/number())", "ND-Root",
         "string(BT-00-Number)");
   }
@@ -1666,6 +1666,35 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "string((for $F in PathNode/MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
         "ND-Root", "string(BT-00-Measure)");
+  }
+
+  // text() variants - verify that 'text' keyword works as alias for 'string' conversion
+  @Test
+  void testTextFromNumberFunction() {
+    testExpressionTranslationWithContext("string(123)", "ND-Root", "text(123)");
+  }
+
+  @Test
+  void testTextFromBooleanFunction() {
+    testExpressionTranslationWithContext("string(true())", "ND-Root", "text(TRUE)");
+  }
+
+  @Test
+  void testTextFromDateFunction() {
+    testExpressionTranslationWithContext("string(xs:date('2024-01-15Z'))", "ND-Root",
+        "text(2024-01-15Z)");
+  }
+
+  @Test
+  void testTextFromTimeFunction() {
+    testExpressionTranslationWithContext("string(xs:time('14:30:00Z'))", "ND-Root",
+        "text(14:30:00Z)");
+  }
+
+  @Test
+  void testTextFromDurationFunction() {
+    testExpressionTranslationWithContext("string(xs:dayTimeDuration('P30D'))", "ND-Root",
+        "text(P30D)");
   }
 
   @Test
