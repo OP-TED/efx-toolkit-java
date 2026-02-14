@@ -2112,6 +2112,49 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   // #endregion: Reverse
 
+  // #region: Subsequence
+
+  @Test
+  void testSubsequenceFunction_WithStringSequences() {
+    testExpressionTranslationWithContext("subsequence(('a','b','c','d'), 2)", "ND-Root",
+        "subsequence(('a', 'b', 'c', 'd'), 2)");
+  }
+
+  @Test
+  void testSubsequenceFunction_WithStringSequences_AndLength() {
+    testExpressionTranslationWithContext("subsequence(('a','b','c','d'), 2, 2)", "ND-Root",
+        "subsequence(('a', 'b', 'c', 'd'), 2, 2)");
+  }
+
+  @Test
+  void testSubsequenceFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext("subsequence((10,20,30,40), 2, 2)", "ND-Root",
+        "subsequence((10, 20, 30, 40), 2, 2)");
+  }
+
+  @Test
+  void testSubsequenceFunction_WithDateSequences() {
+    testExpressionTranslationWithContext(
+        "subsequence((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2024-01-01Z')), 1, 2)",
+        "ND-Root", "subsequence((2022-01-01Z, 2023-01-01Z, 2024-01-01Z), 1, 2)");
+  }
+
+  @Test
+  void testSubsequenceFunction_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "subsequence(PathNode/RepeatableTextField/normalize-space(text()), 2)", "ND-Root",
+        "subsequence(BT-00-Repeatable-Text, 2)");
+  }
+
+  @Test
+  void testSubsequenceFunction_WithRepeatableFieldReference_AndLength() {
+    testExpressionTranslationWithContext(
+        "subsequence(PathNode/RepeatableTextField/normalize-space(text()), 1, 3)", "ND-Root",
+        "subsequence(BT-00-Repeatable-Text, 1, 3)");
+  }
+
+  // #endregion: Subsequence
+
   // #region: Compare sequences
 
   @Test

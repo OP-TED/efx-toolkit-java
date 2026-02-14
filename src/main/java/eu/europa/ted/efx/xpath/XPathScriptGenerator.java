@@ -671,6 +671,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate("reverse(" + list.getScript() + ")", listType);
   }
 
+  @Override
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, Class<T> listType) {
+    return Expression.instantiate(
+        "subsequence(" + list.getScript() + ", " + start.getScript() + ")", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, NumericExpression length, Class<T> listType) {
+    return Expression.instantiate(
+        "subsequence(" + list.getScript() + ", " + start.getScript() + ", " + length.getScript()
+            + ")",
+        listType);
+  }
+
   //#endregion Duration functions ---------------------------------------------
 
   @Override

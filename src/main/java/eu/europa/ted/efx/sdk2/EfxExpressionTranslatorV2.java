@@ -2321,6 +2321,53 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion Reverse --------------------------------------------------------
 
+  // #region Subsequence ------------------------------------------------------
+
+  @Override
+  public void exitStringSubsequenceFunction(StringSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanSubsequenceFunction(BooleanSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericSubsequenceFunction(NumericSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateSubsequenceFunction(DateSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeSubsequenceFunction(TimeSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationSubsequenceFunction(DurationSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitSubsequenceFunction(boolean hasLength,
+      Class<T> listType) {
+    final NumericExpression length =
+        hasLength ? this.stack.pop(NumericExpression.class) : null;
+    final NumericExpression start = this.stack.pop(NumericExpression.class);
+    final T list = this.stack.pop(listType);
+    if (length != null) {
+      this.stack.push(this.script.composeSubsequenceFunction(list, start, length, listType));
+    } else {
+      this.stack.push(this.script.composeSubsequenceFunction(list, start, listType));
+    }
+  }
+
+  // #endregion Subsequence ----------------------------------------------------
+
   // #endregion Sequence Functions --------------------------------------------
 
   // #region Helpers ----------------------------------------------------------
