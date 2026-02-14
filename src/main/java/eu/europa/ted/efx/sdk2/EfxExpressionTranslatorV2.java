@@ -2282,6 +2282,45 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion Sort -----------------------------------------------------------
 
+  // #region Reverse ----------------------------------------------------------
+
+  @Override
+  public void exitStringReverseFunction(StringReverseFunctionContext ctx) {
+    exitReverseFunction(StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanReverseFunction(BooleanReverseFunctionContext ctx) {
+    exitReverseFunction(BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericReverseFunction(NumericReverseFunctionContext ctx) {
+    exitReverseFunction(NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateReverseFunction(DateReverseFunctionContext ctx) {
+    exitReverseFunction(DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeReverseFunction(TimeReverseFunctionContext ctx) {
+    exitReverseFunction(TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationReverseFunction(DurationReverseFunctionContext ctx) {
+    exitReverseFunction(DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitReverseFunction(Class<T> listType) {
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeReverseFunction(list, listType));
+  }
+
+  // #endregion Reverse --------------------------------------------------------
+
   // #endregion Sequence Functions --------------------------------------------
 
   // #region Helpers ----------------------------------------------------------

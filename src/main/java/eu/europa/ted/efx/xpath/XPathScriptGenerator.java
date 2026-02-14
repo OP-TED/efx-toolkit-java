@@ -666,6 +666,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return Expression.instantiate("sort(" + list.getScript() + ")", listType);
   }
 
+  @Override
+  public <T extends SequenceExpression> T composeReverseFunction(T list, Class<T> listType) {
+    return Expression.instantiate("reverse(" + list.getScript() + ")", listType);
+  }
+
   //#endregion Duration functions ---------------------------------------------
 
   @Override

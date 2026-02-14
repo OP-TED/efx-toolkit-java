@@ -2048,7 +2048,69 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "sort(BT-00-Text)");
   }
 
+  @Test
+  void testSortFunction_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "sort(PathNode/RepeatableTextField/normalize-space(text()))", "ND-Root",
+        "sort(BT-00-Repeatable-Text)");
+  }
+
   // #endregion: Sort
+
+  // #region: Reverse
+
+  @Test
+  void testReverseFunction_WithStringSequences() {
+    testExpressionTranslationWithContext("reverse(('banana','apple','cherry'))", "ND-Root",
+        "reverse(('banana', 'apple', 'cherry'))");
+  }
+
+  @Test
+  void testReverseFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext("reverse((3,1,2))", "ND-Root",
+        "reverse((3, 1, 2))");
+  }
+
+  @Test
+  void testReverseFunction_WithDateSequences() {
+    testExpressionTranslationWithContext(
+        "reverse((xs:date('2022-01-01Z'),xs:date('2018-01-01Z'),xs:date('2020-01-01Z')))",
+        "ND-Root", "reverse((2022-01-01Z, 2018-01-01Z, 2020-01-01Z))");
+  }
+
+  @Test
+  void testReverseFunction_WithTimeSequences() {
+    testExpressionTranslationWithContext(
+        "reverse((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('13:00:00Z')))",
+        "ND-Root", "reverse((14:00:00Z, 12:00:00Z, 13:00:00Z))");
+  }
+
+  @Test
+  void testReverseFunction_WithDurationSequences() {
+    testExpressionTranslationWithContext("reverse((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P7D')))",
+        "ND-Root", "reverse((P5D, P2D, P1W))");
+  }
+
+  @Test
+  void testReverseFunction_WithBooleanSequences() {
+    testExpressionTranslationWithContext("reverse((true(),false(),true()))",
+        "ND-Root", "reverse((TRUE, FALSE, TRUE))");
+  }
+
+  @Test
+  void testReverseFunction_WithFieldReferences() {
+    testExpressionTranslationWithContext("reverse(PathNode/TextField/normalize-space(text()))", "ND-Root",
+        "reverse(BT-00-Text)");
+  }
+
+  @Test
+  void testReverseFunction_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "reverse(PathNode/RepeatableTextField/normalize-space(text()))", "ND-Root",
+        "reverse(BT-00-Repeatable-Text)");
+  }
+
+  // #endregion: Reverse
 
   // #region: Compare sequences
 

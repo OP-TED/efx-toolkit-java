@@ -532,6 +532,8 @@ public interface ScriptGenerator {
 
   public <T extends SequenceExpression> T composeSortFunction(T list, Class<T> listType);
 
+  public <T extends SequenceExpression> T composeReverseFunction(T list, Class<T> listType);
+
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type);
 
