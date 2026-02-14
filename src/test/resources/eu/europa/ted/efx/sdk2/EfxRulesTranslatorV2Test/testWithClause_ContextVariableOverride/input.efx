@@ -5,6 +5,6 @@
 ---- STAGE 1a ----
 
 WITH context : $ctx = ND-Root
-    ASSERT $ctx::BT-00-Text is not empty
+    ASSERT not(empty($ctx::BT-00-Text))
     AS ERROR R-CTX-001
     FOR BT-00-Text IN 1, 2

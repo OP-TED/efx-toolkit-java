@@ -53,18 +53,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testEmptinessCondition() {
-    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text()) = ''",
-        "ND-Root", "BT-00-Text is empty");
-  }
-
-  @Test
-  void testEmptinessCondition_WithNot() {
-    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text()) != ''",
-        "ND-Root", "BT-00-Text is not empty");
-  }
-
-  @Test
   void testPresenceCondition() {
     testExpressionTranslationWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
   }
@@ -2254,6 +2242,93 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "deep-equal(sort(PathNode/TextField/normalize-space(text())), sort(PathNode/TextField/normalize-space(text())))", "ND-Root",
         "sequence-equal(BT-00-Text, BT-00-Text)");
   }
+
+  // #endregion: Compare sequences
+
+  // #region: Sequence emptiness
+
+  @Test
+  void testSequenceEmptiness_WithNonRepeatableField() {
+    // Field references always go through sequence emptiness, regardless of repeatability.
+    testExpressionTranslationWithContext("empty(PathNode/TextField/normalize-space(text()))",
+        "ND-Root", "BT-00-Text is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithStringSequence() {
+    testExpressionTranslationWithContext("empty(('a','b','c'))", "ND-Root",
+        "('a', 'b', 'c') is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithStringSequence_Negated() {
+    testExpressionTranslationWithContext("not(empty(('a','b','c')))", "ND-Root",
+        "('a', 'b', 'c') is not empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithNumericSequence() {
+    testExpressionTranslationWithContext("empty((1,2,3))", "ND-Root",
+        "(1, 2, 3) is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithBooleanSequence() {
+    testExpressionTranslationWithContext("empty((true(),false()))", "ND-Root",
+        "(TRUE, FALSE) is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithDateSequence() {
+    testExpressionTranslationWithContext(
+        "empty((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))", "ND-Root",
+        "(2024-01-01Z, 2024-12-31Z) is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithTimeSequence() {
+    testExpressionTranslationWithContext(
+        "empty((xs:time('12:00:00Z'),xs:time('13:00:00Z')))", "ND-Root",
+        "(12:00:00Z, 13:00:00Z) is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithDurationSequence() {
+    testExpressionTranslationWithContext(
+        "empty((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y')))", "ND-Root",
+        "(P1Y, P2Y) is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "empty(PathNode/RepeatableTextField/normalize-space(text()))", "ND-Root",
+        "BT-00-Repeatable-Text is empty");
+  }
+
+  @Test
+  void testSequenceEmptiness_WithRepeatableFieldReference_Negated() {
+    testExpressionTranslationWithContext(
+        "not(empty(PathNode/RepeatableTextField/normalize-space(text())))", "ND-Root",
+        "BT-00-Repeatable-Text is not empty");
+  }
+
+  // #endregion: Sequence emptiness
+
+  // #region: String empty function
+
+  @Test
+  void testStringEmptyFunction() {
+    testExpressionTranslationWithContext("'hello' = ''", "ND-Root", "empty('hello')");
+  }
+
+  @Test
+  void testStringEmptyFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("PathNode/TextField/normalize-space(text()) = ''",
+        "ND-Root", "empty(BT-00-Text)");
+  }
+
+  // #endregion: String empty function
 
   @Test
   void testParameterizedExpression_WithStringParameter() {

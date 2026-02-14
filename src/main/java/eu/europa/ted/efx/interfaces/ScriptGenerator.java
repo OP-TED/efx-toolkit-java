@@ -467,6 +467,8 @@ public interface ScriptGenerator {
   public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
       SequenceExpression two);
 
+  public BooleanExpression composeEmptySequenceCondition(SequenceExpression sequence);
+
   // #endregion Boolean Functions --------------------------------------------
 
   // #region Date Functions ---------------------------------------------------

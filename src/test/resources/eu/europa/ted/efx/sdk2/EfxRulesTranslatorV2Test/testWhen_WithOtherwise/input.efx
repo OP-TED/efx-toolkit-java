@@ -21,6 +21,6 @@ WITH BT-00-Text
         AS WARNING R-H9T-V5L
         FOR BT-00-Text IN 2
 
-    OTHERWISE REPORT BT-00-Text is not empty
+    OTHERWISE REPORT not(empty(BT-00-Text))
         AS INFO R-B6J-C4R
         FOR BT-00-Text IN 2

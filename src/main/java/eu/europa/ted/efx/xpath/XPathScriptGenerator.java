@@ -446,6 +446,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression("deep-equal(sort(" + one.getScript() + "), sort(" + two.getScript() + "))");
   }
 
+  @Override
+  public BooleanExpression composeEmptySequenceCondition(SequenceExpression sequence) {
+    return new BooleanExpression("empty(" + sequence.getScript() + ")");
+  }
+
   //#endregion Boolean functions ----------------------------------------------
 
   //#region Numeric functions -------------------------------------------------

@@ -448,10 +448,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region Boolean expressions - Conditions --------------------------------
 
   @Override
-  public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
+  public void exitStringEmptyFunction(EfxParser.StringEmptyFunctionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
-    String operator = ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER) ? "!=" : "==";
-    this.stack.push(this.script.composeComparisonOperation(expression, operator,
+    this.stack.push(this.script.composeComparisonOperation(expression, "==",
         this.script.getStringLiteralFromUnquotedString("")));
   }
 
@@ -541,6 +540,52 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else {
       this.stack.push(this.script.composeUniqueValueCondition(needle, haystack));
     }
+  }
+
+  @Override
+  public void exitStringSequenceEmptinessCondition(
+      EfxParser.StringSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(StringSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitBooleanSequenceEmptinessCondition(
+      EfxParser.BooleanSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(BooleanSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitNumericSequenceEmptinessCondition(
+      EfxParser.NumericSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(NumericSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDateSequenceEmptinessCondition(
+      EfxParser.DateSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(DateSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitTimeSequenceEmptinessCondition(
+      EfxParser.TimeSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(TimeSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDurationSequenceEmptinessCondition(
+      EfxParser.DurationSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(DurationSequenceExpression.class, ctx.modifier);
+  }
+
+  private <T extends SequenceExpression> void exitSequenceEmptinessCondition(
+      Class<T> sequenceType, org.antlr.v4.runtime.Token modifier) {
+    final T sequence = this.stack.pop(sequenceType);
+    BooleanExpression condition = this.script.composeEmptySequenceCondition(sequence);
+    if (modifier != null && modifier.getText().equals(NOT_MODIFIER)) {
+      condition = this.script.composeLogicalNot(condition);
+    }
+    this.stack.push(condition);
   }
 
   @Override

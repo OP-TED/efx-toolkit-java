@@ -8,6 +8,6 @@ LET text : $noticeType = "16";
 ---- STAGE 1a ----
 
 WITH ND-Root
-    ASSERT $sdkVersion is not empty
+    ASSERT not(empty($sdkVersion))
     AS ERROR R-K7P-M2Q
     FOR BT-00-Text IN 1, 2

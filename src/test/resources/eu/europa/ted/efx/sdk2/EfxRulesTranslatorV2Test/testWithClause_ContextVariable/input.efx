@@ -5,6 +5,6 @@
 ---- STAGE 1a ----
 
 WITH context : $ctx = BT-00-Text
-    ASSERT $ctx is not empty
+    ASSERT not(empty($ctx))
     AS ERROR R-K7P-M2Q
     FOR BT-00-Text IN 1, 2
