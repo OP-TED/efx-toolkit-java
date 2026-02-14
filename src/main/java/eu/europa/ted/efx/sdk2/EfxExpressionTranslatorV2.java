@@ -1650,6 +1650,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitBooleanFromNumberFunction(BooleanFromNumberFunctionContext ctx) {
+    this.stack.push(this.script.composeToBooleanConversion(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
   public void exitContainsFunction(ContainsFunctionContext ctx) {
     final StringExpression needle = this.stack.pop(StringExpression.class);
     final StringExpression haystack = this.stack.pop(StringExpression.class);
@@ -1902,8 +1907,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitNumberFunction(NumberFunctionContext ctx) {
+  public void exitNumberFromStringFunction(NumberFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToNumberConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitNumberFromBooleanFunction(NumberFromBooleanFunctionContext ctx) {
+    this.stack.push(this.script.composeToNumberConversion(this.stack.pop(BooleanExpression.class)));
   }
 
   @Override

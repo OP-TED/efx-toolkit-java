@@ -328,6 +328,8 @@ public interface ScriptGenerator {
 
   public NumericExpression composeToNumberConversion(StringExpression text);
 
+  public NumericExpression composeToNumberConversion(BooleanExpression bool);
+
   public NumericExpression composeSumOperation(NumericSequenceExpression list);
 
   public NumericExpression composeStringLengthCalculation(StringExpression text);
@@ -423,6 +425,8 @@ public interface ScriptGenerator {
   // #region Boolean Functions ------------------------------------------------
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
+
+  public BooleanExpression composeToBooleanConversion(NumericExpression number);
 
   /**
    * Uniqueness check for EFX 1 syntax.

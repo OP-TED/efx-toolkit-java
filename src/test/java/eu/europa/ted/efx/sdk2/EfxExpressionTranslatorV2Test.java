@@ -1279,6 +1279,17 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testBooleanFromNumberFunction() {
+    testExpressionTranslationWithContext("boolean(0)", "ND-Root", "indicator(0)");
+  }
+
+  @Test
+  void testBooleanFromNumberFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("boolean(PathNode/NumberField/number())", "ND-Root",
+        "indicator(BT-00-Number)");
+  }
+
+  @Test
   void testContainsFunction() {
     testExpressionTranslationWithContext(
         "contains(PathNode/TextField/normalize-space(text()), 'xyz')", "ND-Root",
@@ -1539,6 +1550,17 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNumberFunction() {
     testExpressionTranslationWithContext("number(PathNode/TextField/normalize-space(text()))",
         "ND-Root", "number(BT-00-Text)");
+  }
+
+  @Test
+  void testNumberFromBooleanFunction() {
+    testExpressionTranslationWithContext("number(true())", "ND-Root", "number(TRUE)");
+  }
+
+  @Test
+  void testNumberFromBooleanFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("number(PathNode/IndicatorField)", "ND-Root",
+        "number(BT-00-Indicator)");
   }
 
   @Test

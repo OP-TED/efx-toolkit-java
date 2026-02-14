@@ -347,6 +347,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.getScript());
   }
 
+  @Override
+  public BooleanExpression composeToBooleanConversion(NumericExpression number) {
+    return new BooleanExpression("boolean(" + number.getScript() + ")");
+  }
+
   /**
    * EFX 1 uniqueness check - kept for backward compatibility.
    * EFX 2 uses the typed overloads below.
@@ -453,6 +458,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeToNumberConversion(StringExpression text) {
     return new NumericExpression("number(" + text.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeToNumberConversion(BooleanExpression bool) {
+    return new NumericExpression("number(" + bool.getScript() + ")");
   }
 
   @Override
