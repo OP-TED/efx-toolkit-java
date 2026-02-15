@@ -1595,6 +1595,45 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testYearFromDateFunction() {
+    testExpressionTranslationWithContext("year-from-date(xs:date('2024-03-15Z'))", "ND-Root",
+        "year(date('2024-03-15Z'))");
+  }
+
+  @Test
+  void testYearFromDateFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "year-from-date(PathNode/StartDateField/xs:date(text()))", "ND-Root",
+        "year(BT-00-StartDate)");
+  }
+
+  @Test
+  void testMonthFromDateFunction() {
+    testExpressionTranslationWithContext("month-from-date(xs:date('2024-03-15Z'))", "ND-Root",
+        "month(date('2024-03-15Z'))");
+  }
+
+  @Test
+  void testMonthFromDateFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "month-from-date(PathNode/StartDateField/xs:date(text()))", "ND-Root",
+        "month(BT-00-StartDate)");
+  }
+
+  @Test
+  void testDayFromDateFunction() {
+    testExpressionTranslationWithContext("day-from-date(xs:date('2024-03-15Z'))", "ND-Root",
+        "day(date('2024-03-15Z'))");
+  }
+
+  @Test
+  void testDayFromDateFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "day-from-date(PathNode/StartDateField/xs:date(text()))", "ND-Root",
+        "day(BT-00-StartDate)");
+  }
+
+  @Test
   void testAbsoluteFunction() {
     testExpressionTranslationWithContext("abs(-5)", "ND-Root", "absolute(-5)");
   }

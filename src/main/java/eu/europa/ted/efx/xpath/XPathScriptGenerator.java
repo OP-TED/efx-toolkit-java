@@ -502,6 +502,21 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeYearFunction(DateExpression date) {
+    return new NumericExpression("year-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMonthFunction(DateExpression date) {
+    return new NumericExpression("month-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeDayFunction(DateExpression date) {
+    return new NumericExpression("day-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeAbsFunction(NumericExpression number) {
     return new NumericExpression("abs(" + number.getScript() + ")");
   }

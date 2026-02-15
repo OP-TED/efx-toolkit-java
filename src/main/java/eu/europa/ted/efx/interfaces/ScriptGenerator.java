@@ -378,6 +378,30 @@ public interface ScriptGenerator {
   public NumericExpression composeStringLengthCalculation(StringExpression text);
 
   /**
+   * Returns the target language script that extracts the year component from a date.
+   *
+   * @param date The date expression to extract the year from.
+   * @return A numeric expression representing the year.
+   */
+  public NumericExpression composeYearFunction(DateExpression date);
+
+  /**
+   * Returns the target language script that extracts the month component from a date.
+   *
+   * @param date The date expression to extract the month from.
+   * @return A numeric expression representing the month (1-12).
+   */
+  public NumericExpression composeMonthFunction(DateExpression date);
+
+  /**
+   * Returns the target language script that extracts the day component from a date.
+   *
+   * @param date The date expression to extract the day from.
+   * @return A numeric expression representing the day of the month (1-31).
+   */
+  public NumericExpression composeDayFunction(DateExpression date);
+
+  /**
    * Returns the target language script that computes the absolute value of a number.
    *
    * @param number The numeric expression whose absolute value is to be computed.

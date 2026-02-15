@@ -2036,6 +2036,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitYearFromDateFunction(YearFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeYearFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitMonthFromDateFunction(MonthFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeMonthFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitDayFromDateFunction(DayFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeDayFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
   public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
     this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
   }
