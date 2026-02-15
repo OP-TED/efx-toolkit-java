@@ -551,6 +551,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeTrimFunction(StringExpression text) {
+    return new StringExpression(
+        "replace(replace(" + text.getScript() + ", '^\\s+', ''), '\\s+$', '')");
+  }
+
+  @Override
+  public StringExpression composeTrimLeftFunction(StringExpression text) {
+    return new StringExpression("replace(" + text.getScript() + ", '^\\s+', '')");
+  }
+
+  @Override
+  public StringExpression composeTrimRightFunction(StringExpression text) {
+    return new StringExpression("replace(" + text.getScript() + ", '\\s+$', '')");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

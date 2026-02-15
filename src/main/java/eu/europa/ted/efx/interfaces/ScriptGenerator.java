@@ -448,6 +448,30 @@ public interface ScriptGenerator {
   public StringExpression composeNormalizeSpaceFunction(StringExpression text);
 
   /**
+   * Returns the target language script that removes leading and trailing whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims whitespace from both ends.
+   */
+  public StringExpression composeTrimFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that removes leading whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims leading whitespace.
+   */
+  public StringExpression composeTrimLeftFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that removes trailing whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims trailing whitespace.
+   */
+  public StringExpression composeTrimRightFunction(StringExpression text);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 

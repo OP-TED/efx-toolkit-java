@@ -1611,6 +1611,51 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testTrimFunction() {
+    testExpressionTranslation(
+        "replace(replace(PathNode/TextField/normalize-space(text()), '^\\s+', ''), '\\s+$', '')",
+        "{ND-Root} ${trim(BT-00-Text)}");
+  }
+
+  @Test
+  void testTrimFunction_WithLiteral() {
+    testExpressionTranslationWithContext("replace(replace('  hello  ', '^\\s+', ''), '\\s+$', '')",
+        "ND-Root", "trim('  hello  ')");
+  }
+
+  @Test
+  void testTrimLeftFunction() {
+    testExpressionTranslation(
+        "replace(PathNode/TextField/normalize-space(text()), '^\\s+', '')",
+        "{ND-Root} ${trim-left(BT-00-Text)}");
+  }
+
+  @Test
+  void testTrimLeftFunction_WithLiteral() {
+    testExpressionTranslationWithContext("replace('  hello  ', '^\\s+', '')", "ND-Root",
+        "trim-left('  hello  ')");
+  }
+
+  @Test
+  void testTrimRightFunction() {
+    testExpressionTranslation(
+        "replace(PathNode/TextField/normalize-space(text()), '\\s+$', '')",
+        "{ND-Root} ${trim-right(BT-00-Text)}");
+  }
+
+  @Test
+  void testTrimRightFunction_WithLiteral() {
+    testExpressionTranslationWithContext("replace('  hello  ', '\\s+$', '')", "ND-Root",
+        "trim-right('  hello  ')");
+  }
+
+  @Test
+  void testTrimFunction_WithRepeatableField_Throws() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("ND-Root", "trim(BT-00-Repeatable-Text)"));
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }

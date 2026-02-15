@@ -2101,6 +2101,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitTrimFunction(TrimFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitTrimLeftFunction(TrimLeftFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimLeftFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitTrimRightFunction(TrimRightFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimRightFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);
