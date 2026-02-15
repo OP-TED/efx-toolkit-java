@@ -1634,6 +1634,45 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testHoursFromTimeFunction() {
+    testExpressionTranslationWithContext("hours-from-time(xs:time('14:30:00Z'))", "ND-Root",
+        "hours(time('14:30:00Z'))");
+  }
+
+  @Test
+  void testHoursFromTimeFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "hours-from-time(PathNode/StartTimeField/xs:time(text()))", "ND-Root",
+        "hours(BT-00-StartTime)");
+  }
+
+  @Test
+  void testMinutesFromTimeFunction() {
+    testExpressionTranslationWithContext("minutes-from-time(xs:time('14:30:00Z'))", "ND-Root",
+        "minutes(time('14:30:00Z'))");
+  }
+
+  @Test
+  void testMinutesFromTimeFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "minutes-from-time(PathNode/StartTimeField/xs:time(text()))", "ND-Root",
+        "minutes(BT-00-StartTime)");
+  }
+
+  @Test
+  void testSecondsFromTimeFunction() {
+    testExpressionTranslationWithContext("seconds-from-time(xs:time('14:30:45Z'))", "ND-Root",
+        "seconds(time('14:30:45Z'))");
+  }
+
+  @Test
+  void testSecondsFromTimeFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "seconds-from-time(PathNode/StartTimeField/xs:time(text()))", "ND-Root",
+        "seconds(BT-00-StartTime)");
+  }
+
+  @Test
   void testAbsoluteFunction() {
     testExpressionTranslationWithContext("abs(-5)", "ND-Root", "absolute(-5)");
   }

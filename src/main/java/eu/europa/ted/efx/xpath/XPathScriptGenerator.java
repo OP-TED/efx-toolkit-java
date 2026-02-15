@@ -517,6 +517,21 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeHoursFunction(TimeExpression time) {
+    return new NumericExpression("hours-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMinutesFunction(TimeExpression time) {
+    return new NumericExpression("minutes-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeSecondsFunction(TimeExpression time) {
+    return new NumericExpression("seconds-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeAbsFunction(NumericExpression number) {
     return new NumericExpression("abs(" + number.getScript() + ")");
   }

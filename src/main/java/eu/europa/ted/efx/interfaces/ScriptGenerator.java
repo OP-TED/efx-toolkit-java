@@ -402,6 +402,30 @@ public interface ScriptGenerator {
   public NumericExpression composeDayFunction(DateExpression date);
 
   /**
+   * Returns the target language script that extracts the hours component from a time.
+   *
+   * @param time The time expression to extract the hours from.
+   * @return A numeric expression representing the hours (0-23).
+   */
+  public NumericExpression composeHoursFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the minutes component from a time.
+   *
+   * @param time The time expression to extract the minutes from.
+   * @return A numeric expression representing the minutes (0-59).
+   */
+  public NumericExpression composeMinutesFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the seconds component from a time.
+   *
+   * @param time The time expression to extract the seconds from.
+   * @return A numeric expression representing the seconds (0-59).
+   */
+  public NumericExpression composeSecondsFunction(TimeExpression time);
+
+  /**
    * Returns the target language script that computes the absolute value of a number.
    *
    * @param number The numeric expression whose absolute value is to be computed.

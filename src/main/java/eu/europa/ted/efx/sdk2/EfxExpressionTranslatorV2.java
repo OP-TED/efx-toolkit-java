@@ -2051,6 +2051,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitHoursFromTimeFunction(HoursFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeHoursFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitMinutesFromTimeFunction(MinutesFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeMinutesFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitSecondsFromTimeFunction(SecondsFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeSecondsFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
   public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
     this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
   }
