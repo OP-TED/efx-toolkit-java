@@ -561,6 +561,15 @@ public interface ScriptGenerator {
   public StringExpression composeUrlEncodeFunction(StringExpression text);
 
   /**
+   * Composes a capitalize-first function call in the target language.
+   * Converts the first character of the string to upper case.
+   *
+   * @param text The string whose first character to capitalize.
+   * @return The target language script that capitalizes the first character.
+   */
+  public StringExpression composeCapitalizeFirstFunction(StringExpression text);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 

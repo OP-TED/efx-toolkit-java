@@ -1781,6 +1781,26 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testCapitalizeFirstFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'hello' return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))",
+        "ND-Root", "capitalize-first('hello')");
+  }
+
+  @Test
+  void testCapitalizeFirstFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in PathNode/TextField/normalize-space(text()) return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))",
+        "{ND-Root} ${capitalize-first(BT-00-Text)}");
+  }
+
+  @Test
+  void testCapitalizeFirstFunction_WithRepeatableField_Throws() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpression("{ND-Root} ${capitalize-first(ND-Root)}"));
+  }
+
+  @Test
   void testSplitFunction() {
     testExpressionTranslationWithContext(
         "tokenize('a,b,c', replace(',', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",

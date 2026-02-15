@@ -2175,6 +2175,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitCapitalizeFirstFunction(CapitalizeFirstFunctionContext ctx) {
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeCapitalizeFirstFunction(text));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);

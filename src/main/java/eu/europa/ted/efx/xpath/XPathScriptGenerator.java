@@ -638,6 +638,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeCapitalizeFirstFunction(StringExpression text) {
+    return new StringExpression(
+        "(for $__s in " + text.getScript()
+            + " return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");
