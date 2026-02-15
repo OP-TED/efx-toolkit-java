@@ -353,6 +353,38 @@ public interface ScriptGenerator {
 
   public NumericExpression composeStringLengthCalculation(StringExpression text);
 
+  /**
+   * Returns the target language script that computes the absolute value of a number.
+   *
+   * @param number The numeric expression whose absolute value is to be computed.
+   * @return A numeric expression representing the absolute value.
+   */
+  public NumericExpression composeAbsFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number to the nearest integer.
+   *
+   * @param number The numeric expression to round.
+   * @return A numeric expression representing the rounded value.
+   */
+  public NumericExpression composeRoundFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number down (towards negative infinity).
+   *
+   * @param number The numeric expression to round down.
+   * @return A numeric expression representing the rounded-down value.
+   */
+  public NumericExpression composeFloorFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number up (towards positive infinity).
+   *
+   * @param number The numeric expression to round up.
+   * @return A numeric expression representing the rounded-up value.
+   */
+  public NumericExpression composeCeilingFunction(NumericExpression number);
+
   // #endregion Numeric Functions -------------------------------------------
 
   // #region String Functions -----------------------------------------------

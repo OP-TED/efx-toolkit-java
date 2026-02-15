@@ -1570,6 +1570,51 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "string-length(BT-00-Text)");
   }
 
+  @Test
+  void testAbsoluteFunction() {
+    testExpressionTranslationWithContext("abs(-5)", "ND-Root", "absolute(-5)");
+  }
+
+  @Test
+  void testAbsoluteFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("abs(PathNode/NumberField/number())", "ND-Root",
+        "absolute(BT-00-Number)");
+  }
+
+  @Test
+  void testRoundFunction() {
+    testExpressionTranslationWithContext("round(3.7)", "ND-Root", "round(3.7)");
+  }
+
+
+  @Test
+  void testRoundFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("round(PathNode/NumberField/number())", "ND-Root",
+        "round(BT-00-Number)");
+  }
+
+  @Test
+  void testRoundDownFunction() {
+    testExpressionTranslationWithContext("floor(3.7)", "ND-Root", "round-down(3.7)");
+  }
+
+  @Test
+  void testRoundDownFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("floor(PathNode/NumberField/number())", "ND-Root",
+        "round-down(BT-00-Number)");
+  }
+
+  @Test
+  void testRoundUpFunction() {
+    testExpressionTranslationWithContext("ceiling(3.2)", "ND-Root", "round-up(3.2)");
+  }
+
+  @Test
+  void testRoundUpFunction_WithFieldReference() {
+    testExpressionTranslationWithContext("ceiling(PathNode/NumberField/number())", "ND-Root",
+        "round-up(BT-00-Number)");
+  }
+
   // #endregion: Numeric functions
 
   // #region: String functions ------------------------------------------------

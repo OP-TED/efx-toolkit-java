@@ -487,6 +487,26 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeAbsFunction(NumericExpression number) {
+    return new NumericExpression("abs(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeRoundFunction(NumericExpression number) {
+    return new NumericExpression("round(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeFloorFunction(NumericExpression number) {
+    return new NumericExpression("floor(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeCeilingFunction(NumericExpression number) {
+    return new NumericExpression("ceiling(" + number.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
       NumericExpression rightOperand) {
     return new NumericExpression(

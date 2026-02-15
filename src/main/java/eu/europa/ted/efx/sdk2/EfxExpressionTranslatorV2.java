@@ -2020,6 +2020,26 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         .push(this.script.composeStringLengthCalculation(this.stack.pop(StringExpression.class)));
   }
 
+  @Override
+  public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
+    this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundFunction(RoundFunctionContext ctx) {
+    this.stack.push(this.script.composeRoundFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundDownFunction(RoundDownFunctionContext ctx) {
+    this.stack.push(this.script.composeFloorFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundUpFunction(RoundUpFunctionContext ctx) {
+    this.stack.push(this.script.composeCeilingFunction(this.stack.pop(NumericExpression.class)));
+  }
+
   // #endregion Numeric functions ---------------------------------------------
 
   // #region String functions -------------------------------------------------
