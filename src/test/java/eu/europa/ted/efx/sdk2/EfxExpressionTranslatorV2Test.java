@@ -2147,47 +2147,47 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testIndexOfFunction_WithStringSequences() {
-    testExpressionTranslationWithContext("index-of(('a','b','c','b'), 'b')", "ND-Root",
+    testExpressionTranslationWithContext("index-of(('a','b','c','b'), 'b')[1]", "ND-Root",
         "index-of(('a', 'b', 'c', 'b'), 'b')");
   }
 
   @Test
   void testIndexOfFunction_WithNumberSequences() {
-    testExpressionTranslationWithContext("index-of((10,20,30,20), 20)", "ND-Root",
+    testExpressionTranslationWithContext("index-of((10,20,30,20), 20)[1]", "ND-Root",
         "index-of((10, 20, 30, 20), 20)");
   }
 
   @Test
   void testIndexOfFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
-        "index-of((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2022-01-01Z')), xs:date('2022-01-01Z'))",
+        "index-of((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2022-01-01Z')), xs:date('2022-01-01Z'))[1]",
         "ND-Root", "index-of((2022-01-01Z, 2023-01-01Z, 2022-01-01Z), 2022-01-01Z)");
   }
 
   @Test
   void testIndexOfFunction_WithBooleanSequences() {
-    testExpressionTranslationWithContext("index-of((true(),false(),true()), true())",
+    testExpressionTranslationWithContext("index-of((true(),false(),true()), true())[1]",
         "ND-Root", "index-of((TRUE, FALSE, TRUE), TRUE)");
   }
 
   @Test
   void testIndexOfFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
-        "index-of((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')), xs:time('14:00:00Z'))",
+        "index-of((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')), xs:time('14:00:00Z'))[1]",
         "ND-Root", "index-of((14:00:00Z, 12:00:00Z, 14:00:00Z), 14:00:00Z)");
   }
 
   @Test
   void testIndexOfFunction_WithDurationSequences() {
     testExpressionTranslationWithContext(
-        "index-of((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')), xs:dayTimeDuration('P5D'))",
+        "index-of((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')), xs:dayTimeDuration('P5D'))[1]",
         "ND-Root", "index-of((P5D, P2D, P5D), P5D)");
   }
 
   @Test
   void testIndexOfFunction_WithRepeatableFieldReference() {
     testExpressionTranslationWithContext(
-        "index-of(PathNode/RepeatableTextField/normalize-space(text()), 'hello')", "ND-Root",
+        "index-of(PathNode/RepeatableTextField/normalize-space(text()), 'hello')[1]", "ND-Root",
         "index-of(BT-00-Repeatable-Text, 'hello')");
   }
 

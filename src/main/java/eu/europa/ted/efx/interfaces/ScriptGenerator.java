@@ -725,14 +725,15 @@ public interface ScriptGenerator {
       NumericExpression start, NumericExpression length, Class<T> listType);
 
   /**
-   * Returns the target language script that finds the positions of a value within a sequence.
-   * Returns a numeric sequence containing the 1-based positions of all occurrences.
+   * Returns the target language script that finds the 1-based position of the first occurrence of a
+   * value within a sequence. Returns 0 if the value is not found.
    *
    * @param list  The sequence to search in.
    * @param value The value to search for.
-   * @return A numeric sequence containing the positions of all occurrences.
+   * @return A numeric expression with the 1-based position of the first occurrence, or 0 if not
+   *         found.
    */
-  public NumericSequenceExpression composeIndexOfFunction(SequenceExpression list,
+  public NumericExpression composeIndexOfFunction(SequenceExpression list,
       ScalarExpression value);
 
   /**
