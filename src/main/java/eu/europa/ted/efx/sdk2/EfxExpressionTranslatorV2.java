@@ -2096,6 +2096,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitNormalizeSpaceFunction(NormalizeSpaceFunctionContext ctx) {
+    this.stack.push(this.script.composeNormalizeSpaceFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);

@@ -1593,8 +1593,21 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLowerCaseFunction() {
     testExpressionTranslation(
-        "lower-case(PathNode/TextField/normalize-space(text()))", 
+        "lower-case(PathNode/TextField/normalize-space(text()))",
         "{ND-Root} ${lower-case(BT-00-Text)}");
+  }
+
+  @Test
+  void testNormalizeSpaceFunction() {
+    testExpressionTranslation(
+        "normalize-space(PathNode/TextField/normalize-space(text()))",
+        "{ND-Root} ${normalize-space(BT-00-Text)}");
+  }
+
+  @Test
+  void testNormalizeSpaceFunction_WithLiteral() {
+    testExpressionTranslationWithContext("normalize-space('  hello   world  ')", "ND-Root",
+        "normalize-space('  hello   world  ')");
   }
 
   @Test

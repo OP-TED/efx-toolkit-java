@@ -546,6 +546,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeNormalizeSpaceFunction(StringExpression text) {
+    return new StringExpression("normalize-space(" + text.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

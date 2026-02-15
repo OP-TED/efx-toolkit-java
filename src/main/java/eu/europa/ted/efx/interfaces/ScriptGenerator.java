@@ -439,6 +439,15 @@ public interface ScriptGenerator {
   public StringExpression composeToLowerCaseConversion(StringExpression text);
 
   /**
+   * Returns the target language script that strips leading/trailing whitespace and collapses
+   * internal whitespace sequences to a single space.
+   *
+   * @param text The text to normalize.
+   * @return The target language script that normalizes whitespace in the text.
+   */
+  public StringExpression composeNormalizeSpaceFunction(StringExpression text);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 
