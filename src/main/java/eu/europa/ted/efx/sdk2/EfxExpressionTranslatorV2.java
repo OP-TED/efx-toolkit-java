@@ -2015,6 +2015,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitMinFunction(MinFunctionContext ctx) {
+    this.stack.push(this.script.composeMinFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitMaxFunction(MaxFunctionContext ctx) {
+    this.stack.push(this.script.composeMaxFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitAverageFunction(AverageFunctionContext ctx) {
+    this.stack.push(this.script.composeAvgFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
   public void exitStringLengthFunction(StringLengthFunctionContext ctx) {
     this.stack
         .push(this.script.composeStringLengthCalculation(this.stack.pop(StringExpression.class)));

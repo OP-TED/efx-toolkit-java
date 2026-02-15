@@ -482,6 +482,21 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeMinFunction(NumericSequenceExpression list) {
+    return new NumericExpression("min(" + list.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMaxFunction(NumericSequenceExpression list) {
+    return new NumericExpression("max(" + list.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeAvgFunction(NumericSequenceExpression list) {
+    return new NumericExpression("avg(" + list.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeStringLengthCalculation(StringExpression text) {
     return new NumericExpression("string-length(" + text.getScript() + ")");
   }

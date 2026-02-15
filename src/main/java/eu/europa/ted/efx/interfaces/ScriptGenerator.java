@@ -351,6 +351,30 @@ public interface ScriptGenerator {
 
   public NumericExpression composeSumOperation(NumericSequenceExpression list);
 
+  /**
+   * Returns the target language script that computes the minimum value in a numeric sequence.
+   *
+   * @param list The numeric sequence to find the minimum of.
+   * @return A numeric expression representing the minimum value.
+   */
+  public NumericExpression composeMinFunction(NumericSequenceExpression list);
+
+  /**
+   * Returns the target language script that computes the maximum value in a numeric sequence.
+   *
+   * @param list The numeric sequence to find the maximum of.
+   * @return A numeric expression representing the maximum value.
+   */
+  public NumericExpression composeMaxFunction(NumericSequenceExpression list);
+
+  /**
+   * Returns the target language script that computes the average of a numeric sequence.
+   *
+   * @param list The numeric sequence to average.
+   * @return A numeric expression representing the average value.
+   */
+  public NumericExpression composeAvgFunction(NumericSequenceExpression list);
+
   public NumericExpression composeStringLengthCalculation(StringExpression text);
 
   /**

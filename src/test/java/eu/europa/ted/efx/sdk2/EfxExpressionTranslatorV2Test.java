@@ -1564,6 +1564,30 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testMinFunction_UsingFieldReference() {
+    testExpressionTranslationWithContext("min(PathNode/NumberField/number())", "ND-Root",
+        "min(BT-00-Number)");
+  }
+
+  @Test
+  void testMaxFunction_UsingFieldReference() {
+    testExpressionTranslationWithContext("max(PathNode/NumberField/number())", "ND-Root",
+        "max(BT-00-Number)");
+  }
+
+  @Test
+  void testAverageFunction_UsingFieldReference() {
+    testExpressionTranslationWithContext("avg(PathNode/NumberField/number())", "ND-Root",
+        "average(BT-00-Number)");
+  }
+
+  @Test
+  void testAverageFunction_UsingNumericSequenceFromIteration() {
+    testExpressionTranslationWithContext("avg(for $v in PathNode/NumberField/number() return $v + 1)",
+        "ND-Root", "average(for number:$v in BT-00-Number return $v +1)");
+  }
+
+  @Test
   void testStringLengthFunction() {
     testExpressionTranslationWithContext(
         "string-length(PathNode/TextField/normalize-space(text()))", "ND-Root",
