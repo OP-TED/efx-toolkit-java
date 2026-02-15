@@ -529,6 +529,30 @@ public interface ScriptGenerator {
   public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count);
 
   /**
+   * Returns the target language script that replaces all occurrences of a literal search string
+   * with the replacement string.
+   *
+   * @param text The text to search in.
+   * @param search The literal string to search for.
+   * @param replacement The replacement string.
+   * @return The target language script that performs literal replacement.
+   */
+  public StringExpression composeReplaceFunction(StringExpression text, StringExpression search,
+      StringExpression replacement);
+
+  /**
+   * Returns the target language script that replaces all matches of a regular expression pattern
+   * with the replacement string. The pattern uses the EFX regex profile.
+   *
+   * @param text The text to search in.
+   * @param pattern The regex pattern to match.
+   * @param replacement The replacement string (may use capture group references).
+   * @return The target language script that performs regex replacement.
+   */
+  public StringExpression composeReplaceRegexFunction(StringExpression text,
+      StringExpression pattern, StringExpression replacement);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 

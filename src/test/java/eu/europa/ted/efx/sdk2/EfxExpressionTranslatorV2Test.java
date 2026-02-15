@@ -1698,6 +1698,69 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testReplaceFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'world', $__t in 'hello world' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('there', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('hello world', 'world', 'there')");
+  }
+
+  @Test
+  void testReplaceFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in '-', $__t in PathNode/TextField/normalize-space(text()) return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('_', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "{ND-Root} ${replace(BT-00-Text, '-', '_')}");
+  }
+
+  @Test
+  void testReplaceFunction_WithRegexMetacharSearch() {
+    testExpressionTranslationWithContext(
+        "(for $__s in '.', $__t in 'a.b.c' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('-', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('a.b.c', '.', '-')");
+  }
+
+  @Test
+  void testReplaceFunction_WithDollarInSearch() {
+    testExpressionTranslationWithContext(
+        "(for $__s in '$', $__t in 'a$b' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('X', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('a$b', '$', 'X')");
+  }
+
+  @Test
+  void testReplaceFunction_WithDollarInReplacement() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'b', $__t in 'ab' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('$1', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('ab', 'b', '$1')");
+  }
+
+  @Test
+  void testReplaceFunction_WithBackslashInReplacement() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'b', $__t in 'ab' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('\\\\', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('ab', 'b', '\\\\')");
+  }
+
+  @Test
+  void testReplaceFunction_WithEmptySearch() {
+    testExpressionTranslationWithContext(
+        "(for $__s in '', $__t in 'text' return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('x', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
+        "ND-Root", "replace('text', '', 'x')");
+  }
+
+  @Test
+  void testReplaceRegexFunction() {
+    testExpressionTranslationWithContext(
+        "replace('hello 123 world', '[0-9]+', 'NUM')",
+        "ND-Root", "replace-regex('hello 123 world', '[0-9]+', 'NUM')");
+  }
+
+  @Test
+  void testReplaceRegexFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "replace(PathNode/TextField/normalize-space(text()), '\\s+', ' ')",
+        "{ND-Root} ${replace-regex(BT-00-Text, '\\s+', ' ')}");
+  }
+
+  @Test
   void testSplitFunction() {
     testExpressionTranslationWithContext(
         "tokenize('a,b,c', replace(',', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",

@@ -2153,6 +2153,22 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitReplaceFunction(ReplaceFunctionContext ctx) {
+    final StringExpression replacement = this.stack.pop(StringExpression.class);
+    final StringExpression search = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeReplaceFunction(text, search, replacement));
+  }
+
+  @Override
+  public void exitReplaceRegexFunction(ReplaceRegexFunctionContext ctx) {
+    final StringExpression replacement = this.stack.pop(StringExpression.class);
+    final StringExpression pattern = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeReplaceRegexFunction(text, pattern, replacement));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);

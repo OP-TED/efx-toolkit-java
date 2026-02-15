@@ -610,6 +610,29 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeReplaceFunction(StringExpression text, StringExpression search,
+      StringExpression replacement) {
+    // Escape regex metacharacters in the search string for literal matching
+    String escapedSearch = "replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
+    // Escape replacement-string semantics: \ must become \\, $ must become \$
+    // (order matters: escape backslashes first, then dollars)
+    String escapedReplacement = "replace(replace(" + replacement.getScript()
+        + ", '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')";
+    // Bind text and search to avoid double evaluation; guard against empty search at runtime
+    return new StringExpression("(for $__s in " + search.getScript() + ", $__t in "
+        + text.getScript() + " return if ($__s = '') then $__t else replace($__t, "
+        + escapedSearch + ", " + escapedReplacement + "))");
+  }
+
+  @Override
+  public StringExpression composeReplaceRegexFunction(StringExpression text,
+      StringExpression pattern, StringExpression replacement) {
+    return new StringExpression(
+        "replace(" + text.getScript() + ", " + pattern.getScript() + ", "
+            + replacement.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");
