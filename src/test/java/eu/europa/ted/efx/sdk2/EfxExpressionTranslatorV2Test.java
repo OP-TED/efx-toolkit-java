@@ -1719,6 +1719,32 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testSubstringBeforeFunction() {
+    testExpressionTranslationWithContext("substring-before('hello-world', '-')", "ND-Root",
+        "substring-before('hello-world', '-')");
+  }
+
+  @Test
+  void testSubstringBeforeFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "substring-before(PathNode/TextField/normalize-space(text()), '-')",
+        "{ND-Root} ${substring-before(BT-00-Text, '-')}");
+  }
+
+  @Test
+  void testSubstringAfterFunction() {
+    testExpressionTranslationWithContext("substring-after('hello-world', '-')", "ND-Root",
+        "substring-after('hello-world', '-')");
+  }
+
+  @Test
+  void testSubstringAfterFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "substring-after(PathNode/TextField/normalize-space(text()), '-')",
+        "{ND-Root} ${substring-after(BT-00-Text, '-')}");
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }

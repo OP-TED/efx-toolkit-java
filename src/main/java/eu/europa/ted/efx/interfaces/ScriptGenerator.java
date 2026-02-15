@@ -377,6 +377,28 @@ public interface ScriptGenerator {
       NumericExpression length);
 
   /**
+   * Returns the target language script that extracts the part of the text before the first
+   * occurrence of the delimiter. Returns an empty string if the delimiter is not found.
+   *
+   * @param text The text to search in.
+   * @param delimiter The delimiter to search for.
+   * @return The target language script for the substring before the delimiter.
+   */
+  public StringExpression composeSubstringBeforeFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
+   * Returns the target language script that extracts the part of the text after the first
+   * occurrence of the delimiter. Returns an empty string if the delimiter is not found.
+   *
+   * @param text The text to search in.
+   * @param delimiter The delimiter to search for.
+   * @return The target language script for the substring after the delimiter.
+   */
+  public StringExpression composeSubstringAfterFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
    * Returns the target language script that converts a number to its string representation.
    *
    * @param number The numeric expression to convert.

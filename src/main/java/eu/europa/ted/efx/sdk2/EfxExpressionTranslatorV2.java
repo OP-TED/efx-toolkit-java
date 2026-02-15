@@ -2038,6 +2038,20 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitSubstringBeforeFunction(SubstringBeforeFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSubstringBeforeFunction(text, delimiter));
+  }
+
+  @Override
+  public void exitSubstringAfterFunction(SubstringAfterFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSubstringAfterFunction(text, delimiter));
+  }
+
+  @Override
   public void exitNumberToStringFunction(NumberToStringFunctionContext ctx) {
     this.stack.push(this.script.composeToStringConversion(this.stack.pop(NumericExpression.class)));
   }

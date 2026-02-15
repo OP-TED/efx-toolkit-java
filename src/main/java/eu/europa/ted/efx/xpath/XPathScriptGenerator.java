@@ -511,6 +511,20 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeSubstringBeforeFunction(StringExpression text,
+      StringExpression delimiter) {
+    return new StringExpression(
+        "substring-before(" + text.getScript() + ", " + delimiter.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeSubstringAfterFunction(StringExpression text,
+      StringExpression delimiter) {
+    return new StringExpression(
+        "substring-after(" + text.getScript() + ", " + delimiter.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
     return new StringExpression("string(" + number.getScript() + ")");
   }
