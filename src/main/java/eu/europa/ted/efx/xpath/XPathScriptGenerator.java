@@ -567,6 +567,28 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composePadLeftFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar) {
+    String len = length.getScript();
+    String ch = padChar.getScript();
+    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return concat(substring(" + padding + ", 1, " + len
+        + " - string-length($__s)), $__s))");
+  }
+
+  @Override
+  public StringExpression composePadRightFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar) {
+    String len = length.getScript();
+    String ch = padChar.getScript();
+    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return concat($__s, substring(" + padding + ", 1, " + len
+        + " - string-length($__s))))");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

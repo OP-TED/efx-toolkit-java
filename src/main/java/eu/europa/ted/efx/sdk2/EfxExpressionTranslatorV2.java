@@ -2116,6 +2116,22 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitPadLeftFunction(PadLeftFunctionContext ctx) {
+    final StringExpression padChar = this.stack.pop(StringExpression.class);
+    final NumericExpression length = this.stack.pop(NumericExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composePadLeftFunction(text, length, padChar));
+  }
+
+  @Override
+  public void exitPadRightFunction(PadRightFunctionContext ctx) {
+    final StringExpression padChar = this.stack.pop(StringExpression.class);
+    final NumericExpression length = this.stack.pop(NumericExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composePadRightFunction(text, length, padChar));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);

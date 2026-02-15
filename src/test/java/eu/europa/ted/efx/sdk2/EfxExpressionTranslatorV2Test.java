@@ -1656,6 +1656,34 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testPadLeftFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in '42' return concat(substring(string-join(for $__i in 1 to 5 return '0', ''), 1, 5 - string-length($__s)), $__s))",
+        "ND-Root", "pad-left('42', 5, '0')");
+  }
+
+  @Test
+  void testPadLeftFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in PathNode/TextField/normalize-space(text()) return concat(substring(string-join(for $__i in 1 to 10 return ' ', ''), 1, 10 - string-length($__s)), $__s))",
+        "{ND-Root} ${pad-left(BT-00-Text, 10, ' ')}");
+  }
+
+  @Test
+  void testPadRightFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in '42' return concat($__s, substring(string-join(for $__i in 1 to 5 return '0', ''), 1, 5 - string-length($__s))))",
+        "ND-Root", "pad-right('42', 5, '0')");
+  }
+
+  @Test
+  void testPadRightFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in PathNode/TextField/normalize-space(text()) return concat($__s, substring(string-join(for $__i in 1 to 10 return ' ', ''), 1, 10 - string-length($__s))))",
+        "{ND-Root} ${pad-right(BT-00-Text, 10, ' ')}");
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }

@@ -472,6 +472,32 @@ public interface ScriptGenerator {
   public StringExpression composeTrimRightFunction(StringExpression text);
 
   /**
+   * Returns the target language script that pads the text on the left with the given character
+   * until it reaches the specified length. If the text is already at least the specified length,
+   * it is returned unchanged.
+   *
+   * @param text The text to pad.
+   * @param length The desired minimum length.
+   * @param padChar The character to pad with.
+   * @return The target language script that left-pads the text.
+   */
+  public StringExpression composePadLeftFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar);
+
+  /**
+   * Returns the target language script that pads the text on the right with the given character
+   * until it reaches the specified length. If the text is already at least the specified length,
+   * it is returned unchanged.
+   *
+   * @param text The text to pad.
+   * @param length The desired minimum length.
+   * @param padChar The character to pad with.
+   * @return The target language script that right-pads the text.
+   */
+  public StringExpression composePadRightFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 
