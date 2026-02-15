@@ -326,8 +326,21 @@ public interface ScriptGenerator {
 
   public NumericExpression composeCountOperation(final SequenceExpression list);
 
+  /**
+   * Returns the target language script that converts a string to a number.
+   *
+   * @param text The string expression to convert.
+   * @return A numeric expression representing the converted value.
+   */
   public NumericExpression composeToNumberConversion(StringExpression text);
 
+  /**
+   * Returns the target language script that converts a boolean to a number.
+   * Typically {@code TRUE} maps to {@code 1} and {@code FALSE} maps to {@code 0}.
+   *
+   * @param bool The boolean expression to convert.
+   * @return A numeric expression representing the converted value.
+   */
   public NumericExpression composeToNumberConversion(BooleanExpression bool);
 
   public NumericExpression composeSumOperation(NumericSequenceExpression list);
@@ -357,14 +370,44 @@ public interface ScriptGenerator {
   public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
       NumericExpression length);
 
+  /**
+   * Returns the target language script that converts a number to its string representation.
+   *
+   * @param number The numeric expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(NumericExpression number);
 
+  /**
+   * Returns the target language script that converts a boolean to its string representation.
+   *
+   * @param bool The boolean expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(BooleanExpression bool);
 
+  /**
+   * Returns the target language script that converts a date to its string representation.
+   *
+   * @param date The date expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(DateExpression date);
 
+  /**
+   * Returns the target language script that converts a time to its string representation.
+   *
+   * @param time The time expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(TimeExpression time);
 
+  /**
+   * Returns the target language script that converts a duration to its string representation.
+   *
+   * @param duration The duration expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(DurationExpression duration);
 
   /**
@@ -426,6 +469,13 @@ public interface ScriptGenerator {
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
+  /**
+   * Returns the target language script that converts a number to a boolean.
+   * Typically {@code 0} maps to {@code FALSE} and any non-zero value maps to {@code TRUE}.
+   *
+   * @param number The numeric expression to convert.
+   * @return A boolean expression representing the converted value.
+   */
   public BooleanExpression composeToBooleanConversion(NumericExpression number);
 
   /**
@@ -471,6 +521,12 @@ public interface ScriptGenerator {
 
   // #region Date Functions ---------------------------------------------------
 
+  /**
+   * Returns the target language script that converts a string to a date.
+   *
+   * @param pop The string expression to convert.
+   * @return A date expression representing the converted value.
+   */
   public DateExpression composeToDateConversion(StringExpression pop);
 
   public DateExpression composeAddition(final DateExpression date,
@@ -490,14 +546,34 @@ public interface ScriptGenerator {
 
   // #region Time Functions ---------------------------------------------------
 
+  /**
+   * Returns the target language script that converts a string to a time.
+   *
+   * @param pop The string expression to convert.
+   * @return A time expression representing the converted value.
+   */
   public TimeExpression composeToTimeConversion(StringExpression pop);
 
   // #endregion Time Functions ------------------------------------------------
 
   // #region Duration Functions -----------------------------------------------
 
+  /**
+   * Returns the target language script that converts a string to a day-time duration
+   * (e.g. {@code "P3DT4H"} for 3 days and 4 hours).
+   *
+   * @param text The string expression to convert.
+   * @return A duration expression representing the converted value.
+   */
   public DurationExpression composeToDayTimeDurationConversion(StringExpression text);
 
+  /**
+   * Returns the target language script that converts a string to a year-month duration
+   * (e.g. {@code "P2Y3M"} for 2 years and 3 months).
+   *
+   * @param text The string expression to convert.
+   * @return A duration expression representing the converted value.
+   */
   public DurationExpression composeToYearMonthDurationConversion(StringExpression text);
 
   public DurationExpression composeSubtraction(DateExpression startDate, DateExpression endDate);
