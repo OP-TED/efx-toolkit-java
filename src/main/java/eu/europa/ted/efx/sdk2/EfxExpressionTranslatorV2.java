@@ -2533,6 +2533,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitIndexOfSubstringFunction(IndexOfSubstringFunctionContext ctx) {
+    final StringExpression substring = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeIndexOfSubstringFunction(text, substring));
+  }
+
+  @Override
   public void exitIndexOfBooleanFunction(IndexOfBooleanFunctionContext ctx) {
     exitIndexOfFunction(BooleanSequenceExpression.class, BooleanExpression.class);
   }

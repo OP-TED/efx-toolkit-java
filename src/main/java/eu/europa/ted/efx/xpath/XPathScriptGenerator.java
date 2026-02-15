@@ -770,6 +770,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeIndexOfSubstringFunction(StringExpression text,
+      StringExpression substring) {
+    return new NumericExpression(
+        "(for $__s in " + text.getScript() + ", $__sub in " + substring.getScript()
+            + " return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)");
+  }
+
+  @Override
   public StringSequenceExpression composeSplitFunction(StringExpression text,
       StringExpression delimiter) {
     // XPath's tokenize() uses regex, so we escape regex metacharacters in the delimiter

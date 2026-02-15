@@ -838,6 +838,17 @@ public interface ScriptGenerator {
       StringExpression delimiter);
 
   /**
+   * Returns the target language script that finds the 1-based position of the first occurrence
+   * of a substring within a string. Returns 0 if the substring is not found.
+   *
+   * @param text The text to search in.
+   * @param substring The substring to search for.
+   * @return A numeric expression with the 1-based position, or 0 if not found.
+   */
+  public NumericExpression composeIndexOfSubstringFunction(StringExpression text,
+      StringExpression substring);
+
+  /**
    * Returns the target language script that retrieves the element at a given position
    * in a sequence.
    *

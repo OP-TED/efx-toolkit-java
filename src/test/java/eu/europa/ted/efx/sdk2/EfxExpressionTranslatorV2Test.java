@@ -1745,6 +1745,20 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testIndexOfSubstringFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'hello world', $__sub in 'world' return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)",
+        "ND-Root", "index-of-substring('hello world', 'world')");
+  }
+
+  @Test
+  void testIndexOfSubstringFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in PathNode/TextField/normalize-space(text()), $__sub in '-' return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)",
+        "{ND-Root} ${index-of-substring(BT-00-Text, '-')}");
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }
