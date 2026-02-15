@@ -324,6 +324,12 @@ public interface ScriptGenerator {
 
   // #region Numeric Functions ------------------------------------------------
 
+  /**
+   * Returns the target language script that counts the number of elements in a sequence.
+   *
+   * @param list The sequence whose elements are to be counted.
+   * @return A numeric expression representing the count.
+   */
   public NumericExpression composeCountOperation(final SequenceExpression list);
 
   public NumericExpression composeToNumberConversion(StringExpression text);
@@ -464,11 +470,33 @@ public interface ScriptGenerator {
   public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
       DurationSequenceExpression haystack);
 
+  /**
+   * Returns the target language script that checks whether two sequences contain the same
+   * elements, regardless of order.
+   *
+   * @param one The first sequence.
+   * @param two The second sequence.
+   * @return A boolean expression that is true when the two sequences are equal.
+   */
   public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
       SequenceExpression two);
 
+  /**
+   * Returns the target language script that checks whether a sequence is empty
+   * (contains no elements).
+   *
+   * @param sequence The sequence to check.
+   * @return A boolean expression that is true when the sequence is empty.
+   */
   public BooleanExpression composeEmptySequenceCondition(SequenceExpression sequence);
 
+  /**
+   * Returns the target language script that checks whether all values in a sequence are
+   * distinct (i.e. the sequence has no duplicate values).
+   *
+   * @param sequence The sequence to check.
+   * @return A boolean expression that is true when all values are distinct.
+   */
   public BooleanExpression composeIsDistinctCondition(SequenceExpression sequence);
 
   // #endregion Boolean Functions --------------------------------------------
@@ -522,31 +550,125 @@ public interface ScriptGenerator {
 
   // #region Sequence Functions --------------------------------------------
 
+  /**
+   * Returns the target language script that removes duplicate values from a sequence,
+   * preserving only distinct values.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to remove duplicates from.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the distinct values.
+   */
   public <T extends SequenceExpression> T composeDistinctValuesFunction(
       T list, Class<T> listType);
 
+  /**
+   * Returns the target language script that computes the union of two sequences
+   * (all values from both, with duplicates removed).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing the union of both sequences.
+   */
   public <T extends SequenceExpression> T composeUnionFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that computes the intersection of two sequences
+   * (only values present in both).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the values present in both sequences.
+   */
   public <T extends SequenceExpression> T composeIntersectFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that computes the difference of two sequences
+   * (values in the first sequence that are not in the second).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing values from the first sequence not present in the second.
+   */
   public <T extends SequenceExpression> T composeExceptFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that sorts a sequence in ascending order.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to sort.
+   * @param listType The class of the sequence expression type.
+   * @return A sorted sequence.
+   */
   public <T extends SequenceExpression> T composeSortFunction(T list, Class<T> listType);
 
+  /**
+   * Returns the target language script that reverses the order of elements in a sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to reverse.
+   * @param listType The class of the sequence expression type.
+   * @return A reversed sequence.
+   */
   public <T extends SequenceExpression> T composeReverseFunction(T list, Class<T> listType);
 
+  /**
+   * Returns the target language script that extracts a contiguous subsequence starting
+   * at the given position, through the end of the sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The source sequence.
+   * @param start    The 1-based starting position.
+   * @param listType The class of the sequence expression type.
+   * @return A subsequence from the starting position to the end.
+   */
   public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
       NumericExpression start, Class<T> listType);
 
+  /**
+   * Returns the target language script that extracts a contiguous subsequence of the
+   * given length, starting at the given position.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The source sequence.
+   * @param start    The 1-based starting position.
+   * @param length   The maximum number of elements to extract.
+   * @param listType The class of the sequence expression type.
+   * @return A subsequence of the given length starting at the given position.
+   */
   public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
       NumericExpression start, NumericExpression length, Class<T> listType);
 
+  /**
+   * Returns the target language script that finds the positions of a value within a sequence.
+   * Returns a numeric sequence containing the 1-based positions of all occurrences.
+   *
+   * @param list  The sequence to search in.
+   * @param value The value to search for.
+   * @return A numeric sequence containing the positions of all occurrences.
+   */
   public NumericSequenceExpression composeIndexOfFunction(SequenceExpression list,
       ScalarExpression value);
 
+  /**
+   * Returns the target language script that retrieves the element at a given position
+   * in a sequence.
+   *
+   * @param <T>   The scalar type of the elements in the sequence.
+   * @param list  The sequence to index into.
+   * @param index The 1-based position of the element to retrieve.
+   * @param type  The class of the scalar expression type.
+   * @return The element at the given position.
+   */
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type);
 
