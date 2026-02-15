@@ -498,6 +498,15 @@ public interface ScriptGenerator {
       StringExpression padChar);
 
   /**
+   * Returns the target language script that repeats the text the specified number of times.
+   *
+   * @param text The text to repeat.
+   * @param count The number of repetitions.
+   * @return The target language script that repeats the text.
+   */
+  public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 

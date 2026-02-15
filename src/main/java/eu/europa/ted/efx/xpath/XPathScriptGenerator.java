@@ -589,6 +589,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count) {
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return string-join(for $__i in 1 to " + count.getScript()
+        + " return $__s, ''))");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

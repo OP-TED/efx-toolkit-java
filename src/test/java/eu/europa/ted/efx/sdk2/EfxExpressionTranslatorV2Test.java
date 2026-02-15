@@ -1684,6 +1684,20 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testRepeatFunction() {
+    testExpressionTranslationWithContext(
+        "(for $__s in 'abc' return string-join(for $__i in 1 to 3 return $__s, ''))",
+        "ND-Root", "repeat('abc', 3)");
+  }
+
+  @Test
+  void testRepeatFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "(for $__s in PathNode/TextField/normalize-space(text()) return string-join(for $__i in 1 to 4 return $__s, ''))",
+        "{ND-Root} ${repeat(BT-00-Text, 4)}");
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }
