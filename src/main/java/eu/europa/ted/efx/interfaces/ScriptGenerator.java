@@ -848,6 +848,57 @@ public interface ScriptGenerator {
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format);
 
+  /**
+   * Formats a date using a short locale-aware format (e.g. 15/02/2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateShort(DateExpression date);
+
+  /**
+   * Formats a date using a medium locale-aware format with abbreviated month name
+   * (e.g. 15 Feb 2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateMedium(DateExpression date);
+
+  /**
+   * Formats a date using a long locale-aware format with full month name
+   * (e.g. 15 February 2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateLong(DateExpression date);
+
+  /**
+   * Formats a time using a short locale-aware format (e.g. 14:30 CET).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeShort(TimeExpression time);
+
+  /**
+   * Formats a time using a medium locale-aware format with seconds (e.g. 14:30:00).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeMedium(TimeExpression time);
+
+  /**
+   * Formats a time using a long locale-aware format with seconds and timezone
+   * (e.g. 14:30:00 CET).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeLong(TimeExpression time);
+
   public DurationExpression composeMultiplication(final NumericExpression number,
       final DurationExpression duration);
 

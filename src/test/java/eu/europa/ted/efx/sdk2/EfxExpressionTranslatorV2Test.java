@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 
 class EfxExpressionTranslatorV2Test extends EfxTestsBase {
@@ -158,22 +159,18 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "{ND-Root} ${every text:$lang in BT-00-Text-Multilingual/@languageID satisfies BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == $lang]  like '[0-9]*'}");
   }
 
-  @Test 
-  void testPreferredLanguageFunction() {
-    testExpressionTranslation("PathNode/TextMultilingualField[./@languageID = efx:preferred-language(.)]/normalize-space(text())", 
-    "{ND-Root} ${BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == preferred-language(BT-00-Text-Multilingual)]}");
+  @Test
+  void testPreferredLanguage_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "preferred-language(BT-00-Text-Multilingual)"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
   }
 
-    @Test 
-  void testPreferredLanguageFunction_InPredicate() {
-    testExpressionTranslation("efx:preferred-language(PathNode/TextMultilingualField)", 
-    "{ND-Root} ${preferred-language(BT-00-Text-Multilingual)}");
-  }
-
-  @Test 
-  void testPreferredLanguageTextFunction() {
-    testExpressionTranslation("efx:preferred-language-text(PathNode/TextMultilingualField)", 
-    "{ND-Root} ${preferred-language-text(BT-00-Text-Multilingual)}");
+  @Test
+  void testPreferredLanguageText_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "preferred-language-text(BT-00-Text-Multilingual)"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
   }
 
   @Test
@@ -1355,9 +1352,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_wasWithheld_onNonWithholdableField() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:wasWithheld"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
   @Test
@@ -1375,9 +1373,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_isWithheld_onNonWithholdableField() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:isWithheld"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
   @Test
@@ -1414,9 +1413,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_isDisclosed_onNonWithholdableField() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:isDisclosed"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
   @Test
@@ -1432,9 +1432,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_isMasked_onNonWithholdableField() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:isMasked"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
   @Test
@@ -1450,7 +1451,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_isMasked_repeatingFieldFromContext() {
-    assertThrows(ParseCancellationException.class,
+    assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root",
             "BT-00-Text-In-Repeatable-Node:isMasked"));
   }
@@ -1512,9 +1513,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testMetadataProperty_privacyCode_onNonWithholdableField() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:privacyCode"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
   // #endregion: Boolean functions
@@ -2117,6 +2119,27 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFormatNumberFunction() {
     testExpressionTranslationWithContext("format-number(PathNode/NumberField/number(), '# ##0,00')",
         "ND-Root", "format-number(BT-00-Number, '#,##0.00')");
+  }
+
+  @Test
+  void testFormatShort_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "format-short(date('2026-02-15'))"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
+  }
+
+  @Test
+  void testFormatMedium_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "format-medium(date('2026-02-15'))"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
+  }
+
+  @Test
+  void testFormatLong_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "format-long(date('2026-02-15'))"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
   }
 
   // #endregion: String functions

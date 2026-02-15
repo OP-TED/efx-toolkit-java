@@ -60,7 +60,6 @@ import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
-import eu.europa.ted.efx.model.expressions.scalar.MultilingualStringPath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
@@ -2162,6 +2161,51 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeNumberFormatting(number, format));
   }
 
+  @Override
+  public void exitFormatShortDateFunction(FormatShortDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatShortTimeFunction(FormatShortTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatMediumDateFunction(FormatMediumDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatMediumTimeFunction(FormatMediumTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatLongDateFunction(FormatLongDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
+  @Override
+  public void exitFormatLongTimeFunction(FormatLongTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
+  @Override
+  public void exitFormatShortDateTimeFunction(FormatShortDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatMediumDateTimeFunction(FormatMediumDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatLongDateTimeFunction(FormatLongDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
   // #region New in EFX-2 -----------------------------------------------------
 
   @Override
@@ -2254,12 +2298,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
-    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    throw InvalidUsageException.templateOnlyFunction("preferred-language");
   }
 
   @Override
   public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
-    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    throw InvalidUsageException.templateOnlyFunction("preferred-language-text");
   }
 
   @Override

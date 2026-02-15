@@ -729,6 +729,38 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeFormatDateShort(DateExpression date) {
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01]/[M01]/[Y0001]')");
+  }
+
+  @Override
+  public StringExpression composeFormatDateMedium(DateExpression date) {
+    String lang = this.translatorOptions.getPrimaryLanguage2LetterCode();
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01] [MNn,3-3] [Y0001]', '" + lang + "', (), ())");
+  }
+
+  @Override
+  public StringExpression composeFormatDateLong(DateExpression date) {
+    String lang = this.translatorOptions.getPrimaryLanguage2LetterCode();
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01] [MNn] [Y0001]', '" + lang + "', (), ())");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeShort(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01] [Z]')");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeMedium(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01]:[s01]')");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeLong(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01]:[s01] [Z]')");
+  }
+
+  @Override
   public StringLiteral getStringLiteralFromUnquotedString(String value) {
     return new StringLiteral("'" + value + "'");
   }

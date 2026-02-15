@@ -90,6 +90,7 @@ import eu.europa.ted.efx.model.variables.ParsedParameters;
 import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
+import eu.europa.ted.efx.model.expressions.scalar.MultilingualStringPath;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
@@ -834,11 +835,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {
     var expression = this.stack.pop(Expression.class);
 
-    // TODO: Review this in EFX-2
-
-    // This is a hack to make sure that the date and time expressions are rendered in the correct
-    // format. We had to do this because EFX 1 does not support the format-date() and format-time()
-    // functions.
+    // Implicit formatting: date and time expressions in template blocks are automatically
+    // formatted using format-short for display.
+    // Users can override by using explicit format-short/format-medium/format-long in the expression.
     if (TypedExpression.class.isAssignableFrom(expression.getClass())) {
       if (EfxDataType.Date.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
 
@@ -850,25 +849,103 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
                     new DateSequenceExpression(expression.getScript())))),
-            new StringExpression("format-date($item, '[D01]/[M01]/[Y0001]')"),
+            this.script.composeFormatDateShort(new DateExpression(loopVariable.referenceExpression.getScript())),
             StringSequenceExpression.class);
       } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
 
         var loopVariable = new Variable("item",
-            this.script.composeVariableDeclaration("item", DateExpression.class), DateExpression.empty(),
-            this.script.composeVariableReference("item", DateExpression.class));
+            this.script.composeVariableDeclaration("item", TimeExpression.class), TimeExpression.empty(),
+            this.script.composeVariableReference("item", TimeExpression.class));
 
         expression = this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
                     new TimeSequenceExpression(expression.getScript())))),
-            new StringExpression("format-time($item, '[H01]:[m01] [Z]')"),
+            this.script.composeFormatTimeShort(new TimeExpression(loopVariable.referenceExpression.getScript())),
             StringSequenceExpression.class);
       }
     }
 
     this.stack.push(expression);
   }
+
+  // #region Formatting functions (template-only) --------------------------------
+
+  @Override
+  public void exitFormatShortDateFunction(FormatShortDateFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatDateShort(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitFormatShortTimeFunction(FormatShortTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatTimeShort(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitFormatShortDateTimeFunction(FormatShortDateTimeFunctionContext ctx) {
+    TimeExpression time = this.stack.pop(TimeExpression.class);
+    DateExpression date = this.stack.pop(DateExpression.class);
+    this.stack.push(this.script.composeStringConcatenation(List.of(
+        this.script.composeFormatDateShort(date),
+        this.script.getStringLiteralFromUnquotedString(" "),
+        this.script.composeFormatTimeShort(time))));
+  }
+
+  @Override
+  public void exitFormatMediumDateFunction(FormatMediumDateFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatDateMedium(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitFormatMediumTimeFunction(FormatMediumTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatTimeMedium(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitFormatMediumDateTimeFunction(FormatMediumDateTimeFunctionContext ctx) {
+    TimeExpression time = this.stack.pop(TimeExpression.class);
+    DateExpression date = this.stack.pop(DateExpression.class);
+    this.stack.push(this.script.composeStringConcatenation(List.of(
+        this.script.composeFormatDateMedium(date),
+        this.script.getStringLiteralFromUnquotedString(" "),
+        this.script.composeFormatTimeMedium(time))));
+  }
+
+  @Override
+  public void exitFormatLongDateFunction(FormatLongDateFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatDateLong(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitFormatLongTimeFunction(FormatLongTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeFormatTimeLong(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitFormatLongDateTimeFunction(FormatLongDateTimeFunctionContext ctx) {
+    TimeExpression time = this.stack.pop(TimeExpression.class);
+    DateExpression date = this.stack.pop(DateExpression.class);
+    this.stack.push(this.script.composeStringConcatenation(List.of(
+        this.script.composeFormatDateLong(date),
+        this.script.getStringLiteralFromUnquotedString(" "),
+        this.script.composeFormatTimeLong(time))));
+  }
+
+  // #endregion Formatting functions ---------------------------------------------
+
+  // #region Preferred language functions ----------------------------------------
+
+  @Override
+  public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
+    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+  }
+
+  @Override
+  public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
+    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+  }
+
+  // #endregion Preferred language functions -------------------------------------
 
   /***
    * Handles the $value shorthand syntax which renders the value of the field declared as context in

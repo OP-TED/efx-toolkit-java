@@ -16,7 +16,9 @@ package eu.europa.ted.efx.exceptions;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 /**
- * Exception thrown when field validation fails during EFX template processing.
+ * Exception thrown when an EFX construct is used incorrectly, such as referencing
+ * a non-withholdable field for privacy properties, or calling a template-only
+ * function in an expression or validation rule.
  */
 @SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
 public class InvalidUsageException extends ParseCancellationException {
@@ -26,7 +28,8 @@ public class InvalidUsageException extends ParseCancellationException {
         SHORTHAND_REQUIRES_FIELD_CONTEXT,
         INVALID_NOTICE_SUBTYPE_RANGE_ORDER,
         INVALID_NOTICE_SUBTYPE_TOKEN,
-        FIELD_NOT_WITHHOLDABLE
+        FIELD_NOT_WITHHOLDABLE,
+        TEMPLATE_ONLY_FUNCTION
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -34,6 +37,7 @@ public class InvalidUsageException extends ParseCancellationException {
     private static final String INVALID_NOTICE_SUBTYPE_RANGE_ORDER = "Notice subtype range '%s-%s' is not in ascending order.";
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
+    private static final String TEMPLATE_ONLY_FUNCTION = "Function '%s' can only be used in templates, not in expressions or validation rules.";
 
     private final ErrorCode errorCode;
 
@@ -64,5 +68,9 @@ public class InvalidUsageException extends ParseCancellationException {
 
     public static InvalidUsageException fieldNotWithholdable(String fieldId) {
         return new InvalidUsageException(ErrorCode.FIELD_NOT_WITHHOLDABLE, String.format(FIELD_NOT_WITHHOLDABLE, fieldId));
+    }
+
+    public static InvalidUsageException templateOnlyFunction(String functionName) {
+        return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, String.format(TEMPLATE_ONLY_FUNCTION, functionName));
     }
 }
