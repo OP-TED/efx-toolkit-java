@@ -755,6 +755,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
         "index-of(" + list.getScript() + ", " + value.getScript() + ")[1]");
   }
 
+  @Override
+  public StringSequenceExpression composeSplitFunction(StringExpression text,
+      StringExpression delimiter) {
+    // XPath's tokenize() uses regex, so we escape regex metacharacters in the delimiter
+    // to ensure literal matching.
+    String escapedDelim =
+        "replace(" + delimiter.getScript() + ", '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
+    return new StringSequenceExpression("tokenize(" + text.getScript() + ", " + escapedDelim + ")");
+  }
+
   //#endregion Duration functions ---------------------------------------------
 
   @Override

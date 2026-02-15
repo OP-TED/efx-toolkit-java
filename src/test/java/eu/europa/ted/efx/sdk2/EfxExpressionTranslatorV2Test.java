@@ -1698,6 +1698,27 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testSplitFunction() {
+    testExpressionTranslationWithContext(
+        "tokenize('a,b,c', replace(',', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",
+        "ND-Root", "split('a,b,c', ',')");
+  }
+
+  @Test
+  void testSplitFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "tokenize(PathNode/TextField/normalize-space(text()), replace(';', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",
+        "{ND-Root} ${split(BT-00-Text, ';')}");
+  }
+
+  @Test
+  void testSplitFunction_WithRegexMetacharDelimiter() {
+    testExpressionTranslationWithContext(
+        "tokenize('a.b.c', replace('.', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",
+        "ND-Root", "split('a.b.c', '.')");
+  }
+
+  @Test
   void testNumberToStringFunction() {
     testExpressionTranslationWithContext("string(123)", "ND-Root", "string(123)");
   }

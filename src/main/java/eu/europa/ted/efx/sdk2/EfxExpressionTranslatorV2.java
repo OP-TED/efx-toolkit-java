@@ -2465,6 +2465,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitSplitFunction(SplitFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSplitFunction(text, delimiter));
+  }
+
+  @Override
   public void exitBooleanSubsequenceFunction(BooleanSubsequenceFunctionContext ctx) {
     exitSubsequenceFunction(ctx.length != null, BooleanSequenceExpression.class);
   }

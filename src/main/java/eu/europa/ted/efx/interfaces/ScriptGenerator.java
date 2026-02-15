@@ -805,6 +805,17 @@ public interface ScriptGenerator {
       ScalarExpression value);
 
   /**
+   * Returns the target language script that splits a string into a sequence of substrings
+   * using the given literal delimiter.
+   *
+   * @param text The text to split.
+   * @param delimiter The literal delimiter to split on.
+   * @return A string sequence expression with the split parts.
+   */
+  public StringSequenceExpression composeSplitFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
    * Returns the target language script that retrieves the element at a given position
    * in a sequence.
    *
