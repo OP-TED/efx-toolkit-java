@@ -553,6 +553,14 @@ public interface ScriptGenerator {
       StringExpression pattern, StringExpression replacement);
 
   /**
+   * Composes a URL-encoding function call in the target language.
+   *
+   * @param text The string to URL-encode.
+   * @return The target language script that URL-encodes the string.
+   */
+  public StringExpression composeUrlEncodeFunction(StringExpression text);
+
+  /**
    * Gets the target language script that retrieves the preferred language ID
    * out of the languages available in the given field.
    * 

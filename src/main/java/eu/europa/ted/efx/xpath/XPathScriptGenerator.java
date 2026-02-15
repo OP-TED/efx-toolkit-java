@@ -633,6 +633,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeUrlEncodeFunction(StringExpression text) {
+    return new StringExpression("encode-for-uri(" + text.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeStringConcatenation(List<StringExpression> list) {
     return new StringExpression(
         "concat(" + list.stream().map(i -> i.getScript()).collect(Collectors.joining(", ")) + ")");

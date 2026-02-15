@@ -1761,6 +1761,26 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testUrlEncodeFunction() {
+    testExpressionTranslationWithContext(
+        "encode-for-uri('hello world')",
+        "ND-Root", "url-encode('hello world')");
+  }
+
+  @Test
+  void testUrlEncodeFunction_WithFieldReference() {
+    testExpressionTranslation(
+        "encode-for-uri(PathNode/TextField/normalize-space(text()))",
+        "{ND-Root} ${url-encode(BT-00-Text)}");
+  }
+
+  @Test
+  void testUrlEncodeFunction_WithRepeatableField_Throws() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpression("{ND-Root} ${url-encode(ND-Root)}"));
+  }
+
+  @Test
   void testSplitFunction() {
     testExpressionTranslationWithContext(
         "tokenize('a,b,c', replace(',', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",
