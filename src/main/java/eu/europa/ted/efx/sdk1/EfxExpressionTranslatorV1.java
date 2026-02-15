@@ -315,20 +315,20 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitParenthesizedBooleanExpression(
-      EfxParser.ParenthesizedBooleanExpressionContext ctx) {
+      ParenthesizedBooleanExpressionContext ctx) {
     this.stack.push(this.script.composeParenthesizedExpression(
         this.stack.pop(BooleanExpression.class), BooleanExpression.class));
   }
 
   @Override
-  public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
+  public void exitLogicalAndCondition(LogicalAndConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalAnd(left, right));
   }
 
   @Override
-  public void exitLogicalOrCondition(EfxParser.LogicalOrConditionContext ctx) {
+  public void exitLogicalOrCondition(LogicalOrConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalOr(left, right));
@@ -393,7 +393,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Boolean expressions - Conditions --------------------------------
 
   @Override
-  public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
+  public void exitEmptinessCondition(EmptinessConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
     String operator = ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER) ? "!=" : "==";
     this.stack.push(this.script.composeComparisonOperation(expression, operator,
@@ -401,7 +401,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitPresenceCondition(EfxParser.PresenceConditionContext ctx) {
+  public void exitPresenceCondition(PresenceConditionContext ctx) {
     PathExpression reference = this.stack.pop(PathExpression.class);
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
       this.stack.push(this.script.composeLogicalNot(this.script.composeExistsCondition(reference)));
@@ -411,7 +411,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitUniqueValueCondition(EfxParser.UniqueValueConditionContext ctx) {
+  public void exitUniqueValueCondition(UniqueValueConditionContext ctx) {
     PathExpression haystack = this.stack.pop(PathExpression.class);
     PathExpression needle = this.stack.pop(haystack.getClass());
 
@@ -424,7 +424,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
+  public void exitLikePatternCondition(LikePatternConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
     BooleanExpression condition = this.script.composePatternMatchCondition(expression, ctx.pattern.getText());
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
@@ -438,7 +438,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Boolean expressions - List membership conditions -----------------
 
   @Override
-  public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
+  public void exitStringInListCondition(StringInListConditionContext ctx) {
     this.exitInListCondition(ctx.modifier, StringExpression.class, StringSequenceExpression.class);
   }
 
@@ -501,14 +501,14 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Numeric expressions ----------------------------------------------
 
   @Override
-  public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
+  public void exitAdditionExpression(AdditionExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
   }
 
   @Override
-  public void exitMultiplicationExpression(EfxParser.MultiplicationExpressionContext ctx) {
+  public void exitMultiplicationExpression(MultiplicationExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
@@ -930,7 +930,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
+  public void exitSimpleFieldReference(SimpleFieldReferenceContext ctx) {
     this.stack.push(
         symbols.getRelativePathOfField(ctx.FieldId().getText(), this.efxContext.symbol()));
   }
@@ -943,14 +943,14 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
+  public void exitAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.pop();
     }
   }
 
   @Override
-  public void enterAbsoluteNodeReference(EfxParser.AbsoluteNodeReferenceContext ctx) {
+  public void enterAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.push(null);
     }
@@ -976,7 +976,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
+  public void exitFieldReferenceWithPredicate(FieldReferenceWithPredicateContext ctx) {
     if (ctx.predicate() != null) {
       BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
       PathExpression fieldReference = this.stack.pop(PathExpression.class);
@@ -992,7 +992,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * @param ctx The predicate context
    */
   @Override
-  public void enterPredicate(EfxParser.PredicateContext ctx) {
+  public void enterPredicate(PredicateContext ctx) {
     var parent = ctx.getParent();
     if (parent instanceof NodeReferenceWithPredicateContext) {
       final String nodeId = getNodeId((NodeReferenceWithPredicateContext) parent);
@@ -1009,7 +1009,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * After the predicate is parsed we need to switch back to the previous context.
    */
   @Override
-  public void exitPredicate(EfxParser.PredicateContext ctx) {
+  public void exitPredicate(PredicateContext ctx) {
     this.efxContext.pop();
   }
 
@@ -1026,7 +1026,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region External References ----------------------------------------------
 
   @Override
-  public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
+  public void exitNoticeReference(NoticeReferenceContext ctx) {
     this.stack.push(this.script.composeExternalReference(this.stack.pop(StringExpression.class)));
   }
 
@@ -1039,7 +1039,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
+  public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx.noticeReference() != null) {
       PathExpression field = this.stack.pop(PathExpression.class);
       PathExpression notice = this.stack.pop(PathExpression.class);

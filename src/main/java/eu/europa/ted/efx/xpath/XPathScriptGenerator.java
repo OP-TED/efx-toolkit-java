@@ -451,6 +451,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression("empty(" + sequence.getScript() + ")");
   }
 
+  @Override
+  public BooleanExpression composeIsDistinctCondition(SequenceExpression sequence) {
+    return new BooleanExpression(
+        "count(" + sequence.getScript() + ") = count(distinct-values(" + sequence.getScript() + "))");
+  }
+
   //#endregion Boolean functions ----------------------------------------------
 
   //#region Numeric functions -------------------------------------------------

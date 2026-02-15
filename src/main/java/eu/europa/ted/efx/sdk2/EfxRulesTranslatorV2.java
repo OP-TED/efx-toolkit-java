@@ -64,26 +64,7 @@ import eu.europa.ted.efx.model.rules.ValidationRule;
 import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Variable;
-import eu.europa.ted.efx.sdk2.EfxParser.AnyNoticeTypesContext;
-import eu.europa.ted.efx.sdk2.EfxParser.AsClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.AssertClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ConditionalRuleContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ContextDeclarationContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ContextVariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.FallbackRuleContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ForClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.GlobalVariableDeclarationContext;
-import eu.europa.ted.efx.sdk2.EfxParser.InClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.OtherwiseAssertClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.OtherwiseReportClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.StageVariableDeclarationContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ReportClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.RuleSetContext;
-import eu.europa.ted.efx.sdk2.EfxParser.SimpleRuleContext;
-import eu.europa.ted.efx.sdk2.EfxParser.ValidationStageContext;
-import eu.europa.ted.efx.sdk2.EfxParser.VariableInitializerContext;
-import eu.europa.ted.efx.sdk2.EfxParser.WhenClauseContext;
-import eu.europa.ted.efx.sdk2.EfxParser.WithClauseContext;
+import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
  * EFX Rules translator for SDK version 2.
@@ -219,37 +200,37 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStringVariableInitializer(
-      EfxParser.StringVariableInitializerContext ctx) {
+      StringVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), StringExpression.class);
   }
 
   @Override
   public void exitBooleanVariableInitializer(
-      EfxParser.BooleanVariableInitializerContext ctx) {
+      BooleanVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), BooleanExpression.class);
   }
 
   @Override
   public void exitNumericVariableInitializer(
-      EfxParser.NumericVariableInitializerContext ctx) {
+      NumericVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), NumericExpression.class);
   }
 
   @Override
   public void exitDateVariableInitializer(
-      EfxParser.DateVariableInitializerContext ctx) {
+      DateVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), DateExpression.class);
   }
 
   @Override
   public void exitTimeVariableInitializer(
-      EfxParser.TimeVariableInitializerContext ctx) {
+      TimeVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), TimeExpression.class);
   }
 
   @Override
   public void exitDurationVariableInitializer(
-      EfxParser.DurationVariableInitializerContext ctx) {
+      DurationVariableInitializerContext ctx) {
     this.exitVariableInitializer(ctx.variableName.getText(), DurationExpression.class);
   }
 
@@ -269,37 +250,37 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStringSequenceVariableInitializer(
-      EfxParser.StringSequenceVariableInitializerContext ctx) {
+      StringSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), StringSequenceExpression.class);
   }
 
   @Override
   public void exitBooleanSequenceVariableInitializer(
-      EfxParser.BooleanSequenceVariableInitializerContext ctx) {
+      BooleanSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), BooleanSequenceExpression.class);
   }
 
   @Override
   public void exitNumericSequenceVariableInitializer(
-      EfxParser.NumericSequenceVariableInitializerContext ctx) {
+      NumericSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), NumericSequenceExpression.class);
   }
 
   @Override
   public void exitDateSequenceVariableInitializer(
-      EfxParser.DateSequenceVariableInitializerContext ctx) {
+      DateSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), DateSequenceExpression.class);
   }
 
   @Override
   public void exitTimeSequenceVariableInitializer(
-      EfxParser.TimeSequenceVariableInitializerContext ctx) {
+      TimeSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), TimeSequenceExpression.class);
   }
 
   @Override
   public void exitDurationSequenceVariableInitializer(
-      EfxParser.DurationSequenceVariableInitializerContext ctx) {
+      DurationSequenceVariableInitializerContext ctx) {
     this.exitSequenceVariableInitializer(ctx.variableName.getText(), DurationSequenceExpression.class);
   }
 
@@ -699,7 +680,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
      */
     @Override
     public void exitStageVariableDeclaration(
-        EfxParser.StageVariableDeclarationContext ctx) {
+        StageVariableDeclarationContext ctx) {
       if (!this.stack.empty()) {
         Variable variable = this.stack.pop(Variable.class);
         this.stack.declareIdentifier(variable);
@@ -797,7 +778,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
      */
     @Override
     public void exitVariableInitializer(
-        EfxParser.VariableInitializerContext ctx) {
+        VariableInitializerContext ctx) {
         Variable variable = this.stack.pop(Variable.class);
         this.stack.declareIdentifier(variable);
     }
@@ -811,37 +792,37 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
      * These create simple Variable objects with empty expressions just for type tracking.
      */
     @Override
-    public void exitStringVariableInitializer(EfxParser.StringVariableInitializerContext ctx) {
+    public void exitStringVariableInitializer(StringVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           StringExpression.empty(), StringExpression.empty()));
     }
 
     @Override
-    public void exitBooleanVariableInitializer(EfxParser.BooleanVariableInitializerContext ctx) {
+    public void exitBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           BooleanExpression.empty(), BooleanExpression.empty()));
     }
 
     @Override
-    public void exitNumericVariableInitializer(EfxParser.NumericVariableInitializerContext ctx) {
+    public void exitNumericVariableInitializer(NumericVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           NumericExpression.empty(), NumericExpression.empty()));
     }
 
     @Override
-    public void exitDateVariableInitializer(EfxParser.DateVariableInitializerContext ctx) {
+    public void exitDateVariableInitializer(DateVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           DateExpression.empty(), DateExpression.empty()));
     }
 
     @Override
-    public void exitTimeVariableInitializer(EfxParser.TimeVariableInitializerContext ctx) {
+    public void exitTimeVariableInitializer(TimeVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           TimeExpression.empty(), TimeExpression.empty()));
     }
 
     @Override
-    public void exitDurationVariableInitializer(EfxParser.DurationVariableInitializerContext ctx) {
+    public void exitDurationVariableInitializer(DurationVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           DurationExpression.empty(), DurationExpression.empty()));
     }
@@ -849,37 +830,37 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     // Sequence variable initializers for type tracking
 
     @Override
-    public void exitStringSequenceVariableInitializer(EfxParser.StringSequenceVariableInitializerContext ctx) {
+    public void exitStringSequenceVariableInitializer(StringSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new StringSequenceExpression(""), new StringSequenceExpression("")));
     }
 
     @Override
-    public void exitBooleanSequenceVariableInitializer(EfxParser.BooleanSequenceVariableInitializerContext ctx) {
+    public void exitBooleanSequenceVariableInitializer(BooleanSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new BooleanSequenceExpression(""), new BooleanSequenceExpression("")));
     }
 
     @Override
-    public void exitNumericSequenceVariableInitializer(EfxParser.NumericSequenceVariableInitializerContext ctx) {
+    public void exitNumericSequenceVariableInitializer(NumericSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new NumericSequenceExpression(""), new NumericSequenceExpression("")));
     }
 
     @Override
-    public void exitDateSequenceVariableInitializer(EfxParser.DateSequenceVariableInitializerContext ctx) {
+    public void exitDateSequenceVariableInitializer(DateSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new DateSequenceExpression(""), new DateSequenceExpression("")));
     }
 
     @Override
-    public void exitTimeSequenceVariableInitializer(EfxParser.TimeSequenceVariableInitializerContext ctx) {
+    public void exitTimeSequenceVariableInitializer(TimeSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new TimeSequenceExpression(""), new TimeSequenceExpression("")));
     }
 
     @Override
-    public void exitDurationSequenceVariableInitializer(EfxParser.DurationSequenceVariableInitializerContext ctx) {
+    public void exitDurationSequenceVariableInitializer(DurationSequenceVariableInitializerContext ctx) {
       this.stack.push(new Variable(ctx.variableName.getText(),
           new DurationSequenceExpression(""), new DurationSequenceExpression("")));
     }

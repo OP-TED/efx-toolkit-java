@@ -2330,6 +2330,86 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   // #endregion: String empty function
 
+  // #region: Sequence duplicates
+
+  @Test
+  void testSequenceDuplicates_WithNonRepeatableField() {
+    // Field references always go through sequence duplicates, regardless of repeatability.
+    testExpressionTranslationWithContext(
+        "not(count(PathNode/TextField/normalize-space(text())) = count(distinct-values(PathNode/TextField/normalize-space(text()))))",
+        "ND-Root", "BT-00-Text has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithStringSequence() {
+    testExpressionTranslationWithContext(
+        "not(count(('a','b','a')) = count(distinct-values(('a','b','a'))))", "ND-Root",
+        "('a', 'b', 'a') has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithStringSequence_Negated() {
+    testExpressionTranslationWithContext(
+        "count(('a','b','c')) = count(distinct-values(('a','b','c')))", "ND-Root",
+        "('a', 'b', 'c') has no duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithNumericSequence() {
+    testExpressionTranslationWithContext(
+        "not(count((1,2,3)) = count(distinct-values((1,2,3))))", "ND-Root",
+        "(1, 2, 3) has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithBooleanSequence() {
+    testExpressionTranslationWithContext(
+        "not(count((true(),false())) = count(distinct-values((true(),false()))))", "ND-Root",
+        "(TRUE, FALSE) has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithDateSequence() {
+    testExpressionTranslationWithContext(
+        "not(count((xs:date('2024-01-01Z'),xs:date('2024-12-31Z'))) = count(distinct-values((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))))",
+        "ND-Root",
+        "(2024-01-01Z, 2024-12-31Z) has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithTimeSequence() {
+    testExpressionTranslationWithContext(
+        "not(count((xs:time('12:00:00Z'),xs:time('13:00:00Z'))) = count(distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z')))))",
+        "ND-Root",
+        "(12:00:00Z, 13:00:00Z) has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithDurationSequence() {
+    testExpressionTranslationWithContext(
+        "not(count((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))) = count(distinct-values((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y')))))",
+        "ND-Root",
+        "(P1Y, P2Y) has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithRepeatableFieldReference() {
+    testExpressionTranslationWithContext(
+        "not(count(PathNode/RepeatableTextField/normalize-space(text())) = count(distinct-values(PathNode/RepeatableTextField/normalize-space(text()))))",
+        "ND-Root",
+        "BT-00-Repeatable-Text has duplicates");
+  }
+
+  @Test
+  void testSequenceDuplicates_WithRepeatableFieldReference_Negated() {
+    testExpressionTranslationWithContext(
+        "count(PathNode/RepeatableTextField/normalize-space(text())) = count(distinct-values(PathNode/RepeatableTextField/normalize-space(text())))",
+        "ND-Root",
+        "BT-00-Repeatable-Text has no duplicates");
+  }
+
+  // #endregion: Sequence duplicates
+
   @Test
   void testParameterizedExpression_WithStringParameter() {
     testExpressionTranslation("'hello' = 'world'", "{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}",
