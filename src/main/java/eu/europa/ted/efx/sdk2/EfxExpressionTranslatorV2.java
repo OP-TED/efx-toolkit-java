@@ -268,14 +268,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.reference.reference.linkedFieldReference());
+    return this.getFieldId(ctx.reference.reference);
   }
 
   protected String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.reference.reference.reference.reference.reference.linkedFieldReference());
+    return this.getFieldId(ctx.reference.reference.reference.reference.reference);
   }
 
   protected String getFieldId(FieldContextContext ctx) {
@@ -299,7 +299,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.fieldReferenceWithAxis().linkedFieldReference());
+    return this.getFieldId(ctx.linkedFieldReference());
   }
 
   protected static String getNodeId(NodeReferenceContext ctx) {
@@ -1221,14 +1221,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitPredicate(EfxParser.PredicateContext ctx) {
     this.efxContext.pop();
-  }
-
-  @Override
-  public void exitFieldReferenceWithAxis(FieldReferenceWithAxisContext ctx) {
-    if (ctx.axis() != null) {
-      this.stack.push(this.script.composeFieldReferenceWithAxis(
-          this.stack.pop(PathExpression.class), ctx.axis().Axis().getText()));
-    }
   }
 
   // #endregion References with Predicates ------------------------------------

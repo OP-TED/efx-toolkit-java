@@ -30,6 +30,13 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
         super(translatorOptions);
     }
 
+    @Override
+    public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+        final String axis) {
+        String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
+        return Expression.instantiate(resultXPath, fieldReference.getClass());
+    }
+
     /***
      * This method is overridden to workaround a limitation of EFX 1.
      * 
