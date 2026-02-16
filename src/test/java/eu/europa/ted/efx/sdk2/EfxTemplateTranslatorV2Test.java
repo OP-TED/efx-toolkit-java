@@ -1428,6 +1428,122 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   // #endregion Expression block -----------------------------------------------
 
+  // #region Formatting functions ------------------------------------------------
+
+  @Test
+  void testFormatShortDate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01]/[M01]/[Y0001]')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-short(date('2026-02-15'))}"));
+  }
+
+  @Test
+  void testFormatShortDate_WithFieldReference() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-date(PathNode/StartDateField/xs:date(text()), '[D01]/[M01]/[Y0001]')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-short(BT-00-StartDate)}"));
+  }
+
+  @Test
+  void testFormatMediumDate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01] [MNn,3-3] [Y0001]', 'en', (), ())) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-medium(date('2026-02-15'))}"));
+  }
+
+  @Test
+  void testFormatLongDate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01] [MNn] [Y0001]', 'en', (), ())) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-long(date('2026-02-15'))}"));
+  }
+
+  @Test
+  void testFormatShortTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01] [Z]')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-short(time('14:30:00Z'))}"));
+  }
+
+  @Test
+  void testFormatMediumTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01]')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-medium(time('14:30:00Z'))}"));
+  }
+
+  @Test
+  void testFormatLongTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01] [Z]')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-long(time('14:30:00Z'))}"));
+  }
+
+  @Test
+  void testFormatShortDateTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01]/[M01]/[Y0001]'), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01] [Z]'))) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-short(date('2026-02-15'), time('14:30:00Z'))}"));
+  }
+
+  @Test
+  void testFormatMediumDateTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01] [MNn,3-3] [Y0001]', 'en', (), ()), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01]'))) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-medium(date('2026-02-15'), time('14:30:00Z'))}"));
+  }
+
+  @Test
+  void testFormatLongDateTime() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01] [MNn] [Y0001]', 'en', (), ()), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01] [Z]'))) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${format-long(date('2026-02-15'), time('14:30:00Z'))}"));
+  }
+
+  // #endregion Formatting functions ---------------------------------------------
+
+  // #region Preferred language functions ----------------------------------------
+
+  @Test
+  void testPreferredLanguageFunction() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language(BT-00-Text-Multilingual)}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language-text(BT-00-Text-Multilingual)}"));
+  }
+
+  // #endregion Preferred language functions -------------------------------------
+
   // #region contextDeclarationBlock -------------------------------------------
 
   @Test

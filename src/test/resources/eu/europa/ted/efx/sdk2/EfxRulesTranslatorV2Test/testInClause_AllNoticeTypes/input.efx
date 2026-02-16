@@ -8,6 +8,6 @@ WITH BT-00-Text
     AS ERROR R-K7P-M2Q
     FOR BT-00-Text IN *
 
-    ASSERT BT-00-Text is not empty
+    ASSERT not(empty(BT-00-Text))
     AS WARNING R-X3F-N8W
     FOR BT-00-Text IN ANY

@@ -9,7 +9,7 @@ WITH BT-00-Text
     ASSERT BT-00-Text is present
         AS ERROR R-K7P-M2Q
         FOR BT-00-Text IN 1, 2
-    REPORT BT-00-Text is empty
+    REPORT empty(BT-00-Text)
         AS WARNING R-X3F-N8W
         FOR BT-00-Text IN 1, 2
     WHEN BT-00-Text == 'open'
@@ -36,7 +36,7 @@ WITH ND-SubNode
 
 WITH BT-00-Number
     WHEN BT-00-Number > 0
-        REPORT BT-00-Text is not empty
+        REPORT not(empty(BT-00-Text))
         AS INFO R-F5V-T6B
         FOR BT-00-Text IN 1, 2
     WHEN BT-00-Number < 100
@@ -53,7 +53,7 @@ WITH BT-00-Indicator
     REPORT BT-00-Indicator is present
         AS INFO R-M3C-U8N
         FOR BT-00-Indicator IN 1, 2
-    ASSERT BT-00-Text is not empty
+    ASSERT not(empty(BT-00-Text))
         AS ERROR R-S9L-R5K
         FOR BT-00-Text IN 1, 2
     WHEN BT-00-Indicator == TRUE

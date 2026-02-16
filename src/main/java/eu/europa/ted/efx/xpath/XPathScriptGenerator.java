@@ -347,6 +347,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression(reference.getScript());
   }
 
+  @Override
+  public BooleanExpression composeToBooleanConversion(NumericExpression number) {
+    return new BooleanExpression("boolean(" + number.getScript() + ")");
+  }
+
   /**
    * EFX 1 uniqueness check - kept for backward compatibility.
    * EFX 2 uses the typed overloads below.
@@ -441,6 +446,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new BooleanExpression("deep-equal(sort(" + one.getScript() + "), sort(" + two.getScript() + "))");
   }
 
+  @Override
+  public BooleanExpression composeEmptySequenceCondition(SequenceExpression sequence) {
+    return new BooleanExpression("empty(" + sequence.getScript() + ")");
+  }
+
+  @Override
+  public BooleanExpression composeIsDistinctCondition(SequenceExpression sequence) {
+    return new BooleanExpression(
+        "count(" + sequence.getScript() + ") = count(distinct-values(" + sequence.getScript() + "))");
+  }
+
   //#endregion Boolean functions ----------------------------------------------
 
   //#region Numeric functions -------------------------------------------------
@@ -456,13 +472,83 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeToNumberConversion(BooleanExpression bool) {
+    return new NumericExpression("number(" + bool.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeSumOperation(NumericSequenceExpression nodeSet) {
     return new NumericExpression("sum(" + nodeSet.getScript() + ")");
   }
 
   @Override
+  public NumericExpression composeMinFunction(NumericSequenceExpression list) {
+    return new NumericExpression("min(" + list.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMaxFunction(NumericSequenceExpression list) {
+    return new NumericExpression("max(" + list.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeAvgFunction(NumericSequenceExpression list) {
+    return new NumericExpression("avg(" + list.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeStringLengthCalculation(StringExpression text) {
     return new NumericExpression("string-length(" + text.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeYearFunction(DateExpression date) {
+    return new NumericExpression("year-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMonthFunction(DateExpression date) {
+    return new NumericExpression("month-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeDayFunction(DateExpression date) {
+    return new NumericExpression("day-from-date(" + date.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeHoursFunction(TimeExpression time) {
+    return new NumericExpression("hours-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMinutesFunction(TimeExpression time) {
+    return new NumericExpression("minutes-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeSecondsFunction(TimeExpression time) {
+    return new NumericExpression("seconds-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeAbsFunction(NumericExpression number) {
+    return new NumericExpression("abs(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeRoundFunction(NumericExpression number) {
+    return new NumericExpression("round(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeFloorFunction(NumericExpression number) {
+    return new NumericExpression("floor(" + number.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeCeilingFunction(NumericExpression number) {
+    return new NumericExpression("ceiling(" + number.getScript() + ")");
   }
 
   @Override
@@ -490,9 +576,42 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeSubstringBeforeFunction(StringExpression text,
+      StringExpression delimiter) {
+    return new StringExpression(
+        "substring-before(" + text.getScript() + ", " + delimiter.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeSubstringAfterFunction(StringExpression text,
+      StringExpression delimiter) {
+    return new StringExpression(
+        "substring-after(" + text.getScript() + ", " + delimiter.getScript() + ")");
+  }
+
+  @Override
   public StringExpression composeToStringConversion(NumericExpression number) {
-    String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
-    return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
+    return new StringExpression("string(" + number.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeToStringConversion(BooleanExpression bool) {
+    return new StringExpression("string(" + bool.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeToStringConversion(DateExpression date) {
+    return new StringExpression("string(" + date.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeToStringConversion(TimeExpression time) {
+    return new StringExpression("string(" + time.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeToStringConversion(DurationExpression duration) {
+    return new StringExpression("string(" + duration.getScript() + ")");
   }
 
   @Override
@@ -503,6 +622,91 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression composeToLowerCaseConversion(StringExpression text) {
     return new StringExpression("lower-case(" + text.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeNormalizeSpaceFunction(StringExpression text) {
+    return new StringExpression("normalize-space(" + text.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeTrimFunction(StringExpression text) {
+    return new StringExpression(
+        "replace(replace(" + text.getScript() + ", '^\\s+', ''), '\\s+$', '')");
+  }
+
+  @Override
+  public StringExpression composeTrimLeftFunction(StringExpression text) {
+    return new StringExpression("replace(" + text.getScript() + ", '^\\s+', '')");
+  }
+
+  @Override
+  public StringExpression composeTrimRightFunction(StringExpression text) {
+    return new StringExpression("replace(" + text.getScript() + ", '\\s+$', '')");
+  }
+
+  @Override
+  public StringExpression composePadLeftFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar) {
+    String len = length.getScript();
+    String ch = padChar.getScript();
+    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return concat(substring(" + padding + ", 1, " + len
+        + " - string-length($__s)), $__s))");
+  }
+
+  @Override
+  public StringExpression composePadRightFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar) {
+    String len = length.getScript();
+    String ch = padChar.getScript();
+    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return concat($__s, substring(" + padding + ", 1, " + len
+        + " - string-length($__s))))");
+  }
+
+  @Override
+  public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count) {
+    return new StringExpression("(for $__s in " + text.getScript()
+        + " return string-join(for $__i in 1 to " + count.getScript()
+        + " return $__s, ''))");
+  }
+
+  @Override
+  public StringExpression composeReplaceFunction(StringExpression text, StringExpression search,
+      StringExpression replacement) {
+    // Escape regex metacharacters in the search string for literal matching
+    String escapedSearch = "replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
+    // Escape replacement-string semantics: \ must become \\, $ must become \$
+    // (order matters: escape backslashes first, then dollars)
+    String escapedReplacement = "replace(replace(" + replacement.getScript()
+        + ", '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')";
+    // Bind text and search to avoid double evaluation; guard against empty search at runtime
+    return new StringExpression("(for $__s in " + search.getScript() + ", $__t in "
+        + text.getScript() + " return if ($__s = '') then $__t else replace($__t, "
+        + escapedSearch + ", " + escapedReplacement + "))");
+  }
+
+  @Override
+  public StringExpression composeReplaceRegexFunction(StringExpression text,
+      StringExpression pattern, StringExpression replacement) {
+    return new StringExpression(
+        "replace(" + text.getScript() + ", " + pattern.getScript() + ", "
+            + replacement.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeUrlEncodeFunction(StringExpression text) {
+    return new StringExpression("encode-for-uri(" + text.getScript() + ")");
+  }
+
+  @Override
+  public StringExpression composeCapitalizeFirstFunction(StringExpression text) {
+    return new StringExpression(
+        "(for $__s in " + text.getScript()
+            + " return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))");
   }
 
   @Override
@@ -522,6 +726,38 @@ public class XPathScriptGenerator implements ScriptGenerator {
       StringExpression format) {
         String formatString = format instanceof LiteralExpression ? this.translatorOptions.getDecimalFormat().adaptFormatString(format.getScript()) : format.getScript();
         return new StringExpression("format-number(" + number.getScript() + ", " + formatString + ")");
+  }
+
+  @Override
+  public StringExpression composeFormatDateShort(DateExpression date) {
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01]/[M01]/[Y0001]')");
+  }
+
+  @Override
+  public StringExpression composeFormatDateMedium(DateExpression date) {
+    String lang = this.translatorOptions.getPrimaryLanguage2LetterCode();
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01] [MNn,3-3] [Y0001]', '" + lang + "', (), ())");
+  }
+
+  @Override
+  public StringExpression composeFormatDateLong(DateExpression date) {
+    String lang = this.translatorOptions.getPrimaryLanguage2LetterCode();
+    return new StringExpression("format-date(" + date.getScript() + ", '[D01] [MNn] [Y0001]', '" + lang + "', (), ())");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeShort(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01] [Z]')");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeMedium(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01]:[s01]')");
+  }
+
+  @Override
+  public StringExpression composeFormatTimeLong(TimeExpression time) {
+    return new StringExpression("format-time(" + time.getScript() + ", '[H01]:[m01]:[s01] [Z]')");
   }
 
   @Override
@@ -630,6 +866,57 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends SequenceExpression> T composeExceptFunction(T listOne, T listTwo, Class<T> listType) {
     return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (every $L2 in " + listTwo.getScript() + " satisfies $L1 != $L2) then $L1 else ())", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeSortFunction(T list, Class<T> listType) {
+    return Expression.instantiate("sort(" + list.getScript() + ")", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeReverseFunction(T list, Class<T> listType) {
+    return Expression.instantiate("reverse(" + list.getScript() + ")", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, Class<T> listType) {
+    return Expression.instantiate(
+        "subsequence(" + list.getScript() + ", " + start.getScript() + ")", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, NumericExpression length, Class<T> listType) {
+    return Expression.instantiate(
+        "subsequence(" + list.getScript() + ", " + start.getScript() + ", " + length.getScript()
+            + ")",
+        listType);
+  }
+
+  @Override
+  public NumericExpression composeIndexOfFunction(SequenceExpression list,
+      ScalarExpression value) {
+    return new NumericExpression(
+        "index-of(" + list.getScript() + ", " + value.getScript() + ")[1]");
+  }
+
+  @Override
+  public NumericExpression composeIndexOfSubstringFunction(StringExpression text,
+      StringExpression substring) {
+    return new NumericExpression(
+        "(for $__s in " + text.getScript() + ", $__sub in " + substring.getScript()
+            + " return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)");
+  }
+
+  @Override
+  public StringSequenceExpression composeSplitFunction(StringExpression text,
+      StringExpression delimiter) {
+    // XPath's tokenize() uses regex, so we escape regex metacharacters in the delimiter
+    // to ensure literal matching.
+    String escapedDelim =
+        "replace(" + delimiter.getScript() + ", '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
+    return new StringSequenceExpression("tokenize(" + text.getScript() + ", " + escapedDelim + ")");
   }
 
   //#endregion Duration functions ---------------------------------------------

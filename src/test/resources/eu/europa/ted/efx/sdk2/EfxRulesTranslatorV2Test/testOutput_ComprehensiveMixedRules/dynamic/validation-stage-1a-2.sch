@@ -12,7 +12,7 @@
         <report id="R-Z8H-A3X" role="INFO" diagnostics="ND-SubNode_BT-00-Text" test="(true()) or (not(not(../PathNode/TextField/normalize-space(text()) = 'pending') and not(../PathNode/TextField/normalize-space(text()) = 'active')))">rule|text|R-Z8H-A3X</report>
     </rule>
     <rule context="/*/PathNode/NumberField">
-        <report id="R-F5V-T6B" role="INFO" diagnostics="BT-00-Number_BT-00-Text" test="(../TextField/normalize-space(text()) != '') or (not(./number() &gt; 0))">rule|text|R-F5V-T6B</report>
+        <report id="R-F5V-T6B" role="INFO" diagnostics="BT-00-Number_BT-00-Text" test="(not(../TextField/normalize-space(text()) = '')) or (not(./number() &gt; 0))">rule|text|R-F5V-T6B</report>
         <report id="R-W1D-J2Y" role="WARNING" diagnostics="BT-00-Number_BT-00-Indicator" test="(../IndicatorField) or (not(./number() &lt; 100))">rule|text|R-W1D-J2Y</report>
         <assert id="R-Q7G-E4Z" role="ERROR" test="(false()) or (not(not(./number() &gt; 0) and not(./number() &lt; 100)))">rule|text|R-Q7G-E4Z</assert>
     </rule>
