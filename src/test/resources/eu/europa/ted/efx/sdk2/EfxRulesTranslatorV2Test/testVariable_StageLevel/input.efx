@@ -1,11 +1,11 @@
 ---- STAGE 1a ----
 WITH text : $stageVar = "first", BT-00-Text
-ASSERT $stageVar is not empty
+ASSERT not(empty($stageVar))
 AS ERROR R-K7P-M2Q
 FOR BT-00-Text IN 1;
 
 ---- STAGE 1b ----
 WITH text : $stageVar = "second", BT-00-Text
-ASSERT $stageVar is not empty
+ASSERT not(empty($stageVar))
 AS ERROR R-X3F-N8W
 FOR BT-00-Text IN 1;

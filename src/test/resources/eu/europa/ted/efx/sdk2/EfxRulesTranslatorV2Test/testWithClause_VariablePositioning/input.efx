@@ -11,17 +11,17 @@ LET text : $stageVar2 = "S2";
 
 // Case 1: No variables (baseline) - uses stage variable
 WITH BT-00-Text
-    ASSERT $stageVar1 is not empty
+    ASSERT not(empty($stageVar1))
     AS ERROR R-K7P-M2Q
     FOR BT-00-Text IN 1
 
-    ASSERT BT-00-Text is not empty
+    ASSERT not(empty(BT-00-Text))
     AS ERROR R-X3F-N8W
     FOR BT-00-Text IN 2
 
 // Case 2: Single variable before context (pattern-level)
 WITH text : $before1 = "b1", BT-00-Number
-    ASSERT $before1 is not empty
+    ASSERT not(empty($before1))
     AS ERROR R-Y2N-G7S
     FOR BT-00-Number IN 1
 
@@ -31,7 +31,7 @@ WITH text : $before1 = "b1", BT-00-Number
 
 // Case 3: Multiple variables before context (pattern-level)
 WITH text : $preA = "A", text : $preB = "B", BT-00-Indicator
-    ASSERT $preA is not empty and $preB is not empty
+    ASSERT not(empty($preA)) and not(empty($preB))
     AS ERROR R-F5V-T6B
     FOR BT-00-Indicator IN 1
 
@@ -41,7 +41,7 @@ WITH text : $preA = "A", text : $preB = "B", BT-00-Indicator
 
 // Case 4: Single variable after context (rule-level) - uses stage variable
 WITH BT-00-Text, text : $after1 = "a1"
-    ASSERT $stageVar2 is not empty and $after1 is not empty
+    ASSERT not(empty($stageVar2)) and not(empty($after1))
     AS ERROR R-M3C-U8N
     FOR BT-00-Text IN 1
 
@@ -51,7 +51,7 @@ WITH BT-00-Text, text : $after1 = "a1"
 
 // Case 5: Multiple variables after context (rule-level)
 WITH BT-00-Number, text : $postX = "X", text : $postY = "Y"
-    ASSERT $postX is not empty and $postY is not empty
+    ASSERT not(empty($postX)) and not(empty($postY))
     AS ERROR R-V4T-O7J
     FOR BT-00-Number IN 1
 
@@ -61,7 +61,7 @@ WITH BT-00-Number, text : $postX = "X", text : $postY = "Y"
 
 // Case 6: One before, one after (mixed pattern/rule level)
 WITH text : $left = "L", BT-00-Indicator, text : $right = "R"
-    ASSERT $left is not empty and $right is not empty
+    ASSERT not(empty($left)) and not(empty($right))
     AS ERROR R-G2M-X6D
     FOR BT-00-Indicator IN 1
 
@@ -71,7 +71,7 @@ WITH text : $left = "L", BT-00-Indicator, text : $right = "R"
 
 // Case 7: Multiple before and after (full mixed) - uses both stage variables
 WITH text : $p1 = "P1", text : $p2 = "P2", BT-00-Text, text : $r1 = "R1", text : $r2 = "R2"
-    ASSERT $stageVar1 is not empty and $stageVar2 is not empty and $p1 is not empty
+    ASSERT not(empty($stageVar1)) and not(empty($stageVar2)) and not(empty($p1))
     AS ERROR R-C1V-Z4H
     FOR BT-00-Text IN 1
 
@@ -86,7 +86,7 @@ LET text : $stage1bVar = "1B";
 
 // Simple rule using stage 1b variable
 WITH BT-00-Text
-    ASSERT $stage1bVar is not empty
+    ASSERT not(empty($stage1bVar))
     AS ERROR R-E3F-L2G
     FOR BT-00-Text IN 1
 

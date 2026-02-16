@@ -60,7 +60,6 @@ import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
-import eu.europa.ted.efx.model.expressions.scalar.MultilingualStringPath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
@@ -105,6 +104,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   private static final String NOT_MODIFIER =
       EfxLexer.VOCABULARY.getLiteralName(EfxLexer.Not).replaceAll("^'|'$", "");
+  private static final String NO_MODIFIER =
+      EfxLexer.VOCABULARY.getLiteralName(EfxLexer.No).replaceAll("^'|'$", "");
 
   private static final String BEGIN_EXPRESSION_BLOCK = "{";
   private static final String END_EXPRESSION_BLOCK = "}";
@@ -237,7 +238,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return this.getLinkedFieldId(baseFieldId, ctx.linkedFieldProperty());
   }
 
-  protected String getFieldId(EfxParser.FieldMentionContext ctx) {
+  protected String getFieldId(FieldMentionContext ctx) {
     if (ctx == null) {
       return null;
     }
@@ -380,20 +381,20 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitParenthesizedBooleanExpression(
-      EfxParser.ParenthesizedBooleanExpressionContext ctx) {
+      ParenthesizedBooleanExpressionContext ctx) {
     this.stack.push(this.script.composeParenthesizedExpression(
         this.stack.pop(BooleanExpression.class), BooleanExpression.class));
   }
 
   @Override
-  public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
+  public void exitLogicalAndCondition(LogicalAndConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalAnd(left, right));
   }
 
   @Override
-  public void exitLogicalOrCondition(EfxParser.LogicalOrConditionContext ctx) {
+  public void exitLogicalOrCondition(LogicalOrConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalOr(left, right));
@@ -448,15 +449,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region Boolean expressions - Conditions --------------------------------
 
   @Override
-  public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
+  public void exitStringEmptyFunction(StringEmptyFunctionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
-    String operator = ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER) ? "!=" : "==";
-    this.stack.push(this.script.composeComparisonOperation(expression, operator,
+    this.stack.push(this.script.composeComparisonOperation(expression, "==",
         this.script.getStringLiteralFromUnquotedString("")));
   }
 
   @Override
-  public void exitPresenceCondition(EfxParser.PresenceConditionContext ctx) {
+  public void exitPresenceCondition(PresenceConditionContext ctx) {
     PathExpression reference = this.stack.pop(PathExpression.class);
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
       this.stack.push(this.script.composeLogicalNot(this.script.composeExistsCondition(reference)));
@@ -466,7 +466,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitStringUniqueValueCondition(EfxParser.StringUniqueValueConditionContext ctx) {
+  public void exitStringUniqueValueCondition(StringUniqueValueConditionContext ctx) {
     StringSequenceExpression haystack = this.stack.pop(StringSequenceExpression.class);
     StringExpression needle = this.stack.pop(StringExpression.class);
 
@@ -479,7 +479,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitNumericUniqueValueCondition(EfxParser.NumericUniqueValueConditionContext ctx) {
+  public void exitNumericUniqueValueCondition(NumericUniqueValueConditionContext ctx) {
     NumericSequenceExpression haystack = this.stack.pop(NumericSequenceExpression.class);
     NumericExpression needle = this.stack.pop(NumericExpression.class);
 
@@ -492,7 +492,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitBooleanUniqueValueCondition(EfxParser.BooleanUniqueValueConditionContext ctx) {
+  public void exitBooleanUniqueValueCondition(BooleanUniqueValueConditionContext ctx) {
     BooleanSequenceExpression haystack = this.stack.pop(BooleanSequenceExpression.class);
     BooleanExpression needle = this.stack.pop(BooleanExpression.class);
 
@@ -505,7 +505,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitDateUniqueValueCondition(EfxParser.DateUniqueValueConditionContext ctx) {
+  public void exitDateUniqueValueCondition(DateUniqueValueConditionContext ctx) {
     DateSequenceExpression haystack = this.stack.pop(DateSequenceExpression.class);
     DateExpression needle = this.stack.pop(DateExpression.class);
 
@@ -518,7 +518,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitTimeUniqueValueCondition(EfxParser.TimeUniqueValueConditionContext ctx) {
+  public void exitTimeUniqueValueCondition(TimeUniqueValueConditionContext ctx) {
     TimeSequenceExpression haystack = this.stack.pop(TimeSequenceExpression.class);
     TimeExpression needle = this.stack.pop(TimeExpression.class);
 
@@ -531,7 +531,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitDurationUniqueValueCondition(EfxParser.DurationUniqueValueConditionContext ctx) {
+  public void exitDurationUniqueValueCondition(DurationUniqueValueConditionContext ctx) {
     DurationSequenceExpression haystack = this.stack.pop(DurationSequenceExpression.class);
     DurationExpression needle = this.stack.pop(DurationExpression.class);
 
@@ -544,7 +544,99 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
+  public void exitStringSequenceEmptinessCondition(
+      StringSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(StringSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitBooleanSequenceEmptinessCondition(
+      BooleanSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(BooleanSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitNumericSequenceEmptinessCondition(
+      NumericSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(NumericSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDateSequenceEmptinessCondition(
+      DateSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(DateSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitTimeSequenceEmptinessCondition(
+      TimeSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(TimeSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDurationSequenceEmptinessCondition(
+      DurationSequenceEmptinessConditionContext ctx) {
+    exitSequenceEmptinessCondition(DurationSequenceExpression.class, ctx.modifier);
+  }
+
+  private <T extends SequenceExpression> void exitSequenceEmptinessCondition(
+      Class<T> sequenceType, Token modifier) {
+    final T sequence = this.stack.pop(sequenceType);
+    BooleanExpression condition = this.script.composeEmptySequenceCondition(sequence);
+    if (modifier != null && modifier.getText().equals(NOT_MODIFIER)) {
+      condition = this.script.composeLogicalNot(condition);
+    }
+    this.stack.push(condition);
+  }
+
+  @Override
+  public void exitStringSequenceDistinctCondition(
+      StringSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(StringSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitBooleanSequenceDistinctCondition(
+      BooleanSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(BooleanSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitNumericSequenceDistinctCondition(
+      NumericSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(NumericSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDateSequenceDistinctCondition(
+      DateSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(DateSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitTimeSequenceDistinctCondition(
+      TimeSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(TimeSequenceExpression.class, ctx.modifier);
+  }
+
+  @Override
+  public void exitDurationSequenceDistinctCondition(
+      DurationSequenceDistinctConditionContext ctx) {
+    exitSequenceDistinctCondition(DurationSequenceExpression.class, ctx.modifier);
+  }
+
+  private <T extends SequenceExpression> void exitSequenceDistinctCondition(
+      Class<T> sequenceType, Token modifier) {
+    final T sequence = this.stack.pop(sequenceType);
+    BooleanExpression condition = this.script.composeIsDistinctCondition(sequence);
+    if (modifier == null) {
+      condition = this.script.composeLogicalNot(condition);
+    }
+    this.stack.push(condition);
+  }
+
+  @Override
+  public void exitLikePatternCondition(LikePatternConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
     BooleanExpression condition = this.script.composePatternMatchCondition(expression, ctx.pattern.getText());
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
@@ -558,7 +650,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region Boolean expressions - List membership conditions -----------------
 
   @Override
-  public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
+  public void exitStringInListCondition(StringInListConditionContext ctx) {
     this.exitInListCondition(ctx.modifier, StringExpression.class, StringSequenceExpression.class);
   }
 
@@ -629,14 +721,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region Numeric expressions ----------------------------------------------
 
   @Override
-  public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
+  public void exitAdditionExpression(AdditionExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
   }
 
   @Override
-  public void exitMultiplicationExpression(EfxParser.MultiplicationExpressionContext ctx) {
+  public void exitMultiplicationExpression(MultiplicationExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
@@ -1130,7 +1222,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
+  public void exitSimpleFieldReference(SimpleFieldReferenceContext ctx) {
     this.stack.push(
         symbols.getRelativePathOfField(ctx.fieldId.getText(), this.efxContext.symbol()));
   }
@@ -1153,14 +1245,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
+  public void exitAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.pop();
     }
   }
 
   @Override
-  public void enterAbsoluteNodeReference(EfxParser.AbsoluteNodeReferenceContext ctx) {
+  public void enterAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.push(null);
     }
@@ -1186,7 +1278,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
+  public void exitFieldReferenceWithPredicate(FieldReferenceWithPredicateContext ctx) {
     if (ctx.predicate() != null) {
       BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
       PathExpression fieldReference = this.stack.pop(PathExpression.class);
@@ -1202,7 +1294,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    * @param ctx The predicate context
    */
   @Override
-  public void enterPredicate(EfxParser.PredicateContext ctx) {
+  public void enterPredicate(PredicateContext ctx) {
     var parent = ctx.getParent();
     if (parent instanceof NodeReferenceWithPredicateContext) {
       final String nodeId = getNodeId((NodeReferenceWithPredicateContext) parent);
@@ -1219,7 +1311,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    * After the predicate is parsed we need to switch back to the previous context.
    */
   @Override
-  public void exitPredicate(EfxParser.PredicateContext ctx) {
+  public void exitPredicate(PredicateContext ctx) {
     this.efxContext.pop();
   }
 
@@ -1228,7 +1320,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   // #region External References ----------------------------------------------
 
   @Override
-  public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
+  public void exitNoticeReference(NoticeReferenceContext ctx) {
     this.stack.push(this.script.composeExternalReference(this.stack.pop(StringExpression.class)));
   }
 
@@ -1241,7 +1333,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
+  public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx.noticeReference() != null) {
       PathExpression field = this.stack.pop(PathExpression.class);
       PathExpression notice = this.stack.pop(PathExpression.class);
@@ -1642,6 +1734,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitBooleanFromNumberFunction(BooleanFromNumberFunctionContext ctx) {
+    this.stack.push(this.script.composeToBooleanConversion(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
   public void exitContainsFunction(ContainsFunctionContext ctx) {
     final StringExpression needle = this.stack.pop(StringExpression.class);
     final StringExpression haystack = this.stack.pop(StringExpression.class);
@@ -1894,8 +1991,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitNumberFunction(NumberFunctionContext ctx) {
+  public void exitNumberFromStringFunction(NumberFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToNumberConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitNumberFromBooleanFunction(NumberFromBooleanFunctionContext ctx) {
+    this.stack.push(this.script.composeToNumberConversion(this.stack.pop(BooleanExpression.class)));
   }
 
   @Override
@@ -1904,9 +2006,74 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitMinFunction(MinFunctionContext ctx) {
+    this.stack.push(this.script.composeMinFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitMaxFunction(MaxFunctionContext ctx) {
+    this.stack.push(this.script.composeMaxFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitAverageFunction(AverageFunctionContext ctx) {
+    this.stack.push(this.script.composeAvgFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
   public void exitStringLengthFunction(StringLengthFunctionContext ctx) {
     this.stack
         .push(this.script.composeStringLengthCalculation(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitYearFromDateFunction(YearFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeYearFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitMonthFromDateFunction(MonthFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeMonthFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitDayFromDateFunction(DayFromDateFunctionContext ctx) {
+    this.stack.push(this.script.composeDayFunction(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitHoursFromTimeFunction(HoursFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeHoursFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitMinutesFromTimeFunction(MinutesFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeMinutesFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitSecondsFromTimeFunction(SecondsFromTimeFunctionContext ctx) {
+    this.stack.push(this.script.composeSecondsFunction(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
+    this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundFunction(RoundFunctionContext ctx) {
+    this.stack.push(this.script.composeRoundFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundDownFunction(RoundDownFunctionContext ctx) {
+    this.stack.push(this.script.composeFloorFunction(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitRoundUpFunction(RoundUpFunctionContext ctx) {
+    this.stack.push(this.script.composeCeilingFunction(this.stack.pop(NumericExpression.class)));
   }
 
   // #endregion Numeric functions ---------------------------------------------
@@ -1927,8 +2094,42 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitToStringFunction(ToStringFunctionContext ctx) {
+  public void exitSubstringBeforeFunction(SubstringBeforeFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSubstringBeforeFunction(text, delimiter));
+  }
+
+  @Override
+  public void exitSubstringAfterFunction(SubstringAfterFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSubstringAfterFunction(text, delimiter));
+  }
+
+  @Override
+  public void exitNumberToStringFunction(NumberToStringFunctionContext ctx) {
     this.stack.push(this.script.composeToStringConversion(this.stack.pop(NumericExpression.class)));
+  }
+
+  @Override
+  public void exitBooleanToStringFunction(BooleanToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(BooleanExpression.class)));
+  }
+
+  @Override
+  public void exitDateToStringFunction(DateToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(DateExpression.class)));
+  }
+
+  @Override
+  public void exitTimeToStringFunction(TimeToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(TimeExpression.class)));
+  }
+
+  @Override
+  public void exitDurationToStringFunction(DurationToStringFunctionContext ctx) {
+    this.stack.push(this.script.composeToStringConversion(this.stack.pop(DurationExpression.class)));
   }
 
   @Override
@@ -1952,6 +2153,51 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeNumberFormatting(number, format));
   }
 
+  @Override
+  public void exitFormatShortDateFunction(FormatShortDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatShortTimeFunction(FormatShortTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatMediumDateFunction(FormatMediumDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatMediumTimeFunction(FormatMediumTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatLongDateFunction(FormatLongDateFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
+  @Override
+  public void exitFormatLongTimeFunction(FormatLongTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
+  @Override
+  public void exitFormatShortDateTimeFunction(FormatShortDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-short");
+  }
+
+  @Override
+  public void exitFormatMediumDateTimeFunction(FormatMediumDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-medium");
+  }
+
+  @Override
+  public void exitFormatLongDateTimeFunction(FormatLongDateTimeFunctionContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction("format-long");
+  }
+
   // #region New in EFX-2 -----------------------------------------------------
 
   @Override
@@ -1965,6 +2211,77 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitNormalizeSpaceFunction(NormalizeSpaceFunctionContext ctx) {
+    this.stack.push(this.script.composeNormalizeSpaceFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitTrimFunction(TrimFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitTrimLeftFunction(TrimLeftFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimLeftFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitTrimRightFunction(TrimRightFunctionContext ctx) {
+    this.stack.push(this.script.composeTrimRightFunction(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitPadLeftFunction(PadLeftFunctionContext ctx) {
+    final StringExpression padChar = this.stack.pop(StringExpression.class);
+    final NumericExpression length = this.stack.pop(NumericExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composePadLeftFunction(text, length, padChar));
+  }
+
+  @Override
+  public void exitPadRightFunction(PadRightFunctionContext ctx) {
+    final StringExpression padChar = this.stack.pop(StringExpression.class);
+    final NumericExpression length = this.stack.pop(NumericExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composePadRightFunction(text, length, padChar));
+  }
+
+  @Override
+  public void exitRepeatFunction(RepeatFunctionContext ctx) {
+    final NumericExpression count = this.stack.pop(NumericExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeRepeatFunction(text, count));
+  }
+
+  @Override
+  public void exitReplaceFunction(ReplaceFunctionContext ctx) {
+    final StringExpression replacement = this.stack.pop(StringExpression.class);
+    final StringExpression search = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeReplaceFunction(text, search, replacement));
+  }
+
+  @Override
+  public void exitReplaceRegexFunction(ReplaceRegexFunctionContext ctx) {
+    final StringExpression replacement = this.stack.pop(StringExpression.class);
+    final StringExpression pattern = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeReplaceRegexFunction(text, pattern, replacement));
+  }
+
+  @Override
+  public void exitUrlEncodeFunction(UrlEncodeFunctionContext ctx) {
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeUrlEncodeFunction(text));
+  }
+
+  @Override
+  public void exitCapitalizeFirstFunction(CapitalizeFirstFunctionContext ctx) {
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeCapitalizeFirstFunction(text));
+  }
+
+  @Override
   public void exitStringJoinFunction(StringJoinFunctionContext ctx) {
     final StringExpression separator = this.stack.pop(StringExpression.class);
     final StringSequenceExpression list = this.stack.pop(StringSequenceExpression.class);
@@ -1973,12 +2290,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
-    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    throw InvalidUsageException.templateOnlyFunction("preferred-language");
   }
 
   @Override
   public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
-    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    throw InvalidUsageException.templateOnlyFunction("preferred-language-text");
   }
 
   @Override
@@ -2205,6 +2522,186 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   // #endregion Except ---------------------------------------------------------
 
+  // #region Sort --------------------------------------------------------------
+
+  @Override
+  public void exitStringSortFunction(StringSortFunctionContext ctx) {
+    exitSortFunction(StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanSortFunction(BooleanSortFunctionContext ctx) {
+    exitSortFunction(BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericSortFunction(NumericSortFunctionContext ctx) {
+    exitSortFunction(NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateSortFunction(DateSortFunctionContext ctx) {
+    exitSortFunction(DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeSortFunction(TimeSortFunctionContext ctx) {
+    exitSortFunction(TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationSortFunction(DurationSortFunctionContext ctx) {
+    exitSortFunction(DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitSortFunction(Class<T> listType) {
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeSortFunction(list, listType));
+  }
+
+  // #endregion Sort -----------------------------------------------------------
+
+  // #region Reverse ----------------------------------------------------------
+
+  @Override
+  public void exitStringReverseFunction(StringReverseFunctionContext ctx) {
+    exitReverseFunction(StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanReverseFunction(BooleanReverseFunctionContext ctx) {
+    exitReverseFunction(BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericReverseFunction(NumericReverseFunctionContext ctx) {
+    exitReverseFunction(NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateReverseFunction(DateReverseFunctionContext ctx) {
+    exitReverseFunction(DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeReverseFunction(TimeReverseFunctionContext ctx) {
+    exitReverseFunction(TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationReverseFunction(DurationReverseFunctionContext ctx) {
+    exitReverseFunction(DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitReverseFunction(Class<T> listType) {
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeReverseFunction(list, listType));
+  }
+
+  // #endregion Reverse --------------------------------------------------------
+
+  // #region Subsequence ------------------------------------------------------
+
+  @Override
+  public void exitStringSubsequenceFunction(StringSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitSplitFunction(SplitFunctionContext ctx) {
+    final StringExpression delimiter = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeSplitFunction(text, delimiter));
+  }
+
+  @Override
+  public void exitBooleanSubsequenceFunction(BooleanSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericSubsequenceFunction(NumericSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateSubsequenceFunction(DateSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeSubsequenceFunction(TimeSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationSubsequenceFunction(DurationSubsequenceFunctionContext ctx) {
+    exitSubsequenceFunction(ctx.length != null, DurationSequenceExpression.class);
+  }
+
+  private <T extends SequenceExpression> void exitSubsequenceFunction(boolean hasLength,
+      Class<T> listType) {
+    final NumericExpression length =
+        hasLength ? this.stack.pop(NumericExpression.class) : null;
+    final NumericExpression start = this.stack.pop(NumericExpression.class);
+    final T list = this.stack.pop(listType);
+    if (length != null) {
+      this.stack.push(this.script.composeSubsequenceFunction(list, start, length, listType));
+    } else {
+      this.stack.push(this.script.composeSubsequenceFunction(list, start, listType));
+    }
+  }
+
+  // #endregion Subsequence ----------------------------------------------------
+
+  // #region Index-of ----------------------------------------------------------
+
+  @Override
+  public void exitIndexOfStringFunction(IndexOfStringFunctionContext ctx) {
+    exitIndexOfFunction(StringSequenceExpression.class, StringExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfSubstringFunction(IndexOfSubstringFunctionContext ctx) {
+    final StringExpression substring = this.stack.pop(StringExpression.class);
+    final StringExpression text = this.stack.pop(StringExpression.class);
+    this.stack.push(this.script.composeIndexOfSubstringFunction(text, substring));
+  }
+
+  @Override
+  public void exitIndexOfBooleanFunction(IndexOfBooleanFunctionContext ctx) {
+    exitIndexOfFunction(BooleanSequenceExpression.class, BooleanExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfNumericFunction(IndexOfNumericFunctionContext ctx) {
+    exitIndexOfFunction(NumericSequenceExpression.class, NumericExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfDateFunction(IndexOfDateFunctionContext ctx) {
+    exitIndexOfFunction(DateSequenceExpression.class, DateExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfTimeFunction(IndexOfTimeFunctionContext ctx) {
+    exitIndexOfFunction(TimeSequenceExpression.class, TimeExpression.class);
+  }
+
+  @Override
+  public void exitIndexOfDurationFunction(IndexOfDurationFunctionContext ctx) {
+    exitIndexOfFunction(DurationSequenceExpression.class, DurationExpression.class);
+  }
+
+  private <T extends SequenceExpression, S extends ScalarExpression> void exitIndexOfFunction(
+      Class<T> listType, Class<S> valueType) {
+    final S value = this.stack.pop(valueType);
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeIndexOfFunction(list, value));
+  }
+
+  // #endregion Index-of -------------------------------------------------------
+
   // #endregion Sequence Functions --------------------------------------------
 
   // #region Helpers ----------------------------------------------------------
@@ -2360,7 +2857,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void enterPredicate(EfxParser.PredicateContext ctx) {
+    public void enterPredicate(PredicateContext ctx) {
       var parent = ctx.getParent();
       if (parent instanceof NodeReferenceWithPredicateContext) {
         final String nodeId = getNodeId((NodeReferenceWithPredicateContext) parent);
@@ -2374,7 +2871,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void exitPredicate(EfxParser.PredicateContext ctx) {
+    public void exitPredicate(PredicateContext ctx) {
       this.efxContext.pop();
     }
 
@@ -2386,14 +2883,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
+    public void exitAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
       if (ctx.Slash() != null) {
         this.efxContext.pop();
       }
     }
 
     @Override
-    public void enterAbsoluteNodeReference(EfxParser.AbsoluteNodeReferenceContext ctx) {
+    public void enterAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
       if (ctx.Slash() != null) {
         this.efxContext.push(null);
       }
@@ -2414,7 +2911,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     @Override
-    public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
+    public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
       if (ctx.noticeReference() != null) {
         this.efxContext.pop();
       }

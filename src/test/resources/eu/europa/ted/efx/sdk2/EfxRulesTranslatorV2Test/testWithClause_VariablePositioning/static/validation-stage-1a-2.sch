@@ -9,7 +9,7 @@
     <let name="p1" value="&quot;P1&quot;"/>
     <let name="p2" value="&quot;P2&quot;"/>
     <rule context="/*/PathNode/TextField">
-        <assert id="R-X3F-N8W" role="ERROR" test="./normalize-space(text()) != ''">rule|text|R-X3F-N8W</assert>
+        <assert id="R-X3F-N8W" role="ERROR" test="not(./normalize-space(text()) = '')">rule|text|R-X3F-N8W</assert>
     </rule>
     <rule context="/*/PathNode/NumberField">
         <assert id="R-D4K-P9M" role="ERROR" test="$before1 != &quot;x&quot;">rule|text|R-D4K-P9M</assert>

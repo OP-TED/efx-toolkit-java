@@ -54,7 +54,7 @@ LET text : $rootText = BT-00-Text;
 
 // Complex WHEN condition with variable
 WITH ND-SubNode
-WHEN $rootText is not empty
+WHEN not(empty($rootText))
 ASSERT BT-00-Indicator is present
 AS ERROR R-F5V-T6B
 FOR BT-00-Indicator IN *;
