@@ -27,7 +27,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
-import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -94,13 +93,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public PathExpression composeFieldReferenceWithPredicate(PathExpression fieldReference,
       BooleanExpression predicate) {
     return Expression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getClass());
-  }
-
-  @Override
-  public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
-      final String axis) {
-    String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
-    return Expression.instantiate(resultXPath, fieldReference.getClass());
   }
 
   @Override

@@ -1225,12 +1225,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ND-Root", "BT-00-Measure");
   }
 
-  @Test
-  void testFieldReference_WithAxis() {
-    testExpressionTranslationWithContext("./preceding::PathNode/IntegerField/number()", "ND-Root",
-        "ND-Root::preceding::integerField");
-  }
-
   /**
    * Unlike EFX-1, where any reference to a text-multilingual field, is automatically translated to
    * an expression that returns the value of the field in the preferred language, in EFX-2 there are

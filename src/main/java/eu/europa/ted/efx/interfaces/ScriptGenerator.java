@@ -78,8 +78,17 @@ public interface ScriptGenerator {
   public PathExpression composeFieldReferenceWithPredicate(
       final PathExpression fieldReference, final BooleanExpression predicate);
 
-  public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
-      final String axis);
+  /**
+   * Applies an XPath axis to a field reference.
+   *
+   * @deprecated Axis syntax has been removed from EFX-2. This method is only used by EFX-1
+   *     and will be removed in a future version.
+   */
+  @Deprecated(forRemoval = true)
+  default PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis) {
+    return fieldReference;
+  }
 
   /**
    * Given a PathExpression, this method should return the target language script for retrieving the

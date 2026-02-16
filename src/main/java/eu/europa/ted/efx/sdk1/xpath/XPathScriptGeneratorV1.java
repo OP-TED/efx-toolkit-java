@@ -33,6 +33,13 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     }
 
     @Override
+    public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+        final String axis) {
+        String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
+        return Expression.instantiate(resultXPath, fieldReference.getClass());
+    }
+
+    @Override
     public StringExpression composeToStringConversion(NumericExpression number) {
         String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
         return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
