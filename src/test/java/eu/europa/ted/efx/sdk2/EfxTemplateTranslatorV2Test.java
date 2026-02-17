@@ -515,7 +515,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let text*:$items = ('a', 'b', 'c');",
+            "let text*:$items = ['a', 'b', 'c'];",
             "display count: ${count($items)};")));
   }
 
@@ -530,7 +530,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let number*:$nums = (1, 2, 3);",
+            "let number*:$nums = [1, 2, 3];",
             "display count: ${count($nums)};")));
   }
 
@@ -545,7 +545,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let indicator*:$flags = (TRUE, FALSE);",
+            "let indicator*:$flags = [TRUE, FALSE];",
             "display count: ${count($flags)};")));
   }
 
@@ -560,7 +560,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let date*:$dates = (2024-01-01Z, 2024-12-31Z);",
+            "let date*:$dates = [2024-01-01Z, 2024-12-31Z];",
             "display count: ${count($dates)};")));
   }
 
@@ -575,7 +575,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let time*:$times = (10:00:00Z, 18:00:00Z);",
+            "let time*:$times = [10:00:00Z, 18:00:00Z];",
             "display count: ${count($times)};")));
   }
 
@@ -590,7 +590,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let measure*:$durs = (P1Y, P2M);",
+            "let measure*:$durs = [P1Y, P2M];",
             "display count: ${count($durs)};")));
   }
 
@@ -609,7 +609,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let text*:?getItems() = ('a', 'b', 'c');",
+            "let text*:?getItems() = ['a', 'b', 'c'];",
             "display count: ${count(?getItems())};")));
   }
 
@@ -624,7 +624,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let number*:?getNumbers() = (1, 2, 3);",
+            "let number*:?getNumbers() = [1, 2, 3];",
             "display count: ${count(?getNumbers())};")));
   }
 
@@ -639,7 +639,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let indicator*:?getFlags() = (TRUE, FALSE);",
+            "let indicator*:?getFlags() = [TRUE, FALSE];",
             "display count: ${count(?getFlags())};")));
   }
 
@@ -654,7 +654,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let date*:?getDates() = (2024-01-01Z, 2024-12-31Z);",
+            "let date*:?getDates() = [2024-01-01Z, 2024-12-31Z];",
             "display count: ${count(?getDates())};")));
   }
 
@@ -669,7 +669,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let time*:?getTimes() = (10:00:00Z, 18:00:00Z);",
+            "let time*:?getTimes() = [10:00:00Z, 18:00:00Z];",
             "display count: ${count(?getTimes())};")));
   }
 
@@ -684,7 +684,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let measure*:?getDurations() = (P1Y, P2M);",
+            "let measure*:?getDurations() = [P1Y, P2M];",
             "display count: ${count(?getDurations())};")));
   }
 
@@ -1169,7 +1169,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { label(string-join(('field','|','name','|','BT-00-Text'), ', ')) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
-        translateTemplate("{BT-00-Text}  #{${string-join(('field', '|', 'name', '|', 'BT-00-Text'), ', ')}}"));
+        translateTemplate("{BT-00-Text}  #{${string-join(['field', '|', 'name', '|', 'BT-00-Text'], ', ')}}"));
   }
 
   @Test
@@ -1906,7 +1906,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Values: ')eval((1,2,3)) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{ND-Root} Values: ${(1,2,3)}"));
+        translateTemplate("{ND-Root} Values: ${[1,2,3]}"));
   }
 
   @Test
@@ -1917,7 +1917,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Values: ')eval((1,2,PathNode/NumberField/number())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{ND-Root} Values: ${(1,2,BT-00-Number)}"));
+        translateTemplate("{ND-Root} Values: ${[1,2,BT-00-Number]}"));
   }
 
   // #endregion Repeatable Fields in Expression Blocks -------------------------

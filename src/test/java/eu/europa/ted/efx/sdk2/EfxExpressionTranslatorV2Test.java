@@ -50,7 +50,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testInListCondition() {
     testExpressionTranslationWithContext("not('x' = ('a','b','c'))", "BT-00-Text",
-        "'x' not in ('a', 'b', 'c')");
+        "'x' not in ['a', 'b', 'c']");
   }
 
   @Test
@@ -82,14 +82,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringUniqueValueCondition_WithLiteralSequence() {
     testExpressionTranslationWithContext(
         "count(for $n in 'b', $x in ('a','b','c','b')[. = $n] return $x) = 1",
-        "BT-00-Text", "'b' is unique in ('a', 'b', 'c', 'b')");
+        "BT-00-Text", "'b' is unique in ['a', 'b', 'c', 'b']");
   }
 
   @Test
   void testNumericUniqueValueCondition_WithLiteralSequence() {
     testExpressionTranslationWithContext(
         "count(for $n in 2, $x in (1,2,3,2)[. = $n] return $x) = 1",
-        "BT-00-Number", "2 is unique in (1, 2, 3, 2)");
+        "BT-00-Number", "2 is unique in [1, 2, 3, 2]");
   }
 
   @Test
@@ -103,7 +103,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringUniqueValueCondition_WithNot() {
     testExpressionTranslationWithContext(
         "not(count(for $n in 'x', $x in ('a','b','c')[. = $n] return $x) = 1)",
-        "BT-00-Text", "'x' is not unique in ('a', 'b', 'c')");
+        "BT-00-Text", "'x' is not unique in ['a', 'b', 'c']");
   }
 
   @Test
@@ -388,7 +388,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringQuantifiedExpression_UsingLiterals() {
     testExpressionTranslationWithContext("every $x in ('a','b','c') satisfies $x <= 'a'", "ND-Root",
-        "every text:$x in ('a', 'b', 'c') satisfies $x <= 'a'");
+        "every text:$x in ['a', 'b', 'c'] satisfies $x <= 'a'");
   }
 
   @Test
@@ -400,7 +400,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testBooleanQuantifiedExpression_UsingLiterals() {
     testExpressionTranslationWithContext("every $x in (true(),false(),true()) satisfies $x",
-        "ND-Root", "every indicator:$x in (TRUE, FALSE, ALWAYS) satisfies $x");
+        "ND-Root", "every indicator:$x in [TRUE, FALSE, ALWAYS] satisfies $x");
   }
 
   @Test
@@ -412,7 +412,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumericQuantifiedExpression_UsingLiterals() {
     testExpressionTranslationWithContext("every $x in (1,2,3) satisfies $x <= 1", "ND-Root",
-        "every number:$x in (1, 2, 3) satisfies $x <= 1");
+        "every number:$x in [1, 2, 3] satisfies $x <= 1");
   }
 
   @Test
@@ -426,7 +426,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "every $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) satisfies $x <= xs:date('2012-01-01Z')",
         "ND-Root",
-        "every date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) satisfies $x <= 2012-01-01Z");
+        "every date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] satisfies $x <= 2012-01-01Z");
   }
 
   @Test
@@ -441,14 +441,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "every $x in PathNode/StartDateField/xs:date(text()), $y in ($x,xs:date('2022-02-02Z')), $i in (true(),true()) satisfies $x <= xs:date('2012-01-01Z')",
         "ND-Root",
-        "every date:$x in BT-00-StartDate, date:$y in ($x, 2022-02-02Z), indicator:$i in (ALWAYS, TRUE) satisfies $x <= 2012-01-01Z");
+        "every date:$x in BT-00-StartDate, date:$y in [$x, 2022-02-02Z], indicator:$i in [ALWAYS, TRUE] satisfies $x <= 2012-01-01Z");
   }
 
   @Test
   void testTimeQuantifiedExpression_UsingLiterals() {
     testExpressionTranslationWithContext(
         "every $x in (xs:time('00:00:00Z'),xs:time('00:00:01Z'),xs:time('00:00:02Z')) satisfies $x <= xs:time('00:00:00Z')",
-        "ND-Root", "every time:$x in (00:00:00Z, 00:00:01Z, 00:00:02Z) satisfies $x <= 00:00:00Z");
+        "ND-Root", "every time:$x in [00:00:00Z, 00:00:01Z, 00:00:02Z] satisfies $x <= 00:00:00Z");
   }
 
   @Test
@@ -462,7 +462,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationQuantifiedExpression_UsingLiterals() {
     testExpressionTranslationWithContext(
         "every $x in (xs:dayTimeDuration('P1D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P3D')) satisfies boolean(for $T in (current-date()) return ($T + $x <= $T + xs:dayTimeDuration('P1D')))",
-        "ND-Root", "every measure:$x in (P1D, P2D, P3D) satisfies $x <= P1D");
+        "ND-Root", "every measure:$x in [P1D, P2D, P3D] satisfies $x <= P1D");
   }
 
   @Test
@@ -566,7 +566,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringsFromStringIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "'a' = (for $x in ('a','b','c') return concat($x, 'text'))", "ND-Root",
-        "'a' in (for text:$x in ('a', 'b', 'c') return concat($x, 'text'))");
+        "'a' in (for text:$x in ['a', 'b', 'c'] return concat($x, 'text'))");
   }
 
   @Test
@@ -574,7 +574,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
         "ND-Root",
-        "'a' in (for text:$x in ('a', 'b', 'c'), number:$y in (1, 2), indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))");
+        "'a' in (for text:$x in ['a', 'b', 'c'], number:$y in [1, 2], indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))");
   }
 
   @Test
@@ -612,7 +612,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringsFromBooleanIteration_UsingLiterals() {
     testExpressionTranslationWithContext("'a' = (for $x in (true(),false()) return 'y')", "ND-Root",
-        "'a' in (for indicator:$x in (TRUE, FALSE) return 'y')");
+        "'a' in (for indicator:$x in [TRUE, FALSE] return 'y')");
   }
 
   @Test
@@ -625,7 +625,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringsFromNumericIteration_UsingLiterals() {
     testExpressionTranslationWithContext("'a' = (for $x in (1,2,3) return 'y')", "ND-Root",
-        "'a' in (for number:$x in (1, 2, 3) return 'y')");
+        "'a' in (for number:$x in [1, 2, 3] return 'y')");
   }
 
   @Test
@@ -638,7 +638,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringsFromDateIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "'a' = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 'y')",
-        "ND-Root", "'a' in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 'y')");
+        "ND-Root", "'a' in (for date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] return 'y')");
   }
 
   @Test
@@ -651,7 +651,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringsFromTimeIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "'a' = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return 'y')",
-        "ND-Root", "'a' in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 'y')");
+        "ND-Root", "'a' in (for time:$x in [12:00:00Z, 12:00:01Z, 12:00:02Z] return 'y')");
   }
 
   @Test
@@ -664,7 +664,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testStringsFromDurationIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "'a' = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return 'y')",
-        "ND-Root", "'a' in (for measure:$x in (P1D, P1Y, P2M) return 'y')");
+        "ND-Root", "'a' in (for measure:$x in [P1D, P1Y, P2M] return 'y')");
   }
 
 
@@ -679,7 +679,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumbersFromStringIteration_UsingLiterals() {
     testExpressionTranslationWithContext("123 = (for $x in ('a','b','c') return number($x))",
-        "ND-Root", "123 in (for text:$x in ('a', 'b', 'c') return number($x))");
+        "ND-Root", "123 in (for text:$x in ['a', 'b', 'c'] return number($x))");
   }
 
   @Test
@@ -692,7 +692,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumbersFromBooleanIteration_UsingLiterals() {
     testExpressionTranslationWithContext("123 = (for $x in (true(),false()) return 0)", "ND-Root",
-        "123 in (for indicator:$x in (TRUE, FALSE) return 0)");
+        "123 in (for indicator:$x in [TRUE, FALSE] return 0)");
   }
 
   @Test
@@ -705,7 +705,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumbersFromNumericIteration_UsingLiterals() {
     testExpressionTranslationWithContext("123 = (for $x in (1,2,3) return 0)", "ND-Root",
-        "123 in (for number:$x in (1, 2, 3) return 0)");
+        "123 in (for number:$x in [1, 2, 3] return 0)");
   }
 
   @Test
@@ -718,7 +718,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNumbersFromDateIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "123 = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return 0)",
-        "ND-Root", "123 in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 0)");
+        "ND-Root", "123 in (for date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] return 0)");
   }
 
   @Test
@@ -731,7 +731,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNumbersFromTimeIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "123 = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return 0)",
-        "ND-Root", "123 in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 0)");
+        "ND-Root", "123 in (for time:$x in [12:00:00Z, 12:00:01Z, 12:00:02Z] return 0)");
   }
 
   @Test
@@ -744,7 +744,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNumbersFromDurationIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "123 = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return 0)",
-        "ND-Root", "123 in (for measure:$x in (P1D, P1Y, P2M) return 0)");
+        "ND-Root", "123 in (for measure:$x in [P1D, P1Y, P2M] return 0)");
   }
 
 
@@ -760,7 +760,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDatesFromStringIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in ('a','b','c') return xs:date($x))", "ND-Root",
-        "2022-01-01Z in (for text:$x in ('a', 'b', 'c') return date($x))");
+        "2022-01-01Z in (for text:$x in ['a', 'b', 'c'] return date($x))");
   }
 
   @Test
@@ -775,7 +775,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDatesFromBooleanIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in (true(),false()) return xs:date('2022-01-01Z'))",
-        "ND-Root", "2022-01-01Z in (for indicator:$x in (TRUE, FALSE) return 2022-01-01Z)");
+        "ND-Root", "2022-01-01Z in (for indicator:$x in [TRUE, FALSE] return 2022-01-01Z)");
   }
 
   @Test
@@ -790,7 +790,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDatesFromNumericIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in (1,2,3) return xs:date('2022-01-01Z'))", "ND-Root",
-        "2022-01-01Z in (for number:$x in (1, 2, 3) return 2022-01-01Z)");
+        "2022-01-01Z in (for number:$x in [1, 2, 3] return 2022-01-01Z)");
   }
 
   @Test
@@ -805,7 +805,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:date('2022-01-01Z'))",
         "ND-Root",
-        "2022-01-01Z in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 2022-01-01Z)");
+        "2022-01-01Z in (for date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] return 2022-01-01Z)");
   }
 
   @Test
@@ -820,7 +820,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:date('2022-01-01Z'))",
         "ND-Root",
-        "2022-01-01Z in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 2022-01-01Z)");
+        "2022-01-01Z in (for time:$x in [12:00:00Z, 12:00:01Z, 12:00:02Z] return 2022-01-01Z)");
   }
 
   @Test
@@ -834,7 +834,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDatesFromDurationIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:date('2022-01-01Z'))",
-        "ND-Root", "2022-01-01Z in (for measure:$x in (P1D, P1Y, P2M) return 2022-01-01Z)");
+        "ND-Root", "2022-01-01Z in (for measure:$x in [P1D, P1Y, P2M] return 2022-01-01Z)");
   }
 
 
@@ -851,7 +851,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTimesFromStringIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in ('a','b','c') return xs:time($x))", "ND-Root",
-        "12:00:00Z in (for text:$x in ('a', 'b', 'c') return time($x))");
+        "12:00:00Z in (for text:$x in ['a', 'b', 'c'] return time($x))");
   }
 
   @Test
@@ -866,7 +866,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTimesFromBooleanIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in (true(),false()) return xs:time('12:00:00Z'))",
-        "ND-Root", "12:00:00Z in (for indicator:$x in (TRUE, FALSE) return 12:00:00Z)");
+        "ND-Root", "12:00:00Z in (for indicator:$x in [TRUE, FALSE] return 12:00:00Z)");
   }
 
   @Test
@@ -881,7 +881,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTimesFromNumericIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in (1,2,3) return xs:time('12:00:00Z'))", "ND-Root",
-        "12:00:00Z in (for number:$x in (1, 2, 3) return 12:00:00Z)");
+        "12:00:00Z in (for number:$x in [1, 2, 3] return 12:00:00Z)");
   }
 
   @Test
@@ -896,7 +896,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:time('12:00:00Z'))",
         "ND-Root",
-        "12:00:00Z in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return 12:00:00Z)");
+        "12:00:00Z in (for date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] return 12:00:00Z)");
   }
 
   @Test
@@ -911,7 +911,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:time('12:00:00Z'))",
         "ND-Root",
-        "12:00:00Z in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return 12:00:00Z)");
+        "12:00:00Z in (for time:$x in [12:00:00Z, 12:00:01Z, 12:00:02Z] return 12:00:00Z)");
   }
 
   @Test
@@ -925,7 +925,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTimesFromDurationIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:time('12:00:00Z') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:time('12:00:00Z'))",
-        "ND-Root", "12:00:00Z in (for measure:$x in (P1D, P1Y, P2M) return 12:00:00Z)");
+        "ND-Root", "12:00:00Z in (for measure:$x in [P1D, P1Y, P2M] return 12:00:00Z)");
   }
 
 
@@ -942,7 +942,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromStringIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (xs:dayTimeDuration('P1D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P7D')) return $x)",
-        "ND-Root", "P1D in (for measure:$x in (P1D, P2D, P1W) return $x)");
+        "ND-Root", "P1D in (for measure:$x in [P1D, P2D, P1W] return $x)");
   }
 
   @Test
@@ -957,7 +957,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromBooleanIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (true(),false()) return xs:dayTimeDuration('P1D'))",
-        "ND-Root", "P1D in (for indicator:$x in (TRUE, FALSE) return P1D)");
+        "ND-Root", "P1D in (for indicator:$x in [TRUE, FALSE] return P1D)");
   }
 
   @Test
@@ -972,7 +972,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromNumericIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (1,2,3) return xs:dayTimeDuration('P1D'))",
-        "ND-Root", "P1D in (for number:$x in (1, 2, 3) return P1D)");
+        "ND-Root", "P1D in (for number:$x in [1, 2, 3] return P1D)");
   }
 
   @Test
@@ -986,7 +986,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromDateIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (xs:date('2012-01-01Z'),xs:date('2012-01-02Z'),xs:date('2012-01-03Z')) return xs:dayTimeDuration('P1D'))",
-        "ND-Root", "P1D in (for date:$x in (2012-01-01Z, 2012-01-02Z, 2012-01-03Z) return P1D)");
+        "ND-Root", "P1D in (for date:$x in [2012-01-01Z, 2012-01-02Z, 2012-01-03Z] return P1D)");
   }
 
   @Test
@@ -1000,7 +1000,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromTimeIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (xs:time('12:00:00Z'),xs:time('12:00:01Z'),xs:time('12:00:02Z')) return xs:dayTimeDuration('P1D'))",
-        "ND-Root", "P1D in (for time:$x in (12:00:00Z, 12:00:01Z, 12:00:02Z) return P1D)");
+        "ND-Root", "P1D in (for time:$x in [12:00:00Z, 12:00:01Z, 12:00:02Z] return P1D)");
   }
 
   @Test
@@ -1014,7 +1014,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationsFromDurationIteration_UsingLiterals() {
     testExpressionTranslationWithContext(
         "xs:dayTimeDuration('P1D') = (for $x in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) return xs:dayTimeDuration('P1D'))",
-        "ND-Root", "P1D in (for measure:$x in (P1D, P1Y, P2M) return P1D)");
+        "ND-Root", "P1D in (for measure:$x in [P1D, P1Y, P2M] return P1D)");
   }
 
   @Test
@@ -1055,51 +1055,51 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringList() {
     testExpressionTranslationWithContext("'a' = ('a','b','c')", "BT-00-Text",
-        "'a' in ('a', 'b', 'c')");
+        "'a' in ['a', 'b', 'c']");
   }
 
   @Test
   void testNumericList_UsingNumericLiterals() {
-    testExpressionTranslationWithContext("4 = (1,2,3)", "BT-00-Text", "4 in (1, 2, 3)");
+    testExpressionTranslationWithContext("4 = (1,2,3)", "BT-00-Text", "4 in [1, 2, 3]");
   }
 
   @Test
   void testNumericList_UsingNumericField() {
     testExpressionTranslationWithContext("4 = (1,../NumberField/number(),3)", "BT-00-Text",
-        "4 in (1, BT-00-Number, 3)");
+        "4 in [1, BT-00-Number, 3]");
   }
 
   @Test
   void testNumericList_UsingTextField() {
     assertThrows(ParseCancellationException.class,
-        () -> translateExpressionWithContext("BT-00-Text", "4 in (1, BT-00-Text, 3)"));
+        () -> translateExpressionWithContext("BT-00-Text", "4 in [1, BT-00-Text, 3]"));
   }
 
   @Test
   void testBooleanList() {
     testExpressionTranslationWithContext("false() = (true(),PathNode/IndicatorField,true())",
-        "ND-Root", "NEVER in (TRUE, BT-00-Indicator, ALWAYS)");
+        "ND-Root", "NEVER in [TRUE, BT-00-Indicator, ALWAYS]");
   }
 
   @Test
   void testDateList() {
     testExpressionTranslationWithContext(
         "xs:date('2022-01-01Z') = (xs:date('2022-01-02Z'),PathNode/StartDateField/xs:date(text()),xs:date('2022-02-02Z'))",
-        "ND-Root", "2022-01-01Z in (2022-01-02Z, BT-00-StartDate, 2022-02-02Z)");
+        "ND-Root", "2022-01-01Z in [2022-01-02Z, BT-00-StartDate, 2022-02-02Z]");
   }
 
   @Test
   void testTimeList() {
     testExpressionTranslationWithContext(
         "xs:time('12:20:21Z') = (xs:time('12:30:00Z'),PathNode/StartTimeField/xs:time(text()),xs:time('13:40:00Z'))",
-        "ND-Root", "12:20:21Z in (12:30:00Z, BT-00-StartTime, 13:40:00Z)");
+        "ND-Root", "12:20:21Z in [12:30:00Z, BT-00-StartTime, 13:40:00Z]");
   }
 
   @Test
   void testDurationList_UsingDurationLiterals() {
     testExpressionTranslationWithContext(
         "xs:yearMonthDuration('P3M') = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))",
-        "BT-00-Text", "P3M in (P1M, P3M, P6M)");
+        "BT-00-Text", "P3M in [P1M, P3M, P6M]");
   }
 
 
@@ -1108,7 +1108,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testDurationList_UsingDurationField() {
     assertEquals(
         "(for $F in ../MeasureField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())) = (xs:yearMonthDuration('P1M'),xs:yearMonthDuration('P3M'),xs:yearMonthDuration('P6M'))",
-        translateExpressionWithContext("BT-00-Text", "BT-00-Measure in (P1M, P3M, P6M)"));
+        translateExpressionWithContext("BT-00-Text", "BT-00-Measure in [P1M, P3M, P6M]"));
   }
 
   @Test
@@ -2100,7 +2100,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringJoinFunction_withLiterals() {
     testExpressionTranslationWithContext("string-join(('abc','def'), ',')", "ND-Root",
-        "string-join(('abc', 'def'), ',')");
+        "string-join(['abc', 'def'], ',')");
   }
 
   @Test
@@ -2179,39 +2179,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testDistinctValuesFunction_WithStringSequences() {
     testExpressionTranslationWithContext("distinct-values(('one','two','one'))", "ND-Root",
-        "distinct-values(('one', 'two', 'one'))");
+        "distinct-values(['one', 'two', 'one'])");
   }
 
   @Test
   void testDistinctValuesFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("distinct-values((1,2,3,2,3,4))", "ND-Root",
-        "distinct-values((1, 2, 3, 2, 3, 4))");
+        "distinct-values([1, 2, 3, 2, 3, 4])");
   }
 
   @Test
   void testDistinctValuesFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "distinct-values((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'),xs:date('2018-01-01Z'),xs:date('2022-01-02Z')))",
-        "ND-Root", "distinct-values((2018-01-01Z, 2020-01-01Z, 2018-01-01Z, 2022-01-02Z))");
+        "ND-Root", "distinct-values([2018-01-01Z, 2020-01-01Z, 2018-01-01Z, 2022-01-02Z])");
   }
 
   @Test
   void testDistinctValuesFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')))",
-        "ND-Root", "distinct-values((12:00:00Z, 13:00:00Z, 12:00:00Z, 14:00:00Z))");
+        "ND-Root", "distinct-values([12:00:00Z, 13:00:00Z, 12:00:00Z, 14:00:00Z])");
   }
 
   @Test
   void testDistinctValuesFunction_WithDurationSequences() {
     testExpressionTranslationWithContext("distinct-values((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')))",
-        "ND-Root", "distinct-values((P1W, P2D, P2D, P5D))");
+        "ND-Root", "distinct-values([P1W, P2D, P2D, P5D])");
   }
 
   @Test
   void testDistinctValuesFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("distinct-values((true(),false(),false(),false()))",
-        "ND-Root", "distinct-values((TRUE, FALSE, FALSE, NEVER))");
+        "ND-Root", "distinct-values([TRUE, FALSE, FALSE, NEVER])");
   }
 
   @Test
@@ -2225,39 +2225,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testUnionFunction_WithStringSequences() {
     testExpressionTranslationWithContext("distinct-values((('one','two'), ('two','three','four')))",
-        "ND-Root", "value-union(('one', 'two'), ('two', 'three', 'four'))");
+        "ND-Root", "value-union(['one', 'two'], ['two', 'three', 'four'])");
   }
 
   @Test
   void testUnionFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("distinct-values(((1,2,3), (2,3,4)))", "ND-Root",
-        "value-union((1, 2, 3), (2, 3, 4))");
+        "value-union([1, 2, 3], [2, 3, 4])");
   }
 
   @Test
   void testUnionFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "distinct-values(((xs:date('2018-01-01Z'),xs:date('2020-01-01Z')), (xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
-        "ND-Root", "value-union((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
+        "ND-Root", "value-union([2018-01-01Z, 2020-01-01Z], [2018-01-01Z, 2022-01-02Z])");
   }
 
   @Test
   void testUnionFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "distinct-values(((xs:time('12:00:00Z'),xs:time('13:00:00Z')), (xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
-        "ND-Root", "value-union((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
+        "ND-Root", "value-union([12:00:00Z, 13:00:00Z], [12:00:00Z, 14:00:00Z])");
   }
 
   @Test
   void testUnionFunction_WithDurationSequences() {
     testExpressionTranslationWithContext("distinct-values(((xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')), (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D'))))",
-        "ND-Root", "value-union((P1W, P2D), (P2D, P5D))");
+        "ND-Root", "value-union([P1W, P2D], [P2D, P5D])");
   }
 
   @Test
   void testUnionFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("distinct-values(((true(),false()), (false(),false())))",
-        "ND-Root", "value-union((TRUE, FALSE), (FALSE, NEVER))");
+        "ND-Root", "value-union([TRUE, FALSE], [FALSE, NEVER])");
   }
 
   @Test
@@ -2281,39 +2281,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testIntersectFunction_WithStringSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in ('one','two') return if (some $L2 in ('two','three','four') satisfies $L1 = $L2) then $L1 else ())", "ND-Root",
-        "value-intersect(('one', 'two'), ('two', 'three', 'four'))");
+        "value-intersect(['one', 'two'], ['two', 'three', 'four'])");
   }
 
   @Test
   void testIntersectFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("distinct-values(for $L1 in (1,2,3) return if (some $L2 in (2,3,4) satisfies $L1 = $L2) then $L1 else ())", "ND-Root",
-        "value-intersect((1, 2, 3), (2, 3, 4))");
+        "value-intersect([1, 2, 3], [2, 3, 4])");
   }
 
   @Test
   void testIntersectFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in (xs:date('2018-01-01Z'),xs:date('2020-01-01Z')) return if (some $L2 in (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
+        "ND-Root", "value-intersect([2018-01-01Z, 2020-01-01Z], [2018-01-01Z, 2022-01-02Z])");
   }
 
   @Test
   void testIntersectFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in (xs:time('12:00:00Z'),xs:time('13:00:00Z')) return if (some $L2 in (xs:time('12:00:00Z'),xs:time('14:00:00Z')) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
+        "ND-Root", "value-intersect([12:00:00Z, 13:00:00Z], [12:00:00Z, 14:00:00Z])");
   }
 
   @Test
   void testIntersectFunction_WithDurationSequences() {
     testExpressionTranslationWithContext("distinct-values(for $L1 in (xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')) return if (some $L2 in (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((P1W, P2D), (P2D, P5D))");
+        "ND-Root", "value-intersect([P1W, P2D], [P2D, P5D])");
   }
 
   @Test
   void testIntersectFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("distinct-values(for $L1 in (true(),false()) return if (some $L2 in (false(),false()) satisfies $L1 = $L2) then $L1 else ())",
-        "ND-Root", "value-intersect((TRUE, FALSE), (FALSE, NEVER))");
+        "ND-Root", "value-intersect([TRUE, FALSE], [FALSE, NEVER])");
   }
 
   @Test
@@ -2337,41 +2337,41 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testExceptFunction_WithStringSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in ('one','two') return if (every $L2 in ('two','three','four') satisfies $L1 != $L2) then $L1 else ())", "ND-Root",
-        "value-except(('one', 'two'), ('two', 'three', 'four'))");
+        "value-except(['one', 'two'], ['two', 'three', 'four'])");
   }
 
   @Test
   void testExceptFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("distinct-values(for $L1 in (1,2,3) return if (every $L2 in (2,3,4) satisfies $L1 != $L2) then $L1 else ())", "ND-Root",
-        "value-except((1, 2, 3), (2, 3, 4))");
+        "value-except([1, 2, 3], [2, 3, 4])");
   }
 
   @Test
   void testExceptFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in (xs:date('2018-01-01Z'),xs:date('2020-01-01Z')) return if (every $L2 in (xs:date('2018-01-01Z'),xs:date('2022-01-02Z')) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
+        "ND-Root", "value-except([2018-01-01Z, 2020-01-01Z], [2018-01-01Z, 2022-01-02Z])");
   }
 
   @Test
   void testExceptFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in (xs:time('12:00:00Z'),xs:time('13:00:00Z')) return if (every $L2 in (xs:time('12:00:00Z'),xs:time('14:00:00Z')) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
+        "ND-Root", "value-except([12:00:00Z, 13:00:00Z], [12:00:00Z, 14:00:00Z])");
   }
 
   @Test
   void testExceptFunction_WithDurationSequences() {
     testExpressionTranslationWithContext(
         "distinct-values(for $L1 in (xs:dayTimeDuration('P7D'),xs:dayTimeDuration('P2D')) return if (every $L2 in (xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')) satisfies $L1 != $L2) then $L1 else ())",
-        "ND-Root", "value-except((P1W, P2D), (P2D, P5D))");
+        "ND-Root", "value-except([P1W, P2D], [P2D, P5D])");
   }
 
   @Test
   void testExceptFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext(
       "distinct-values(for $L1 in (true(),false()) return if (every $L2 in (false(),false()) satisfies $L1 != $L2) then $L1 else ())", "ND-Root",
-        "value-except((TRUE, FALSE), (FALSE, NEVER))");
+        "value-except([TRUE, FALSE], [FALSE, NEVER])");
   }
 
   @Test
@@ -2423,39 +2423,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testSortFunction_WithStringSequences() {
     testExpressionTranslationWithContext("sort(('banana','apple','cherry'))", "ND-Root",
-        "sort(('banana', 'apple', 'cherry'))");
+        "sort(['banana', 'apple', 'cherry'])");
   }
 
   @Test
   void testSortFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("sort((3,1,2))", "ND-Root",
-        "sort((3, 1, 2))");
+        "sort([3, 1, 2])");
   }
 
   @Test
   void testSortFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "sort((xs:date('2022-01-01Z'),xs:date('2018-01-01Z'),xs:date('2020-01-01Z')))",
-        "ND-Root", "sort((2022-01-01Z, 2018-01-01Z, 2020-01-01Z))");
+        "ND-Root", "sort([2022-01-01Z, 2018-01-01Z, 2020-01-01Z])");
   }
 
   @Test
   void testSortFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "sort((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('13:00:00Z')))",
-        "ND-Root", "sort((14:00:00Z, 12:00:00Z, 13:00:00Z))");
+        "ND-Root", "sort([14:00:00Z, 12:00:00Z, 13:00:00Z])");
   }
 
   @Test
   void testSortFunction_WithDurationSequences() {
     testExpressionTranslationWithContext("sort((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P7D')))",
-        "ND-Root", "sort((P5D, P2D, P1W))");
+        "ND-Root", "sort([P5D, P2D, P1W])");
   }
 
   @Test
   void testSortFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("sort((true(),false(),true()))",
-        "ND-Root", "sort((TRUE, FALSE, TRUE))");
+        "ND-Root", "sort([TRUE, FALSE, TRUE])");
   }
 
   @Test
@@ -2478,39 +2478,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testReverseFunction_WithStringSequences() {
     testExpressionTranslationWithContext("reverse(('banana','apple','cherry'))", "ND-Root",
-        "reverse(('banana', 'apple', 'cherry'))");
+        "reverse(['banana', 'apple', 'cherry'])");
   }
 
   @Test
   void testReverseFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("reverse((3,1,2))", "ND-Root",
-        "reverse((3, 1, 2))");
+        "reverse([3, 1, 2])");
   }
 
   @Test
   void testReverseFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "reverse((xs:date('2022-01-01Z'),xs:date('2018-01-01Z'),xs:date('2020-01-01Z')))",
-        "ND-Root", "reverse((2022-01-01Z, 2018-01-01Z, 2020-01-01Z))");
+        "ND-Root", "reverse([2022-01-01Z, 2018-01-01Z, 2020-01-01Z])");
   }
 
   @Test
   void testReverseFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "reverse((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('13:00:00Z')))",
-        "ND-Root", "reverse((14:00:00Z, 12:00:00Z, 13:00:00Z))");
+        "ND-Root", "reverse([14:00:00Z, 12:00:00Z, 13:00:00Z])");
   }
 
   @Test
   void testReverseFunction_WithDurationSequences() {
     testExpressionTranslationWithContext("reverse((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P7D')))",
-        "ND-Root", "reverse((P5D, P2D, P1W))");
+        "ND-Root", "reverse([P5D, P2D, P1W])");
   }
 
   @Test
   void testReverseFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("reverse((true(),false(),true()))",
-        "ND-Root", "reverse((TRUE, FALSE, TRUE))");
+        "ND-Root", "reverse([TRUE, FALSE, TRUE])");
   }
 
   @Test
@@ -2533,26 +2533,26 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testSubsequenceFunction_WithStringSequences() {
     testExpressionTranslationWithContext("subsequence(('a','b','c','d'), 2)", "ND-Root",
-        "subsequence(('a', 'b', 'c', 'd'), 2)");
+        "subsequence(['a', 'b', 'c', 'd'], 2)");
   }
 
   @Test
   void testSubsequenceFunction_WithStringSequences_AndLength() {
     testExpressionTranslationWithContext("subsequence(('a','b','c','d'), 2, 2)", "ND-Root",
-        "subsequence(('a', 'b', 'c', 'd'), 2, 2)");
+        "subsequence(['a', 'b', 'c', 'd'], 2, 2)");
   }
 
   @Test
   void testSubsequenceFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("subsequence((10,20,30,40), 2, 2)", "ND-Root",
-        "subsequence((10, 20, 30, 40), 2, 2)");
+        "subsequence([10, 20, 30, 40], 2, 2)");
   }
 
   @Test
   void testSubsequenceFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "subsequence((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2024-01-01Z')), 1, 2)",
-        "ND-Root", "subsequence((2022-01-01Z, 2023-01-01Z, 2024-01-01Z), 1, 2)");
+        "ND-Root", "subsequence([2022-01-01Z, 2023-01-01Z, 2024-01-01Z], 1, 2)");
   }
 
   @Test
@@ -2576,40 +2576,40 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testIndexOfFunction_WithStringSequences() {
     testExpressionTranslationWithContext("index-of(('a','b','c','b'), 'b')[1]", "ND-Root",
-        "index-of(('a', 'b', 'c', 'b'), 'b')");
+        "index-of(['a', 'b', 'c', 'b'], 'b')");
   }
 
   @Test
   void testIndexOfFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("index-of((10,20,30,20), 20)[1]", "ND-Root",
-        "index-of((10, 20, 30, 20), 20)");
+        "index-of([10, 20, 30, 20], 20)");
   }
 
   @Test
   void testIndexOfFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "index-of((xs:date('2022-01-01Z'),xs:date('2023-01-01Z'),xs:date('2022-01-01Z')), xs:date('2022-01-01Z'))[1]",
-        "ND-Root", "index-of((2022-01-01Z, 2023-01-01Z, 2022-01-01Z), 2022-01-01Z)");
+        "ND-Root", "index-of([2022-01-01Z, 2023-01-01Z, 2022-01-01Z], 2022-01-01Z)");
   }
 
   @Test
   void testIndexOfFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext("index-of((true(),false(),true()), true())[1]",
-        "ND-Root", "index-of((TRUE, FALSE, TRUE), TRUE)");
+        "ND-Root", "index-of([TRUE, FALSE, TRUE], TRUE)");
   }
 
   @Test
   void testIndexOfFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "index-of((xs:time('14:00:00Z'),xs:time('12:00:00Z'),xs:time('14:00:00Z')), xs:time('14:00:00Z'))[1]",
-        "ND-Root", "index-of((14:00:00Z, 12:00:00Z, 14:00:00Z), 14:00:00Z)");
+        "ND-Root", "index-of([14:00:00Z, 12:00:00Z, 14:00:00Z], 14:00:00Z)");
   }
 
   @Test
   void testIndexOfFunction_WithDurationSequences() {
     testExpressionTranslationWithContext(
         "index-of((xs:dayTimeDuration('P5D'),xs:dayTimeDuration('P2D'),xs:dayTimeDuration('P5D')), xs:dayTimeDuration('P5D'))[1]",
-        "ND-Root", "index-of((P5D, P2D, P5D), P5D)");
+        "ND-Root", "index-of([P5D, P2D, P5D], P5D)");
   }
 
   @Test
@@ -2627,41 +2627,41 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testSequenceEqualFunction_WithStringSequences() {
     testExpressionTranslationWithContext(
         "deep-equal(sort(('one','two')), sort(('two','three','four')))", "ND-Root",
-        "sequence-equal(('one', 'two'), ('two', 'three', 'four'))");
+        "sequence-equal(['one', 'two'], ['two', 'three', 'four'])");
   }
 
   @Test
   void testSequenceEqualFunction_WithNumberSequences() {
     testExpressionTranslationWithContext("deep-equal(sort((1,2,3)), sort((2,3,4)))", "ND-Root",
-        "sequence-equal((1, 2, 3), (2, 3, 4))");
+        "sequence-equal([1, 2, 3], [2, 3, 4])");
   }
 
   @Test
   void testSequenceEqualFunction_WithDateSequences() {
     testExpressionTranslationWithContext(
         "deep-equal(sort((xs:date('2018-01-01Z'),xs:date('2020-01-01Z'))), sort((xs:date('2018-01-01Z'),xs:date('2022-01-02Z'))))",
-        "ND-Root", "sequence-equal((2018-01-01Z, 2020-01-01Z), (2018-01-01Z, 2022-01-02Z))");
+        "ND-Root", "sequence-equal([2018-01-01Z, 2020-01-01Z], [2018-01-01Z, 2022-01-02Z])");
   }
 
   @Test
   void testSequenceEqualFunction_WithTimeSequences() {
     testExpressionTranslationWithContext(
         "deep-equal(sort((xs:time('12:00:00Z'),xs:time('13:00:00Z'))), sort((xs:time('12:00:00Z'),xs:time('14:00:00Z'))))",
-        "ND-Root", "sequence-equal((12:00:00Z, 13:00:00Z), (12:00:00Z, 14:00:00Z))");
+        "ND-Root", "sequence-equal([12:00:00Z, 13:00:00Z], [12:00:00Z, 14:00:00Z])");
   }
 
   @Test
   void testSequenceEqualFunction_WithBooleanSequences() {
     testExpressionTranslationWithContext(
         "deep-equal(sort((true(),false())), sort((false(),false())))", "ND-Root",
-        "sequence-equal((TRUE, FALSE), (FALSE, NEVER))");
+        "sequence-equal([TRUE, FALSE], [FALSE, NEVER])");
   }
 
   @Test
   void testSequenceEqualFunction_WithDurationSequences() {
     testExpressionTranslationWithContext(
         "deep-equal(sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))), sort((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P3Y'))))",
-        "ND-Root", "sequence-equal((P1Y, P2Y), (P1Y, P3Y))");
+        "ND-Root", "sequence-equal([P1Y, P2Y], [P1Y, P3Y])");
   }
 
   @Test
@@ -2685,46 +2685,46 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testSequenceEmptiness_WithStringSequence() {
     testExpressionTranslationWithContext("empty(('a','b','c'))", "ND-Root",
-        "('a', 'b', 'c') is empty");
+        "['a', 'b', 'c'] is empty");
   }
 
   @Test
   void testSequenceEmptiness_WithStringSequence_Negated() {
     testExpressionTranslationWithContext("not(empty(('a','b','c')))", "ND-Root",
-        "('a', 'b', 'c') is not empty");
+        "['a', 'b', 'c'] is not empty");
   }
 
   @Test
   void testSequenceEmptiness_WithNumericSequence() {
     testExpressionTranslationWithContext("empty((1,2,3))", "ND-Root",
-        "(1, 2, 3) is empty");
+        "[1, 2, 3] is empty");
   }
 
   @Test
   void testSequenceEmptiness_WithBooleanSequence() {
     testExpressionTranslationWithContext("empty((true(),false()))", "ND-Root",
-        "(TRUE, FALSE) is empty");
+        "[TRUE, FALSE] is empty");
   }
 
   @Test
   void testSequenceEmptiness_WithDateSequence() {
     testExpressionTranslationWithContext(
         "empty((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))", "ND-Root",
-        "(2024-01-01Z, 2024-12-31Z) is empty");
+        "[2024-01-01Z, 2024-12-31Z] is empty");
   }
 
   @Test
   void testSequenceEmptiness_WithTimeSequence() {
     testExpressionTranslationWithContext(
         "empty((xs:time('12:00:00Z'),xs:time('13:00:00Z')))", "ND-Root",
-        "(12:00:00Z, 13:00:00Z) is empty");
+        "[12:00:00Z, 13:00:00Z] is empty");
   }
 
   @Test
   void testSequenceEmptiness_WithDurationSequence() {
     testExpressionTranslationWithContext(
         "empty((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y')))", "ND-Root",
-        "(P1Y, P2Y) is empty");
+        "[P1Y, P2Y] is empty");
   }
 
   @Test
@@ -2772,28 +2772,28 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testSequenceDuplicates_WithStringSequence() {
     testExpressionTranslationWithContext(
         "not(count(('a','b','a')) = count(distinct-values(('a','b','a'))))", "ND-Root",
-        "('a', 'b', 'a') has duplicates");
+        "['a', 'b', 'a'] has duplicates");
   }
 
   @Test
   void testSequenceDuplicates_WithStringSequence_Negated() {
     testExpressionTranslationWithContext(
         "count(('a','b','c')) = count(distinct-values(('a','b','c')))", "ND-Root",
-        "('a', 'b', 'c') has no duplicates");
+        "['a', 'b', 'c'] has no duplicates");
   }
 
   @Test
   void testSequenceDuplicates_WithNumericSequence() {
     testExpressionTranslationWithContext(
         "not(count((1,2,3)) = count(distinct-values((1,2,3))))", "ND-Root",
-        "(1, 2, 3) has duplicates");
+        "[1, 2, 3] has duplicates");
   }
 
   @Test
   void testSequenceDuplicates_WithBooleanSequence() {
     testExpressionTranslationWithContext(
         "not(count((true(),false())) = count(distinct-values((true(),false()))))", "ND-Root",
-        "(TRUE, FALSE) has duplicates");
+        "[TRUE, FALSE] has duplicates");
   }
 
   @Test
@@ -2801,7 +2801,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "not(count((xs:date('2024-01-01Z'),xs:date('2024-12-31Z'))) = count(distinct-values((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))))",
         "ND-Root",
-        "(2024-01-01Z, 2024-12-31Z) has duplicates");
+        "[2024-01-01Z, 2024-12-31Z] has duplicates");
   }
 
   @Test
@@ -2809,7 +2809,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "not(count((xs:time('12:00:00Z'),xs:time('13:00:00Z'))) = count(distinct-values((xs:time('12:00:00Z'),xs:time('13:00:00Z')))))",
         "ND-Root",
-        "(12:00:00Z, 13:00:00Z) has duplicates");
+        "[12:00:00Z, 13:00:00Z] has duplicates");
   }
 
   @Test
@@ -2817,7 +2817,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "not(count((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y'))) = count(distinct-values((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2Y')))))",
         "ND-Root",
-        "(P1Y, P2Y) has duplicates");
+        "[P1Y, P2Y] has duplicates");
   }
 
   @Test
@@ -2883,37 +2883,37 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testParameterizedExpression_WithTextSequenceParameter() {
     testExpressionTranslation("count(('a','b','c'))",
-        "{ND-Root, text*:$items} ${count($items)}", "('a', 'b', 'c')");
+        "{ND-Root, text*:$items} ${count($items)}", "['a', 'b', 'c']");
   }
 
   @Test
   void testParameterizedExpression_WithNumericSequenceParameter() {
     testExpressionTranslation("count((1,2,3))",
-        "{ND-Root, number*:$items} ${count($items)}", "(1, 2, 3)");
+        "{ND-Root, number*:$items} ${count($items)}", "[1, 2, 3]");
   }
 
   @Test
   void testParameterizedExpression_WithBooleanSequenceParameter() {
     testExpressionTranslation("count((true(),false(),true()))",
-        "{ND-Root, indicator*:$items} ${count($items)}", "(TRUE, FALSE, ALWAYS)");
+        "{ND-Root, indicator*:$items} ${count($items)}", "[TRUE, FALSE, ALWAYS]");
   }
 
   @Test
   void testParameterizedExpression_WithDateSequenceParameter() {
     testExpressionTranslation("count((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))",
-        "{ND-Root, date*:$items} ${count($items)}", "(2024-01-01Z, 2024-12-31Z)");
+        "{ND-Root, date*:$items} ${count($items)}", "[2024-01-01Z, 2024-12-31Z]");
   }
 
   @Test
   void testParameterizedExpression_WithTimeSequenceParameter() {
     testExpressionTranslation("count((xs:time('10:00:00Z'),xs:time('18:00:00Z')))",
-        "{ND-Root, time*:$items} ${count($items)}", "(10:00:00Z, 18:00:00Z)");
+        "{ND-Root, time*:$items} ${count($items)}", "[10:00:00Z, 18:00:00Z]");
   }
 
   @Test
   void testParameterizedExpression_WithDurationSequenceParameter() {
     testExpressionTranslation("count((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')))",
-        "{ND-Root, measure*:$items} ${count($items)}", "(P1Y, P2M)");
+        "{ND-Root, measure*:$items} ${count($items)}", "[P1Y, P2M]");
   }
 
   // #endregion: Compare sequences
@@ -2956,7 +2956,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testIndexer_WithTextSequence() {
-    testExpressionTranslationWithContext("('a','b','c')[1]", "ND-Root", "('a', 'b','c')[1]");
+    testExpressionTranslationWithContext("('a','b','c')[1]", "ND-Root", "['a', 'b','c'][1]");
   }
 
   // #endregion: Indexers

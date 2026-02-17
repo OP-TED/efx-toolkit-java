@@ -76,6 +76,6 @@ FOR BT-00-Indicator IN *;
 
 // Rule with code check
 WITH ND-Root
-ASSERT BT-00-Code in ("code1", "code2", "code3")
+ASSERT BT-00-Code in ["code1", "code2", "code3"]
 AS ERROR R-S9L-R5K
 FOR BT-00-Code IN *;

@@ -1,4 +1,4 @@
-LET time* : $times = (09:00:00Z, 17:00:00Z);
+LET time* : $times = [09:00:00Z, 17:00:00Z];
 
 ---- STAGE 1a ----
 

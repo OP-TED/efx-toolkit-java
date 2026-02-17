@@ -1,4 +1,4 @@
-LET text* : $languages = ('EN', 'FR', 'DE');
+LET text* : $languages = ['EN', 'FR', 'DE'];
 
 ---- STAGE 1a ----
 
