@@ -183,7 +183,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringLiteral getStringLiteralEquivalent(String literal) {
-    return new StringLiteral(literal);
+    return new StringLiteral(efxToXPathLiteral(literal));
   }
 
   @Override
@@ -224,7 +224,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public BooleanExpression composePatternMatchCondition(StringExpression expression,
       String pattern) {
     return new BooleanExpression(
-        String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(), pattern));
+        String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(),
+            efxToXPathLiteral(pattern)));
   }
 
   @Override
@@ -928,6 +929,46 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   private String quoted(final String text) {
     return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";
+  }
+
+  /**
+   * Converts an EFX string literal to a valid XPath string literal.
+   *
+   * EFX uses backslash escaping for quotes ({@code \'} or {@code \"}), while XPath uses
+   * quote doubling ({@code ''} or {@code ""}). Other backslash sequences (e.g. regex
+   * escapes like {@code \d}, {@code \w}) are passed through unchanged.
+   */
+  protected static String efxToXPathLiteral(String efxLiteral) {
+    if (efxLiteral == null || efxLiteral.length() < 2) {
+      return efxLiteral;
+    }
+
+    char delimiter = efxLiteral.charAt(0);
+    String content = efxLiteral.substring(1, efxLiteral.length() - 1);
+
+    StringBuilder result = new StringBuilder();
+    result.append(delimiter);
+    for (int i = 0; i < content.length(); i++) {
+      char c = content.charAt(i);
+      if (c == '\\' && i + 1 < content.length()) {
+        char next = content.charAt(i + 1);
+        if (next == '\'' || next == '"') {
+          if (next == delimiter) {
+            result.append(delimiter);
+            result.append(delimiter);
+          } else {
+            result.append(next);
+          }
+          i++;
+        } else {
+          result.append(c);
+        }
+      } else {
+        result.append(c);
+      }
+    }
+    result.append(delimiter);
+    return result.toString();
   }
 
   private int getWeeksFromDurationLiteral(final String literal) {

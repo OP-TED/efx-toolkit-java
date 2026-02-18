@@ -20,8 +20,10 @@ import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
@@ -68,6 +70,26 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      * This function returns the list of languages used in the visualisation in the
      * order of preference (visualisation language followed by notice language(s)).
      */
+    /**
+     * Preserved V1 behavior: pass EFX string literal through as-is without converting
+     * escape sequences to XPath format.
+     */
+    @Override
+    public StringLiteral getStringLiteralEquivalent(String literal) {
+        return new StringLiteral(literal);
+    }
+
+    /**
+     * Preserved V1 behavior: pass EFX pattern literal through as-is without converting
+     * escape sequences to XPath format.
+     */
+    @Override
+    public BooleanExpression composePatternMatchCondition(StringExpression expression,
+        String pattern) {
+        return new BooleanExpression(
+            String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(), pattern));
+    }
+
     @Override
     public PathExpression composeFieldValueReference(PathExpression fieldReference) {
         XPathInfo xpathInfo = XPathProcessor.parse(fieldReference.getScript());

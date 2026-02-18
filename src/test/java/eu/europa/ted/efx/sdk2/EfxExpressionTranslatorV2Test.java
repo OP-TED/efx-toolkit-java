@@ -142,6 +142,18 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLikePatternCondition_WithEscapedSingleQuote() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), 'a''b')",
+        "BT-00-Text", "'test' like 'a\\'b'");
+  }
+
+  @Test
+  void testLikePatternCondition_WithEscapedDoubleQuote() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), 'a\"b')",
+        "BT-00-Text", "'test' like 'a\\\"b'");
+  }
+
+  @Test
   void testLikePatternCondition_WithNot() {
     testExpressionTranslationWithContext("not(fn:matches(normalize-space('123'), '[0-9]*'))",
         "BT-00-Text", "'123' not like '[0-9]*'");
@@ -269,6 +281,11 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringComparison() {
     testExpressionTranslationWithContext("'aaa' < 'bbb'", "BT-00-Text", "'aaa' < 'bbb'");
+  }
+
+  @Test
+  void testStringComparison_WithEscapedSingleQuote() {
+    testExpressionTranslationWithContext("'a''b' = 'c''d'", "BT-00-Text", "'a\\'b' == 'c\\'d'");
   }
 
   @Test
