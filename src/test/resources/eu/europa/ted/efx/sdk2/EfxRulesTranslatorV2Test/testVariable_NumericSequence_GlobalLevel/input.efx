@@ -1,4 +1,4 @@
-LET number* : $numbers = (1, 2, 3);
+LET number* : $numbers = [1, 2, 3];
 
 ---- STAGE 1a ----
 

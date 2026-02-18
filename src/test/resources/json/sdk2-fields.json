@@ -353,6 +353,61 @@
       }
     },
     {
+      "id": "BT-00-Repeatable-Number",
+      "alias": "repeatableNumberField",
+      "type": "number",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableNumberField",
+      "xpathRelative": "PathNode/RepeatableNumberField",
+      "repeatable": {
+        "value": true
+      }
+    },
+    {
+      "id": "BT-00-Repeatable-Indicator",
+      "alias": "repeatableIndicatorField",
+      "type": "indicator",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableIndicatorField",
+      "xpathRelative": "PathNode/RepeatableIndicatorField",
+      "repeatable": {
+        "value": true
+      }
+    },
+    {
+      "id": "BT-00-Repeatable-Date",
+      "alias": "repeatableDateField",
+      "type": "date",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableDateField",
+      "xpathRelative": "PathNode/RepeatableDateField",
+      "repeatable": {
+        "value": true
+      }
+    },
+    {
+      "id": "BT-00-Repeatable-Time",
+      "alias": "repeatableTimeField",
+      "type": "time",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableTimeField",
+      "xpathRelative": "PathNode/RepeatableTimeField",
+      "repeatable": {
+        "value": true
+      }
+    },
+    {
+      "id": "BT-00-Repeatable-Duration",
+      "alias": "repeatableDurationField",
+      "type": "duration",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableDurationField",
+      "xpathRelative": "PathNode/RepeatableDurationField",
+      "repeatable": {
+        "value": true
+      }
+    },
+    {
       "id": "BT-00-Text-In-Repeatable-Node",
       "alias": "textInRepeatableNode",
       "type": "text",

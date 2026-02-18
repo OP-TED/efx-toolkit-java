@@ -1,4 +1,4 @@
-LET indicator* : $flags = (TRUE, FALSE, TRUE);
+LET indicator* : $flags = [TRUE, FALSE, TRUE];
 
 ---- STAGE 1a ----
 
