@@ -29,7 +29,8 @@ public class InvalidUsageException extends ParseCancellationException {
         INVALID_NOTICE_SUBTYPE_RANGE_ORDER,
         INVALID_NOTICE_SUBTYPE_TOKEN,
         FIELD_NOT_WITHHOLDABLE,
-        TEMPLATE_ONLY_FUNCTION
+        TEMPLATE_ONLY_FUNCTION,
+        UNSUPPORTED_REGEX_CONSTRUCT
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -38,6 +39,7 @@ public class InvalidUsageException extends ParseCancellationException {
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
     private static final String TEMPLATE_ONLY_FUNCTION = "Function '%s' can only be used in templates, not in expressions or validation rules.";
+    private static final String UNSUPPORTED_REGEX_CONSTRUCT = "Invalid regex pattern %s at position %d: %s";
 
     private final ErrorCode errorCode;
 
@@ -72,5 +74,9 @@ public class InvalidUsageException extends ParseCancellationException {
 
     public static InvalidUsageException templateOnlyFunction(String functionName) {
         return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, String.format(TEMPLATE_ONLY_FUNCTION, functionName));
+    }
+
+    public static InvalidUsageException unsupportedRegexConstruct(String pattern, int position, String reason) {
+        return new InvalidUsageException(ErrorCode.UNSUPPORTED_REGEX_CONSTRUCT, String.format(UNSUPPORTED_REGEX_CONSTRUCT, pattern, position, reason));
     }
 }
