@@ -43,6 +43,7 @@ import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.util.EfxRegexValidator;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -637,6 +638,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitLikePatternCondition(LikePatternConditionContext ctx) {
+    EfxRegexValidator.validate(ctx.pattern.getText());
     StringExpression expression = this.stack.pop(StringExpression.class);
     BooleanExpression condition = this.script.composePatternMatchCondition(expression, ctx.pattern.getText());
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
@@ -2344,6 +2346,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitReplaceRegexFunction(ReplaceRegexFunctionContext ctx) {
+    if (ctx.pattern instanceof StringLiteralExpressionContext) {
+      EfxRegexValidator.validate(ctx.pattern.getText());
+    }
     final StringExpression replacement = this.stack.pop(StringExpression.class);
     final StringExpression pattern = this.stack.pop(StringExpression.class);
     final StringExpression text = this.stack.pop(StringExpression.class);
