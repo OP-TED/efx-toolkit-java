@@ -1618,6 +1618,30 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         result);
   }
 
+  @Test
+  void testWithDisplay_RootContext_ForLoop() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(for $x in PathNode/RepeatableTextField/normalize-space(text()) return $x) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(
+            "with ND-Root display ${for text:$x in BT-00-Repeatable-Text return $x};"));
+  }
+
+  @Test
+  void testWithDisplay_RootContext_ForConcatenatedIterations() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(for $x in PathNode/RepeatableTextField/normalize-space(text()) return PathNode/RepeatableTextField[../TextField/normalize-space(text()) = $x]/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(
+            "with ND-Root display ${for text:$x in BT-00-Repeatable-Text return BT-00-Repeatable-Text[BT-00-Text == $x]};"));
+  }
+
   // #endregion contextDeclarationBlock ----------------------------------------
 
   // #region chooseTemplate ----------------------------------------------------

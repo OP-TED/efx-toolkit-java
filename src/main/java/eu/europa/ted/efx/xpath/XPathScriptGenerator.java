@@ -258,6 +258,13 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public <T extends SequenceExpression> T composeForExpression(
+      IteratorListExpression iterators, SequenceExpression expression, Class<T> targetListType) {
+    return Expression.instantiate("for " + iterators.getScript() + " return " + expression.getScript(),
+        targetListType);
+  }
+
+  @Override
   public IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList) {
     return new IteratorExpression(variableDeclarationExpression.getScript() + " in " + sourceList.getScript());
   }
