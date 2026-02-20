@@ -224,8 +224,71 @@ public interface ScriptGenerator {
   public <T extends TypedExpression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
+  /**
+   * Composes a "for ... return" expression that maps each iteration to a scalar value,
+   * collecting the results into a sequence (a map operation).
+   *
+   * EFX:   for text:$x in ['a', 'b', 'c'] return concat($x, '!')
+   * XPath: for $x in ('a','b','c') return concat($x, '!')
+   *
+   * Java:
+   *   List&lt;String&gt; result = new ArrayList&lt;&gt;();
+   *   for (String x : List.of("a", "b", "c")) {
+   *       result.add(x + "!");
+   *   }
+   *   // result = ["a!", "b!", "c!"]
+   *
+   * JavaScript:
+   *   const result = ["a", "b", "c"].map(x => x + "!");
+   *
+   * Python:
+   *   result = [x + "!" for x in ["a", "b", "c"]]
+   *
+   * @param iterators the iterator list (one or more typed iterators)
+   * @param expression the scalar expression evaluated per iteration
+   * @param targetListType the class of the resulting sequence expression
+   * @return the target-language script for the for-return expression
+   */
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType);
+
+  /**
+   * Composes a "for ... return" expression where the return body is a sequence,
+   * concatenating all results into a single flat sequence (a flatMap operation).
+   *
+   * Unlike {@link #composeForExpression} where the body is a scalar (map), here the
+   * body produces a sequence per iteration. The results are concatenated without
+   * removing duplicates.
+   *
+   * EFX:   for number:$x in [1, 2, 3] return [$x, $x * 10]
+   * XPath: for $x in (1, 2, 3) return ($x, $x * 10)
+   *        (XPath flattens sequences automatically)
+   *
+   * Java:
+   *   List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+   *   for (int x : List.of(1, 2, 3)) {
+   *       result.addAll(List.of(x, x * 10));
+   *   }
+   *   // result = [1, 10, 2, 20, 3, 30]
+   *
+   * JavaScript:
+   *   const result = [1, 2, 3].flatMap(x => [x, x * 10]);
+   *
+   * Python:
+   *   result = [item for x in [1, 2, 3] for item in [x, x * 10]]
+   *
+   * The key difference from composeForExpression is add() vs addAll():
+   * composeForExpression (scalar body) adds one element per iteration,
+   * composeForExpression (sequence body) adds all elements of a
+   * sub-sequence per iteration.
+   *
+   * @param iterators the iterator list (one or more typed iterators)
+   * @param sequenceExpression the sequence expression evaluated per iteration
+   * @param targetListType the class of the resulting sequence expression
+   * @return the target-language script for the for expression
+   */
+  public <T extends SequenceExpression> T composeForExpression(
+      IteratorListExpression iterators, SequenceExpression sequenceExpression, Class<T> targetListType);
 
   public IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList);
 

@@ -1034,7 +1034,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(StringExpression.class, StringSequenceExpression.class);
+    this.exitIterationExpression(StringExpression.class, StringSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
@@ -1045,7 +1045,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitNumericSequenceFromIteration(NumericSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(NumericExpression.class, NumericSequenceExpression.class);
+    this.exitIterationExpression(NumericExpression.class, NumericSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
@@ -1056,7 +1056,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(BooleanExpression.class, BooleanSequenceExpression.class);
+    this.exitIterationExpression(BooleanExpression.class, BooleanSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
@@ -1067,7 +1067,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitDateSequenceFromIteration(DateSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(DateExpression.class, DateSequenceExpression.class);
+    this.exitIterationExpression(DateExpression.class, DateSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
@@ -1078,7 +1078,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(TimeExpression.class, TimeSequenceExpression.class);
+    this.exitIterationExpression(TimeExpression.class, TimeSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
   }
 
@@ -1089,8 +1089,76 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitDurationSequenceFromIteration(DurationSequenceFromIterationContext ctx) {
-    this.exitIterationExpression(DurationExpression.class, DurationSequenceExpression.class);
+    this.exitIterationExpression(DurationExpression.class, DurationSequenceExpression.class, ctx.Distinct() != null);
     this.stack.popStackFrame(); // Iteration variables are local to the iteration
+  }
+
+  // for ... return <sequence> (concatenated iterations, i.e. flatMap)
+
+  @Override
+  public void enterStringSequenceFromConcatenatedIterations(StringSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitStringSequenceFromConcatenatedIterations(StringSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(StringSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
+  }
+
+  @Override
+  public void enterBooleanSequenceFromConcatenatedIterations(BooleanSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitBooleanSequenceFromConcatenatedIterations(BooleanSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(BooleanSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
+  }
+
+  @Override
+  public void enterNumericSequenceFromConcatenatedIterations(NumericSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitNumericSequenceFromConcatenatedIterations(NumericSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(NumericSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
+  }
+
+  @Override
+  public void enterDateSequenceFromConcatenatedIterations(DateSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitDateSequenceFromConcatenatedIterations(DateSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(DateSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
+  }
+
+  @Override
+  public void enterTimeSequenceFromConcatenatedIterations(TimeSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitTimeSequenceFromConcatenatedIterations(TimeSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(TimeSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
+  }
+
+  @Override
+  public void enterDurationSequenceFromConcatenatedIterations(DurationSequenceFromConcatenatedIterationsContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
+  public void exitDurationSequenceFromConcatenatedIterations(DurationSequenceFromConcatenatedIterationsContext ctx) {
+    this.exitConcatenatedIterationExpression(DurationSequenceExpression.class, ctx.Distinct() != null);
+    this.stack.popStackFrame();
   }
 
   public <T1 extends ScalarExpression, T2 extends SequenceExpression> void exitIteratorExpression(String variableName,
@@ -1104,13 +1172,26 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, initialisationExpression));
   }
 
-  public <T extends ScalarExpression> void exitIterationExpression(
-      Class<T> expressionType,
-      Class<? extends SequenceExpression> targetListType) {
+  @SuppressWarnings("unchecked")
+  public <T extends ScalarExpression, L extends SequenceExpression> void exitIterationExpression(
+      Class<T> expressionType, Class<L> targetListType, boolean distinct) {
     T expression = this.stack.pop(expressionType);
     IteratorListExpression iterators = this.stack.pop(IteratorListExpression.class);
-    this.stack
-        .push(this.script.composeForExpression(iterators, expression, targetListType));
+    L result = this.script.composeForExpression(iterators, expression, targetListType);
+    if (distinct) {
+      result = this.script.composeDistinctValuesFunction(result, targetListType);
+    }
+    this.stack.push(result);
+  }
+
+  public <T extends SequenceExpression> void exitConcatenatedIterationExpression(Class<T> sequenceType, boolean distinct) {
+    T sequenceExpression = this.stack.pop(sequenceType);
+    IteratorListExpression iterators = this.stack.pop(IteratorListExpression.class);
+    T result = this.script.composeForExpression(iterators, sequenceExpression, sequenceType);
+    if (distinct) {
+      result = this.script.composeDistinctValuesFunction(result, sequenceType);
+    }
+    this.stack.push(result);
   }
 
   // #endregion Iterators -----------------------------------------------------
@@ -2998,6 +3079,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
             this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
             return;
           }
+          // If inside a for-return body, auto-insert sequence cast so the re-parsed
+          // expression matches the ConcatenatedIterations rule (flatMap semantics).
+          if (hasParentContextOfType(ctx, LateBoundSequenceFromIterationContext.class)) {
+            this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
+            return;
+          }
           throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
         }
       }
@@ -3501,6 +3588,78 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     @Override
     public void exitLateBoundSequenceFromIteration(LateBoundSequenceFromIterationContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    // for ... return <sequence> (concatenated iterations)
+
+    @Override
+    public void enterStringSequenceFromConcatenatedIterations(StringSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitStringSequenceFromConcatenatedIterations(StringSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterNumericSequenceFromConcatenatedIterations(NumericSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitNumericSequenceFromConcatenatedIterations(NumericSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterBooleanSequenceFromConcatenatedIterations(BooleanSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitBooleanSequenceFromConcatenatedIterations(BooleanSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterDateSequenceFromConcatenatedIterations(DateSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitDateSequenceFromConcatenatedIterations(DateSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterTimeSequenceFromConcatenatedIterations(TimeSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitTimeSequenceFromConcatenatedIterations(TimeSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterDurationSequenceFromConcatenatedIterations(DurationSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitDurationSequenceFromConcatenatedIterations(DurationSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.popStackFrame();
+    }
+
+    @Override
+    public void enterLateBoundSequenceFromConcatenatedIterations(LateBoundSequenceFromConcatenatedIterationsContext ctx) {
+      this.stack.pushStackFrame();
+    }
+
+    @Override
+    public void exitLateBoundSequenceFromConcatenatedIterations(LateBoundSequenceFromConcatenatedIterationsContext ctx) {
       this.stack.popStackFrame();
     }
 
