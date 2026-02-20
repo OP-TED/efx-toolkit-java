@@ -1041,6 +1041,41 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ND-Root", "P1D in (for measure:$x in BT-00-Measure return P1D)");
   }
 
+  // Strings from concatenated iterations -----------------------------------
+
+  @Test
+  void testStringsFromConcatenatedIterations_UsingLiterals() {
+    testExpressionTranslationWithContext(
+        "'a' = (for $x in ('a','b','c') return ('x','y'))", "ND-Root",
+        "'a' in (for text:$x in ['a', 'b', 'c'] return ['x', 'y'])");
+  }
+
+  @Test
+  void testStringsFromConcatenatedIterations_UsingFieldReference() {
+    testExpressionTranslationWithContext(
+        "for $x in PathNode/TextField/normalize-space(text()) return PathNode/RepeatableTextField/normalize-space(text())",
+        "ND-Root",
+        "for text:$x in BT-00-Text return BT-00-Repeatable-Text");
+  }
+
+  // Return distinct (scalar) ------------------------------------------------
+
+  @Test
+  void testStringsFromIteration_ReturnDistinct() {
+    testExpressionTranslationWithContext(
+        "distinct-values(for $x in ('a','b','c') return concat($x, '!'))", "ND-Root",
+        "for text:$x in ['a', 'b', 'c'] return distinct concat($x, '!')");
+  }
+
+  // Return distinct (concatenated iterations / flatMap) --------------------
+
+  @Test
+  void testStringsFromConcatenatedIterations_ReturnDistinct() {
+    testExpressionTranslationWithContext(
+        "'a' = (distinct-values(for $x in ('a','b','c') return ('x','y')))", "ND-Root",
+        "'a' in (for text:$x in ['a', 'b', 'c'] return distinct ['x', 'y'])");
+  }
+
   // #endregion: Iteration expressions
 
   // #region: Numeric expressions ---------------------------------------------
