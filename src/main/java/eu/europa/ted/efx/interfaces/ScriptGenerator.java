@@ -232,7 +232,7 @@ public interface ScriptGenerator {
    * XPath: for $x in ('a','b','c') return concat($x, '!')
    *
    * Java:
-   *   List<String> result = new ArrayList<>();
+   *   List&lt;String&gt; result = new ArrayList&lt;&gt;();
    *   for (String x : List.of("a", "b", "c")) {
    *       result.add(x + "!");
    *   }
@@ -265,7 +265,7 @@ public interface ScriptGenerator {
    *        (XPath flattens sequences automatically)
    *
    * Java:
-   *   List<Integer> result = new ArrayList<>();
+   *   List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
    *   for (int x : List.of(1, 2, 3)) {
    *       result.addAll(List.of(x, x * 10));
    *   }
