@@ -2346,6 +2346,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitReplaceRegexFunction(ReplaceRegexFunctionContext ctx) {
+    if (ctx.pattern instanceof StringLiteralExpressionContext) {
+      EfxRegexValidator.validate(ctx.pattern.getText());
+    }
     final StringExpression replacement = this.stack.pop(StringExpression.class);
     final StringExpression pattern = this.stack.pop(StringExpression.class);
     final StringExpression text = this.stack.pop(StringExpression.class);

@@ -137,8 +137,8 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLikePatternCondition_WithEscapedDot() {
     testExpressionTranslationWithContext(
-        "fn:matches(normalize-space('12.3'), '\\d+\\.\\d+')",
-        "BT-00-Text", "'12.3' like '\\d+\\.\\d+'");
+        "fn:matches(normalize-space('12.3'), '[0-9]+\\.[0-9]+')",
+        "BT-00-Text", "'12.3' like '[0-9]+\\.[0-9]+'");
   }
 
   @Test
@@ -1951,8 +1951,23 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testReplaceRegexFunction_WithFieldReference() {
     testExpressionTranslation(
-        "replace(PathNode/TextField/normalize-space(text()), '\\s+', ' ')",
-        "{ND-Root} ${replace-regex(BT-00-Text, '\\s+', ' ')}");
+        "replace(PathNode/TextField/normalize-space(text()), '[ \\t]+', ' ')",
+        "{ND-Root} ${replace-regex(BT-00-Text, '[ \\t]+', ' ')}");
+  }
+
+  @Test
+  void testReplaceRegexFunction_WithShorthandPattern_ThrowsError() {
+    assertThrows(InvalidUsageException.class, () ->
+        testExpressionTranslationWithContext(
+            "", "ND-Root", "replace-regex('hello', '\\w+', 'x')"));
+  }
+
+  @Test
+  void testReplaceRegexFunction_WithDynamicPattern_DoesNotThrow() {
+    // Pattern is a field reference (non-literal) — static regex validation is skipped
+    testExpressionTranslation(
+        "replace('hello', PathNode/TextField/normalize-space(text()), 'x')",
+        "{ND-Root} ${replace-regex('hello', BT-00-Text, 'x')}");
   }
 
   @Test

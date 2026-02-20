@@ -22,28 +22,25 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
  * from the portable EFX regex subset. This subset is designed to work identically across all
  * EFX target languages (XPath, Java, JavaScript, Python, C#, Swift).
  *
- * <h3>Allowed constructs:</h3>
- * <ul>
- *   <li>Literal characters</li>
- *   <li>{@code .} (any character)</li>
- *   <li>{@code *}, {@code +}, {@code ?} (quantifiers, greedy or non-greedy)</li>
- *   <li>{@code {n}}, {@code {n,}}, {@code {n,m}} (repetition, greedy or non-greedy)</li>
- *   <li>{@code [...]}, {@code [^...]} (character classes with ranges)</li>
- *   <li>{@code (...)} (grouping), {@code |} (alternation)</li>
- *   <li>{@code ^}, {@code $} (anchors)</li>
- *   <li>{@code \d}, {@code \D}, {@code \w}, {@code \W}, {@code \s}, {@code \S}
- *       (shorthand character classes with ASCII semantics)</li>
- *   <li>Escaped metacharacters: {@code \.}, {@code \\}, {@code \(}, {@code \)},
- *       {@code \[}, {@code \]}, {@code \{}, {@code \}}, {@code \*}, {@code \+},
- *       {@code \?}, {@code \|}, {@code \^}, {@code \$}</li>
- * </ul>
+ * Allowed constructs:
  *
- * <h3>Shorthand character class semantics (ASCII):</h3>
- * <ul>
- *   <li>{@code \d} = {@code [0-9]}</li>
- *   <li>{@code \w} = {@code [a-zA-Z0-9_]}</li>
- *   <li>{@code \s} = {@code [ \t\r\n\f]}</li>
- * </ul>
+ *   Literal characters
+ *   {@code .} (any character)
+ *   {@code *}, {@code +}, {@code ?} (quantifiers, greedy or non-greedy)
+ *   {@code {n}}, {@code {n,}}, {@code {n,m}} (repetition, greedy or non-greedy)
+ *   {@code [...]}, {@code [^...]} (character classes with ranges)
+ *   {@code (...)} (grouping), {@code |} (alternation)
+ *   {@code ^}, {@code $} (anchors)
+ *   Escaped metacharacters: {@code \.} {@code \\} {@code \(} {@code \)}
+ *   {@code \[} {@code \]} {@code \{} {@code \}} {@code \*} {@code \+}
+ *   {@code \?} {@code \|} {@code \^} {@code \$}
+ *
+ * Disallowed constructs (not portable):
+ *
+ *   {@code \d}, {@code \D}, {@code \w}, {@code \W}, {@code \s}, {@code \S}
+ *   — shorthand character classes have inconsistent semantics across target languages
+ *   (ASCII in XPath/JavaScript, Unicode in Python/C#/Swift). Use explicit character
+ *   classes instead, e.g. {@code [0-9]}, {@code [a-zA-Z0-9_]}, {@code [ \t\r\n]}.
  */
 public final class EfxRegexValidator {
 
@@ -102,13 +99,24 @@ public final class EfxRegexValidator {
 
         char next = content.charAt(pos + 1);
 
-        if (SHORTHAND_CLASSES.contains(next) || ESCAPABLE_METACHARACTERS.contains(next)) {
+        if (ESCAPABLE_METACHARACTERS.contains(next)) {
+            return pos + 1;
+        }
+
+        // Portable whitespace escapes — same meaning in all target languages
+        if (next == 't' || next == 'r' || next == 'n' || next == 'f') {
             return pos + 1;
         }
 
         // EFX quote escapes (\' and \") — these represent literal quote characters
         if (next == '\'' || next == '"') {
             return pos + 1;
+        }
+
+        if (SHORTHAND_CLASSES.contains(next)) {
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+                    "shorthand class '\\" + next + "' is not allowed in EFX regex — its semantics differ across target languages. "
+                    + "Use an explicit character class instead (e.g. [0-9], [a-zA-Z0-9_], [ \\t\\r\\n])");
         }
 
         if (next == 'b' || next == 'B') {
@@ -160,7 +168,8 @@ public final class EfxRegexValidator {
                     throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, i + 1, "trailing backslash in character class");
                 }
                 char next = content.charAt(i + 1);
-                if (SHORTHAND_CLASSES.contains(next) || ESCAPABLE_METACHARACTERS.contains(next)
+                if (ESCAPABLE_METACHARACTERS.contains(next)
+                        || next == 't' || next == 'r' || next == 'n' || next == 'f'
                         || next == '\'' || next == '"' || next == '-') {
                     i += 2;
                     continue;

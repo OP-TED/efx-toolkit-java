@@ -106,13 +106,13 @@ class EfxRegexValidatorTest {
         }
 
         @Test
-        void testShorthandClasses() {
-            assertDoesNotThrow(() -> EfxRegexValidator.validate("'\\d\\D\\w\\W\\s\\S'"));
+        void testEscapedMetacharacters() {
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'\\.\\\\\\(\\)\\[\\]\\{\\}\\*\\+\\?\\|\\^\\$'"));
         }
 
         @Test
-        void testEscapedMetacharacters() {
-            assertDoesNotThrow(() -> EfxRegexValidator.validate("'\\.\\\\\\(\\)\\[\\]\\{\\}\\*\\+\\?\\|\\^\\$'"));
+        void testWhitespaceEscapes() {
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'[ \\t\\r\\n\\f]+'"));
         }
 
         @Test
@@ -122,13 +122,8 @@ class EfxRegexValidatorTest {
         }
 
         @Test
-        void testShorthandClassesInsideCharacterClass() {
-            assertDoesNotThrow(() -> EfxRegexValidator.validate("'[\\d\\w]'"));
-        }
-
-        @Test
         void testComplexPattern() {
-            assertDoesNotThrow(() -> EfxRegexValidator.validate("'^[a-zA-Z]\\d{2,4}(\\.[0-9]+)?$'"));
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'^[a-zA-Z][0-9]{2,4}(\\.[0-9]+)?$'"));
         }
 
         @Test
@@ -149,6 +144,55 @@ class EfxRegexValidatorTest {
 
     @Nested
     class DisallowedConstructs {
+
+        @Test
+        void testShorthandClass_d() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\d'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClass_w() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\w'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClass_s() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\s'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClass_D() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\D'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClass_W() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\W'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClass_S() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\S'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
+
+        @Test
+        void testShorthandClassInsideCharacterClass() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'[\\d\\w]'"));
+            assertTrue(ex.getMessage().contains("shorthand class"));
+        }
 
         @Test
         void testWordBoundary() {
