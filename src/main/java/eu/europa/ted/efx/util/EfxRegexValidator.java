@@ -34,6 +34,10 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
  *   Escaped metacharacters: {@code \.} {@code \\} {@code \(} {@code \)}
  *   {@code \[} {@code \]} {@code \{} {@code \}} {@code \*} {@code \+}
  *   {@code \?} {@code \|} {@code \^} {@code \$}
+ *   {@code \p{Category}}, {@code \P{Category}} — Unicode property escapes,
+ *   e.g. {@code \p{L}} (any Unicode letter). All EFX target languages support these
+ *   (JavaScript requires the {@code u} flag; Python requires the {@code regex} module
+ *   instead of {@code re} — both are handled transparently by the EFX translator).
  *
  * Disallowed constructs (not portable):
  *
@@ -62,7 +66,6 @@ public final class EfxRegexValidator {
             return;
         }
 
-        char delimiter = rawPattern.charAt(0);
         String content = rawPattern.substring(1, rawPattern.length() - 1);
         int groupDepth = 0;
 
@@ -130,8 +133,17 @@ public final class EfxRegexValidator {
         }
 
         if (next == 'p' || next == 'P') {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
-                    "Unicode property escape '\\" + next + "{...}' is not allowed in EFX regex — use character classes like '[a-z]' instead");
+            // Unicode property escape \p{Category} or \P{Category} — allowed
+            if (pos + 2 >= content.length() || content.charAt(pos + 2) != '{') {
+                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+                        "Unicode property escape '\\" + next + "' must be followed by '{Category}' (e.g. \\p{L})");
+            }
+            int closeIdx = content.indexOf('}', pos + 3);
+            if (closeIdx < 0) {
+                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+                        "Unicode property escape '\\" + next + "{...}' is missing closing '}'");
+            }
+            return closeIdx;
         }
 
         if (next == '0' || next == 'x' || next == 'u') {
@@ -174,9 +186,8 @@ public final class EfxRegexValidator {
                     i += 2;
                     continue;
                 }
-                // Reject the same unsupported escapes as outside a character class
-                validateEscape(rawPattern, content, i);
-                i += 2;
+                // Validate using the same rules as outside a character class
+                i = validateEscape(rawPattern, content, i) + 1;
                 continue;
             }
 

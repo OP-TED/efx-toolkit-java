@@ -116,6 +116,13 @@ class EfxRegexValidatorTest {
         }
 
         @Test
+        void testUnicodePropertyEscape() {
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'\\p{L}+'"));
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'\\P{Z}+'"));
+            assertDoesNotThrow(() -> EfxRegexValidator.validate("'[\\p{L}\\p{N}]+'"));
+        }
+
+        @Test
         void testEscapedQuotes() {
             assertDoesNotThrow(() -> EfxRegexValidator.validate("'a\\'b'"));
             assertDoesNotThrow(() -> EfxRegexValidator.validate("'a\\\"b'"));
@@ -216,10 +223,31 @@ class EfxRegexValidatorTest {
         }
 
         @Test
-        void testUnicodePropertyEscape() {
+        void testUnicodePropertyEscape_MissingBraces() {
             InvalidUsageException ex = assertThrows(InvalidUsageException.class,
                     () -> EfxRegexValidator.validate("'\\p'"));
-            assertTrue(ex.getMessage().contains("Unicode property"));
+            assertTrue(ex.getMessage().contains("\\p"));
+        }
+
+        @Test
+        void testUnicodePropertyEscape_UpperCase_MissingBraces() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\P'"));
+            assertTrue(ex.getMessage().contains("\\P"));
+        }
+
+        @Test
+        void testUnicodePropertyEscape_MissingClosingBrace() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\p{L'"));
+            assertTrue(ex.getMessage().contains("\\p"));
+        }
+
+        @Test
+        void testUnicodePropertyEscape_UpperCase_MissingClosingBrace() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\P{Z'"));
+            assertTrue(ex.getMessage().contains("\\P"));
         }
 
         @Test
