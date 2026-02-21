@@ -160,6 +160,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     CommonTokenStream tokens = new CommonTokenStream(lexer);
 
     EfxParser parser = new EfxParser(tokens);
+    parser.setErrorHandler(new EfxErrorStrategy());
     parser.removeErrorListeners();
     parser.addErrorListener(this.errorListener);
 

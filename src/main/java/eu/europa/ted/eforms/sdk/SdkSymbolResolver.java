@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 
@@ -662,7 +662,7 @@ public class SdkSymbolResolver implements SymbolResolver {
       case JUSTIFICATION_DESCRIPTION_FIELD:
         return privacy.getJustificationDescriptionFieldId();
       default:
-        throw ConsistencyCheckException.unhandledPrivacySetting(privacyField);
+        throw TranslatorConfigurationException.unhandledPrivacySetting(privacyField);
     }
   }
 

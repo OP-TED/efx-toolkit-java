@@ -13,7 +13,7 @@
  */
 package eu.europa.ted.efx.model.expressions;
 
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
@@ -39,7 +39,7 @@ public interface TypedExpression extends Expression {
   static Class<? extends EfxDataType> getEfxDataType(Class<? extends TypedExpression> clazz) {
     EfxDataTypeAssociation annotation = clazz.getAnnotation(EfxDataTypeAssociation.class);
     if (annotation == null) {
-      throw ConsistencyCheckException.missingTypeAnnotation(clazz);
+      throw TranslatorConfigurationException.missingTypeAnnotation(clazz);
     }
     return annotation.dataType();
   }
@@ -73,7 +73,7 @@ public interface TypedExpression extends Expression {
     } else if (ScalarExpression.class.isAssignableFrom(targetType)) {
       return targetType.cast(ScalarExpression.from(source, targetType.asSubclass(ScalarExpression.class)));
     } else {
-      throw ConsistencyCheckException.unknownExpressionType(targetType);
+      throw TranslatorConfigurationException.unknownExpressionType(targetType);
     }
   }
 

@@ -13,15 +13,14 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Exception thrown when an EFX construct is used incorrectly, such as referencing
  * a non-withholdable field for privacy properties, or calling a template-only
  * function in an expression or validation rule.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class InvalidUsageException extends ParseCancellationException {
+public class InvalidUsageException extends EfxCompilationException {
 
     public enum ErrorCode {
         SHORTHAND_REQUIRES_CODE_OR_INDICATOR,
@@ -43,40 +42,45 @@ public class InvalidUsageException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidUsageException(ErrorCode errorCode, String message) {
-        super(message);
+    private InvalidUsageException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private InvalidUsageException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
-    public static InvalidUsageException shorthandRequiresCodeOrIndicator(String fieldName, String fieldType) {
-        return new InvalidUsageException(ErrorCode.SHORTHAND_REQUIRES_CODE_OR_INDICATOR, String.format(SHORTHAND_REQUIRES_CODE_OR_INDICATOR, fieldName, fieldType));
+    public static InvalidUsageException shorthandRequiresCodeOrIndicator(ParserRuleContext ctx, String fieldName, String fieldType) {
+        return new InvalidUsageException(ErrorCode.SHORTHAND_REQUIRES_CODE_OR_INDICATOR, ctx, SHORTHAND_REQUIRES_CODE_OR_INDICATOR, fieldName, fieldType);
     }
 
-    public static InvalidUsageException shorthandRequiresFieldContext(String shorthandType) {
-        return new InvalidUsageException(ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT, String.format(SHORTHAND_REQUIRES_FIELD_CONTEXT, shorthandType));
+    public static InvalidUsageException shorthandRequiresFieldContext(ParserRuleContext ctx, String shorthandType) {
+        return new InvalidUsageException(ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT, ctx, SHORTHAND_REQUIRES_FIELD_CONTEXT, shorthandType);
     }
 
     public static InvalidUsageException invalidNoticeSubtypeRangeOrder(String start, String end) {
-        return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_RANGE_ORDER, String.format(INVALID_NOTICE_SUBTYPE_RANGE_ORDER, start, end));
+        return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_RANGE_ORDER, INVALID_NOTICE_SUBTYPE_RANGE_ORDER, start, end);
     }
 
-    public static InvalidUsageException invalidNoticeSubtypeToken(String token) {
-        return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN, String.format(INVALID_NOTICE_SUBTYPE_TOKEN, token));
+    public static InvalidUsageException invalidNoticeSubtypeToken(String tokenText) {
+        return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN, INVALID_NOTICE_SUBTYPE_TOKEN, tokenText);
     }
 
-    public static InvalidUsageException fieldNotWithholdable(String fieldId) {
-        return new InvalidUsageException(ErrorCode.FIELD_NOT_WITHHOLDABLE, String.format(FIELD_NOT_WITHHOLDABLE, fieldId));
+    public static InvalidUsageException fieldNotWithholdable(ParserRuleContext ctx, String fieldId) {
+        return new InvalidUsageException(ErrorCode.FIELD_NOT_WITHHOLDABLE, ctx, FIELD_NOT_WITHHOLDABLE, fieldId);
     }
 
-    public static InvalidUsageException templateOnlyFunction(String functionName) {
-        return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, String.format(TEMPLATE_ONLY_FUNCTION, functionName));
+    public static InvalidUsageException templateOnlyFunction(ParserRuleContext ctx, String functionName) {
+        return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, ctx, TEMPLATE_ONLY_FUNCTION, functionName);
     }
 
     public static InvalidUsageException unsupportedRegexConstruct(String pattern, int position, String reason) {
-        return new InvalidUsageException(ErrorCode.UNSUPPORTED_REGEX_CONSTRUCT, String.format(UNSUPPORTED_REGEX_CONSTRUCT, pattern, position, reason));
+        return new InvalidUsageException(ErrorCode.UNSUPPORTED_REGEX_CONSTRUCT, UNSUPPORTED_REGEX_CONSTRUCT, pattern, position, reason);
     }
 }

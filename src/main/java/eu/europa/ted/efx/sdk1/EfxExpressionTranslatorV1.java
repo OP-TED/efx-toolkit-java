@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -34,7 +34,7 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -341,7 +341,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     ScalarExpression right = this.stack.pop(ScalarExpression.class);
     ScalarExpression left = this.stack.pop(ScalarExpression.class);
     if (!left.getClass().isAssignableFrom(right.getClass()) && !right.getClass().isAssignableFrom(left.getClass()) && !left.getDataType().isAssignableFrom(right.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !left.getDataType().isAssignableFrom(right.getDataType())) {
-      throw TypeMismatchException.cannotCompare(left, right);
+      throw TypeMismatchException.cannotCompare(ctx, left, right);
     }
     this.stack.push(this.script.composeComparisonOperation(left, ctx.operator.getText(), right));
   }
@@ -639,7 +639,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (typeWhenFalse == EfxDataType.Duration.class) {
       this.exitConditionalDurationExpression();
     } else {
-      throw ConsistencyCheckException.unsupportedTypeInConditional(typeWhenFalse);
+      throw TranslatorConfigurationException.unsupportedTypeInConditional(typeWhenFalse);
     }
   }
 
@@ -1001,7 +1001,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
       final String fieldId = getFieldId((FieldReferenceWithPredicateContext) parent);
       this.efxContext.pushFieldContext(fieldId);
     } else {
-      throw new ParseCancellationException("Unexpected parent context for predicate: " + parent.getClass().getSimpleName());
+      throw TranslatorConfigurationException.unhandledPredicateContext(parent.getClass().getSimpleName());
     }
   }
 
@@ -1170,7 +1170,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
           this.symbols.getAbsolutePathOfNode(variableContext.symbol()), this.symbols
               .getRelativePathOfNode(variableContext.symbol(), this.efxContext.symbol())));
     } else {
-      throw ConsistencyCheckException.invalidVariableContext();
+      throw TranslatorConfigurationException.unhandledVariableContext(variableContext.getClass().getSimpleName());
     }
   }
 
@@ -1211,37 +1211,37 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), StringExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), NumericExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), BooleanExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DateExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), TimeExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DurationExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), DurationExpression.class);
   }
 
-  private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
+  private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionParameters.isEmpty()) {
-      throw InvalidArgumentException.missingArgument(parameterName);
+      throw InvalidArgumentException.missingArgument(ctx, parameterName);
     }
 
     ParsedParameter parameter = new ParsedParameter(parameterName,
@@ -1426,7 +1426,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(DurationSequenceExpression.class);
     } else {
-      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
           EfxLexer.VOCABULARY.getLiteralName(EfxLexer.DistinctValuesFunction));
     }
   }
@@ -1455,7 +1455,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitUnionFunction(DurationSequenceExpression.class);
     } else {
-      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
           EfxLexer.VOCABULARY.getLiteralName(EfxLexer.UnionFunction));
     }
   }
@@ -1485,7 +1485,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitIntersectFunction(DurationSequenceExpression.class);
     } else {
-      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
           EfxLexer.VOCABULARY.getLiteralName(EfxLexer.IntersectFunction));
     }
   }
@@ -1515,7 +1515,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitExceptFunction(DurationSequenceExpression.class);
     } else {
-      throw InvalidArgumentException.unsupportedSequenceType(sequenceType.getSimpleName(),
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
           EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ExceptFunction));
     }
   }

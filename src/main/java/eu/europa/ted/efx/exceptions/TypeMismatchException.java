@@ -13,7 +13,7 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -21,11 +21,8 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 
 /**
  * Exception thrown when type mismatches are detected in EFX templates.
- * Extends ParseCancellationException to properly stop ANTLR4 parsing
- * and bypass error recovery mechanisms.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class TypeMismatchException extends ParseCancellationException {
+public class TypeMismatchException extends EfxCompilationException {
 
     public enum ErrorCode {
         CANNOT_CONVERT,
@@ -41,13 +38,18 @@ public class TypeMismatchException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private TypeMismatchException(ErrorCode errorCode, String message) {
-        super(message);
+    private TypeMismatchException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private TypeMismatchException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
     public static TypeMismatchException cannotConvert(Class<? extends ParsedEntity> expectedType,
@@ -57,26 +59,25 @@ public class TypeMismatchException extends ParseCancellationException {
             var actual = actualType.asSubclass(TypedExpression.class);
             var expected = expectedType.asSubclass(TypedExpression.class);
 
-            return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, String.format(CANNOT_CONVERT,
+            return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, CANNOT_CONVERT,
                     TypedExpression.getEfxDataType(expected).getSimpleName(),
-                    TypedExpression.getEfxDataType(actual).getSimpleName()));
+                    TypedExpression.getEfxDataType(actual).getSimpleName());
         }
-        return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, String.format(CANNOT_CONVERT,
-                expectedType.getSimpleName(), actualType.getSimpleName()));
+        return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, CANNOT_CONVERT,
+                expectedType.getSimpleName(), actualType.getSimpleName());
     }
 
-    public static TypeMismatchException cannotCompare(Expression left, Expression right) {
-        return new TypeMismatchException(ErrorCode.CANNOT_COMPARE, String.format(CANNOT_COMPARE,
-                left.getClass().getSimpleName(), right.getClass().getSimpleName()));
+    public static TypeMismatchException cannotCompare(ParserRuleContext ctx, Expression left, Expression right) {
+        return new TypeMismatchException(ErrorCode.CANNOT_COMPARE, ctx, CANNOT_COMPARE,
+                left.getClass().getSimpleName(), right.getClass().getSimpleName());
     }
 
-    public static TypeMismatchException fieldMayRepeat(String fieldId, String contextSymbol) {
-        return new TypeMismatchException(ErrorCode.EXPECTED_SCALAR, String.format(EXPECTED_SCALAR, fieldId,
-                contextSymbol != null ? contextSymbol : "root"));
+    public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, String fieldId, String contextSymbol) {
+        return new TypeMismatchException(ErrorCode.EXPECTED_SCALAR, ctx, EXPECTED_SCALAR, fieldId,
+                contextSymbol != null ? contextSymbol : "root");
     }
 
-    public static TypeMismatchException nodesHaveNoValue(String variableName, String nodeId) {
-        return new TypeMismatchException(ErrorCode.EXPECTED_FIELD_CONTEXT, String.format(EXPECTED_FIELD_CONTEXT, variableName, nodeId));
+    public static TypeMismatchException nodesHaveNoValue(ParserRuleContext ctx, String variableName, String nodeId) {
+        return new TypeMismatchException(ErrorCode.EXPECTED_FIELD_CONTEXT, ctx, EXPECTED_FIELD_CONTEXT, variableName, nodeId);
     }
 }
-

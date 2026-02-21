@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
@@ -336,7 +337,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(fieldId);
+      this.shorthandIndirectLabelReference(ctx, fieldId);
     } else {
       this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -348,10 +349,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   @Override
   public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
-    this.shorthandIndirectLabelReference(ctx.FieldId().getText());
+    this.shorthandIndirectLabelReference(ctx, ctx.FieldId().getText());
   }
 
-  private void shorthandIndirectLabelReference(final String fieldId) {
+  private void shorthandIndirectLabelReference(ParserRuleContext ctx, final String fieldId) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final PathExpression valueReference = this.symbols.isAttributeField(fieldId)
@@ -403,7 +404,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 StringSequenceExpression.class), TranslatorContext.DEFAULT));
         break;
       default:
-        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(fieldId, fieldType);
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(ctx, fieldId, fieldType);
     }
   }
 
@@ -420,7 +421,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandIndirectLabelReference(this.efxContext.symbol());
+        this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol());
       } else {
         this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -448,9 +449,9 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void exitShorthandIndirectLabelReferenceFromContextField(
       ShorthandIndirectLabelReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw InvalidUsageException.shorthandRequiresFieldContext("#value");
+      throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "#value");
     }
-    this.shorthandIndirectLabelReference(this.efxContext.symbol());
+    this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol());
   }
 
   @Override
@@ -529,7 +530,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void exitShorthandFieldValueReferenceFromContextField(
       ShorthandFieldValueReferenceFromContextFieldContext ctx) {
     if (!this.efxContext.isFieldContext()) {
-      throw InvalidUsageException.shorthandRequiresFieldContext("$value");
+      throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "$value");
     }
     this.stack.push(this.script.composeFieldValueReference(
         this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.symbol())));
@@ -569,10 +570,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
     if (indentChange > 1) {
-      throw InvalidIndentationException.indentationLevelSkipped();
+      throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero();
+          throw InvalidIndentationException.startIndentAtZero(ctx);
       }
       this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
@@ -606,10 +607,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     this.stack.clear(); // Variable scope boundary. Clear declared variables
 
     if (indentChange > 1) {
-      throw InvalidIndentationException.indentationLevelSkipped();
+      throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
       if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero();
+          throw InvalidIndentationException.startIndentAtZero(ctx);
       }
       this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
           new Conditionals(), content);
@@ -655,7 +656,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {
-          throw InvalidIndentationException.mixedIndentation();
+          throw InvalidIndentationException.mixedIndentation(ctx);
     }
 
     if (ctx.Spaces() != null) {
@@ -663,18 +664,18 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.indentWith = Indent.SPACES;
         this.indentSpaces = ctx.Spaces().getText().length();
       } else if (this.indentWith == Indent.TABS) {
-          throw InvalidIndentationException.mixedIndentation();
+          throw InvalidIndentationException.mixedIndentation(ctx);
       }
 
       if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-          throw InvalidIndentationException.inconsistentSpaces(this.indentSpaces);
+          throw InvalidIndentationException.inconsistentSpaces(ctx, this.indentSpaces);
       }
       return ctx.Spaces().getText().length() / this.indentSpaces;
     } else if (ctx.Tabs() != null) {
       if (this.indentWith == Indent.UNDETERMINED) {
         this.indentWith = Indent.TABS;
       } else if (this.indentWith == Indent.SPACES) {
-          throw InvalidIndentationException.mixedIndentation();
+          throw InvalidIndentationException.mixedIndentation(ctx);
       }
 
       return ctx.Tabs().getText().length();

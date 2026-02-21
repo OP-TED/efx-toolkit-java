@@ -1819,8 +1819,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testTemplateLine_InvalidIndentation_MixedIndentation() {
-    assertThrows(InvalidIndentationException.class,
+    InvalidIndentationException ex = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate("{BT-00-Text} foo\n\t  {BT-00-Text} bar"));
+    assertEquals(InvalidIndentationException.ErrorCode.MIXED_INDENTATION, ex.getErrorCode());
+    assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test

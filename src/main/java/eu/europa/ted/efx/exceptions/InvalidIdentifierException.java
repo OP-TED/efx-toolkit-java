@@ -13,16 +13,13 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Exception thrown when identifier-related errors occur during EFX template processing.
  * This includes undeclared identifiers, duplicate declarations, and scope violations.
- * Extends ParseCancellationException to properly stop ANTLR4 parsing
- * and bypass error recovery mechanisms.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class InvalidIdentifierException extends ParseCancellationException {
+public class InvalidIdentifierException extends EfxCompilationException {
 
     public enum ErrorCode {
         UNDECLARED_IDENTIFIER,
@@ -36,24 +33,29 @@ public class InvalidIdentifierException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidIdentifierException(ErrorCode errorCode, String message) {
-        super(message);
+    private InvalidIdentifierException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private InvalidIdentifierException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
     public static InvalidIdentifierException undeclaredIdentifier(String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, String.format(UNDECLARED_IDENTIFIER, identifierName));
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, UNDECLARED_IDENTIFIER, identifierName);
     }
 
     public static InvalidIdentifierException alreadyDeclared(String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, String.format(IDENTIFIER_ALREADY_DECLARED, identifierName));
+        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, IDENTIFIER_ALREADY_DECLARED, identifierName);
     }
 
-    public static InvalidIdentifierException notAContextVariable(String variableName) {
-        return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, String.format(NOT_A_CONTEXT_VARIABLE, variableName));
+    public static InvalidIdentifierException notAContextVariable(ParserRuleContext ctx, String variableName) {
+        return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, ctx, NOT_A_CONTEXT_VARIABLE, variableName);
     }
 }

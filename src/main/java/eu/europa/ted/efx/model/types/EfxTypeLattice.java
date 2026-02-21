@@ -16,7 +16,7 @@ package eu.europa.ted.efx.model.types;
 import java.util.Arrays;
 import java.util.List;
 
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 
 /**
  * Provides type conversion operations for the EFX type system.
@@ -90,7 +90,7 @@ public final class EfxTypeLattice {
      * @param type any EFX data type (primitive, scalar, or sequence)
      * @return the corresponding primitive type
      * @throws IllegalArgumentException if type is null
-     * @throws ConsistencyCheckException if type is not registered in TYPE_VARIANTS
+     * @throws TranslatorConfigurationException if type is not registered in TYPE_VARIANTS
      */
     public static Class<? extends EfxDataType.Primitive> toPrimitive(Class<? extends EfxDataType> type) {
         if (type == null) {
@@ -101,7 +101,7 @@ public final class EfxTypeLattice {
                 return variants.primitive;
             }
         }
-        throw ConsistencyCheckException.typeNotRegistered(type);
+        throw TranslatorConfigurationException.typeNotRegistered(type);
     }
 
     /**
@@ -110,7 +110,7 @@ public final class EfxTypeLattice {
      * @param type any EFX data type (primitive, scalar, or sequence)
      * @return the corresponding scalar type
      * @throws IllegalArgumentException if type is null
-     * @throws ConsistencyCheckException if type is not registered in TYPE_VARIANTS
+     * @throws TranslatorConfigurationException if type is not registered in TYPE_VARIANTS
      */
     public static Class<? extends EfxDataType.ConcreteScalar> toScalar(Class<? extends EfxDataType> type) {
         if (type == null) {
@@ -121,7 +121,7 @@ public final class EfxTypeLattice {
                 return variants.scalar;
             }
         }
-        throw ConsistencyCheckException.typeNotRegistered(type);
+        throw TranslatorConfigurationException.typeNotRegistered(type);
     }
 
     /**
@@ -130,7 +130,7 @@ public final class EfxTypeLattice {
      * @param type any EFX data type (primitive, scalar, or sequence)
      * @return the corresponding sequence type
      * @throws IllegalArgumentException if type is null
-     * @throws ConsistencyCheckException if type is not registered in TYPE_VARIANTS
+     * @throws TranslatorConfigurationException if type is not registered in TYPE_VARIANTS
      */
     public static Class<? extends EfxDataType.ConcreteSequence> toSequence(Class<? extends EfxDataType> type) {
         if (type == null) {
@@ -141,7 +141,7 @@ public final class EfxTypeLattice {
                 return variants.sequence;
             }
         }
-        throw ConsistencyCheckException.typeNotRegistered(type);
+        throw TranslatorConfigurationException.typeNotRegistered(type);
     }
 
     /**

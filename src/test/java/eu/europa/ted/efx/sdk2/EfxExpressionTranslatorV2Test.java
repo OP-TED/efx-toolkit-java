@@ -15,6 +15,7 @@ package eu.europa.ted.efx.sdk2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
@@ -176,6 +177,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("ND-Root", "preferred-language(BT-00-Text-Multilingual)"));
     assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
+    assertTrue(exception.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test
@@ -1402,6 +1404,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         () -> translateExpressionWithContext("BT-00-Text",
             "BT-00-Text:wasWithheld"));
     assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
+    assertTrue(exception.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test
@@ -3036,6 +3039,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text == 'test'"));
     assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test
@@ -3109,6 +3113,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     InvalidIdentifierException ex = assertThrows(InvalidIdentifierException.class,
         () -> translateExpressionWithContext("ND-Root", "for text:$x in BT-00-Text return $x::BT-00-Number"));
     assertEquals(InvalidIdentifierException.ErrorCode.NOT_A_CONTEXT_VARIABLE, ex.getErrorCode());
+    assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test
