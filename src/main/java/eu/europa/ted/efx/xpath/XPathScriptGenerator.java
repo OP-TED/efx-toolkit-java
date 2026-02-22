@@ -532,6 +532,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public NumericExpression composeYearsFromDurationFunction(DurationExpression duration) {
+    return new NumericExpression("years-from-duration(" + duration.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMonthsFromDurationFunction(DurationExpression duration) {
+    String d = duration.getScript();
+    return new NumericExpression("(years-from-duration(" + d + ") * 12 + months-from-duration(" + d + "))");
+  }
+
+  @Override
+  public NumericExpression composeDaysFromDurationFunction(DurationExpression duration) {
+    return new NumericExpression("days-from-duration(" + duration.getScript() + ")");
+  }
+
+  @Override
   public NumericExpression composeAbsFunction(NumericExpression number) {
     return new NumericExpression("abs(" + number.getScript() + ")");
   }

@@ -1724,6 +1724,62 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testYearsFromDurationFunction() {
+    testExpressionTranslationWithContext(
+        "years-from-duration(xs:yearMonthDuration('P2Y'))", "ND-Root",
+        "years(P2Y)");
+  }
+
+  @Test
+  void testYearsFromDurationFunction_WithDayTimeDuration() {
+    testExpressionTranslationWithContext(
+        "years-from-duration(xs:dayTimeDuration('P10D'))", "ND-Root",
+        "years(P10D)");
+  }
+
+  @Test
+  void testYearsFromDurationFunction_WithFieldReference() {
+    testExpressionTranslationWithContext(
+        "years-from-duration((for $F in PathNode/DurationField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))",
+        "ND-Root", "years(BT-00-Duration)");
+  }
+
+  @Test
+  void testMonthsFromDurationFunction() {
+    testExpressionTranslationWithContext(
+        "(years-from-duration(xs:yearMonthDuration('P3M')) * 12 + months-from-duration(xs:yearMonthDuration('P3M')))",
+        "ND-Root", "months(P3M)");
+  }
+
+  @Test
+  void testMonthsFromDurationFunction_WithYears() {
+    testExpressionTranslationWithContext(
+        "(years-from-duration(xs:yearMonthDuration('P2Y')) * 12 + months-from-duration(xs:yearMonthDuration('P2Y')))",
+        "ND-Root", "months(P2Y)");
+  }
+
+  @Test
+  void testMonthsFromDurationFunction_TotalMonths() {
+    testExpressionTranslationWithContext(
+        "(years-from-duration(xs:yearMonthDuration('P12M')) * 12 + months-from-duration(xs:yearMonthDuration('P12M')))",
+        "ND-Root", "months(P12M)");
+  }
+
+  @Test
+  void testDaysFromDurationFunction() {
+    testExpressionTranslationWithContext(
+        "days-from-duration(xs:dayTimeDuration('P10D'))", "ND-Root",
+        "days(P10D)");
+  }
+
+  @Test
+  void testDaysFromDurationFunction_WithWeeks() {
+    testExpressionTranslationWithContext(
+        "days-from-duration(xs:dayTimeDuration('P21D'))", "ND-Root",
+        "days(P3W)");
+  }
+
+  @Test
   void testAbsoluteFunction() {
     testExpressionTranslationWithContext("abs(-5)", "ND-Root", "absolute(-5)");
   }

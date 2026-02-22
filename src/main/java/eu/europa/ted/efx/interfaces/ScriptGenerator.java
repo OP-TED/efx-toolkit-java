@@ -498,6 +498,30 @@ public interface ScriptGenerator {
   public NumericExpression composeSecondsFunction(TimeExpression time);
 
   /**
+   * Returns the target language script that extracts the years component from a duration.
+   *
+   * @param duration The duration expression to extract the years from.
+   * @return A numeric expression representing the years component.
+   */
+  public NumericExpression composeYearsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total months from a duration.
+   *
+   * @param duration The duration expression to extract the total months from.
+   * @return A numeric expression representing the total months (years * 12 + months).
+   */
+  public NumericExpression composeMonthsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total days from a duration.
+   *
+   * @param duration The duration expression to extract the total days from.
+   * @return A numeric expression representing the total days.
+   */
+  public NumericExpression composeDaysFromDurationFunction(DurationExpression duration);
+
+  /**
    * Returns the target language script that computes the absolute value of a number.
    *
    * @param number The numeric expression whose absolute value is to be computed.

@@ -2141,6 +2141,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitYearsFromDurationFunction(YearsFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeYearsFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
+  public void exitMonthsFromDurationFunction(MonthsFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeMonthsFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
+  public void exitDaysFromDurationFunction(DaysFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeDaysFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
   public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
     this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
   }
