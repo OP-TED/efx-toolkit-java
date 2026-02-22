@@ -389,11 +389,11 @@ class SdkSymbolResolverTest {
     }
 
     @Test
-    @DisplayName("Measure field returns DurationPath")
-    void measureField_shouldReturnDurationPath() {
-      PathExpression path = resolver.getAbsolutePathOfField("BT-00-Measure");
+    @DisplayName("Duration field returns DurationPath")
+    void durationField_shouldReturnDurationPath() {
+      PathExpression path = resolver.getAbsolutePathOfField("BT-00-Duration");
       assertEquals(DurationPath.class, path.getClass(),
-          "Measure field should return DurationPath");
+          "Duration field should return DurationPath");
     }
 
     @Test

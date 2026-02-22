@@ -45,7 +45,8 @@ public interface SequencePath extends SequenceExpression, PathExpression {
       entry(FieldTypes.INDICATOR, BooleanSequencePath.class), //
       entry(FieldTypes.AMOUNT, NumericSequencePath.class), //
       entry(FieldTypes.NUMBER, NumericSequencePath.class), //
-      entry(FieldTypes.MEASURE, DurationSequencePath.class), //
+      entry(FieldTypes.MEASURE, NumericSequencePath.class), //
+      entry(FieldTypes.DURATION, DurationSequencePath.class), //
       entry(FieldTypes.CODE, StringSequencePath.class),
       entry(FieldTypes.INTERNAL_CODE, StringSequencePath.class), //
       entry(FieldTypes.INTEGER, NumericSequencePath.class), //

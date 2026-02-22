@@ -2817,7 +2817,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   protected static String numericTypeName = getLexerSymbol(EfxLexer.Number);
   protected static String dateTypeName = getLexerSymbol(EfxLexer.Date);
   protected static String timeTypeName = getLexerSymbol(EfxLexer.Time);
-  protected static String durationTypeName = getLexerSymbol(EfxLexer.Measure);
+  protected static String durationTypeName = getLexerSymbol(EfxLexer.Duration);
 
   // Map from eForms field types to EFX type names - made protected for reuse in subclasses
   protected static final Map<String, String> eFormsToEfxTypeMap = Map.ofEntries( //
@@ -2828,7 +2828,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       entry(FieldTypes.INDICATOR.getName(), booleanTypeName), //
       entry(FieldTypes.AMOUNT.getName(), numericTypeName), //
       entry(FieldTypes.NUMBER.getName(), numericTypeName), //
-      entry(FieldTypes.MEASURE.getName(), durationTypeName), //
+      entry(FieldTypes.MEASURE.getName(), numericTypeName), //
+      entry(FieldTypes.DURATION.getName(), durationTypeName), //
       entry(FieldTypes.CODE.getName(), textTypeName), //
       entry(FieldTypes.INTERNAL_CODE.getName(), textTypeName), //
       entry(FieldTypes.INTEGER.getName(), numericTypeName), //

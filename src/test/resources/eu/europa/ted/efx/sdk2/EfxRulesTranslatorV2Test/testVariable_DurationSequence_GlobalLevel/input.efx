@@ -1,4 +1,4 @@
-LET measure* : $durations = [P1D, P2D];
+LET duration* : $durations = [P1D, P2D];
 
 ---- STAGE 1a ----
 

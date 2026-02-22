@@ -45,7 +45,8 @@ public interface SequenceExpression extends TypedExpression {
       entry(FieldTypes.INDICATOR, BooleanSequenceExpression.class), //
       entry(FieldTypes.AMOUNT, NumericSequenceExpression.class), //
       entry(FieldTypes.NUMBER, NumericSequenceExpression.class), //
-      entry(FieldTypes.MEASURE, DurationSequenceExpression.class), //
+      entry(FieldTypes.MEASURE, NumericSequenceExpression.class), //
+      entry(FieldTypes.DURATION, DurationSequenceExpression.class), //
       entry(FieldTypes.CODE, StringSequenceExpression.class), //
       entry(FieldTypes.INTERNAL_CODE, StringSequenceExpression.class), //
       entry(FieldTypes.INTEGER, NumericSequenceExpression.class), //
