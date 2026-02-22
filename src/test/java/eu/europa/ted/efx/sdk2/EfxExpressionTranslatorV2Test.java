@@ -1568,6 +1568,32 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, exception.getErrorCode());
   }
 
+  // rawValue property tests
+
+  @Test
+  void testFieldRawValue_Duration() {
+    testExpressionTranslationWithContext(
+        "PathNode/DurationField/normalize-space(text())",
+        "ND-Root",
+        "BT-00-Duration:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_Text() {
+    testExpressionTranslationWithContext(
+        "PathNode/TextField/normalize-space(text())",
+        "ND-Root",
+        "BT-00-Text:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_Number() {
+    testExpressionTranslationWithContext(
+        "PathNode/NumberField/normalize-space(text())",
+        "ND-Root",
+        "BT-00-Number:rawValue");
+  }
+
   // #endregion: Boolean functions
 
   // #region: Numeric functions -----------------------------------------------
@@ -1600,6 +1626,30 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testNumberFromBooleanFunction_WithFieldReference() {
     testExpressionTranslationWithContext("number(PathNode/IndicatorField)", "ND-Root",
         "number(BT-00-Indicator)");
+  }
+
+  @Test
+  void testNumberFromDurationField_ExplicitRawValue() {
+    testExpressionTranslationWithContext(
+        "number(PathNode/DurationField/normalize-space(text()))",
+        "ND-Root",
+        "number(BT-00-Duration:rawValue)");
+  }
+
+  @Test
+  void testFieldRawValue_NumberLikePattern() {
+    testExpressionTranslationWithContext(
+        "fn:matches(normalize-space(PathNode/NumberField/normalize-space(text())), '[0-9]+\\.[0-9]+')",
+        "ND-Root",
+        "BT-00-Number:rawValue like '[0-9]+\\.[0-9]+'");
+  }
+
+  @Test
+  void testNumberFromDurationRawValue_Comparison() {
+    testExpressionTranslationWithContext(
+        "number(PathNode/DurationField/normalize-space(text())) > 3",
+        "ND-Root",
+        "number(BT-00-Duration:rawValue) > 3");
   }
 
   @Test

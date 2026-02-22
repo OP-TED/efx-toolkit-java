@@ -1933,6 +1933,17 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.getStringLiteralFromUnquotedString(privacyCode));
   }
 
+  @Override
+  public void exitFieldRawValueProperty(FieldRawValuePropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
+    }
+    final PathExpression fieldPath =
+        this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
+  }
+
   private boolean isFieldRepeatableFromContext(String fieldId, Context context) {
     String contextNodeId = context.isFieldContext()
         ? this.symbols.getParentNodeOfField(context.symbol())

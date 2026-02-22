@@ -127,6 +127,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeFieldRawValueReference(PathExpression fieldReference) {
+    return new StringExpression(fieldReference.getScript() + "/normalize-space(text())");
+  }
+
+  @Override
   public <T extends PathExpression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
     return Expression.instantiate(
