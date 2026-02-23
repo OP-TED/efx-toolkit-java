@@ -237,7 +237,40 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     String testName = "testInClause_AllNoticeTypes";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
 
-    assertEquals(19, outputFiles.size(), "Should generate 19 files");
+    assertEquals(5, outputFiles.size(), "Should generate 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testInClause_MixedAllAndSpecific() throws IOException {
+    String testName = "testInClause_MixedAllAndSpecific";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    // 1 shared + 2 specific per config (dynamic + static) + 2 complete-validation + schematrons.json
+    assertEquals(9, outputFiles.size(), "Should generate 9 files");
+
+    // Shared pattern exists (no subtype suffix)
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a.sch"));
+    // Subtype-specific patterns exist
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a-1.sch"));
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a-2.sch"));
+
+    // Shared pattern should contain R-K7P-M2Q (the IN * rule)
+    String sharedPattern = outputFiles.get("dynamic/validation-stage-1a.sch");
+    assertTrue(sharedPattern.contains("R-K7P-M2Q"));
+    assertFalse(sharedPattern.contains("R-X3F-N8W"), "Specific rule should not be in shared pattern");
+
+    // Specific patterns should contain R-X3F-N8W but not R-K7P-M2Q
+    String specific1 = outputFiles.get("dynamic/validation-stage-1a-1.sch");
+    assertTrue(specific1.contains("R-X3F-N8W"));
+    assertFalse(specific1.contains("R-K7P-M2Q"), "Shared rule should not be in specific pattern");
+
+    // Complete validation should reference both shared and specific patterns in phases
+    String completeValidation = outputFiles.get("dynamic/complete-validation.sch");
+    String phase1 = extractPhase(completeValidation, "eforms-1");
+    assertTrue(phase1.contains("EFORMS-validation-stage-1a\""), "Phase 1 should include shared pattern");
+    assertTrue(phase1.contains("EFORMS-validation-stage-1a-1"), "Phase 1 should include specific pattern");
+
     assertAllOutputs(testName, outputFiles);
   }
 
@@ -468,19 +501,21 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
 
     assertFalse(outputFiles.isEmpty(), "Output files should not be empty");
-    assertEquals(57, outputFiles.size(), "Should generate exactly 57 files");
+    assertEquals(15, outputFiles.size(), "Should generate exactly 15 files");
 
     // Verify we have the expected files
     assertTrue(outputFiles.containsKey("dynamic/complete-validation.sch"));
     assertTrue(outputFiles.containsKey("static/complete-validation.sch"));
     assertTrue(outputFiles.containsKey("schematrons.json"));
 
-    // Check that patterns exist for each stage
-    assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("dynamic/validation-stage-1a-")));
+    // Stages with only IN * rules produce shared patterns (no subtype suffix)
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a.sch"));
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-2a.sch"));
+    assertTrue(outputFiles.containsKey("dynamic/validation-stage-3a.sch"));
+    assertTrue(outputFiles.containsKey("static/validation-stage-1a.sch"));
+
+    // Stage 1b has subtype-specific rules
     assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("dynamic/validation-stage-1b-")));
-    assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("dynamic/validation-stage-2a-")));
-    assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("dynamic/validation-stage-3a-")));
-    assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("static/validation-stage-1a-")));
 
     // Verify XML well-formedness for all .sch files
     for (Map.Entry<String, String> entry : outputFiles.entrySet()) {

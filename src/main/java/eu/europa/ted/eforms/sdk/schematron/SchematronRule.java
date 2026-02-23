@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.rules.RuleNature;
@@ -35,12 +36,22 @@ public class SchematronRule {
   private final Context context;
 
   /**
-   * Creates a SchematronRule containing only tests that apply to the given notice type.
-   *
-   * @param ruleSet The source rule set
-   * @param noticeType The notice type to filter tests by
+   * Creates a SchematronRule for rules that apply to all notice subtypes (shared pattern).
    */
-  public SchematronRule(RuleSet ruleSet, String noticeType) {
+  public static SchematronRule createUniversalRule(RuleSet ruleSet) {
+    return new SchematronRule(ruleSet, SchematronRule::isUniversal);
+  }
+
+  /**
+   * Creates a SchematronRule for rules specific to a single notice subtype.
+   * Excludes rules that apply to all subtypes (those go into the shared pattern).
+   */
+  public static SchematronRule createSubtypeSpecificRule(RuleSet ruleSet, String noticeSubtype) {
+    return new SchematronRule(ruleSet,
+        rule -> !isUniversal(rule) && appliesToNoticeSubtype(rule, noticeSubtype));
+  }
+
+  private SchematronRule(RuleSet ruleSet, Predicate<ValidationRule> filter) {
     this.context = ruleSet.getContext();
 
     List<SchematronLet> variables = new ArrayList<>();
@@ -51,7 +62,7 @@ public class SchematronRule {
     }
 
     for (ValidationRule validationRule : ruleSet) {
-      if (appliesToNoticeType(validationRule, noticeType)) {
+      if (filter.test(validationRule)) {
         if (validationRule instanceof ReportRule) {
           tests.add(new SchematronReport(validationRule, this.context));
         } else {
@@ -61,7 +72,7 @@ public class SchematronRule {
     }
 
     ValidationRule fallback = ruleSet.getFallbackRule();
-    if (fallback != null && appliesToNoticeType(fallback, noticeType)) {
+    if (fallback != null && filter.test(fallback)) {
       if (fallback instanceof ReportRule) {
         tests.add(new SchematronReport(fallback, this.context));
       } else {
@@ -73,9 +84,14 @@ public class SchematronRule {
     this.tests = tests;
   }
 
-  private static boolean appliesToNoticeType(ValidationRule rule, String noticeType) {
-    return rule.getNoticeSubtypes() != null
-        && rule.getNoticeSubtypes().asList().contains(noticeType);
+  private static boolean isUniversal(ValidationRule rule) {
+    return rule.getNoticeSubtypeRange() != null
+        && rule.getNoticeSubtypeRange().isUniversal();
+  }
+
+  private static boolean appliesToNoticeSubtype(ValidationRule rule, String noticeSubtype) {
+    return rule.getNoticeSubtypeRange() != null
+        && rule.getNoticeSubtypeRange().asList().contains(noticeSubtype);
   }
 
   /** Used by pattern.ftl */

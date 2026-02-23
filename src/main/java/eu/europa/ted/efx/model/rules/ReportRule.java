@@ -25,6 +25,6 @@ public class ReportRule extends ValidationRule {
         this.invertedCondition = other.invertedCondition;
         this.expression = other.expression;
         this.invertedConditionOrExpression = other.invertedConditionOrExpression;
-        this.noticeSubtypes = other.noticeSubtypes;
+        this.noticeSubtypeRange = other.noticeSubtypeRange;
     }
 }

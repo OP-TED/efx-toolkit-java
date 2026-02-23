@@ -151,20 +151,31 @@ public class SchematronGenerator implements ValidatorGenerator {
 
   /**
    * Transforms validation stages into Schematron patterns.
-   * Creates one pattern per (stage, noticeType) combination, where each pattern
-   * only contains the rules/assertions that apply to that specific notice type.
+   * For each stage, first creates a shared pattern for rules that apply to all subtypes,
+   * then creates subtype-specific patterns for the remaining rules.
    */
   private void transformStagesToPatterns(List<ValidationStage> stages,
       List<SchematronPattern> patterns, Map<String, SchematronDiagnostic> diagnosticsMap) {
     for (ValidationStage stage : stages) {
-      // Get all notice types referenced in this stage
-      for (String noticeType : SchematronPattern.getNoticeTypesInStage(stage)) {
-        SchematronPattern pattern = new SchematronPattern(stage, noticeType);
+      // Create shared pattern for rules that apply to all subtypes
+      if (stage.containsUniversalRules()) {
+        SchematronPattern sharedPattern = new SchematronPattern(stage);
+        if (sharedPattern.hasRules()) {
+          patterns.add(sharedPattern);
+          diagnosticsMap.putAll(sharedPattern.getDiagnostics());
+          logger.debug("Created shared pattern {} for stage {}",
+              sharedPattern.getId(), stage.getName());
+        }
+      }
+
+      // Create subtype-specific patterns for remaining rules
+      for (String noticeSubtype : stage.getNoticeSubtypes()) {
+        SchematronPattern pattern = new SchematronPattern(stage, noticeSubtype);
         if (pattern.hasRules()) {
           patterns.add(pattern);
           diagnosticsMap.putAll(pattern.getDiagnostics());
-          logger.debug("Created pattern {} for stage {} / notice type {}",
-              pattern.getId(), stage.getName(), noticeType);
+          logger.debug("Created pattern {} for stage {} / notice subtype {}",
+              pattern.getId(), stage.getName(), noticeSubtype);
         }
       }
     }
@@ -193,7 +204,7 @@ public class SchematronGenerator implements ValidatorGenerator {
    * @return A map of filename to file content for all generated Schematron files
    * @throws IOException If an error occurs during file generation
    */
-  private Map<String, String> generateOutputFiles(List<String> noticeTypeIds,
+  private Map<String, String> generateOutputFiles(List<String> noticeSubtypeIds,
       List<SchematronPattern> patterns, SchematronSchema baseSchema) throws IOException {
     logger.debug("Generating Schematron output files");
 
@@ -208,7 +219,7 @@ public class SchematronGenerator implements ValidatorGenerator {
 
     try {
       for (SchematronOutputConfig config : configs) {
-        generateOutputForConfig(config, noticeTypeIds, patterns, baseSchema, outputFiles, schematronsMetadata);
+        generateOutputForConfig(config, noticeSubtypeIds, patterns, baseSchema, outputFiles, schematronsMetadata);
       }
 
       // Generate schematrons.json with entries from all configurations
@@ -229,7 +240,7 @@ public class SchematronGenerator implements ValidatorGenerator {
    */
   private void generateOutputForConfig(
       SchematronOutputConfig config,
-      List<String> noticeTypeIds,
+      List<String> noticeSubtypeIds,
       List<SchematronPattern> patterns,
       SchematronSchema baseSchema,
       Map<String, String> outputFiles,
@@ -280,13 +291,13 @@ public class SchematronGenerator implements ValidatorGenerator {
     }
 
     // Build and add phases to schema
-    Map<String, List<String>> phasesMap = buildPhasesMapForConfig(noticeTypeIds, patterns, config);
+    Map<String, List<String>> phasesMap = buildPhasesMapForConfig(noticeSubtypeIds, patterns, config);
     for (Map.Entry<String, List<String>> entry : phasesMap.entrySet()) {
-      String noticeTypeId = entry.getKey();
+      String noticeSubtypeId = entry.getKey();
       List<String> patternIds = entry.getValue();
 
       if (!patternIds.isEmpty()) {
-        SchematronPhase phase = new SchematronPhase(noticeTypeId);
+        SchematronPhase phase = new SchematronPhase(noticeSubtypeId);
         for (String patternId : patternIds) {
           phase.addActivePattern(patternId);
         }
@@ -314,33 +325,41 @@ public class SchematronGenerator implements ValidatorGenerator {
   }
 
   /**
-   * Builds a map from notice type ID to list of pattern IDs that apply to it,
+   * Builds a map from notice subtype ID to list of pattern IDs that apply to it,
    * filtered by the given output configuration.
-   * Each pattern now applies to exactly one notice type, so this is a simple grouping.
-   * Pattern order is preserved from the EFX file order.
+   * Shared patterns (applying to all subtypes) are added to every phase.
+   * Subtype-specific patterns are added only to their notice subtype's phase.
    *
    * @param config The output configuration specifying which rule natures to include
-   * @return Map of notice type ID to ordered list of pattern IDs
+   * @return Map of notice subtype ID to ordered list of pattern IDs
    */
-  private Map<String, List<String>> buildPhasesMapForConfig(List<String> noticeTypeIds,
+  private Map<String, List<String>> buildPhasesMapForConfig(List<String> noticeSubtypeIds,
       List<SchematronPattern> patterns, SchematronOutputConfig config) {
     Map<String, List<String>> phasesMap = new LinkedHashMap<>();
 
-    // Initialize map with all valid notice types
-    for (String noticeTypeId : noticeTypeIds) {
-      phasesMap.put(noticeTypeId, new ArrayList<>());
+    // Initialize map with all valid notice subtypes
+    for (String noticeSubtypeId : noticeSubtypeIds) {
+      phasesMap.put(noticeSubtypeId, new ArrayList<>());
     }
 
-    // Each pattern applies to exactly one notice type
     for (SchematronPattern pattern : patterns) {
       // Skip patterns that don't have rules matching this configuration
       if (!pattern.hasRulesFor(config.ruleNatures())) {
         continue;
       }
-      String noticeType = pattern.getNoticeType();
-      List<String> patternList = phasesMap.get(noticeType);
-      if (patternList != null) {
-        patternList.add(pattern.getId());
+
+      if (pattern.isShared()) {
+        // Shared patterns go into all phases
+        for (List<String> patternList : phasesMap.values()) {
+          patternList.add(pattern.getId());
+        }
+      } else {
+        // Subtype-specific patterns go only into their notice subtype's phase
+        String noticeSubtype = pattern.getNoticeSubtype();
+        List<String> patternList = phasesMap.get(noticeSubtype);
+        if (patternList != null) {
+          patternList.add(pattern.getId());
+        }
       }
     }
 

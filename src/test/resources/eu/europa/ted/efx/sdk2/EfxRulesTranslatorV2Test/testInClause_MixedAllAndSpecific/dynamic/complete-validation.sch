@@ -19,9 +19,11 @@
 
     <phase id="eforms-1">
         <active pattern="EFORMS-validation-stage-1a" />
+        <active pattern="EFORMS-validation-stage-1a-1" />
     </phase>
     <phase id="eforms-2">
         <active pattern="EFORMS-validation-stage-1a" />
+        <active pattern="EFORMS-validation-stage-1a-2" />
     </phase>
     <phase id="eforms-3">
         <active pattern="EFORMS-validation-stage-1a" />
@@ -43,5 +45,7 @@
     </phase>
 
     <include href="validation-stage-1a.sch"/>
+    <include href="validation-stage-1a-1.sch"/>
+    <include href="validation-stage-1a-2.sch"/>
 
 </schema>
