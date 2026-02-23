@@ -248,7 +248,7 @@ public interface ScriptGenerator {
    *   // result = ["a!", "b!", "c!"]
    *
    * JavaScript:
-   *   const result = ["a", "b", "c"].map(x => x + "!");
+   *   const result = ["a", "b", "c"].map(x =&gt; x + "!");
    *
    * Python:
    *   result = [x + "!" for x in ["a", "b", "c"]]
@@ -281,7 +281,7 @@ public interface ScriptGenerator {
    *   // result = [1, 10, 2, 20, 3, 30]
    *
    * JavaScript:
-   *   const result = [1, 2, 3].flatMap(x => [x, x * 10]);
+   *   const result = [1, 2, 3].flatMap(x =&gt; [x, x * 10]);
    *
    * Python:
    *   result = [item for x in [1, 2, 3] for item in [x, x * 10]]
