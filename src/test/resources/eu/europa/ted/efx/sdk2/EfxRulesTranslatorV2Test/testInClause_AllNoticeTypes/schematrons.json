@@ -4,88 +4,18 @@
     "type" : "dynamic",
     "filename" : "dynamic/complete-validation.sch"
   }, {
-    "name" : "validation-stage-1a-1",
+    "name" : "validation-stage-1a",
     "type" : "dynamic",
     "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-1.sch"
-  }, {
-    "name" : "validation-stage-1a-2",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-2.sch"
-  }, {
-    "name" : "validation-stage-1a-3",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-3.sch"
-  }, {
-    "name" : "validation-stage-1a-4",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-4.sch"
-  }, {
-    "name" : "validation-stage-1a-5",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-5.sch"
-  }, {
-    "name" : "validation-stage-1a-E1",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-E1.sch"
-  }, {
-    "name" : "validation-stage-1a-E2",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-E2.sch"
-  }, {
-    "name" : "validation-stage-1a-X01",
-    "type" : "dynamic",
-    "stage" : "1a",
-    "filename" : "dynamic/validation-stage-1a-X01.sch"
+    "filename" : "dynamic/validation-stage-1a.sch"
   }, {
     "name" : "complete-validation",
     "type" : "static",
     "filename" : "static/complete-validation.sch"
   }, {
-    "name" : "validation-stage-1a-1",
+    "name" : "validation-stage-1a",
     "type" : "static",
     "stage" : "1a",
-    "filename" : "static/validation-stage-1a-1.sch"
-  }, {
-    "name" : "validation-stage-1a-2",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-2.sch"
-  }, {
-    "name" : "validation-stage-1a-3",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-3.sch"
-  }, {
-    "name" : "validation-stage-1a-4",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-4.sch"
-  }, {
-    "name" : "validation-stage-1a-5",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-5.sch"
-  }, {
-    "name" : "validation-stage-1a-E1",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-E1.sch"
-  }, {
-    "name" : "validation-stage-1a-E2",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-E2.sch"
-  }, {
-    "name" : "validation-stage-1a-X01",
-    "type" : "static",
-    "stage" : "1a",
-    "filename" : "static/validation-stage-1a-X01.sch"
+    "filename" : "static/validation-stage-1a.sch"
   } ]
 }

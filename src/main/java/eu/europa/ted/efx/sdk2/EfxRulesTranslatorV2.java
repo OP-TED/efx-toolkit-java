@@ -524,7 +524,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   /**
    * Called when exiting an IN clause.
-   * The IN clause specifies which notice types the assertion applies to.
+   * The IN clause specifies which notice subtypes the assertion applies to.
    */
   @Override
   public void exitInClause(InClauseContext ctx) {
@@ -532,7 +532,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
     String compressedList = ctx.noticeTypeList() instanceof AnyNoticeTypesContext ? "*" : ctx.noticeTypeList().getText();
     var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.symbols.getAllNoticeSubtypeIds());
-    this.stack.peek(ValidationRule.class).setNoticeSubtypes(noticeSubtypes);
+    this.stack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
     this.completeValidation.addNoticeSubtypes(noticeSubtypes.asList());
   }
 

@@ -18,37 +18,30 @@
 
 
     <phase id="eforms-1">
-        <active pattern="EFORMS-validation-stage-1a-1" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-2">
-        <active pattern="EFORMS-validation-stage-1a-2" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-3">
-        <active pattern="EFORMS-validation-stage-1a-3" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-4">
-        <active pattern="EFORMS-validation-stage-1a-4" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-5">
-        <active pattern="EFORMS-validation-stage-1a-5" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-E1">
-        <active pattern="EFORMS-validation-stage-1a-E1" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-E2">
-        <active pattern="EFORMS-validation-stage-1a-E2" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
     <phase id="eforms-X01">
-        <active pattern="EFORMS-validation-stage-1a-X01" />
+        <active pattern="EFORMS-validation-stage-1a" />
     </phase>
 
-    <include href="validation-stage-1a-1.sch"/>
-    <include href="validation-stage-1a-2.sch"/>
-    <include href="validation-stage-1a-3.sch"/>
-    <include href="validation-stage-1a-4.sch"/>
-    <include href="validation-stage-1a-5.sch"/>
-    <include href="validation-stage-1a-E1.sch"/>
-    <include href="validation-stage-1a-E2.sch"/>
-    <include href="validation-stage-1a-X01.sch"/>
+    <include href="validation-stage-1a.sch"/>
 
 </schema>

@@ -20,16 +20,16 @@ import java.util.List;
  * Represents a Schematron &lt;phase&gt; element.
  */
 public class SchematronPhase {
-  private final String noticeType;
+  private final String noticeSubtype;
   private final List<String> activePatterns = new ArrayList<>();
 
-  public SchematronPhase(String noticeType) {
-    this.noticeType = noticeType;
+  public SchematronPhase(String noticeSubtype) {
+    this.noticeSubtype = noticeSubtype;
   }
 
   /** Used by complete-validation.ftl */
   public String getId() {
-    return "eforms-" + this.noticeType;
+    return "eforms-" + this.noticeSubtype;
   }
 
   /** Used by complete-validation.ftl */

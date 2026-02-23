@@ -1,0 +1,13 @@
+// Test: Mixed all-subtypes and specific-subtypes rules in the same stage
+// The IN * rule should go into a shared pattern, the IN 1, 2 rule into specific patterns
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN *
+
+    ASSERT not(empty(BT-00-Text))
+    AS WARNING R-X3F-N8W
+    FOR BT-00-Text IN 1, 2

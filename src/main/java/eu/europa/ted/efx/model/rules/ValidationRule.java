@@ -27,7 +27,7 @@ public class ValidationRule implements ParsedEntity {
     BooleanExpression invertedCondition;
     BooleanExpression expression;
     BooleanExpression invertedConditionOrExpression;
-    NoticeSubtypeRange noticeSubtypes;
+    NoticeSubtypeRange noticeSubtypeRange;
 
     public void setId(String id) {
         this.id = id;
@@ -85,10 +85,10 @@ public class ValidationRule implements ParsedEntity {
         return this.invertedConditionOrExpression;
     }
 
-    public void setNoticeSubtypes(NoticeSubtypeRange noticeSubtypes) {
-        this.noticeSubtypes = noticeSubtypes;
+    public void setNoticeSubtypeRange(NoticeSubtypeRange noticeSubtypeRange) {
+        this.noticeSubtypeRange = noticeSubtypeRange;
     }
-    public NoticeSubtypeRange getNoticeSubtypes() {
-        return this.noticeSubtypes;
+    public NoticeSubtypeRange getNoticeSubtypeRange() {
+        return this.noticeSubtypeRange;
     }
 }

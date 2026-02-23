@@ -14,6 +14,7 @@
 package eu.europa.ted.efx.model.rules;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
@@ -23,6 +24,7 @@ import eu.europa.ted.efx.model.ParsedEntity;
 public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
 
     private final List<String> noticeSubtypes;
+    private final boolean universal;
 
     public NoticeSubtypeRange(String rangeString, List<String> validNoticeSubtypes) {
 
@@ -33,9 +35,10 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
         }
 
         rangeString = (rangeString == null) ? "" : rangeString.trim();
-        
+
         if (rangeString == "*" || rangeString.equalsIgnoreCase("ANY")) {
-            noticeSubtypes.addAll(validNoticeSubtypes);
+            this.noticeSubtypes.addAll(validNoticeSubtypes);
+            this.universal = true;
             return;
         }
 
@@ -51,7 +54,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                     if (idx < 0) {
                         throw SymbolResolutionException.unknownNoticeSubtype(parts[0], rangeString);
                     }
-                    noticeSubtypes.add(validNoticeSubtypes.get(idx));
+                    this.noticeSubtypes.add(validNoticeSubtypes.get(idx));
                     break;
                 }
                 case 2: {
@@ -68,7 +71,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                     }
 
                     for (int i = startIdx; i <= endIdx; i++) {
-                        noticeSubtypes.add(validNoticeSubtypes.get(i));
+                        this.noticeSubtypes.add(validNoticeSubtypes.get(i));
                     }
                     break;
                 }
@@ -77,18 +80,24 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
             }
         }
 
+        this.universal = !validNoticeSubtypes.isEmpty()
+            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypes);
+    }
+
+    public boolean isUniversal() {
+        return this.universal;
     }
 
     public List<String> asList() {
-        return List.copyOf(noticeSubtypes);
+        return List.copyOf(this.noticeSubtypes);
     }
 
     public int size() {
-        return noticeSubtypes.size();
+        return this.noticeSubtypes.size();
     }
 
     @Override
     public java.util.Iterator<String> iterator() {
-        return noticeSubtypes.iterator();
+        return this.noticeSubtypes.iterator();
     }
 }

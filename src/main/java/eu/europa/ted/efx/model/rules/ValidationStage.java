@@ -14,7 +14,9 @@
 package eu.europa.ted.efx.model.rules;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.variables.Variable;
@@ -49,5 +51,38 @@ public class ValidationStage implements ParsedEntity {
 
     public List<Variable> getVariables() {
         return this.variables;
+    }
+
+    public boolean containsUniversalRules() {
+        for (RuleSet ruleSet : this.ruleSets) {
+            for (ValidationRule rule : ruleSet) {
+                if (rule.getNoticeSubtypeRange() != null && rule.getNoticeSubtypeRange().isUniversal()) {
+                    return true;
+                }
+            }
+            ValidationRule fallback = ruleSet.getFallbackRule();
+            if (fallback != null && fallback.getNoticeSubtypeRange() != null
+                && fallback.getNoticeSubtypeRange().isUniversal()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Set<String> getNoticeSubtypes() {
+        Set<String> subtypes = new LinkedHashSet<>();
+        for (RuleSet ruleSet : this.ruleSets) {
+            for (ValidationRule rule : ruleSet) {
+                if (rule.getNoticeSubtypeRange() != null && !rule.getNoticeSubtypeRange().isUniversal()) {
+                    subtypes.addAll(rule.getNoticeSubtypeRange().asList());
+                }
+            }
+            ValidationRule fallback = ruleSet.getFallbackRule();
+            if (fallback != null && fallback.getNoticeSubtypeRange() != null
+                && !fallback.getNoticeSubtypeRange().isUniversal()) {
+                subtypes.addAll(fallback.getNoticeSubtypeRange().asList());
+            }
+        }
+        return subtypes;
     }
 }

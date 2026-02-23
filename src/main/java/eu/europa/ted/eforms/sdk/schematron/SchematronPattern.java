@@ -15,40 +15,50 @@ package eu.europa.ted.eforms.sdk.schematron;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.RuleSet;
-import eu.europa.ted.efx.model.rules.ValidationRule;
 import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.efx.model.variables.Variable;
 
 /**
  * Represents a Schematron &lt;pattern&gt; element.
- * Each pattern is specific to a stage AND a notice type, containing only
- * the assertions that apply to that notice type.
+ * A pattern can be either subtype-specific (for a single notice subtype) or shared
+ * (for rules that apply to all notice subtypes).
  */
 public class SchematronPattern {
   private final String stage;
-  private final String noticeType;
+  private final String noticeSubtype;
   private final List<SchematronLet> variables;
   private final List<SchematronRule> rules;
 
   /**
-   * Creates a pattern for a specific stage and notice type combination.
-   * Only includes rules/assertions that apply to the given notice type.
+   * Creates a shared pattern for a stage, containing only rules that apply to all subtypes.
    *
    * @param validationStage The validation stage
-   * @param noticeType The notice type to filter by
    */
-  public SchematronPattern(ValidationStage validationStage, String noticeType) {
+  public SchematronPattern(ValidationStage validationStage) {
     this.stage = validationStage.getName();
-    this.noticeType = noticeType;
+    this.noticeSubtype = null;
     this.variables = collectVariables(validationStage);
-    this.rules = createRules(validationStage, noticeType);
+    this.rules = createUniversalRules(validationStage);
+  }
+
+  /**
+   * Creates a pattern for a specific stage and notice subtype combination.
+   * Only includes subtype-specific rules; rules that apply to all subtypes are excluded.
+   *
+   * @param validationStage The validation stage
+   * @param noticeSubtype The notice subtype to filter by
+   */
+  public SchematronPattern(ValidationStage validationStage, String noticeSubtype) {
+    this.stage = validationStage.getName();
+    this.noticeSubtype = noticeSubtype;
+    this.variables = collectVariables(validationStage);
+    this.rules = createSubtypeSpecificRules(validationStage, noticeSubtype);
   }
 
   private static List<SchematronLet> collectVariables(ValidationStage stage) {
@@ -64,10 +74,10 @@ public class SchematronPattern {
     return vars;
   }
 
-  private static List<SchematronRule> createRules(ValidationStage stage, String noticeType) {
+  private static List<SchematronRule> createUniversalRules(ValidationStage stage) {
     List<SchematronRule> rules = new ArrayList<>();
     for (RuleSet ruleSet : stage.getRuleSets()) {
-      SchematronRule rule = new SchematronRule(ruleSet, noticeType);
+      SchematronRule rule = SchematronRule.createUniversalRule(ruleSet);
       if (rule.hasTests()) {
         rules.add(rule);
       }
@@ -75,37 +85,36 @@ public class SchematronPattern {
     return rules;
   }
 
-  /**
-   * Returns all notice types referenced in the given stage.
-   * Used by SchematronGenerator to determine which patterns to create.
-   */
-  public static Set<String> getNoticeTypesInStage(ValidationStage stage) {
-    Set<String> types = new LinkedHashSet<>();
+  private static List<SchematronRule> createSubtypeSpecificRules(ValidationStage stage, String noticeSubtype) {
+    List<SchematronRule> rules = new ArrayList<>();
     for (RuleSet ruleSet : stage.getRuleSets()) {
-      for (ValidationRule rule : ruleSet) {
-        if (rule.getNoticeSubtypes() != null) {
-          types.addAll(rule.getNoticeSubtypes().asList());
-        }
-      }
-      ValidationRule fallback = ruleSet.getFallbackRule();
-      if (fallback != null && fallback.getNoticeSubtypes() != null) {
-        types.addAll(fallback.getNoticeSubtypes().asList());
+      SchematronRule rule = SchematronRule.createSubtypeSpecificRule(ruleSet, noticeSubtype);
+      if (rule.hasTests()) {
+        rules.add(rule);
       }
     }
-    return types;
+    return rules;
   }
 
   /** Used by pattern.ftl */
   public String getId() {
-    return "validation-stage-" + this.stage + "-" + this.noticeType;
+    if (this.noticeSubtype == null) {
+      return "validation-stage-" + this.stage;
+    }
+    return "validation-stage-" + this.stage + "-" + this.noticeSubtype;
   }
 
   public String getStage() {
     return this.stage;
   }
 
-  public String getNoticeType() {
-    return this.noticeType;
+  public String getNoticeSubtype() {
+    return this.noticeSubtype;
+  }
+
+  /** Returns true if this is a shared pattern (applies to all notice subtypes). */
+  public boolean isShared() {
+    return this.noticeSubtype == null;
   }
 
   /** Used by pattern.ftl */
