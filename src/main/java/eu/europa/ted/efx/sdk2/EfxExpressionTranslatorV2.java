@@ -2433,14 +2433,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitDatePlusMeasureFunction(DatePlusMeasureFunctionContext ctx) {
+  public void exitDatePlusDurationFunction(DatePlusDurationFunctionContext ctx) {
     DurationExpression right = this.stack.pop(DurationExpression.class);
     DateExpression left = this.stack.pop(DateExpression.class);
     this.stack.push(this.script.composeAddition(left, right));
   }
 
   @Override
-  public void exitDateMinusMeasureFunction(DateMinusMeasureFunctionContext ctx) {
+  public void exitDateMinusDurationFunction(DateMinusDurationFunctionContext ctx) {
     DurationExpression right = this.stack.pop(DurationExpression.class);
     DateExpression left = this.stack.pop(DateExpression.class);
     this.stack.push(this.script.composeSubtraction(left, right));
