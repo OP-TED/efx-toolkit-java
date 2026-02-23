@@ -13,15 +13,12 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Exception thrown when invalid indentation is detected in EFX templates.
- * Extends ParseCancellationException to properly stop ANTLR4 parsing
- * and bypass error recovery mechanisms.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class InvalidIndentationException extends ParseCancellationException {
+public class InvalidIndentationException extends EfxCompilationException {
 
     public enum ErrorCode {
         INCONSISTENT_INDENTATION_SPACES,
@@ -41,38 +38,41 @@ public class InvalidIndentationException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidIndentationException(ErrorCode errorCode, String message) {
-        super(message);
+    private InvalidIndentationException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private InvalidIndentationException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
-    public static InvalidIndentationException inconsistentSpaces(int spaces) {
-        return new InvalidIndentationException(ErrorCode.INCONSISTENT_INDENTATION_SPACES,
-                String.format(INCONSISTENT_INDENTATION_SPACES, spaces));
+    public static InvalidIndentationException inconsistentSpaces(ParserRuleContext ctx, int spaces) {
+        return new InvalidIndentationException(ErrorCode.INCONSISTENT_INDENTATION_SPACES, ctx, INCONSISTENT_INDENTATION_SPACES, spaces);
     }
 
-    public static InvalidIndentationException indentationLevelSkipped() {
-        return new InvalidIndentationException(ErrorCode.INDENTATION_LEVEL_SKIPPED, INDENTATION_LEVEL_SKIPPED);
+    public static InvalidIndentationException indentationLevelSkipped(ParserRuleContext ctx) {
+        return new InvalidIndentationException(ErrorCode.INDENTATION_LEVEL_SKIPPED, ctx, INDENTATION_LEVEL_SKIPPED);
     }
 
-    public static InvalidIndentationException startIndentAtZero() {
-        return new InvalidIndentationException(ErrorCode.START_INDENT_AT_ZERO, START_INDENT_AT_ZERO);
+    public static InvalidIndentationException startIndentAtZero(ParserRuleContext ctx) {
+        return new InvalidIndentationException(ErrorCode.START_INDENT_AT_ZERO, ctx, START_INDENT_AT_ZERO);
     }
 
-    public static InvalidIndentationException mixedIndentation() {
-        return new InvalidIndentationException(ErrorCode.MIXED_INDENTATION, MIXED_INDENTATION);
+    public static InvalidIndentationException mixedIndentation(ParserRuleContext ctx) {
+        return new InvalidIndentationException(ErrorCode.MIXED_INDENTATION, ctx, MIXED_INDENTATION);
     }
 
-    public static InvalidIndentationException noNestingOnInvocations() {
-        return new InvalidIndentationException(ErrorCode.NO_NESTING_ON_INVOCATIONS, NO_NESTING_ON_INVOCATIONS);
+    public static InvalidIndentationException noNestingOnInvocations(ParserRuleContext ctx) {
+        return new InvalidIndentationException(ErrorCode.NO_NESTING_ON_INVOCATIONS, ctx, NO_NESTING_ON_INVOCATIONS);
     }
 
-    public static InvalidIndentationException noIndentOnTemplateDeclarations() {
-        return new InvalidIndentationException(ErrorCode.NO_INDENT_ON_TEMPLATE_DECLARATIONS,
-                NO_INDENT_ON_TEMPLATE_DECLARATIONS);
+    public static InvalidIndentationException noIndentOnTemplateDeclarations(ParserRuleContext ctx) {
+        return new InvalidIndentationException(ErrorCode.NO_INDENT_ON_TEMPLATE_DECLARATIONS, ctx, NO_INDENT_ON_TEMPLATE_DECLARATIONS);
     }
 }

@@ -115,11 +115,11 @@
       "xpathRelative": "PathNode/EndTimeField"
     },
     {
-      "id": "BT-00-Measure",
-      "type": "measure",
+      "id": "BT-00-Duration",
+      "type": "duration",
       "parentNodeId": "ND-Root",
-      "xpathAbsolute": "/*/PathNode/MeasureField",
-      "xpathRelative": "PathNode/MeasureField"
+      "xpathAbsolute": "/*/PathNode/DurationField",
+      "xpathRelative": "PathNode/DurationField"
     },
     {
       "id": "BT-00-Integer",

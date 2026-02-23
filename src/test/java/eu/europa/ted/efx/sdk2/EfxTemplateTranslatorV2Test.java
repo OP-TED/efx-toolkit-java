@@ -150,7 +150,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body02())"),
         translateTemplate(lines(
-            "let template:all-types-template(text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, measure:$dur) display Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
+            "let template:all-types-template(text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur) display Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
             "invoke all-types-template('text', 123, TRUE, date('2023-01-01'), time('12:00:00'), day-time-duration('P1D'));")));
   }
 
@@ -590,7 +590,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let measure*:$durs = [P1Y, P2M];",
+            "let duration*:$durs = [P1Y, P2M];",
             "display count: ${count($durs)};")));
   }
 
@@ -684,7 +684,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let measure*:?getDurations() = [P1Y, P2M];",
+            "let duration*:?getDurations() = [P1Y, P2M];",
             "display count: ${count(?getDurations())};")));
   }
 
@@ -778,7 +778,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let measure*:?processDurations(measure*:$durs) = $durs;",
+            "let duration*:?processDurations(duration*:$durs) = $durs;",
             "display done;")));
   }
 
@@ -1768,7 +1768,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(
-            "{/, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), measure:$dur=day-time-duration('P1D')} All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur}"));
+            "{/, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), duration:$dur=day-time-duration('P1D')} All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur}"));
   }
 
   @Test
@@ -1819,8 +1819,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testTemplateLine_InvalidIndentation_MixedIndentation() {
-    assertThrows(InvalidIndentationException.class,
+    InvalidIndentationException ex = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate("{BT-00-Text} foo\n\t  {BT-00-Text} bar"));
+    assertEquals(InvalidIndentationException.ErrorCode.MIXED_INDENTATION, ex.getErrorCode());
+    assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
   }
 
   @Test

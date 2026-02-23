@@ -9,8 +9,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.Parameter;
@@ -128,17 +126,11 @@ public class ContentBlock {
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
       final Conditionals conditionals,
       final Markup defaultContent) {
-    if (this.parent == null) {
-      throw new ParseCancellationException("Cannot add sibling to root block");
-    }
     return this.parent.addChild(number, context, variables, conditionals, defaultContent);
   }
 
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
       final TemplateDefinition template) {
-    if (this.parent == null) {
-      throw new ParseCancellationException("Cannot add sibling to root block");
-    }
     return this.parent.addChild(number, context, variables, template);
   }
 

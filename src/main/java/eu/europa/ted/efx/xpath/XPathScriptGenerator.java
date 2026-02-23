@@ -127,6 +127,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
+  public StringExpression composeFieldRawValueReference(PathExpression fieldReference) {
+    return new StringExpression(fieldReference.getScript() + "/normalize-space(text())");
+  }
+
+  @Override
   public <T extends PathExpression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
     return Expression.instantiate(
@@ -529,6 +534,22 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeSecondsFunction(TimeExpression time) {
     return new NumericExpression("seconds-from-time(" + time.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeYearsFromDurationFunction(DurationExpression duration) {
+    return new NumericExpression("years-from-duration(" + duration.getScript() + ")");
+  }
+
+  @Override
+  public NumericExpression composeMonthsFromDurationFunction(DurationExpression duration) {
+    String d = duration.getScript();
+    return new NumericExpression("(years-from-duration(" + d + ") * 12 + months-from-duration(" + d + "))");
+  }
+
+  @Override
+  public NumericExpression composeDaysFromDurationFunction(DurationExpression duration) {
+    return new NumericExpression("days-from-duration(" + duration.getScript() + ")");
   }
 
   @Override

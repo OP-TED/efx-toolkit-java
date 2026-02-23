@@ -222,12 +222,12 @@
       "xpathRelative": "PathNode/EndTimeField"
     },
     {
-      "id": "BT-00-Measure",
-      "alias": "measureField",
-      "type": "measure",
+      "id": "BT-00-Duration",
+      "alias": "durationField",
+      "type": "duration",
       "parentNodeId": "ND-Root",
-      "xpathAbsolute": "/*/PathNode/MeasureField",
-      "xpathRelative": "PathNode/MeasureField"
+      "xpathAbsolute": "/*/PathNode/DurationField",
+      "xpathRelative": "PathNode/DurationField"
     },
     {
       "id": "BT-00-Integer",
@@ -502,12 +502,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-11-Measure",
-      "alias": "bt11Measure",
-      "type": "measure",
+      "id": "BT-11-Duration",
+      "alias": "bt11Duration",
+      "type": "duration",
       "parentNodeId": "ND-SubSubNode",
-      "xpathAbsolute": "/*/SubNode/SubSubNode/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/SubNode/SubSubNode/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-12-Text",
@@ -558,12 +558,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-12-Measure",
-      "alias": "bt12Measure",
-      "type": "measure",
+      "id": "BT-12-Duration",
+      "alias": "bt12Duration",
+      "type": "duration",
       "parentNodeId": "ND-SubSubNode2",
-      "xpathAbsolute": "/*/SubNode/SubSubNode2/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/SubNode/SubSubNode2/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-13-Text",
@@ -614,12 +614,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-13-Measure",
-      "alias": "bt13Measure",
-      "type": "measure",
+      "id": "BT-13-Duration",
+      "alias": "bt13Duration",
+      "type": "duration",
       "parentNodeId": "ND-RepeatableInSubNode",
-      "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-14-Text",
@@ -670,12 +670,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-14-Measure",
-      "alias": "bt14Measure",
-      "type": "measure",
+      "id": "BT-14-Duration",
+      "alias": "bt14Duration",
+      "type": "duration",
       "parentNodeId": "ND-RepeatableInSubNode2",
-      "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-21-TextMultilingual",
@@ -718,12 +718,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-21-Measure",
-      "alias": "bt21Measure",
-      "type": "measure",
+      "id": "BT-21-Duration",
+      "alias": "bt21Duration",
+      "type": "duration",
       "parentNodeId": "ND-NonRepeatableSubNode",
-      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-22-Text",
@@ -774,12 +774,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-22-Measure",
-      "alias": "bt22Measure",
-      "type": "measure",
+      "id": "BT-22-Duration",
+      "alias": "bt22Duration",
+      "type": "duration",
       "parentNodeId": "ND-NonRepeatableSubNode2",
-      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-23-Text",
@@ -830,12 +830,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-23-Measure",
-      "alias": "bt23Measure",
-      "type": "measure",
+      "id": "BT-23-Duration",
+      "alias": "bt23Duration",
+      "type": "duration",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
-      "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-24-Text",
@@ -886,12 +886,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-24-Measure",
-      "alias": "bt24Measure",
-      "type": "measure",
+      "id": "BT-24-Duration",
+      "alias": "bt24Duration",
+      "type": "duration",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
-      "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-25-TextMultilingual",
@@ -934,12 +934,12 @@
       "xpathRelative": "Time"
     },
     {
-      "id": "BT-25-Measure",
-      "alias": "bt25Measure",
-      "type": "measure",
+      "id": "BT-25-Duration",
+      "alias": "bt25Duration",
+      "type": "duration",
       "parentNodeId": "ND-RepeatableSubSubNode",
-      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Measure",
-      "xpathRelative": "Measure"
+      "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Duration",
+      "xpathRelative": "Duration"
     },
     {
       "id": "BT-00-Number-In-Repeatable-Node",

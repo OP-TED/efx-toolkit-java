@@ -13,18 +13,15 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.variables.Parametrised;
 
 /**
  * Exception thrown when invalid arguments are detected in EFX templates.
- * Extends ParseCancellationException to properly stop ANTLR4 parsing
- * and bypass error recovery mechanisms.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class InvalidArgumentException extends ParseCancellationException {
+public class InvalidArgumentException extends EfxCompilationException {
 
     public enum ErrorCode {
         ARGUMENT_NUMBER_MISMATCH,
@@ -40,19 +37,24 @@ public class InvalidArgumentException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidArgumentException(ErrorCode errorCode, String message) {
-        super(message);
+    private InvalidArgumentException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private InvalidArgumentException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
     public static InvalidArgumentException argumentNumberMismatch(Parametrised identifier, int expectedNumber, int actualNumber) {
         return new InvalidArgumentException(ErrorCode.ARGUMENT_NUMBER_MISMATCH,
-                String.format(ARGUMENT_NUMBER_MISMATCH, identifier.getClass().getSimpleName().toLowerCase(),
-                        identifier.name, expectedNumber, actualNumber));
+                ARGUMENT_NUMBER_MISMATCH, identifier.getClass().getSimpleName().toLowerCase(),
+                identifier.name, expectedNumber, actualNumber);
     }
 
     public static InvalidArgumentException argumentNumberMismatch(Parametrised identifier, int expectedNumber) {
@@ -62,16 +64,16 @@ public class InvalidArgumentException extends ParseCancellationException {
     public static InvalidArgumentException argumentTypeMismatch(int position, Parametrised identifier,
             Class<? extends TypedExpression> expectedType, Class<? extends TypedExpression> actualType) {
         return new InvalidArgumentException(ErrorCode.ARGUMENT_TYPE_MISMATCH,
-                String.format(ARGUMENT_TYPE_MISMATCH, position + 1, identifier.getClass().getSimpleName().toLowerCase(),
-                        identifier.name, TypedExpression.getEfxDataType(expectedType).getSimpleName(),
-                        TypedExpression.getEfxDataType(actualType).getSimpleName()));
+                ARGUMENT_TYPE_MISMATCH, position + 1, identifier.getClass().getSimpleName().toLowerCase(),
+                identifier.name, TypedExpression.getEfxDataType(expectedType).getSimpleName(),
+                TypedExpression.getEfxDataType(actualType).getSimpleName());
     }
 
-    public static InvalidArgumentException unsupportedSequenceType(String type, String functionName) {
-        return new InvalidArgumentException(ErrorCode.UNSUPPORTED_SEQUENCE_TYPE, String.format(UNSUPPORTED_SEQUENCE_TYPE, type, functionName));
+    public static InvalidArgumentException unsupportedSequenceType(ParserRuleContext ctx, String type, String functionName) {
+        return new InvalidArgumentException(ErrorCode.UNSUPPORTED_SEQUENCE_TYPE, ctx, UNSUPPORTED_SEQUENCE_TYPE, type, functionName);
     }
 
-    public static InvalidArgumentException missingArgument(String parameterName) {
-        return new InvalidArgumentException(ErrorCode.MISSING_ARGUMENT, String.format(MISSING_ARGUMENT, parameterName));
+    public static InvalidArgumentException missingArgument(ParserRuleContext ctx, String parameterName) {
+        return new InvalidArgumentException(ErrorCode.MISSING_ARGUMENT, ctx, MISSING_ARGUMENT, parameterName);
     }
 }

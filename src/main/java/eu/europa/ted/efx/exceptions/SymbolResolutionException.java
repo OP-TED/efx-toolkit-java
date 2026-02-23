@@ -13,16 +13,13 @@
  */
 package eu.europa.ted.efx.exceptions;
 
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * Exception thrown when symbol resolution fails during EFX template processing.
  * This includes unknown fields, nodes, codelists, or other symbol lookup failures.
- * Extends ParseCancellationException to properly stop ANTLR4 parsing
- * and bypass error recovery mechanisms.
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // Necessary to integrate with ANTLR4 parser cancellation
-public class SymbolResolutionException extends ParseCancellationException {
+public class SymbolResolutionException extends EfxCompilationException {
 
     public enum ErrorCode {
         UNKNOWN_SYMBOL,
@@ -40,25 +37,30 @@ public class SymbolResolutionException extends ParseCancellationException {
 
     private final ErrorCode errorCode;
 
-    private SymbolResolutionException(ErrorCode errorCode, String message) {
-        super(message);
+    private SymbolResolutionException(ErrorCode errorCode, String template, Object... args) {
+        super(template, args);
+        this.errorCode = errorCode;
+    }
+
+    private SymbolResolutionException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
+        super(ctx, template, args);
         this.errorCode = errorCode;
     }
 
     public ErrorCode getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
     public static SymbolResolutionException unknownCodelist(String codelistId) {
-        return new SymbolResolutionException(ErrorCode.UNKNOWN_CODELIST, String.format(UNKNOWN_CODELIST, codelistId));
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_CODELIST, UNKNOWN_CODELIST, codelistId);
     }
 
     public static SymbolResolutionException unknownSymbol(String symbol) {
-        return new SymbolResolutionException(ErrorCode.UNKNOWN_SYMBOL, String.format(UNKNOWN_SYMBOL, symbol));
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_SYMBOL, UNKNOWN_SYMBOL, symbol);
     }
 
     public static SymbolResolutionException noCodelistForField(String fieldId) {
-        return new SymbolResolutionException(ErrorCode.NO_CODELIST_FOR_FIELD, String.format(NO_CODELIST_FOR_FIELD, fieldId));
+        return new SymbolResolutionException(ErrorCode.NO_CODELIST_FOR_FIELD, NO_CODELIST_FOR_FIELD, fieldId);
     }
 
     public static SymbolResolutionException rootNodeNotFound() {
@@ -66,6 +68,6 @@ public class SymbolResolutionException extends ParseCancellationException {
     }
 
     public static SymbolResolutionException unknownNoticeSubtype(String noticeSubtype, String rangeString) {
-        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, String.format(UNKNOWN_NOTICE_SUBTYPE, noticeSubtype, rangeString));
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, UNKNOWN_NOTICE_SUBTYPE, noticeSubtype, rangeString);
     }
 }

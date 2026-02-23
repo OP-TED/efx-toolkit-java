@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 
@@ -304,6 +304,17 @@ public class SdkSymbolResolver implements SymbolResolver {
     if (sdkField == null) {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
+
+    // Temporary: the SDK does not yet distinguish duration from measure.
+    // Both are "measure" in the SDK, but durations use the "duration-unit" codelist.
+    // Remove this when the SDK adds "duration" as a proper data type.
+    if (FieldTypes.MEASURE.getName().equals(sdkField.getType())) {
+      SdkField unitCodeField = sdkField.getAttributeField("unitCode");
+      if (unitCodeField != null && "duration-unit".equals(unitCodeField.getCodelistId())) {
+        return FieldTypes.DURATION.getName();
+      }
+    }
+
     return sdkField.getType();
   }
 
@@ -662,7 +673,7 @@ public class SdkSymbolResolver implements SymbolResolver {
       case JUSTIFICATION_DESCRIPTION_FIELD:
         return privacy.getJustificationDescriptionFieldId();
       default:
-        throw ConsistencyCheckException.unhandledPrivacySetting(privacyField);
+        throw TranslatorConfigurationException.unhandledPrivacySetting(privacyField);
     }
   }
 

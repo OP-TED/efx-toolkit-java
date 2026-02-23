@@ -19,6 +19,7 @@ public enum FieldTypes {
     AMOUNT("amount"), //
     NUMBER("number"), //
     MEASURE("measure"), //
+    DURATION("duration"), //
     CODE("code"), //
     INTERNAL_CODE("internal-code"), //
     INTEGER("integer"), //

@@ -45,7 +45,8 @@ public interface ScalarExpression extends TypedExpression {
       entry(FieldTypes.INDICATOR, BooleanExpression.class), //
       entry(FieldTypes.AMOUNT, NumericExpression.class), //
       entry(FieldTypes.NUMBER, NumericExpression.class), //
-      entry(FieldTypes.MEASURE, DurationExpression.class), //
+      entry(FieldTypes.MEASURE, NumericExpression.class), //
+      entry(FieldTypes.DURATION, DurationExpression.class), //
       entry(FieldTypes.CODE, StringExpression.class), entry(FieldTypes.INTERNAL_CODE, StringExpression.class), //
       entry(FieldTypes.INTEGER, NumericExpression.class), //
       entry(FieldTypes.DATE, DateExpression.class), //

@@ -45,7 +45,8 @@ public interface ScalarPath extends ScalarExpression, PathExpression {
       entry(FieldTypes.INDICATOR, BooleanPath.class), //
       entry(FieldTypes.AMOUNT, NumericPath.class), //
       entry(FieldTypes.NUMBER, NumericPath.class), //
-      entry(FieldTypes.MEASURE, DurationPath.class), //
+      entry(FieldTypes.MEASURE, NumericPath.class), //
+      entry(FieldTypes.DURATION, DurationPath.class), //
       entry(FieldTypes.CODE, StringPath.class),
       entry(FieldTypes.INTERNAL_CODE, StringPath.class), //
       entry(FieldTypes.INTEGER, NumericPath.class), //

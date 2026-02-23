@@ -30,7 +30,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -42,7 +41,7 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.SdkInconsistencyException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
-import eu.europa.ted.efx.exceptions.ConsistencyCheckException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.util.EfxRegexValidator;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -161,6 +160,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         new EfxLexer(CharStreams.fromString(preprocessedExpression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
+    parser.setErrorHandler(new EfxErrorStrategy());
 
     if (errorListener != null) {
       lexer.removeErrorListeners();
@@ -188,6 +188,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
             CharStreams.fromString(BEGIN_EXPRESSION_BLOCK + parameterValue + END_EXPRESSION_BLOCK));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
+    parser.setErrorHandler(new EfxErrorStrategy());
 
     if (errorListener != null) {
       lexer.removeErrorListeners();
@@ -225,7 +226,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     else if (ctx.JustificationDescription() != null)
       return this.symbols.getPrivacySettingOfField(baseFieldId, PrivacySetting.JUSTIFICATION_DESCRIPTION_FIELD);
     else
-      throw ConsistencyCheckException.unhandledLinkedFieldProperty(ctx.getText());
+      throw TranslatorConfigurationException.unhandledLinkedFieldProperty(ctx.getText());
   }
 
   protected String getFieldId(LinkedFieldReferenceContext ctx) {
@@ -1386,7 +1387,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       final String fieldId = getFieldId((FieldReferenceWithPredicateContext) parent);
       this.efxContext.pushFieldContext(fieldId);
     } else {
-      throw new ParseCancellationException("Unexpected parent context for predicate: " + parent.getClass().getSimpleName());
+      throw TranslatorConfigurationException.unhandledPredicateContext(parent.getClass().getSimpleName());
     }
   }
 
@@ -1540,7 +1541,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     String variableName = ctx.variableReference().variableName.getText();
     Context variableContext = this.efxContext.getContextFromVariable(variableName);
     if (variableContext == null) {
-      throw InvalidIdentifierException.notAContextVariable(variableName);
+      throw InvalidIdentifierException.notAContextVariable(ctx, variableName);
     }
     if (variableContext.isFieldContext()) {
       this.efxContext.push(new FieldContext(variableContext.symbol(),
@@ -1723,7 +1724,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     var baseType = EfxTypeLattice.toPrimitive(function.dataType);
     var sequenceExpressionType = efxDataTypeToSequenceExpressionMap.get(baseType);
     if (sequenceExpressionType == null) {
-      throw ConsistencyCheckException.missingTypeMapping(function.dataType, "efxDataTypeToSequenceExpressionMap");
+      throw TranslatorConfigurationException.missingTypeMapping(function.dataType, "efxDataTypeToSequenceExpressionMap");
     }
     this.stack.push(this.script.composeFunctionInvocation(
         ctx.functionInvocation().functionName.getText(),
@@ -1738,68 +1739,68 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), StringExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), NumericExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), BooleanExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), DateExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), TimeExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), DurationExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DurationExpression.class);
   }
 
   // Sequence parameter declarations
   @Override
   public void exitStringSequenceParameterDeclaration(StringSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), StringSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), StringSequenceExpression.class);
   }
 
   @Override
   public void exitNumericSequenceParameterDeclaration(NumericSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), NumericSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), NumericSequenceExpression.class);
   }
 
   @Override
   public void exitBooleanSequenceParameterDeclaration(BooleanSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), BooleanSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), BooleanSequenceExpression.class);
   }
 
   @Override
   public void exitDateSequenceParameterDeclaration(DateSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), DateSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DateSequenceExpression.class);
   }
 
   @Override
   public void exitTimeSequenceParameterDeclaration(TimeSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), TimeSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), TimeSequenceExpression.class);
   }
 
   @Override
   public void exitDurationSequenceParameterDeclaration(DurationSequenceParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(ctx.parameterName.getText(), DurationSequenceExpression.class);
+    this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DurationSequenceExpression.class);
   }
 
-  private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
+  private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionArguments.isEmpty()) {
-      throw InvalidArgumentException.missingArgument(parameterName);
+      throw InvalidArgumentException.missingArgument(ctx, parameterName);
     }
 
     ParsedParameter parameter = new ParsedParameter(parameterName,
@@ -1848,12 +1849,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitFieldWasWithheldProperty(FieldWasWithheldPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
     if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
-      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
 
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
-      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+      throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
     }
 
     this.stack.push(this.composeWasWithheldCondition(fieldId, privacyCode));
@@ -1863,12 +1864,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitFieldIsWithheldProperty(FieldIsWithheldPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
     if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
-      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
 
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
-      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+      throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
     }
 
     this.stack.push(this.script.composeLogicalAnd(
@@ -1888,12 +1889,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitFieldIsDisclosedProperty(FieldIsDisclosedPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
     if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
-      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
 
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
-      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+      throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
     }
 
     // "isDisclosed" = "was withheld" AND NOT "still withheld" AND NOT "masked"
@@ -1901,25 +1902,25 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeLogicalAnd(
             this.composeWasWithheldCondition(fieldId, privacyCode),
             this.script.composeLogicalNot(this.composeStillWithheldCondition(fieldId))),
-        this.script.composeLogicalNot(this.composeIsMaskedCondition(fieldId))));
+        this.script.composeLogicalNot(this.composeIsMaskedCondition(ctx, fieldId))));
   }
 
   @Override
   public void exitFieldIsMaskedProperty(FieldIsMaskedPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
     if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
-      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
 
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
-      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+      throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
     }
 
     // "isMasked" = was withheld AND field value equals the privacy mask
     this.stack.push(this.script.composeLogicalAnd(
         this.composeWasWithheldCondition(fieldId, privacyCode),
-        this.composeIsMaskedCondition(fieldId)));
+        this.composeIsMaskedCondition(ctx, fieldId)));
   }
 
   @Override
@@ -1927,9 +1928,20 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     final String fieldId = getFieldId(ctx.fieldMention());
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
-      throw InvalidUsageException.fieldNotWithholdable(fieldId);
+      throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
     }
     this.stack.push(this.script.getStringLiteralFromUnquotedString(privacyCode));
+  }
+
+  @Override
+  public void exitFieldRawValueProperty(FieldRawValuePropertyContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    if (this.isFieldRepeatableFromContext(fieldId, this.efxContext.peek())) {
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
+    }
+    final PathExpression fieldPath =
+        this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
   }
 
   private boolean isFieldRepeatableFromContext(String fieldId, Context context) {
@@ -1970,12 +1982,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         BooleanExpression.class);
   }
 
-  private BooleanExpression composeIsMaskedCondition(String fieldId) {
+  private BooleanExpression composeIsMaskedCondition(ParserRuleContext ctx, String fieldId) {
     final String maskingValue = this.symbols.getPrivacyMask(fieldId);
     final PathExpression fieldValue = this.script.composeFieldValueReference(this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol()));
 
     if (!(fieldValue instanceof ScalarExpression)) {
-      throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
 
     return this.script.composeComparisonOperation(
@@ -2140,6 +2152,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitYearsFromDurationFunction(YearsFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeYearsFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
+  public void exitMonthsFromDurationFunction(MonthsFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeMonthsFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
+  public void exitDaysFromDurationFunction(DaysFromDurationFunctionContext ctx) {
+    this.stack.push(this.script.composeDaysFromDurationFunction(this.stack.pop(DurationExpression.class)));
+  }
+
+  @Override
   public void exitAbsoluteFunction(AbsoluteFunctionContext ctx) {
     this.stack.push(this.script.composeAbsFunction(this.stack.pop(NumericExpression.class)));
   }
@@ -2238,47 +2265,47 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitFormatShortDateFunction(FormatShortDateFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-short");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-short");
   }
 
   @Override
   public void exitFormatShortTimeFunction(FormatShortTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-short");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-short");
   }
 
   @Override
   public void exitFormatMediumDateFunction(FormatMediumDateFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-medium");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-medium");
   }
 
   @Override
   public void exitFormatMediumTimeFunction(FormatMediumTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-medium");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-medium");
   }
 
   @Override
   public void exitFormatLongDateFunction(FormatLongDateFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-long");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-long");
   }
 
   @Override
   public void exitFormatLongTimeFunction(FormatLongTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-long");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-long");
   }
 
   @Override
   public void exitFormatShortDateTimeFunction(FormatShortDateTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-short");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-short");
   }
 
   @Override
   public void exitFormatMediumDateTimeFunction(FormatMediumDateTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-medium");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-medium");
   }
 
   @Override
   public void exitFormatLongDateTimeFunction(FormatLongDateTimeFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("format-long");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-long");
   }
 
   // #region New in EFX-2 -----------------------------------------------------
@@ -2376,12 +2403,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("preferred-language");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "preferred-language");
   }
 
   @Override
   public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
-    throw InvalidUsageException.templateOnlyFunction("preferred-language-text");
+    throw InvalidUsageException.templateOnlyFunction(ctx, "preferred-language-text");
   }
 
   @Override
@@ -2406,14 +2433,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitDatePlusMeasureFunction(DatePlusMeasureFunctionContext ctx) {
+  public void exitDatePlusDurationFunction(DatePlusDurationFunctionContext ctx) {
     DurationExpression right = this.stack.pop(DurationExpression.class);
     DateExpression left = this.stack.pop(DateExpression.class);
     this.stack.push(this.script.composeAddition(left, right));
   }
 
   @Override
-  public void exitDateMinusMeasureFunction(DateMinusMeasureFunctionContext ctx) {
+  public void exitDateMinusDurationFunction(DateMinusDurationFunctionContext ctx) {
     DurationExpression right = this.stack.pop(DurationExpression.class);
     DateExpression left = this.stack.pop(DateExpression.class);
     this.stack.push(this.script.composeSubtraction(left, right));
@@ -2816,7 +2843,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   protected static String numericTypeName = getLexerSymbol(EfxLexer.Number);
   protected static String dateTypeName = getLexerSymbol(EfxLexer.Date);
   protected static String timeTypeName = getLexerSymbol(EfxLexer.Time);
-  protected static String durationTypeName = getLexerSymbol(EfxLexer.Measure);
+  protected static String durationTypeName = getLexerSymbol(EfxLexer.Duration);
 
   // Map from eForms field types to EFX type names - made protected for reuse in subclasses
   protected static final Map<String, String> eFormsToEfxTypeMap = Map.ofEntries( //
@@ -2827,7 +2854,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       entry(FieldTypes.INDICATOR.getName(), booleanTypeName), //
       entry(FieldTypes.AMOUNT.getName(), numericTypeName), //
       entry(FieldTypes.NUMBER.getName(), numericTypeName), //
-      entry(FieldTypes.MEASURE.getName(), durationTypeName), //
+      entry(FieldTypes.MEASURE.getName(), numericTypeName), //
+      entry(FieldTypes.DURATION.getName(), durationTypeName), //
       entry(FieldTypes.CODE.getName(), textTypeName), //
       entry(FieldTypes.INTERNAL_CODE.getName(), textTypeName), //
       entry(FieldTypes.INTEGER.getName(), numericTypeName), //
@@ -2890,6 +2918,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       this.lexer = new EfxLexer(charStream);
       this.tokens = new CommonTokenStream(lexer);
       this.parser = new EfxParser(tokens);
+      this.parser.setErrorHandler(new EfxErrorStrategy());
       this.rewriter = new TokenStreamRewriter(tokens);
 
       if (this.errorListener != null) {
@@ -2952,7 +2981,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         final String fieldId = getFieldId((FieldReferenceWithPredicateContext) parent);
         this.efxContext.pushFieldContext(fieldId);
       } else {
-        throw new ParseCancellationException("Unexpected parent context for predicate: " + parent.getClass().getSimpleName());
+        throw TranslatorConfigurationException.unhandledPredicateContext(parent.getClass().getSimpleName());
       }
     }
 
@@ -3040,7 +3069,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       String variableName = ctx.variableReference().variableName.getText();
       Context variableContext = this.efxContext.getContextFromVariable(variableName);
       if (variableContext == null) {
-        throw InvalidIdentifierException.notAContextVariable(variableName);
+        throw InvalidIdentifierException.notAContextVariable(ctx, variableName);
       }
       if (variableContext.isFieldContext()) {
         this.efxContext.push(new FieldContext(variableContext.symbol(),
@@ -3088,7 +3117,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
             this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
             return;
           }
-          throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+          throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
         }
       }
 
@@ -3192,14 +3221,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
       // Guard: Node context variables cannot be used as values
       if (variableContext != null && variableContext.isNodeContext()) {
-        throw TypeMismatchException.nodesHaveNoValue(variableName, variableContext.symbol());
+        throw TypeMismatchException.nodesHaveNoValue(ctx, variableName, variableContext.symbol());
       }
 
       // Guard: Field context variables must not be repeatable in scalar context
       if (variableContext != null && variableContext.isFieldContext()) {
         String fieldId = variableContext.symbol();
         if (this.symbols.isFieldRepeatableFromContext(fieldId, getContextNodeId())) {
-          throw TypeMismatchException.fieldMayRepeat(fieldId, this.efxContext.symbol());
+          throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
         }
       }
 
@@ -3225,7 +3254,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
       // Guard: Node context variables cannot be used as values
       if (variableContext != null && variableContext.isNodeContext()) {
-        throw TypeMismatchException.nodesHaveNoValue(variableName, variableContext.symbol());
+        throw TypeMismatchException.nodesHaveNoValue(ctx, variableName, variableContext.symbol());
       }
 
       // No repeatability check needed - sequences can have multiple values

@@ -100,6 +100,15 @@ public interface ScriptGenerator {
   public PathExpression composeFieldValueReference(final PathExpression fieldReference);
 
   /**
+   * Given a PathExpression, this method should return the target language script for retrieving
+   * the raw text content of the field, without any type-specific processing.
+   *
+   * @param fieldReference The PathExpression that points to the field.
+   * @return A StringExpression that retrieves the raw text value of the field.
+   */
+  public StringExpression composeFieldRawValueReference(final PathExpression fieldReference);
+
+  /**
    * Given a PathExpression and an attribute name, this method should return the target language
    * script for retrieving the value of the attribute.
    * 
@@ -496,6 +505,30 @@ public interface ScriptGenerator {
    * @return A numeric expression representing the seconds (0-59).
    */
   public NumericExpression composeSecondsFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the years component from a duration.
+   *
+   * @param duration The duration expression to extract the years from.
+   * @return A numeric expression representing the years component.
+   */
+  public NumericExpression composeYearsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total months from a duration.
+   *
+   * @param duration The duration expression to extract the total months from.
+   * @return A numeric expression representing the total months (years * 12 + months).
+   */
+  public NumericExpression composeMonthsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total days from a duration.
+   *
+   * @param duration The duration expression to extract the total days from.
+   * @return A numeric expression representing the total days.
+   */
+  public NumericExpression composeDaysFromDurationFunction(DurationExpression duration);
 
   /**
    * Returns the target language script that computes the absolute value of a number.
