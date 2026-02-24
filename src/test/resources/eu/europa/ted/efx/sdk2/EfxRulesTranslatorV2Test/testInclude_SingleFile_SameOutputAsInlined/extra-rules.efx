@@ -1,0 +1,6 @@
+---- STAGE 1b ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-X3F-N8W
+    FOR BT-00-Text IN 1

@@ -21,7 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -31,9 +34,11 @@ import org.xml.sax.InputSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
+import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
 import eu.europa.ted.eforms.sdk.schematron.SchematronGenerator;
@@ -559,4 +564,83 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion Context variable type tests
+
+  //#region Include directive tests
+
+  /**
+   * Verifies that a rules file with #include produces the same output
+   * as the equivalent rules file with all content inlined.
+   */
+  @Test
+  void testInclude_SingleFile_SameOutputAsInlined() throws IOException {
+    String testName = "testInclude_SingleFile_SameOutputAsInlined";
+
+    IncludedFileResolver resolver = path -> readExpected(testName, path);
+    EfxTranslatorOptions options = new EfxTranslatorOptions(
+        false, null, EfxTranslatorOptions.DEFAULT_UDF_NAMESPACE,
+        DecimalFormat.XSL_DEFAULT, resolver, java.util.Locale.ENGLISH);
+
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName), options);
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  /**
+   * Verifies that translateRules(Path) auto-wires a filesystem resolver
+   * when no resolver is provided in options.
+   */
+  @Test
+  void testInclude_FromPath_DefaultResolverWorks(@TempDir Path tempDir) throws IOException {
+    String mainContent =
+        "---- STAGE 1a ----\n\n"
+        + "WITH BT-00-Text\n"
+        + "    REPORT empty(BT-00-Text)\n"
+        + "    AS WARNING R-K7P-M2Q\n"
+        + "    FOR BT-00-Text IN 1\n\n"
+        + "#include \"extra.efx\"\n";
+
+    String extraContent =
+        "---- STAGE 1b ----\n\n"
+        + "WITH BT-00-Text\n"
+        + "    ASSERT BT-00-Text is present\n"
+        + "    AS ERROR R-X3F-N8W\n"
+        + "    FOR BT-00-Text IN 1\n";
+
+    Files.writeString(tempDir.resolve("rules.efx"), mainContent);
+    Files.writeString(tempDir.resolve("extra.efx"), extraContent);
+
+    Map<String, String> outputFiles =
+        translator.translateRules(tempDir.resolve("rules.efx"), EfxTranslatorOptions.DEFAULT);
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    for (Map.Entry<String, String> entry : outputFiles.entrySet()) {
+      if (entry.getKey().endsWith(".sch")) {
+        assertValidXml(entry.getValue(), entry.getKey());
+      }
+    }
+  }
+
+  /**
+   * Verifies that translateRules(String, options) propagates include IO failures
+   * as UncheckedIOException with meaningful context.
+   */
+  @Test
+  void testInclude_FromString_IOFailurePropagates() {
+    String input = "#include \"missing.efx\"\n---- STAGE 1a ----\n";
+
+    IncludedFileResolver resolver = path -> {
+      throw new IOException("File not found: " + path);
+    };
+
+    EfxTranslatorOptions options = new EfxTranslatorOptions(
+        false, null, EfxTranslatorOptions.DEFAULT_UDF_NAMESPACE,
+        DecimalFormat.XSL_DEFAULT, resolver, java.util.Locale.ENGLISH);
+
+    UncheckedIOException thrown = assertThrows(UncheckedIOException.class,
+        () -> translator.translateRules(input, options));
+    assertTrue(thrown.getMessage().contains("Include resolution failed"));
+  }
+
+  //#endregion Include directive tests
 }

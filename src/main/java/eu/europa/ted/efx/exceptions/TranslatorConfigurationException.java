@@ -29,7 +29,9 @@ public class TranslatorConfigurationException extends IllegalStateException {
         UNHANDLED_VARIABLE_CONTEXT,
         UNHANDLED_PRIVACY_SETTING,
         UNHANDLED_LINKED_FIELD_PROPERTY,
-        UNHANDLED_PREDICATE_CONTEXT
+        UNHANDLED_PREDICATE_CONTEXT,
+        INCLUDE_RESOLVER_NOT_CONFIGURED,
+        UNRESOLVED_INCLUDE_DIRECTIVE
     }
 
     private static final String TYPE_NOT_REGISTERED =
@@ -78,6 +80,14 @@ public class TranslatorConfigurationException extends IllegalStateException {
         "If the grammar was updated to allow predicates in new contexts, " +
         "add a handler for this case in enterPredicate().";
 
+    private static final String INCLUDE_RESOLVER_NOT_CONFIGURED =
+        "EFX rules contain #include directives but no IncludedFileResolver is configured. " +
+        "Pass an IncludedFileResolver via TranslatorOptions to enable include resolution.";
+
+    private static final String UNRESOLVED_INCLUDE_DIRECTIVE =
+        "Unresolved #include directive '%s' found during preprocessing. " +
+        "Include resolution may have been skipped or failed silently.";
+
     private final ErrorCode errorCode;
 
     private TranslatorConfigurationException(ErrorCode errorCode, String template, Object... args) {
@@ -123,5 +133,13 @@ public class TranslatorConfigurationException extends IllegalStateException {
 
     public static TranslatorConfigurationException unhandledPredicateContext(String contextClassName) {
         return new TranslatorConfigurationException(ErrorCode.UNHANDLED_PREDICATE_CONTEXT, UNHANDLED_PREDICATE_CONTEXT, contextClassName);
+    }
+
+    public static TranslatorConfigurationException includeResolverNotConfigured() {
+        return new TranslatorConfigurationException(ErrorCode.INCLUDE_RESOLVER_NOT_CONFIGURED, INCLUDE_RESOLVER_NOT_CONFIGURED);
+    }
+
+    public static TranslatorConfigurationException unresolvedIncludeDirective(String path) {
+        return new TranslatorConfigurationException(ErrorCode.UNRESOLVED_INCLUDE_DIRECTIVE, UNRESOLVED_INCLUDE_DIRECTIVE, path);
     }
 }

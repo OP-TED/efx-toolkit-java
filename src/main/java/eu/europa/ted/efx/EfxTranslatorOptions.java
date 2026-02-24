@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.DecimalFormat;
 
@@ -42,6 +43,7 @@ public class EfxTranslatorOptions implements TranslatorOptions {
     private final String userDefinedFunctionNamespace;
     private final boolean profilerEnabled;
     private final Path profilerOutputPath;
+    private final IncludedFileResolver includedFileResolver;
 
     public EfxTranslatorOptions(DecimalFormat symbols) {
         this(DEFAULT_PROFILER_ENABLED, DEFAULT_PROFILER_OUTPUT_PATH, DEFAULT_UDF_NAMESPACE, symbols, Locale.ENGLISH);
@@ -68,11 +70,16 @@ public class EfxTranslatorOptions implements TranslatorOptions {
     }
 
     public EfxTranslatorOptions(boolean profilerEnabled, Path profilerOutputPath, String udfNamespace, DecimalFormat symbols, Locale primaryLocale, Locale... otherLocales) {
+        this(profilerEnabled, profilerOutputPath, udfNamespace, symbols, null, primaryLocale, otherLocales);
+    }
+
+    public EfxTranslatorOptions(boolean profilerEnabled, Path profilerOutputPath, String udfNamespace, DecimalFormat symbols, IncludedFileResolver includedFileResolver, Locale primaryLocale, Locale... otherLocales) {
         this.userDefinedFunctionNamespace = udfNamespace;
         this.symbols = symbols;
         this.primaryLocale = primaryLocale;
         this.profilerEnabled = profilerEnabled;
         this.profilerOutputPath = profilerOutputPath;
+        this.includedFileResolver = includedFileResolver;
         this.otherLocales = new ArrayList<>(Arrays.asList(otherLocales));
     }
 
@@ -129,5 +136,10 @@ public class EfxTranslatorOptions implements TranslatorOptions {
     @Override
     public Path getProfilerOutputPath() {
         return this.profilerOutputPath;
+    }
+
+    @Override
+    public IncludedFileResolver getIncludedFileResolver() {
+        return this.includedFileResolver;
     }
 }

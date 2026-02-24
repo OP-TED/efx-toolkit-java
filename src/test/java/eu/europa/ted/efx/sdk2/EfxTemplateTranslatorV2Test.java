@@ -17,11 +17,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Locale;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
+import eu.europa.ted.efx.EfxTranslator;
+import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
+import eu.europa.ted.efx.interfaces.IncludedFileResolver;
+import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.DecimalFormat;
 
 class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Override
@@ -2000,4 +2006,40 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{ND-SubNode[BT-01-SubNode-Text is present]} line1",
             "  {BT-01-SubNode-Text} line2")));
   }
+
+  // #region Include directive ---------------------------------------------------
+
+  @Test
+  void testInclude_SingleFile_SameOutputAsInlined() throws Exception {
+    String includedContent = "{BT-00-Code} Code: ${BT-00-Code}\n";
+
+    String templateWithInclude = lines(
+        "{BT-00-Text} Text: ${BT-00-Text}",
+        "#include \"extra-lines.efx\"") + "\n";
+
+    String templateInlined = lines(
+        "{BT-00-Text} Text: ${BT-00-Text}",
+        "{BT-00-Code} Code: ${BT-00-Code}") + "\n";
+
+    IncludedFileResolver resolver = path -> {
+      if ("extra-lines.efx".equals(path)) {
+        return includedContent;
+      }
+      throw new java.io.IOException("Unknown include: " + path);
+    };
+
+    EfxTranslatorOptions options = new EfxTranslatorOptions(
+        false, null, "udf", DecimalFormat.EFX_DEFAULT, resolver, Locale.ENGLISH);
+
+    String withInclude = EfxTranslator.translateTemplate(
+        DependencyFactoryMock.INSTANCE, getSdkVersion(), templateWithInclude, options);
+    String inlined = translateTemplate(lines(
+        "{BT-00-Text} Text: ${BT-00-Text}",
+        "{BT-00-Code} Code: ${BT-00-Code}"));
+
+    assertEquals(inlined, withInclude,
+        "Template with #include should produce the same output as the equivalent inlined template");
+  }
+
+  // #endregion Include directive ------------------------------------------------
 }

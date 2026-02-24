@@ -15,6 +15,7 @@ package eu.europa.ted.efx.sdk2;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -42,6 +43,7 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
+import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -165,6 +167,12 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public String renderTemplate(final Path pathname, TranslatorOptions options) throws IOException {
+    // Default to filesystem-based include resolution relative to the input file
+    if (options.getIncludedFileResolver() == null) {
+      Path baseDir = pathname.toAbsolutePath().getParent();
+      options = TranslatorOptions.withResolver(options, new FileSystemIncludedFileResolver(baseDir));
+    }
+
     return renderTemplate(CharStreams.fromPath(pathname), options);
   }
 
@@ -173,7 +181,11 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public String renderTemplate(final String template, TranslatorOptions options) {
-    return renderTemplate(CharStreams.fromString(template), options);
+    try {
+      return renderTemplate(CharStreams.fromString(template), options);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Include resolution failed during template rendering", e);
+    }
   }
 
   @Override
@@ -181,13 +193,14 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     return renderTemplate(CharStreams.fromStream(stream), options);
   }
 
-  private String renderTemplate(final CharStream charStream, TranslatorOptions options) {
+  private String renderTemplate(final CharStream charStream, TranslatorOptions options)
+      throws IOException {
     logger.debug("Rendering template");
     final long startTime = System.currentTimeMillis();
 
     // New in EFX-2: template preprocessing
     final long preprocessingStartTime = System.currentTimeMillis();
-    final TemplatePreprocessor preprocessor = this.new TemplatePreprocessor(charStream);
+    final TemplatePreprocessor preprocessor = this.new TemplatePreprocessor(charStream, options.getIncludedFileResolver());
     final String preprocessedTemplate = preprocessor.processTemplate();
     final long preprocessingEndTime = System.currentTimeMillis();
     final long preprocessingDuration = preprocessingEndTime - preprocessingStartTime;
@@ -1518,8 +1531,8 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    */
   class TemplatePreprocessor extends ExpressionPreprocessor {
 
-    TemplatePreprocessor(CharStream template) {
-      super(template);
+    TemplatePreprocessor(CharStream template, IncludedFileResolver resolver) throws IOException {
+      super(new IncludeProcessor(resolver).resolve(template));
     }
 
     String processTemplate() {
