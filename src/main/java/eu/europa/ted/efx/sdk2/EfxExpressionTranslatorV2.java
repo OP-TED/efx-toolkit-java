@@ -3697,6 +3697,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     // #endregion Scope management --------------------------------------------
 
+    // #region Include directive guard -----------------------------------------
+
+    @Override
+    public void exitIncludeDirective(IncludeDirectiveContext ctx) {
+      String path = ctx.IncludePath() != null ? ctx.IncludePath().getText().trim() : "<unknown>";
+      throw TranslatorConfigurationException.unresolvedIncludeDirective(path);
+    }
+
+    // #endregion Include directive guard --------------------------------------
+
   }
 
   // #endregion Pre-processing ------------------------------------------------

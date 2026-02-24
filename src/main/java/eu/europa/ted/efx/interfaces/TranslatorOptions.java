@@ -26,8 +26,35 @@ public interface TranslatorOptions {
     
     /**
      * Returns the output path for EFX profiling results.
-     * 
+     *
      * @return Path where profiling results should be written, or null if no file output is desired
      */
     public Path getProfilerOutputPath();
+
+    /**
+     * Returns the include resolver for resolving {@code #include} directives in rules files.
+     *
+     * @return The include resolver, or null if include resolution is not configured.
+     */
+    default IncludedFileResolver getIncludedFileResolver() {
+        return null;
+    }
+
+    /**
+     * Returns a new {@link TranslatorOptions} that delegates all methods to this instance
+     * but overrides the {@link IncludedFileResolver}.
+     */
+    static TranslatorOptions withResolver(TranslatorOptions delegate, IncludedFileResolver resolver) {
+        return new TranslatorOptions() {
+            @Override public DecimalFormat getDecimalFormat() { return delegate.getDecimalFormat(); }
+            @Override public String getPrimaryLanguage2LetterCode() { return delegate.getPrimaryLanguage2LetterCode(); }
+            @Override public String getPrimaryLanguage3LetterCode() { return delegate.getPrimaryLanguage3LetterCode(); }
+            @Override public String[] getAllLanguage2LetterCodes() { return delegate.getAllLanguage2LetterCodes(); }
+            @Override public String[] getAllLanguage3LetterCodes() { return delegate.getAllLanguage3LetterCodes(); }
+            @Override public String getUserDefinedFunctionNamespace() { return delegate.getUserDefinedFunctionNamespace(); }
+            @Override public boolean isProfilerEnabled() { return delegate.isProfilerEnabled(); }
+            @Override public Path getProfilerOutputPath() { return delegate.getProfilerOutputPath(); }
+            @Override public IncludedFileResolver getIncludedFileResolver() { return resolver; }
+        };
+    }
 }

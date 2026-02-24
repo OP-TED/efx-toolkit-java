@@ -15,6 +15,7 @@ package eu.europa.ted.efx.sdk2;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
@@ -30,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.EfxRulesTranslator;
+import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
@@ -113,6 +116,13 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
       throws IOException {
     logger.debug("Translating EFX rules from file: {}", pathname);
     CharStream input = CharStreams.fromPath(pathname);
+
+    // Default to filesystem-based include resolution relative to the input file
+    if (options.getIncludedFileResolver() == null) {
+      Path baseDir = pathname.toAbsolutePath().getParent();
+      options = TranslatorOptions.withResolver(options, new FileSystemIncludedFileResolver(baseDir));
+    }
+
     return translateRulesFromCharStream(input, options);
   }
 
@@ -123,8 +133,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     try {
       return translateRulesFromCharStream(input, options);
     } catch (IOException e) {
-      // This should never happen when reading from a string
-      throw new RuntimeException("Unexpected IOException while translating rules from string", e);
+      throw new UncheckedIOException("Include resolution failed during rules translation", e);
     }
   }
 
@@ -149,7 +158,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     logger.debug("Parsing EFX rules");
 
     // New in EFX-2: rules preprocessing
-    final RulesPreprocessor preprocessor = this.new RulesPreprocessor(input);
+    final RulesPreprocessor preprocessor = this.new RulesPreprocessor(input, options.getIncludedFileResolver());
     final String preprocessedRules = preprocessor.processRules();
 
     // Now parse the preprocessed rules
@@ -175,6 +184,11 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     // Walk the parse tree - this translator IS the listener
     ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);
+
+    if (this.completeValidation.getStages().isEmpty()) {
+      throw new ParseCancellationException(
+          "Rules file must contain at least one validation stage");
+    }
 
     // Generate output using the validator generator
     return this.validatorGenerator.generateOutput(this.completeValidation);
@@ -649,8 +663,9 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    */
   class RulesPreprocessor extends ExpressionPreprocessor {
 
-    RulesPreprocessor(final CharStream charStream) {
-      super(charStream);
+    RulesPreprocessor(final CharStream charStream, IncludedFileResolver resolver)
+        throws IOException {
+      super(new IncludeProcessor(resolver).resolve(charStream));
     }
 
     String processRules() {
