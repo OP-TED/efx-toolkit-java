@@ -1506,6 +1506,55 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testComputedProperty_wasWithheld_repeatableFieldFromOwnContext() {
+    testExpressionTranslationWithContext(
+        "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:wasWithheld");
+  }
+
+  @Test
+  void testComputedProperty_isWithheld_repeatableFieldFromOwnContext() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "(not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isWithheld");
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed_repeatableFieldFromOwnContext() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "not("
+                + "(not(" + privacyPath + "/PublicationDate)"
+                + " or "
+                + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
+            + ")"
+            + " and "
+            + "not(./normalize-space(text()) = 'unpublished')",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isDisclosed");
+  }
+
+  @Test
+  void testComputedProperty_isMasked_repeatableFieldFromOwnContext() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "./normalize-space(text()) = 'unpublished'",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isMasked");
+  }
+
+  @Test
   void testComputedProperty_isDisclosed_numericField() {
     final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='num-priv']";
     testExpressionTranslationWithContext(
@@ -1573,7 +1622,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldRawValue_Duration() {
     testExpressionTranslationWithContext(
-        "PathNode/DurationField/normalize-space(text())",
+        "PathNode/DurationField/text()",
         "ND-Root",
         "BT-00-Duration:rawValue");
   }
@@ -1581,7 +1630,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldRawValue_Text() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text())",
+        "PathNode/TextField/text()",
         "ND-Root",
         "BT-00-Text:rawValue");
   }
@@ -1589,9 +1638,17 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldRawValue_Number() {
     testExpressionTranslationWithContext(
-        "PathNode/NumberField/normalize-space(text())",
+        "PathNode/NumberField/text()",
         "ND-Root",
         "BT-00-Number:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_RepeatableFieldFromOwnContext() {
+    testExpressionTranslationWithContext(
+        "./text()",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:rawValue");
   }
 
   // #endregion: Boolean functions
@@ -1631,7 +1688,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumberFromDurationField_ExplicitRawValue() {
     testExpressionTranslationWithContext(
-        "number(PathNode/DurationField/normalize-space(text()))",
+        "number(PathNode/DurationField/text())",
         "ND-Root",
         "number(BT-00-Duration:rawValue)");
   }
@@ -1639,7 +1696,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldRawValue_NumberLikePattern() {
     testExpressionTranslationWithContext(
-        "fn:matches(normalize-space(PathNode/NumberField/normalize-space(text())), '[0-9]+\\.[0-9]+')",
+        "fn:matches(normalize-space(PathNode/NumberField/text()), '[0-9]+\\.[0-9]+')",
         "ND-Root",
         "BT-00-Number:rawValue like '[0-9]+\\.[0-9]+'");
   }
@@ -1647,7 +1704,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumberFromDurationRawValue_Comparison() {
     testExpressionTranslationWithContext(
-        "number(PathNode/DurationField/normalize-space(text())) > 3",
+        "number(PathNode/DurationField/text()) > 3",
         "ND-Root",
         "number(BT-00-Duration:rawValue) > 3");
   }
