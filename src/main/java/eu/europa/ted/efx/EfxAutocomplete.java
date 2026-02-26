@@ -54,7 +54,7 @@ public class EfxAutocomplete {
    * @param sdkVersion The SDK version (e.g. "1.14.0", "2.0.0", "eforms-sdk-2.0.0").
    * @return A list of autocomplete suggestions for functions, keywords, and properties.
    */
-  public static List<CompletionItem> getBuiltinFunctions(String sdkVersion) {
+  public static List<CompletionItem> getEfxCompletions(String sdkVersion) {
     if ("2".equals(new SdkVersion(sdkVersion).getMajor())) {
       return SDK2_ITEMS;
     }
