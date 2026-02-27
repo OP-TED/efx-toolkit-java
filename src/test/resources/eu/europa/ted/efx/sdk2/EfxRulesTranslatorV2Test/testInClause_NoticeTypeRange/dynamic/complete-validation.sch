@@ -17,17 +17,17 @@
     <ns prefix="fn" uri="http://www.w3.org/2005/xpath-functions" />
 
 
-    <phase id="eforms-1">
-        <active pattern="EFORMS-validation-stage-1a-1" />
-    </phase>
-    <phase id="eforms-2">
-        <active pattern="EFORMS-validation-stage-1a-2" />
-    </phase>
-    <phase id="eforms-3">
-        <active pattern="EFORMS-validation-stage-1a-3" />
-    </phase>
     <phase id="eforms-5">
         <active pattern="EFORMS-validation-stage-1a-5" />
+    </phase>
+    <phase id="eforms-9">
+        <active pattern="EFORMS-validation-stage-1a-9" />
+    </phase>
+    <phase id="eforms-10">
+        <active pattern="EFORMS-validation-stage-1a-10" />
+    </phase>
+    <phase id="eforms-11">
+        <active pattern="EFORMS-validation-stage-1a-11" />
     </phase>
     <phase id="eforms-E1">
         <active pattern="EFORMS-validation-stage-1a-E1" />
@@ -40,10 +40,10 @@
         <diagnostic id="ND-SubNode_BT-00-Text" see="field:BT-00-Text">../PathNode/TextField</diagnostic>
     </diagnostics>
 
-    <include href="validation-stage-1a-1.sch"/>
-    <include href="validation-stage-1a-2.sch"/>
-    <include href="validation-stage-1a-3.sch"/>
     <include href="validation-stage-1a-5.sch"/>
+    <include href="validation-stage-1a-9.sch"/>
+    <include href="validation-stage-1a-10.sch"/>
+    <include href="validation-stage-1a-11.sch"/>
     <include href="validation-stage-1a-E1.sch"/>
     <include href="validation-stage-1a-E2.sch"/>
 

@@ -26,18 +26,18 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
     private final List<String> noticeSubtypes;
     private final boolean universal;
 
-    public NoticeSubtypeRange(String rangeString, List<String> validNoticeSubtypes) {
+    public NoticeSubtypeRange(String rangeString, List<String> validNoticeSubtypesInAscendingOrder) {
 
         this.noticeSubtypes = new ArrayList<>();
 
-        if (validNoticeSubtypes == null) {
-            validNoticeSubtypes = List.of();
+        if (validNoticeSubtypesInAscendingOrder == null) {
+            validNoticeSubtypesInAscendingOrder = List.of();
         }
 
         rangeString = (rangeString == null) ? "" : rangeString.trim();
 
         if (rangeString == "*" || rangeString.equalsIgnoreCase("ANY")) {
-            this.noticeSubtypes.addAll(validNoticeSubtypes);
+            this.noticeSubtypes.addAll(validNoticeSubtypesInAscendingOrder);
             this.universal = true;
             return;
         }
@@ -50,19 +50,19 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
             String[] parts = item.split("\\s*-\\s*", -1);
             switch (parts.length) {
                 case 1: {
-                    int idx = validNoticeSubtypes.indexOf(parts[0]);
+                    int idx = validNoticeSubtypesInAscendingOrder.indexOf(parts[0]);
                     if (idx < 0) {
                         throw SymbolResolutionException.unknownNoticeSubtype(parts[0], rangeString);
                     }
-                    this.noticeSubtypes.add(validNoticeSubtypes.get(idx));
+                    this.noticeSubtypes.add(validNoticeSubtypesInAscendingOrder.get(idx));
                     break;
                 }
                 case 2: {
-                    int startIdx = validNoticeSubtypes.indexOf(parts[0]);
+                    int startIdx = validNoticeSubtypesInAscendingOrder.indexOf(parts[0]);
                     if (startIdx < 0) {
                         throw SymbolResolutionException.unknownNoticeSubtype(parts[0], parts[0] + "-" + parts[1]);
                     }
-                    int endIdx = validNoticeSubtypes.indexOf(parts[1]);
+                    int endIdx = validNoticeSubtypesInAscendingOrder.indexOf(parts[1]);
                     if (endIdx < 0) {
                         throw SymbolResolutionException.unknownNoticeSubtype(parts[1], parts[0] + "-" + parts[1]);
                     }
@@ -71,7 +71,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
                     }
 
                     for (int i = startIdx; i <= endIdx; i++) {
-                        this.noticeSubtypes.add(validNoticeSubtypes.get(i));
+                        this.noticeSubtypes.add(validNoticeSubtypesInAscendingOrder.get(i));
                     }
                     break;
                 }
@@ -80,8 +80,8 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
             }
         }
 
-        this.universal = !validNoticeSubtypes.isEmpty()
-            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypes);
+        this.universal = !validNoticeSubtypesInAscendingOrder.isEmpty()
+            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
     }
 
     public boolean isUniversal() {

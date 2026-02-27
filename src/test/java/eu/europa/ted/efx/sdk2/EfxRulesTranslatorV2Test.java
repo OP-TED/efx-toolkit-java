@@ -25,6 +25,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -37,10 +39,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.EfxTranslatorOptions;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
+import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.eforms.sdk.schematron.SchematronGenerator;
 
 /**
@@ -277,6 +281,31 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertTrue(phase1.contains("EFORMS-validation-stage-1a-1"), "Phase 1 should include specific pattern");
 
     assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testInClause_ReversedRange_ThrowsInvalidRangeOrder() {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-SubNode",
+        "    ASSERT BT-00-Text is present",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN 11-9"
+    );
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidUsageException.ErrorCode.INVALID_NOTICE_SUBTYPE_RANGE_ORDER,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testInClause_MalformedToken_ThrowsInvalidToken() {
+    List<String> subtypes = Arrays.asList("1", "2", "3");
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> new NoticeSubtypeRange("1-2-3", subtypes));
+    assertEquals(InvalidUsageException.ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN,
+        exception.getErrorCode());
   }
 
   //#endregion IN clause tests
