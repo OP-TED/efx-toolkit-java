@@ -18,7 +18,6 @@ import static java.util.Map.entry;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -27,7 +26,9 @@ import eu.europa.ted.eforms.sdk.SdkSymbolResolver;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.eforms.sdk.entity.v2.SdkCodelistV2;
+import eu.europa.ted.eforms.sdk.entity.v2.SdkNoticeSubtypeV2;
 import eu.europa.ted.eforms.sdk.repository.SdkDataTypeRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
@@ -54,8 +55,7 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
     // Mock codelists
     this.codelistById = createMockCodelists();
 
-    // Mock notice types - not needed, we override getAllNoticeSubtypeIds()
-    this.noticeTypesById = new HashMap<>();
+    this.noticeTypesById = createMockNoticeTypes();
 
     this.dataTypeById = SdkDataTypeRepository.createDefault();
   }
@@ -75,8 +75,11 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
         buildCodelistMock("indicator", Optional.empty())));
   }
 
-  @Override
-  public List<String> getAllNoticeSubtypeIds() {
-    return Arrays.asList("1", "2", "3", "4", "5", "E1", "E2", "X01");
+  private Map<String, SdkNoticeSubtype> createMockNoticeTypes() {
+    Map<String, SdkNoticeSubtype> map = new HashMap<>();
+    for (String id : Arrays.asList("1", "2", "3", "4", "5", "9", "10", "11", "E1", "E2", "X01")) {
+      map.put(id, new SdkNoticeSubtypeV2(id, "notice", "planning"));
+    }
+    return map;
   }
 }

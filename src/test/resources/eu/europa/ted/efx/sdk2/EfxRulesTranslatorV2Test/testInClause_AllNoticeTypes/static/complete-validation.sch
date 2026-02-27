@@ -32,6 +32,15 @@
     <phase id="eforms-5">
         <active pattern="EFORMS-validation-stage-1a" />
     </phase>
+    <phase id="eforms-9">
+        <active pattern="EFORMS-validation-stage-1a" />
+    </phase>
+    <phase id="eforms-10">
+        <active pattern="EFORMS-validation-stage-1a" />
+    </phase>
+    <phase id="eforms-11">
+        <active pattern="EFORMS-validation-stage-1a" />
+    </phase>
     <phase id="eforms-E1">
         <active pattern="EFORMS-validation-stage-1a" />
     </phase>
