@@ -15,6 +15,7 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 
@@ -188,12 +189,11 @@ public interface SymbolResolver {
   public List<String> expandCodelist(final String codelistId);
 
   /**
-   * Gets a list of all valid notice subtype IDs.
-   * Used for validating notice subtype references in EFX.
+   * Gets all valid notice subtypes.
    *
-   * @return List of notice type IDs (e.g., ["1", "2", ..., "40", "CEI", "E1", ..., "X02"])
+   * @return List of notice subtypes
    */
-  public List<String> getAllNoticeSubtypeIds();
+  public List<SdkNoticeSubtype> getAllNoticeSubtypes();
 
   /**
    * Resolves a field alias to its canonical field identifier.

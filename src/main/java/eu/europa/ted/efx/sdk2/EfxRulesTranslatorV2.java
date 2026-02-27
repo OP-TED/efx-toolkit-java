@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.efx.interfaces.EfxRulesTranslator;
 import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -95,6 +98,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    * This is the intermediate model passed to the validator generator.
    */
   private CompleteValidation completeValidation = new CompleteValidation();
+
+  private List<String> cachedSortedNoticeSubtypeIds;
 
   /**
    * Constructor for EfxRulesTranslatorV2.
@@ -545,7 +550,13 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     logger.debug("Processing IN clause");
 
     String compressedList = ctx.noticeTypeList() instanceof AnyNoticeTypesContext ? "*" : ctx.noticeTypeList().getText();
-    var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.symbols.getAllNoticeSubtypeIds());
+    if (this.cachedSortedNoticeSubtypeIds == null) {
+      this.cachedSortedNoticeSubtypeIds = this.symbols.getAllNoticeSubtypes().stream()
+          .sorted()
+          .map(SdkNoticeSubtype::getId)
+          .collect(Collectors.toUnmodifiableList());
+    }
+    var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.cachedSortedNoticeSubtypeIds);
     this.stack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
     this.completeValidation.addNoticeSubtypes(noticeSubtypes.asList());
   }

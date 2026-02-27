@@ -69,7 +69,6 @@ public class SdkSymbolResolver implements SymbolResolver {
   protected SdkDataTypeRepository dataTypeById;
 
   private SdkNode cachedRootNode;
-  private List<String> cachedNoticeSubtypeIds;
 
   @Override
   public final List<String> expandCodelist(final String codelistId) {
@@ -393,14 +392,8 @@ public class SdkSymbolResolver implements SymbolResolver {
   }
 
   @Override
-  public List<String> getAllNoticeSubtypeIds() {
-    if (this.cachedNoticeSubtypeIds == null) {
-      this.cachedNoticeSubtypeIds = this.noticeTypesById.values().stream()
-          .sorted()
-          .map(SdkNoticeSubtype::getId)
-          .collect(Collectors.toList());
-    }
-    return this.cachedNoticeSubtypeIds;
+  public List<SdkNoticeSubtype> getAllNoticeSubtypes() {
+    return List.copyOf(this.noticeTypesById.values());
   }
 
   protected HashMap<String, SdkField> indexFieldsByAlias() {
