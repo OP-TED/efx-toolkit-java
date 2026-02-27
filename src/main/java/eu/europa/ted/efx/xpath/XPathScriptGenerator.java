@@ -128,7 +128,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeFieldRawValueReference(PathExpression fieldReference) {
-    return new StringExpression(fieldReference.getScript() + "/normalize-space(text())");
+    return new StringExpression(fieldReference.getScript() + "/text()");
   }
 
   @Override

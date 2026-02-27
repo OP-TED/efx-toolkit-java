@@ -97,6 +97,13 @@
       "alias": "RepeatableInRepeatableNode2"
     },
     {
+      "id": "ND-PrivacyForRepeatableText",
+      "parentId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']",
+      "xpathRelative": "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']",
+      "repeatable": false
+    },
+    {
       "id": "ND-PrivacyInRepeatableNode",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']",
@@ -350,6 +357,13 @@
       "xpathRelative": "PathNode/RepeatableTextField",
       "repeatable": {
         "value": true
+      },
+      "privacy": {
+        "code": "rep-text-priv",
+        "unpublishedFieldId": "BT-195(BT-00)-Repeatable-Text",
+        "reasonCodeFieldId": "BT-197(BT-00)-Repeatable-Text",
+        "reasonDescriptionFieldId": "BT-196(BT-00)-Repeatable-Text",
+        "publicationDateFieldId": "BT-198(BT-00)-Repeatable-Text"
       }
     },
     {
@@ -1041,6 +1055,35 @@
       "type": "date",
       "parentNodeId": "ND-PrivacyInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']/PublicationDate",
+      "xpathRelative": "PublicationDate"
+    },
+    {
+      "id": "BT-195(BT-00)-Repeatable-Text",
+      "type": "code",
+      "parentNodeId": "ND-PrivacyForRepeatableText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/FieldIdentifierCode",
+      "xpathRelative": "FieldIdentifierCode",
+      "presetValue": "rep-text-priv"
+    },
+    {
+      "id": "BT-196(BT-00)-Repeatable-Text",
+      "type": "text-multilingual",
+      "parentNodeId": "ND-PrivacyForRepeatableText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonDescription",
+      "xpathRelative": "ReasonDescription"
+    },
+    {
+      "id": "BT-197(BT-00)-Repeatable-Text",
+      "type": "code",
+      "parentNodeId": "ND-PrivacyForRepeatableText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonCode",
+      "xpathRelative": "ReasonCode"
+    },
+    {
+      "id": "BT-198(BT-00)-Repeatable-Text",
+      "type": "date",
+      "parentNodeId": "ND-PrivacyForRepeatableText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/PublicationDate",
       "xpathRelative": "PublicationDate"
     }
   ]

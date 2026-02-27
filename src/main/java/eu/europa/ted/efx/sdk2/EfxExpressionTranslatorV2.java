@@ -1945,6 +1945,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   private boolean isFieldRepeatableFromContext(String fieldId, Context context) {
+    // Skip repeatability check if context IS this field (e.g., inside a WITH block on this field).
+    // In that case, we're referencing the current element being iterated, not the whole sequence.
+    if (context.isFieldContext() && fieldId.equals(context.symbol())) {
+      return false;
+    }
     String contextNodeId = context.isFieldContext()
         ? this.symbols.getParentNodeOfField(context.symbol())
         : context.symbol();
