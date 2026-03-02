@@ -3077,7 +3077,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     @Override
     public void enterLateBoundScalar(LateBoundScalarContext ctx) {
       this.typeResolutionStack.push(
-          this.adjustForGrammarAmbiguities(ctx, CardinalityResolutionContext.RESOLVE_SCALAR));
+          this.adjustForGrammarAmbiguity(ctx, CardinalityResolutionContext.RESOLVE_SCALAR));
     }
 
     @Override
@@ -3088,7 +3088,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     @Override
     public void enterLateBoundSequence(LateBoundSequenceContext ctx) {
       this.typeResolutionStack.push(
-          this.adjustForGrammarAmbiguities(ctx, CardinalityResolutionContext.RESOLVE_SEQUENCE));
+          this.adjustForGrammarAmbiguity(ctx, CardinalityResolutionContext.RESOLVE_SEQUENCE));
     }
 
     @Override
@@ -3101,36 +3101,21 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
      * cardinality is ambiguous, and returns {@code RESOLVE_EITHER} if so.
      * Otherwise returns the provided default context.
      *
-     * There are two grammar ambiguities that require this adjustment:
-     *
-     * Ambiguity 1: The {@code expression} rule accepts both
-     * {@code lateBoundScalar} and {@code lateBoundSequence} via
-     * {@code lateBoundExpression}. The parser picks one alternative, but the
-     * actual cardinality is unknown until the preprocessor resolves it.
-     *
-     * Ambiguity 2: The {@code for...return} construct has two rules:
-     * {@code lateBoundSequenceFromIteration} (scalar body) and
-     * {@code lateBoundSequenceFromConcatenatedIterations} (sequence body).
-     * The parser picks one, but the body cardinality is unknown until resolved.
+     * The {@code lateBoundExpression} rule accepts both {@code lateBoundScalar}
+     * and {@code lateBoundSequence}. The parser picks one alternative, but the
+     * actual cardinality is unknown until the preprocessor resolves it. This
+     * ambiguity applies wherever {@code lateBoundExpression} appears in the
+     * grammar: the top-level {@code expression} rule and the body of
+     * {@code lateBoundSequenceFromIteration}.
      *
      * @param ctx the late-bound parse tree node (scalar or sequence)
      * @param defaultContext the context to use when no ambiguity is detected
      * @return {@code RESOLVE_EITHER} if an ambiguity applies, otherwise
      *         {@code defaultContext}
      */
-    private CardinalityResolutionContext adjustForGrammarAmbiguities(ParserRuleContext ctx,
+    private CardinalityResolutionContext adjustForGrammarAmbiguity(ParserRuleContext ctx,
         CardinalityResolutionContext defaultContext) {
-      ParserRuleContext parent = ctx.getParent();
-
-      // Ambiguity 1: expression → lateBoundExpression → lateBoundScalar | lateBoundSequence
-      boolean ambiguity1 = (parent instanceof LateBoundExpressionContext)
-          && (parent.getParent() instanceof ExpressionContext);
-
-      // Ambiguity 2: lateBoundSequenceFromIteration vs lateBoundSequenceFromConcatenatedIterations
-      boolean ambiguity2 = (parent instanceof LateBoundSequenceFromIterationContext)
-          || (parent instanceof LateBoundSequenceFromConcatenatedIterationsContext);
-
-      return (ambiguity1 || ambiguity2)
+      return (ctx.getParent() instanceof LateBoundExpressionContext)
           ? CardinalityResolutionContext.RESOLVE_EITHER
           : defaultContext;
     }
@@ -3766,16 +3751,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     @Override
     public void exitDurationSequenceFromConcatenatedIterations(DurationSequenceFromConcatenatedIterationsContext ctx) {
-      this.stack.popStackFrame();
-    }
-
-    @Override
-    public void enterLateBoundSequenceFromConcatenatedIterations(LateBoundSequenceFromConcatenatedIterationsContext ctx) {
-      this.stack.pushStackFrame();
-    }
-
-    @Override
-    public void exitLateBoundSequenceFromConcatenatedIterations(LateBoundSequenceFromConcatenatedIterationsContext ctx) {
       this.stack.popStackFrame();
     }
 

@@ -92,6 +92,12 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
         "for text:$x in BT-00-Text return BT-00-Text");
   }
 
+  @Test
+  void testResolveFieldReference_Either_NestedForReturn() {
+    translateExpressionWithContext("ND-Root",
+        "for text:$x in BT-00-Text return (for text:$y in BT-00-Text return BT-00-Repeatable-Text)");
+  }
+
   // #endregion resolveFieldOrAttributeReference --------------------------------
 
   // #region resolveFunctionInvocation ------------------------------------------
