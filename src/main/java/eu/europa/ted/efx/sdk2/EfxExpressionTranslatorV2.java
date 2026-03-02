@@ -15,9 +15,11 @@ package eu.europa.ted.efx.sdk2;
 
 import static java.util.Map.entry;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +77,7 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxTypeLattice;
+import eu.europa.ted.efx.model.types.EfxTypeTokenLookup;
 import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.ParsedArguments;
 import eu.europa.ted.efx.model.variables.Function;
@@ -85,7 +88,7 @@ import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
- * The the goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
+ * The goal of the EfxExpressionTranslator is to take an EFX expression and translate it to a
  * target scripting language.
  * 
  * The target language syntax is not hardcoded into the translator so that this class can be reused
@@ -257,11 +260,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     if (ctx.absoluteFieldReference() != null) {
-      return this.getFieldId(ctx.absoluteFieldReference());
+      return getFieldId(ctx.absoluteFieldReference());
     }
 
     if (ctx.fieldReferenceInOtherNotice() != null) {
-      return this.getFieldId(ctx.fieldReferenceInOtherNotice());
+      return getFieldId(ctx.fieldReferenceInOtherNotice());
     }
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
@@ -271,14 +274,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.reference.reference);
+    return getFieldId(ctx.reference.reference);
   }
 
   protected String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.reference.reference.reference.reference.reference);
+    return getFieldId(ctx.reference.reference.reference.reference.reference);
   }
 
   protected String getFieldId(FieldContextContext ctx) {
@@ -287,11 +290,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     }
 
     if (ctx.absoluteFieldReference() != null) {
-      return this.getFieldId(ctx.absoluteFieldReference());
+      return getFieldId(ctx.absoluteFieldReference());
     }
 
     if (ctx.fieldReferenceWithPredicate() != null) {
-      return this.getFieldId(ctx.fieldReferenceWithPredicate());
+      return getFieldId(ctx.fieldReferenceWithPredicate());
     }
 
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
@@ -302,7 +305,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     if (ctx == null) {
       return null;
     }
-    return this.getFieldId(ctx.linkedFieldReference());
+    return getFieldId(ctx.linkedFieldReference());
   }
 
   protected static String getNodeId(NodeReferenceContext ctx) {
@@ -2842,44 +2845,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     assert false: "This should have been handled by the preprocessor: " + ctx.getText() +". Check any changes that you might have made in the EFX grammar that may have broken this assumption.";
   }
 
-  // Type name constants - made protected for reuse in subclasses
-  protected static String textTypeName = getLexerSymbol(EfxLexer.Text);
-  protected static String booleanTypeName = getLexerSymbol(EfxLexer.Indicator);
-  protected static String numericTypeName = getLexerSymbol(EfxLexer.Number);
-  protected static String dateTypeName = getLexerSymbol(EfxLexer.Date);
-  protected static String timeTypeName = getLexerSymbol(EfxLexer.Time);
-  protected static String durationTypeName = getLexerSymbol(EfxLexer.Duration);
 
-  // Map from eForms field types to EFX type names - made protected for reuse in subclasses
-  protected static final Map<String, String> eFormsToEfxTypeMap = Map.ofEntries( //
-      entry(FieldTypes.ID.getName(), textTypeName), //
-      entry(FieldTypes.ID_REF.getName(), textTypeName), //
-      entry(FieldTypes.TEXT.getName(), textTypeName), //
-      entry(FieldTypes.TEXT_MULTILINGUAL.getName(), textTypeName), //
-      entry(FieldTypes.INDICATOR.getName(), booleanTypeName), //
-      entry(FieldTypes.AMOUNT.getName(), numericTypeName), //
-      entry(FieldTypes.NUMBER.getName(), numericTypeName), //
-      entry(FieldTypes.MEASURE.getName(), numericTypeName), //
-      entry(FieldTypes.DURATION.getName(), durationTypeName), //
-      entry(FieldTypes.CODE.getName(), textTypeName), //
-      entry(FieldTypes.INTERNAL_CODE.getName(), textTypeName), //
-      entry(FieldTypes.INTEGER.getName(), numericTypeName), //
-      entry(FieldTypes.DATE.getName(), dateTypeName), //
-      entry(FieldTypes.ZONED_DATE.getName(), dateTypeName), //
-      entry(FieldTypes.TIME.getName(), timeTypeName), //
-      entry(FieldTypes.ZONED_TIME.getName(), timeTypeName), //
-      entry(FieldTypes.URL.getName(), textTypeName), //
-      entry(FieldTypes.PHONE.getName(), textTypeName), //
-      entry(FieldTypes.EMAIL.getName(), textTypeName));
-
-  // Map from Java EfxDataType classes to EFX type names - made protected for reuse in subclasses
-  protected static final Map<Class<? extends EfxDataType>, String> javaToEfxTypeMap = Map.ofEntries(
-      entry(EfxDataType.String.class, textTypeName), //
-      entry(EfxDataType.Boolean.class, booleanTypeName), //
-      entry(EfxDataType.Number.class, numericTypeName), //
-      entry(EfxDataType.Duration.class, durationTypeName), //
-      entry(EfxDataType.Date.class, dateTypeName), //
-      entry(EfxDataType.Time.class, timeTypeName));
+  private enum CardinalityResolutionContext {
+    RESOLVED,
+    RESOLVE_SCALAR,
+    RESOLVE_SEQUENCE,
+    RESOLVE_EITHER
+  }
 
   /**
    * The EFX expression pre-processor is used to remove expression ambiguities
@@ -2908,6 +2880,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     final TokenStreamRewriter rewriter;
     final CallStack stack = new CallStack();
     final ContextStack efxContext;
+    final Deque<CardinalityResolutionContext> typeResolutionStack = new ArrayDeque<>();
     
     ExpressionPreprocessor(String expression) {
       this(CharStreams.fromString(expression));
@@ -2941,7 +2914,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return this.rewriter.getText();
     }
 
-    // #region Context tracking -----------------------------------------------
+    // #region EFX context tracking -------------------------------------------
 
     @Override
     public void enterSingleExpression(SingleExpressionContext ctx) {
@@ -3097,45 +3070,99 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       }
     }
 
-    // #endregion Context tracking --------------------------------------------
+    // #endregion EFX context tracking ----------------------------------------
+
+    // #region Rewrite context stack -------------------------------------------
 
     @Override
-    public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
-      String fieldId = getFieldId(ctx.fieldReference());
-      String fieldType = eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(fieldId));
+    public void enterLateBoundScalar(LateBoundScalarContext ctx) {
+      this.typeResolutionStack.push(
+          this.adjustForGrammarAmbiguities(ctx, CardinalityResolutionContext.RESOLVE_SCALAR));
+    }
 
-      // Skip repeatability check if context IS this field (e.g., inside a predicate on this field).
-      // In that case, we're referencing the current element being iterated, not the whole sequence.
-      if (this.efxContext.isEmpty() || !fieldId.equals(this.efxContext.symbol())) {
-        String contextNodeId = getContextNodeId();
-        if (this.symbols.isFieldRepeatableFromContext(fieldId, contextNodeId)) {
-          // B2 Solution 3: If we're in a top-level expression context where sequences
-          // are valid (lateBoundScalar → lateBoundExpression → expression), auto-insert
-          // sequence cast instead of throwing.
-          if (isTopLevelLateBoundExpression(ctx)) {
-            this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
-            return;
-          }
-          // If inside a for-return body, auto-insert sequence cast so the re-parsed
-          // expression matches the ConcatenatedIterations rule (flatMap semantics).
-          if (hasParentContextOfType(ctx, LateBoundSequenceFromIterationContext.class)) {
-            this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
-            return;
-          }
-          throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-        }
-      }
+    @Override
+    public void exitLateBoundScalar(LateBoundScalarContext ctx) {
+      this.typeResolutionStack.pop();
+    }
 
-      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
-        return;
-      }
+    @Override
+    public void enterLateBoundSequence(LateBoundSequenceContext ctx) {
+      this.typeResolutionStack.push(
+          this.adjustForGrammarAmbiguities(ctx, CardinalityResolutionContext.RESOLVE_SEQUENCE));
+    }
 
-      // Insert the type cast
-      this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + ")");
+    @Override
+    public void exitLateBoundSequence(LateBoundSequenceContext ctx) {
+      this.typeResolutionStack.pop();
     }
 
     /**
-     * Gets the node ID of the current context for use with isFieldRepeatableFromContext.
+     * Checks whether the given late-bound node sits in a grammar position where
+     * cardinality is ambiguous, and returns {@code RESOLVE_EITHER} if so.
+     * Otherwise returns the provided default context.
+     *
+     * There are two grammar ambiguities that require this adjustment:
+     *
+     * Ambiguity 1: The {@code expression} rule accepts both
+     * {@code lateBoundScalar} and {@code lateBoundSequence} via
+     * {@code lateBoundExpression}. The parser picks one alternative, but the
+     * actual cardinality is unknown until the preprocessor resolves it.
+     *
+     * Ambiguity 2: The {@code for...return} construct has two rules:
+     * {@code lateBoundSequenceFromIteration} (scalar body) and
+     * {@code lateBoundSequenceFromConcatenatedIterations} (sequence body).
+     * The parser picks one, but the body cardinality is unknown until resolved.
+     *
+     * @param ctx the late-bound parse tree node (scalar or sequence)
+     * @param defaultContext the context to use when no ambiguity is detected
+     * @return {@code RESOLVE_EITHER} if an ambiguity applies, otherwise
+     *         {@code defaultContext}
+     */
+    private CardinalityResolutionContext adjustForGrammarAmbiguities(ParserRuleContext ctx,
+        CardinalityResolutionContext defaultContext) {
+      ParserRuleContext parent = ctx.getParent();
+
+      // Ambiguity 1: expression → lateBoundExpression → lateBoundScalar | lateBoundSequence
+      boolean ambiguity1 = (parent instanceof LateBoundExpressionContext)
+          && (parent.getParent() instanceof ExpressionContext);
+
+      // Ambiguity 2: lateBoundSequenceFromIteration vs lateBoundSequenceFromConcatenatedIterations
+      boolean ambiguity2 = (parent instanceof LateBoundSequenceFromIterationContext)
+          || (parent instanceof LateBoundSequenceFromConcatenatedIterationsContext);
+
+      return (ambiguity1 || ambiguity2)
+          ? CardinalityResolutionContext.RESOLVE_EITHER
+          : defaultContext;
+    }
+
+    private CardinalityResolutionContext currentCardinalityResolutionContext() {
+      return this.typeResolutionStack.isEmpty() ? CardinalityResolutionContext.RESOLVED : this.typeResolutionStack.peek();
+    }
+
+
+    /**
+     * Returns true if a field is repeatable from the current EFX context.
+     * A field is not considered repeatable if it IS the current context.
+     */
+    private boolean isFieldRepeatableFromCurrentContext(String fieldId) {
+      if (!this.efxContext.isEmpty() && fieldId.equals(this.efxContext.symbol())) {
+        return false;
+      }
+      return this.symbols.isFieldRepeatableFromContext(fieldId, this.getContextNodeId());
+    }
+
+    // #endregion Rewrite context stack ----------------------------------------
+
+    // #region Type cast insertion ---------------------------------------------
+    //
+    // Each reference type (field, attribute, function, variable, dictionary) can
+    // appear in both lateBoundScalarReference and lateBoundSequenceReference.
+    // Both paths delegate to a single shared method that consults the
+    // typeResolutionStack to decide scalar (type) vs sequence (type*) cast.
+
+    /**
+     * Gets the node ID of the current context for use with
+     * isFieldRepeatableFromContext.
      * If the context is a NodeContext, returns the node ID directly.
      * If the context is a FieldContext, returns the parent node of that field.
      * If the context is empty/null, returns null (root context).
@@ -3153,219 +3180,293 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       }
     }
 
-    @Override
-    public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
-        return;
+    /**
+     * Resolves cardinality for a field or attribute reference.
+     * Fields have contextual cardinality: the same field may be scalar or sequence
+     * depending on the evaluation context. Because of this, a non-repeatable field
+     * in a sequence context is silently promoted to a single-element sequence rather
+     * than rejected as an error.
+     *
+     * @param ctx the parse tree context of the reference
+     * @param fieldRef the field reference used to look up repeatability
+     * @param typeName the EFX type name to insert as a cast prefix
+     */
+    private void resolveFieldOrAttributeReference(ParserRuleContext ctx, FieldReferenceContext fieldRef, String typeName) {
+      switch (this.currentCardinalityResolutionContext()) {
+        case RESOLVED:
+          return;
+        case RESOLVE_SEQUENCE: {
+          this.rewriter.insertBefore(ctx.getStart(), "(" + typeName + "*)");
+          break;
+        }
+        case RESOLVE_EITHER: {
+          String suffix = this.isFieldRepeatableFromCurrentContext(getFieldId(fieldRef)) ? "*" : "";
+          this.rewriter.insertBefore(ctx.getStart(), "(" + typeName + suffix + ")");
+          break;
+        }
+        case RESOLVE_SCALAR: {
+          String fieldId = getFieldId(fieldRef);
+          if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
+            throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
+          }
+          this.rewriter.insertBefore(ctx.getStart(), "(" + typeName + ")");
+          break;
+        }
       }
-
-      // Insert the type cast. For attributes, the type is always text.
-      this.rewriter.insertBefore(ctx.getStart(), "(" + textTypeName + ")");
     }
 
+    /**
+     * Resolves cardinality for a field reference by looking up its type from
+     * the SDK metadata and delegating to {@code resolveFieldOrAttributeReference}.
+     *
+     * @param ctx the parse tree context of the reference
+     * @param fieldRef the field reference used to look up the field type
+     */
+    private void resolveFieldReference(ParserRuleContext ctx, FieldReferenceContext fieldRef) {
+      String fieldType = EfxTypeTokenLookup.fromEformsType(this.symbols.getTypeOfField(getFieldId(fieldRef)));
+      this.resolveFieldOrAttributeReference(ctx, fieldRef, fieldType);
+    }
+
+    /**
+     * Resolves cardinality for an attribute reference. The attribute type is
+     * hardcoded as text because the symbol resolver does not yet support
+     * resolving an attribute reference to its field ID.
+     *
+     * @param ctx the attribute reference parse tree context
+     */
+    private void resolveAttributeReference(AttributeReferenceContext ctx) {
+      this.resolveFieldOrAttributeReference(ctx, ctx.fieldReference(), EfxTypeTokenLookup.TEXT);
+    }
+
+    /**
+     * Resolves cardinality for a user-defined function invocation.
+     * Functions have explicit cardinality from their declaration (scalar or
+     * sequence return type), so a scalar function in sequence context or
+     * vice versa is an error.
+     *
+     * @param ctx the parse tree context of the enclosing expression
+     * @param funcCtx the function invocation parse tree context
+     */
+    private void resolveFunctionInvocation(ParserRuleContext ctx, FunctionInvocationContext funcCtx) {
+      switch (this.currentCardinalityResolutionContext()) {
+        case RESOLVED:
+          return;
+        case RESOLVE_SEQUENCE: {
+          Class<? extends EfxDataType> returnType = this.stack.getTypeOfIdentifier(funcCtx.functionName.getText());
+          if (!EfxDataType.Cardinality.Sequence.class.isAssignableFrom(returnType)) {
+            throw TypeMismatchException.identifierIsScalar(ctx, funcCtx.functionName.getText());
+          }
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(returnType));
+          this.rewriter.insertBefore(funcCtx.FunctionPrefix().getSymbol(), "(" + typeCast + "*)");
+          break;
+        }
+        case RESOLVE_EITHER: {
+          Class<? extends EfxDataType> returnType = this.stack.getTypeOfIdentifier(funcCtx.functionName.getText());
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(returnType));
+          String suffix = EfxDataType.Cardinality.Sequence.class.isAssignableFrom(returnType) ? "*" : "";
+          this.rewriter.insertBefore(funcCtx.FunctionPrefix().getSymbol(), "(" + typeCast + suffix + ")");
+          break;
+        }
+        case RESOLVE_SCALAR: {
+          Class<? extends EfxDataType> returnType = this.stack.getTypeOfIdentifier(funcCtx.functionName.getText());
+          if (EfxDataType.Cardinality.Sequence.class.isAssignableFrom(returnType)) {
+            throw TypeMismatchException.identifierIsSequence(ctx, funcCtx.functionName.getText());
+          }
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(returnType));
+          this.rewriter.insertBefore(funcCtx.FunctionPrefix().getSymbol(), "(" + typeCast + ")");
+          break;
+        }
+      }
+    }
+
+    /**
+     * Dispatches cardinality resolution for a variable reference to either
+     * {@code resolveContextVariableReference} or {@code resolveRegularVariableReference},
+     * depending on whether the variable was declared with {@code context:}.
+     *
+     * @param ctx the variable reference parse tree context
+     */
+    private void resolveVariableReference(VariableReferenceContext ctx) {
+      if (this.efxContext.getContextFromVariable(ctx.variableName.getText()) != null) {
+        this.resolveContextVariableReference(ctx);
+      } else {
+        this.resolveRegularVariableReference(ctx);
+      }
+    }
+
+    /**
+     * Resolves type for a context variable reference (declared with {@code context:}).
+     * Context variables are always scalar because the iterator binds them to a single
+     * instance, so using one in a sequence context is an error. Node context variables
+     * cannot be used as values at all.
+     *
+     * @param ctx the variable reference parse tree context
+     */
+    private void resolveContextVariableReference(VariableReferenceContext ctx) {
+      Context variableContext = this.efxContext.getContextFromVariable(ctx.variableName.getText());
+      if (variableContext.isNodeContext()) {
+        throw TypeMismatchException.nodeContextUsedAsValue(ctx, ctx.variableName.getText(), variableContext.symbol());
+      }
+
+      switch (this.currentCardinalityResolutionContext()) {
+        case RESOLVED:
+          return;
+        case RESOLVE_SEQUENCE:
+          throw TypeMismatchException.identifierIsScalar(ctx, ctx.variableName.getText());
+        case RESOLVE_EITHER:
+        case RESOLVE_SCALAR: {
+          String typeCast = EfxTypeTokenLookup.fromEformsType(this.symbols.getTypeOfField(variableContext.symbol()));
+          this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + typeCast + ")");
+          break;
+        }
+      }
+    }
+
+    /**
+     * Resolves type for a regular (non-context) variable reference.
+     * Variables have explicit cardinality from their declaration, so a scalar
+     * variable in sequence context (or vice versa) is an error.
+     *
+     * @param ctx the variable reference parse tree context
+     */
+    private void resolveRegularVariableReference(VariableReferenceContext ctx) {
+      switch (this.currentCardinalityResolutionContext()) {
+        case RESOLVED:
+          return;
+        case RESOLVE_SEQUENCE: {
+          Class<? extends EfxDataType> stackType = this.stack.getTypeOfIdentifier(ctx.variableName.getText());
+          if (!EfxDataType.Cardinality.Sequence.class.isAssignableFrom(stackType)) {
+            throw TypeMismatchException.identifierIsScalar(ctx, ctx.variableName.getText());
+          }
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(stackType));
+          this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + typeCast + "*)");
+          break;
+        }
+        case RESOLVE_EITHER: {
+          Class<? extends EfxDataType> stackType = this.stack.getTypeOfIdentifier(ctx.variableName.getText());
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(stackType));
+          String suffix = EfxDataType.Cardinality.Sequence.class.isAssignableFrom(stackType) ? "*" : "";
+          this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + typeCast + suffix + ")");
+          break;
+        }
+        case RESOLVE_SCALAR: {
+          Class<? extends EfxDataType> stackType = this.stack.getTypeOfIdentifier(ctx.variableName.getText());
+          if (EfxDataType.Cardinality.Sequence.class.isAssignableFrom(stackType)) {
+            throw TypeMismatchException.identifierIsSequence(ctx, ctx.variableName.getText());
+          }
+          String typeCast = EfxTypeTokenLookup.fromJavaType(EfxTypeLattice.toPrimitive(stackType));
+          this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + typeCast + ")");
+          break;
+        }
+      }
+    }
+
+    /**
+     * Resolves type for a dictionary lookup reference.
+     * Dictionaries always return a scalar value (one key maps to one value),
+     * so using a dictionary lookup in a sequence context is an error.
+     *
+     * @param ctx the dictionary lookup parse tree context
+     */
+    private void resolveDictionaryLookup(DictionaryLookupContext ctx) {
+      switch (this.currentCardinalityResolutionContext()) {
+        case RESOLVED:
+          return;
+        case RESOLVE_SEQUENCE:
+          throw TypeMismatchException.dictionaryIsScalar(ctx, ctx.dictionaryName.getText());
+        case RESOLVE_EITHER:
+        case RESOLVE_SCALAR: {
+          String typeCast = EfxTypeTokenLookup.fromJavaType(
+              EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(ctx.dictionaryName.getText())));
+          this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + typeCast + ")");
+          break;
+        }
+      }
+    }
+
+    // #endregion Type cast insertion ------------------------------------------
+
+    // #region Late-bound type resolution --------------------------------------
+
     @Override
-    public void exitScalarFromFunctionInvocation(ScalarFromFunctionInvocationContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
-        return;
-      }
-
-      String functionName = ctx.functionInvocation().functionName.getText();
-      String functionType = javaToEfxTypeMap.get(EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(functionName)));
-
-      if (functionType != null) {
-        // Insert the type cast
-        this.rewriter.insertBefore(ctx.functionInvocation().FunctionPrefix().getSymbol(), "(" + functionType + ")");
-      }
+    public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
+      this.resolveFieldReference(ctx, ctx.fieldReference());
     }
 
     @Override
     public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
-        return;
-      }
+      this.resolveFieldReference(ctx, ctx.fieldReference());
+    }
 
-      // Find the referenced field and get its type
-      String fieldId = getFieldId(ctx.fieldReference());
-      String fieldType = eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(fieldId));
-
-      if (fieldType != null) {
-        // Insert the sequence type cast (type*)
-        this.rewriter.insertBefore(ctx.getStart(), "(" + fieldType + "*)");
-      }
+    @Override
+    public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
+      this.resolveAttributeReference(ctx.attributeReference());
     }
 
     @Override
     public void exitSequenceFromAttributeReference(SequenceFromAttributeReferenceContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
-        return;
-      }
+      this.resolveAttributeReference(ctx.attributeReference());
+    }
 
-      // Insert the sequence type cast (text*)
-      this.rewriter.insertBefore(ctx.getStart(), "(" + textTypeName + "*)");
+    @Override
+    public void exitScalarFromFunctionInvocation(ScalarFromFunctionInvocationContext ctx) {
+      this.resolveFunctionInvocation(ctx, ctx.functionInvocation());
     }
 
     @Override
     public void exitSequenceFromFunctionInvocation(SequenceFromFunctionInvocationContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
-        return;
-      }
-
-      String functionName = ctx.functionInvocation().functionName.getText();
-      String functionType = javaToEfxTypeMap.get(EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(functionName)));
-
-      if (functionType != null) {
-        // Insert the sequence type cast (type*)
-        this.rewriter.insertBefore(ctx.functionInvocation().FunctionPrefix().getSymbol(), "(" + functionType + "*)");
-      }
+      this.resolveFunctionInvocation(ctx, ctx.functionInvocation());
     }
 
     @Override
     public void exitScalarFromVariableReference(ScalarFromVariableReferenceContext ctx) {
-      String variableName = ctx.variableReference().variableName.getText();
-      Context variableContext = this.efxContext.getContextFromVariable(variableName);
-
-      // Guard: Node context variables cannot be used as values
-      if (variableContext != null && variableContext.isNodeContext()) {
-        throw TypeMismatchException.nodesHaveNoValue(ctx, variableName, variableContext.symbol());
-      }
-
-      // Guard: Field context variables must not be repeatable in scalar context
-      if (variableContext != null && variableContext.isFieldContext()) {
-        String fieldId = variableContext.symbol();
-        if (this.symbols.isFieldRepeatableFromContext(fieldId, getContextNodeId())) {
-          throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-        }
-      }
-
-      // Guard: Skip type cast insertion if not in late-bound context (explicit cast already present)
-      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
-        return;
-      }
-
-      // Determine type for cast: field type for context variables, variable type for regular variables
-      String typeCast = (variableContext != null)
-          ? eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(variableContext.symbol()))
-          : javaToEfxTypeMap.get(EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(variableName)));
-
-      if (typeCast != null) {
-        this.rewriter.insertBefore(ctx.variableReference().VariablePrefix().getSymbol(), "(" + typeCast + ")");
-      }
+      this.resolveVariableReference(ctx.variableReference());
     }
 
     @Override
     public void exitSequenceFromVariableReference(SequenceFromVariableReferenceContext ctx) {
-      String variableName = ctx.variableReference().variableName.getText();
-      Context variableContext = this.efxContext.getContextFromVariable(variableName);
-
-      // Guard: Node context variables cannot be used as values
-      if (variableContext != null && variableContext.isNodeContext()) {
-        throw TypeMismatchException.nodesHaveNoValue(ctx, variableName, variableContext.symbol());
-      }
-
-      // No repeatability check needed - sequences can have multiple values
-
-      // Guard: Skip type cast insertion if not in late-bound context (explicit cast already present)
-      if (!hasParentContextOfType(ctx, LateBoundSequenceContext.class)) {
-        return;
-      }
-
-      // Determine type for cast: field type for context variables, variable type for regular variables
-      String typeCast = (variableContext != null)
-          ? eFormsToEfxTypeMap.get(this.symbols.getTypeOfField(variableContext.symbol()))
-          : javaToEfxTypeMap.get(EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(variableName)));
-
-      if (typeCast != null) {
-        this.rewriter.insertBefore(ctx.variableReference().VariablePrefix().getSymbol(), "(" + typeCast + "*)");
-      }
+      this.resolveVariableReference(ctx.variableReference());
     }
 
     @Override
     public void exitDictionaryLookup(DictionaryLookupContext ctx) {
-      if (!hasParentContextOfType(ctx, LateBoundScalarContext.class)) {
-        return;
-      }
-
-      String dictionaryName = ctx.dictionaryName.getText();
-      String dictionaryType = javaToEfxTypeMap.get(EfxTypeLattice.toPrimitive(this.stack.getTypeOfIdentifier(dictionaryName)));
-
-      if (dictionaryType != null) {
-        // Insert the type cast
-        this.rewriter.insertBefore(ctx.VariablePrefix().getSymbol(), "(" + dictionaryType + ")");
-      }
+      this.resolveDictionaryLookup(ctx);
     }
 
-    boolean hasParentContextOfType(ParserRuleContext ctx, Class<? extends ParserRuleContext> parentClass) {
-      ParserRuleContext parent = ctx.getParent();
-      while (parent != null) {
-        if (parentClass.isInstance(parent)) {
-          return true;
-        }
-        parent = parent.getParent();
-      }
-      return false;
-    }
+    // #endregion Late-bound type resolution -----------------------------------
 
-    /**
-     * Checks if we're in a top-level late-bound expression context where sequences are valid.
-     * This is the path: lateBoundScalar → lateBoundExpression → expression
-     * In this path, the grammar allows either scalars or sequences, so a repeatable field
-     * can be auto-cast to sequence instead of throwing an error.
-     */
-    private boolean isTopLevelLateBoundExpression(ParserRuleContext ctx) {
-      // Walk up to find LateBoundScalarContext
-      ParserRuleContext current = ctx;
-      while (current != null && !(current instanceof LateBoundScalarContext)) {
-        current = current.getParent();
-      }
-      if (current == null) {
-        return false;
-      }
-      // Check if LateBoundScalarContext's parent is LateBoundExpressionContext
-      ParserRuleContext parent = current.getParent();
-      if (!(parent instanceof LateBoundExpressionContext)) {
-        return false;
-      }
-      // Check if LateBoundExpressionContext's parent is ExpressionContext
-      ParserRuleContext grandparent = parent.getParent();
-      return grandparent instanceof ExpressionContext;
-    }
+    // #region Symbol declarations ---------------------------------------------
 
     // #region Variable declarations ------------------------------------------
 
     @Override
     public void exitStringIteratorVariableDeclaration(StringIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName,  StringExpression.empty(), StringExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(),  StringExpression.empty(), StringExpression.empty()));
     }
   
     @Override
     public void exitBooleanIteratorVariableDeclaration(BooleanIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName, BooleanExpression.empty(), BooleanExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(), BooleanExpression.empty(), BooleanExpression.empty()));
     }
   
     @Override
     public void exitNumericIteratorVariableDeclaration(NumericIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName, NumericExpression.empty(), NumericExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(), NumericExpression.empty(), NumericExpression.empty()));
     }
   
     @Override
     public void exitDateIteratorVariableDeclaration(DateIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName, DateExpression.empty(), DateExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(), DateExpression.empty(), DateExpression.empty()));
     }
   
     @Override
     public void exitTimeIteratorVariableDeclaration(TimeIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName, TimeExpression.empty(), TimeExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(), TimeExpression.empty(), TimeExpression.empty()));
     }
   
     @Override
     public void exitDurationIteratorVariableDeclaration(DurationIteratorVariableDeclarationContext ctx) {
-      String variableName = ctx.variableName.getText();
-      this.stack.declareIdentifier(new Variable(variableName, DurationExpression.empty(), DurationExpression.empty()));
+      this.stack.declareIdentifier(new Variable(ctx.variableName.getText(), DurationExpression.empty(), DurationExpression.empty()));
     }
 
     @Override
@@ -3393,75 +3494,63 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     @Override
     public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, StringExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), StringExpression.empty()));
     }
 
     @Override
     public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, NumericExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), NumericExpression.empty()));
     }
 
     @Override
     public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, BooleanExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), BooleanExpression.empty()));
     }
 
     @Override
     public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, DateExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), DateExpression.empty()));
     }
 
     @Override
     public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, TimeExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), TimeExpression.empty()));
     }
 
     @Override
     public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, DurationExpression.empty()));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), DurationExpression.empty()));
     }
 
     // Sequence parameter declarations
     @Override
     public void exitStringSequenceParameterDeclaration(StringSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new StringSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new StringSequenceExpression("")));
     }
 
     @Override
     public void exitNumericSequenceParameterDeclaration(NumericSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new NumericSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new NumericSequenceExpression("")));
     }
 
     @Override
     public void exitBooleanSequenceParameterDeclaration(BooleanSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new BooleanSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new BooleanSequenceExpression("")));
     }
 
     @Override
     public void exitDateSequenceParameterDeclaration(DateSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new DateSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new DateSequenceExpression("")));
     }
 
     @Override
     public void exitTimeSequenceParameterDeclaration(TimeSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new TimeSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new TimeSequenceExpression("")));
     }
 
     @Override
     public void exitDurationSequenceParameterDeclaration(DurationSequenceParameterDeclarationContext ctx) {
-      String identifier = ctx.parameterName.getText();
-      this.stack.declareIdentifier(new ParsedParameter(identifier, new DurationSequenceExpression("")));
+      this.stack.declareIdentifier(new ParsedParameter(ctx.parameterName.getText(), new DurationSequenceExpression("")));
     }
 
     // #endregion Parameter declarations --------------------------------------
@@ -3470,81 +3559,71 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     @Override
     public void exitStringFunctionDeclaration(StringFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), StringExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), StringExpression.empty()));
     }
 
     @Override
     public void exitNumericFunctionDeclaration(NumericFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), NumericExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), NumericExpression.empty()));
     }
 
     @Override
     public void exitBooleanFunctionDeclaration(BooleanFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), BooleanExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), BooleanExpression.empty()));
     }
 
 
     @Override
     public void exitDateFunctionDeclaration(DateFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), DateExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), DateExpression.empty()));
     }
 
 
     @Override
     public void exitTimeFunctionDeclaration(TimeFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), TimeExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), TimeExpression.empty()));
     }
 
     @Override
     public void exitDurationFunctionDeclaration(DurationFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), DurationExpression.empty()));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), DurationExpression.empty()));
     }
 
     // Sequence function declarations
 
     @Override
     public void exitStringSequenceFunctionDeclaration(StringSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new StringSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new StringSequenceExpression("")));
     }
 
     @Override
     public void exitNumericSequenceFunctionDeclaration(NumericSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new NumericSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new NumericSequenceExpression("")));
     }
 
     @Override
     public void exitBooleanSequenceFunctionDeclaration(BooleanSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new BooleanSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new BooleanSequenceExpression("")));
     }
 
     @Override
     public void exitDateSequenceFunctionDeclaration(DateSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new DateSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new DateSequenceExpression("")));
     }
 
     @Override
     public void exitTimeSequenceFunctionDeclaration(TimeSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new TimeSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new TimeSequenceExpression("")));
     }
 
     @Override
     public void exitDurationSequenceFunctionDeclaration(DurationSequenceFunctionDeclarationContext ctx) {
-      String functionName = ctx.functionName.getText();
-      this.stack.declareFunction(new Function(functionName, new ParsedParameters(), new DurationSequenceExpression("")));
+      this.stack.declareFunction(new Function(ctx.functionName.getText(), new ParsedParameters(), new DurationSequenceExpression("")));
     }
 
     // #endregion Function declarations ---------------------------------------
+
+    // #endregion Symbol declarations ------------------------------------------
 
     // #region Scope management -----------------------------------------------
 
@@ -3702,7 +3781,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
     // #endregion Scope management --------------------------------------------
 
-    // #region Include directive guard -----------------------------------------
+    // #region Guards ---------------------------------------------------------
 
     @Override
     public void exitIncludeDirective(IncludeDirectiveContext ctx) {
@@ -3710,7 +3789,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       throw TranslatorConfigurationException.unresolvedIncludeDirective(path);
     }
 
-    // #endregion Include directive guard --------------------------------------
+    // #endregion Guards ------------------------------------------------------
 
   }
 

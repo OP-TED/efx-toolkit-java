@@ -111,6 +111,10 @@ public class TranslatorConfigurationException extends IllegalStateException {
         return new TranslatorConfigurationException(ErrorCode.MISSING_TYPE_MAPPING, MISSING_TYPE_MAPPING, type.getName(), mapName);
     }
 
+    public static TranslatorConfigurationException missingTypeMapping(String typeName, String mapName) {
+        return new TranslatorConfigurationException(ErrorCode.MISSING_TYPE_MAPPING, MISSING_TYPE_MAPPING, typeName, mapName);
+    }
+
     public static TranslatorConfigurationException missingTypeAnnotation(Class<?> type) {
         return new TranslatorConfigurationException(ErrorCode.MISSING_TYPE_ANNOTATION, MISSING_TYPE_ANNOTATION, type.getName());
     }

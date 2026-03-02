@@ -25,6 +25,7 @@ import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
@@ -1646,6 +1647,24 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(
             "with ND-Root display ${for text:$x in BT-00-Repeatable-Text return BT-00-Repeatable-Text[BT-00-Text == $x]};"));
+  }
+
+  @Test
+  void testWithDisplay_PredicateWithForLoop_VarInRepeatableField() {
+    // Working variant: $var in repeatable-field inside a sub-predicate.
+    // Analogous to: OPT-316-Contract[$tender in BT-3202-Contract]
+    translateTemplate(
+        "with ND-Root[count(for text:$x in BT-00-Repeatable-Text, text:$y in BT-00-Text[$x in BT-00-Repeatable-Text] return $y) > 0] display foo;");
+  }
+
+  @Test
+  void testWithDisplay_PredicateWithForLoop_RepeatableFieldEqVar() {
+    // Broken variant: repeatable-field == $var inside a sub-predicate.
+    // Analogous to: OPT-316-Contract[BT-3202-Contract == $tender]
+    // This should produce a meaningful error about scalar/multiple mismatch,
+    // not a confusing syntax error like "expected {When, Display, Invoke}".
+    assertThrows(TypeMismatchException.class, () -> translateTemplate(
+        "with BT-00-Number[count(for text:$x in BT-00-Repeatable-Text, text:$y in BT-00-Text[BT-00-Repeatable-Text == $x] return $y) > 0] display foo;"));
   }
 
   // #endregion contextDeclarationBlock ----------------------------------------
