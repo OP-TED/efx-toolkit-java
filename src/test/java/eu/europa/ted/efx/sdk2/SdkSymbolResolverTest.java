@@ -652,9 +652,9 @@ class SdkSymbolResolverTest {
     }
 
     @Test
-    @DisplayName("getAllNoticeSubtypeIds returns list of notice types")
-    void getAllNoticeSubtypeIds_returnsNoticeTypes() {
-      List<String> noticeTypes = resolver.getAllNoticeSubtypeIds();
+    @DisplayName("getAllNoticeSubtypes returns notice types")
+    void getAllNoticeSubtypes_returnsNoticeTypes() {
+      var noticeTypes = resolver.getAllNoticeSubtypes();
 
       assertNotNull(noticeTypes, "Should return list of notice types");
       assertFalse(noticeTypes.isEmpty(), "Notice types list should not be empty");

@@ -27,6 +27,7 @@ import eu.europa.ted.eforms.sdk.SdkSymbolResolver;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.eforms.sdk.entity.v1.SdkCodelistV1;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkNodeRepository;
@@ -53,7 +54,7 @@ public class SymbolResolverMockV1 extends SdkSymbolResolver {
     // Mock codelists
     this.codelistById = createMockCodelists();
 
-    // Mock notice types - not needed, we override getAllNoticeSubtypeIds()
+    // Mock notice types - not needed for V1
     this.noticeTypesById = new HashMap<>();
   }
 
@@ -81,7 +82,7 @@ public class SymbolResolverMockV1 extends SdkSymbolResolver {
   }
 
   @Override
-  public List<String> getAllNoticeSubtypeIds() {
-    return Arrays.asList("1", "2", "3", "4", "5", "E1", "E2", "X01");
+  public List<SdkNoticeSubtype> getAllNoticeSubtypes() {
+    return List.of();
   }
 }
