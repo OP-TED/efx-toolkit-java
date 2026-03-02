@@ -13,6 +13,7 @@
  */
 package eu.europa.ted.efx.sdk2;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -38,7 +39,8 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveFieldReference_Scalar_NonRepeatableField() {
-    translateExpressionWithContext("ND-Root", "BT-00-Text == 'test'");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text == 'test'"));
   }
 
   @Test
@@ -50,7 +52,8 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveFieldReference_Scalar_NonRepeatableAttribute() {
-    translateExpressionWithContext("ND-Root", "BT-00-CodeAttribute/@attribute == 'test'");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root", "BT-00-CodeAttribute/@attribute == 'test'"));
   }
 
   @Test
@@ -63,33 +66,38 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveFieldReference_Scalar_AttributeOnRepeatableNode_OkFromSameContext() {
-    translateExpressionWithContext("ND-RepeatableNode",
-        "BT-00-Text-In-Repeatable-Node/@attribute == 'test'");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-RepeatableNode",
+            "BT-00-Text-In-Repeatable-Node/@attribute == 'test'"));
   }
 
   @Test
   void testResolveFieldReference_Sequence_RepeatableFieldInIterator() {
-    translateExpressionWithContext("ND-Root",
-        "for text:$x in BT-00-Repeatable-Text return $x");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for text:$x in BT-00-Repeatable-Text return $x"));
   }
 
   @Test
   void testResolveFieldReference_Sequence_NonRepeatableFieldInIterator() {
     // Silent promotion: non-repeatable field accepted in sequence context.
-    translateExpressionWithContext("ND-Root",
-        "for text:$x in BT-00-Text return $x");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for text:$x in BT-00-Text return $x"));
   }
 
   @Test
   void testResolveFieldReference_Either_RepeatableFieldInForReturn() {
-    translateExpressionWithContext("ND-Root",
-        "for text:$x in BT-00-Text return BT-00-Repeatable-Text");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for text:$x in BT-00-Text return BT-00-Repeatable-Text"));
   }
 
   @Test
   void testResolveFieldReference_Either_NonRepeatableFieldInForReturn() {
-    translateExpressionWithContext("ND-Root",
-        "for text:$x in BT-00-Text return BT-00-Text");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for text:$x in BT-00-Text return BT-00-Text"));
   }
 
   // #endregion resolveFieldOrAttributeReference --------------------------------
@@ -98,12 +106,14 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveFunctionInvocation_Scalar() {
-    translateExpressionWithContext("ND-Root", "number(BT-00-Text)");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root", "number(BT-00-Text)"));
   }
 
   @Test
   void testResolveFunctionInvocation_Sequence() {
-    translateExpressionWithContext("ND-Root", "count(BT-00-Text)");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root", "count(BT-00-Text)"));
   }
 
   @Test
@@ -126,16 +136,18 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveFunctionInvocation_Either_ScalarFunction() {
-    translateTemplate(lines(
-        "let text:?f() = 'hi';",
-        "display ${?f()};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text:?f() = 'hi';",
+            "display ${?f()};")));
   }
 
   @Test
   void testResolveFunctionInvocation_Either_SequenceFunction() {
-    translateTemplate(lines(
-        "let text*:?f() = ['a', 'b'];",
-        "display count: ${count(?f())};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text*:?f() = ['a', 'b'];",
+            "display count: ${count(?f())};")));
   }
 
   // #endregion resolveFunctionInvocation ---------------------------------------
@@ -144,14 +156,16 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveContextVariable_Scalar_NonRepeatableField() {
-    translateExpressionWithContext("ND-Root",
-        "for context:$f in BT-00-Text return $f == 'test'");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for context:$f in BT-00-Text return $f == 'test'"));
   }
 
   @Test
   void testResolveContextVariable_Scalar_RepeatableField() {
-    translateExpressionWithContext("ND-Root",
-        "for context:$f in BT-00-Repeatable-Text return $f == 'test'");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for context:$f in BT-00-Repeatable-Text return $f == 'test'"));
   }
 
   @Test
@@ -172,8 +186,9 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveContextVariable_Either_FieldContextInForReturn() {
-    translateExpressionWithContext("ND-Root",
-        "for context:$f in BT-00-Text return $f");
+    assertDoesNotThrow(
+        () -> translateExpressionWithContext("ND-Root",
+            "for context:$f in BT-00-Text return $f"));
   }
 
   // #endregion resolveContextVariableReference ---------------------------------
@@ -182,9 +197,10 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveRegularVariable_Scalar_ScalarVariable() {
-    translateTemplate(lines(
-        "let text:$x = 'a';",
-        "with BT-00-Text[$x == 'a'] display foo;"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text:$x = 'a';",
+            "with BT-00-Text[$x == 'a'] display foo;")));
   }
 
   @Test
@@ -207,23 +223,26 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveRegularVariable_Sequence_SequenceVariable() {
-    translateTemplate(lines(
-        "let text*:$items = ['a', 'b', 'c'];",
-        "display count: ${count($items)};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text*:$items = ['a', 'b', 'c'];",
+            "display count: ${count($items)};")));
   }
 
   @Test
   void testResolveRegularVariable_Either_ScalarVariable() {
-    translateTemplate(lines(
-        "let text:$x = 'test';",
-        "display value: ${$x};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text:$x = 'test';",
+            "display value: ${$x};")));
   }
 
   @Test
   void testResolveRegularVariable_Either_SequenceVariable() {
-    translateTemplate(lines(
-        "let text*:$items = ['a', 'b'];",
-        "display ${for text:$x in $items return $x};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let text*:$items = ['a', 'b'];",
+            "display ${for text:$x in $items return $x};")));
   }
 
   // #endregion resolveRegularVariableReference ---------------------------------
@@ -232,16 +251,18 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testResolveDictionaryLookup_Scalar_InPredicate() {
-    translateTemplate(lines(
-        "let $dic index BT-00-Number by BT-00-Text;",
-        "with BT-00-Text[$dic['key'] == 1] display foo;"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let $dic index BT-00-Number by BT-00-Text;",
+            "with BT-00-Text[$dic['key'] == 1] display foo;")));
   }
 
   @Test
   void testResolveDictionaryLookup_Either_InDisplayBlock() {
-    translateTemplate(lines(
-        "let $dic index BT-00-Number by BT-00-Text;",
-        "display ${$dic['key']};"));
+    assertDoesNotThrow(
+        () -> translateTemplate(lines(
+            "let $dic index BT-00-Number by BT-00-Text;",
+            "display ${$dic['key']};")));
   }
 
   @Test
