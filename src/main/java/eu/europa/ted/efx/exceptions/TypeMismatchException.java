@@ -27,14 +27,20 @@ public class TypeMismatchException extends EfxCompilationException {
     public enum ErrorCode {
         CANNOT_CONVERT,
         CANNOT_COMPARE,
-        EXPECTED_SCALAR,
-        EXPECTED_FIELD_CONTEXT
+        FIELD_MAY_REPEAT,
+        NODE_CONTEXT_AS_VALUE,
+        IDENTIFIER_IS_SEQUENCE,
+        IDENTIFIER_IS_SCALAR,
+        DICTIONARY_IS_SCALAR
     }
 
     private static final String CANNOT_CONVERT = "Type mismatch. Expected %s instead of %s.";
-    private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s";
-    private static final String EXPECTED_SCALAR = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
-    private static final String EXPECTED_FIELD_CONTEXT = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
+    private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s.";
+    private static final String FIELD_MAY_REPEAT = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
+    private static final String NODE_CONTEXT_AS_VALUE = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
+    private static final String IDENTIFIER_IS_SEQUENCE = "Type mismatch. Variable '$%s' is declared as a sequence, but is used as a scalar.";
+    private static final String IDENTIFIER_IS_SCALAR = "Type mismatch. Variable '$%s' is declared as a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s].";
+    private static final String DICTIONARY_IS_SCALAR = "Type mismatch. Dictionary lookup '$%s' returns a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s['key']].";
 
     private final ErrorCode errorCode;
 
@@ -73,11 +79,23 @@ public class TypeMismatchException extends EfxCompilationException {
     }
 
     public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, String fieldId, String contextSymbol) {
-        return new TypeMismatchException(ErrorCode.EXPECTED_SCALAR, ctx, EXPECTED_SCALAR, fieldId,
+        return new TypeMismatchException(ErrorCode.FIELD_MAY_REPEAT, ctx, FIELD_MAY_REPEAT, fieldId,
                 contextSymbol != null ? contextSymbol : "root");
     }
 
-    public static TypeMismatchException nodesHaveNoValue(ParserRuleContext ctx, String variableName, String nodeId) {
-        return new TypeMismatchException(ErrorCode.EXPECTED_FIELD_CONTEXT, ctx, EXPECTED_FIELD_CONTEXT, variableName, nodeId);
+    public static TypeMismatchException nodeContextUsedAsValue(ParserRuleContext ctx, String variableName, String nodeId) {
+        return new TypeMismatchException(ErrorCode.NODE_CONTEXT_AS_VALUE, ctx, NODE_CONTEXT_AS_VALUE, variableName, nodeId);
+    }
+
+    public static TypeMismatchException identifierIsSequence(ParserRuleContext ctx, String variableName) {
+        return new TypeMismatchException(ErrorCode.IDENTIFIER_IS_SEQUENCE, ctx, IDENTIFIER_IS_SEQUENCE, variableName);
+    }
+
+    public static TypeMismatchException identifierIsScalar(ParserRuleContext ctx, String variableName) {
+        return new TypeMismatchException(ErrorCode.IDENTIFIER_IS_SCALAR, ctx, IDENTIFIER_IS_SCALAR, variableName, variableName);
+    }
+
+    public static TypeMismatchException dictionaryIsScalar(ParserRuleContext ctx, String dictionaryName) {
+        return new TypeMismatchException(ErrorCode.DICTIONARY_IS_SCALAR, ctx, DICTIONARY_IS_SCALAR, dictionaryName, dictionaryName);
     }
 }

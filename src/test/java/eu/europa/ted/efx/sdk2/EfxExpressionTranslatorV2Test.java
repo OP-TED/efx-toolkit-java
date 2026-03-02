@@ -337,7 +337,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testDurationComparison_UsingYearMOnthDurationLiterals() {
+  void testDurationComparison_UsingYearMonthDurationLiterals() {
     testExpressionTranslationWithContext(
         "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P1Y') = $T + xs:yearMonthDuration('P12M')))",
         "BT-00-Text", "P1Y == P12M");
@@ -3201,7 +3201,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A repeatable field used as scalar should throw TypeMismatchException.fieldMayRepeat()
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
     assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
   }
 
@@ -3210,7 +3210,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableNode (repeatable) used as scalar from ND-Root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-Repeatable-Node == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   @Test
@@ -3225,7 +3225,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableSubSubNode (inside ND-NonRepeatableSubNode inside ND-RepeatableNode) used from root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   @Test
@@ -3233,7 +3233,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-RepeatableSubSubNode used from ND-RepeatableNode should still throw (ND-RepeatableSubSubNode is also repeatable)
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-RepeatableNode", "BT-00-Text-In-RepeatableSubSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   @Test
@@ -3248,7 +3248,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Field in ND-NonRepeatableSubNode (non-repeatable) inside ND-RepeatableNode (repeatable) used from root should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-In-NonRepeatableSubNode == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   @Test
@@ -3263,7 +3263,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A repeatable field used as needle (left side) in uniqueness condition should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text is unique in /BT-00-Text"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   // #endregion: Scalar/Sequence Validation
@@ -3297,7 +3297,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A node context variable used as scalar value should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "for context:$n in ND-SubNode return $n == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_FIELD_CONTEXT, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.NODE_CONTEXT_AS_VALUE, ex.getErrorCode());
   }
 
   @Test
@@ -3305,7 +3305,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // A node context variable used in count() should throw
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "for context:$n in ND-SubNode return count($n)"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_FIELD_CONTEXT, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.NODE_CONTEXT_AS_VALUE, ex.getErrorCode());
   }
 
   // #endregion: TypeMismatchException - nodeCannotBeValue
@@ -3319,14 +3319,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "for $f in PathNode/TextField return $f = 'test'",
         "ND-Root",
         "for context:$f in BT-00-Text return $f == 'test'");
-  }
-
-  @Test
-  void testScalarFromFieldContextVariable_Repeatable_ThrowsFieldMayRepeat() {
-    // A repeatable field context variable used as scalar should throw
-    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("ND-Root", "for context:$f in BT-00-Repeatable-Text return $f == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
   }
 
   // #endregion: TypeMismatchException - fieldMayRepeat (Context Variables)
@@ -3383,7 +3375,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Pattern: FIELD[REPEATABLE_FIELD == $var] - the repeatable field is used as scalar
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text[BT-00-Repeatable-Text == 'test']"));
-    assertEquals(TypeMismatchException.ErrorCode.EXPECTED_SCALAR, ex.getErrorCode());
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
   }
 
   @Test

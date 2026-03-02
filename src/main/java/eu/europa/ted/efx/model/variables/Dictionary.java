@@ -13,6 +13,8 @@
  */
 package eu.europa.ted.efx.model.variables;
 
+import java.util.Objects;
+
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
@@ -29,8 +31,7 @@ public class Dictionary extends Identifier {
   public final Class<? extends TypedExpression> type;
 
   public Dictionary(String dictionaryName, PathExpression pathExpression, StringExpression keyExpression) {
-    
-    super(dictionaryName, keyExpression.getDataType());
+    super(dictionaryName, pathExpression.getDataType());
     this.keyExpression = keyExpression;
     this.pathExpression = pathExpression;
     this.type = pathExpression.getClass();
@@ -42,9 +43,9 @@ public class Dictionary extends Identifier {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
     Dictionary dictionary = (Dictionary) o;
-    return java.util.Objects.equals(keyExpression, dictionary.keyExpression)
-        && java.util.Objects.equals(pathExpression, dictionary.pathExpression)
-        && java.util.Objects.equals(type, dictionary.type);
+    return Objects.equals(keyExpression, dictionary.keyExpression)
+        && Objects.equals(pathExpression, dictionary.pathExpression)
+        && Objects.equals(type, dictionary.type);
   }
 
   @Override
