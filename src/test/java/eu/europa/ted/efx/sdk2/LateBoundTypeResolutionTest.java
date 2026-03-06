@@ -23,12 +23,12 @@ import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 
 /**
- * Tests for the ExpressionPreprocessor's type resolution logic.
+ * Tests for late-bound type resolution logic.
  *
  * Organized by resolve method and CardinalityResolutionContext to clearly show coverage.
  * Each test is named: test[ResolveMethod]_[Context]_[scenario].
  */
-class PreprocessorTypeResolutionTest extends EfxTestsBase {
+class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Override
   protected String getSdkVersion() {
@@ -252,6 +252,13 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
             "display ${for text:$x in $items return $x};")));
   }
 
+  @Test
+  void testResolveRegularVariable_UndeclaredVariable_Throws() {
+    assertThrows(Exception.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "for text:$x in BT-00-Text return $undeclared"));
+  }
+
   // #endregion resolveRegularVariableReference ---------------------------------
 
   // #region resolveDictionaryLookup --------------------------------------------
@@ -282,4 +289,111 @@ class PreprocessorTypeResolutionTest extends EfxTestsBase {
   }
 
   // #endregion resolveDictionaryLookup -----------------------------------------
+
+  // #region verifyMatchingTypes ------------------------------------------------
+
+  @Test
+  void testLateBoundComparison_MismatchedFieldTypes_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text == BT-00-Number"));
+    assertEquals(TypeMismatchException.ErrorCode.CANNOT_CONVERT, ex.getErrorCode());
+  }
+
+  @Test
+  void testLateBoundComparison_OneSideMismatched_Throws() {
+    // Late-bound text field compared against numeric literal — the typed pop should catch this.
+    assertThrows(Exception.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text == 42"));
+  }
+
+  // #endregion verifyMatchingTypes ---------------------------------------------
+
+  // #region typeConversions ------------------------------------------------------
+
+  @Test
+  void testLateBoundToNumber_FromTextField() {
+    testExpressionTranslationWithContext(
+        "number(PathNode/TextField/normalize-space(text()))",
+        "ND-Root", "number(BT-00-Text)");
+  }
+
+  @Test
+  void testLateBoundToString_FromNumberField() {
+    testExpressionTranslationWithContext(
+        "string(PathNode/NumberField/number())",
+        "ND-Root", "text(BT-00-Number)");
+  }
+
+  @Test
+  void testLateBoundBooleanFromNumber_FromNumberField() {
+    testExpressionTranslationWithContext(
+        "boolean(PathNode/NumberField/number())",
+        "ND-Root", "indicator(BT-00-Number)");
+  }
+
+  @Test
+  void testLateBoundDateFromString_FromTextField() {
+    testExpressionTranslationWithContext(
+        "xs:date(PathNode/TextField/normalize-space(text()))",
+        "ND-Root", "date(BT-00-Text)");
+  }
+
+  @Test
+  void testLateBoundTimeFromString_FromTextField() {
+    testExpressionTranslationWithContext(
+        "xs:time(PathNode/TextField/normalize-space(text()))",
+        "ND-Root", "time(BT-00-Text)");
+  }
+
+  // #endregion typeConversions ---------------------------------------------------
+
+  // #region parenthesizedLateBound ----------------------------------------------
+
+  @Test
+  void testParenthesizedLateBoundScalar_PreservesParentheses() {
+    testExpressionTranslationWithContext(
+        "(PathNode/NumberField/number()) + 1",
+        "ND-Root", "(BT-00-Number) + 1");
+  }
+
+  @Test
+  void testParenthesizedLateBoundSequence_PreservesParentheses() {
+    testExpressionTranslationWithContext(
+        "count((PathNode/RepeatableTextField/normalize-space(text())))",
+        "ND-Root", "count((BT-00-Repeatable-Text))");
+  }
+
+  @Test
+  void testParenthesizedLateBoundSequence_BareReference() {
+    testExpressionTranslationWithContext(
+        "(PathNode/RepeatableTextField/normalize-space(text()))",
+        "ND-Root", "(BT-00-Repeatable-Text)");
+  }
+
+  // #endregion parenthesizedLateBound -------------------------------------------
+
+  // #region incompatibleOperands -------------------------------------------------
+
+  @Test
+  void testLateBoundAddition_IncompatibleTypes_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Duration + BT-00-Text"));
+    assertEquals(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS, ex.getErrorCode());
+  }
+
+  @Test
+  void testLateBoundSubtraction_IncompatibleTypes_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Duration - BT-00-Text"));
+    assertEquals(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS, ex.getErrorCode());
+  }
+
+  @Test
+  void testLateBoundMultiplication_IncompatibleTypes_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Duration / BT-00-Duration"));
+    assertEquals(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS, ex.getErrorCode());
+  }
+
+  // #endregion incompatibleOperands -----------------------------------------------
 }

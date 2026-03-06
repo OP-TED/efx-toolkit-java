@@ -353,7 +353,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testCalculatedDurationComparison() {
     testExpressionTranslationWithContext(
-        "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P3M') > $T + xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text()))))",
+        "boolean(for $T in (current-date()) return ($T + xs:yearMonthDuration('P3M') > $T + (xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text())))))",
         "ND-Root", "P3M > (BT-00-EndDate - BT-00-StartDate)");
   }
 
@@ -377,16 +377,23 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testDurationMultiplication_DurationTimesLateBoundNumeric() {
+    testExpressionTranslationWithContext(
+        "(PathNode/NumberField/number() * xs:dayTimeDuration('P1D'))",
+        "ND-Root", "P1D * BT-00-Number");
+  }
+
+  @Test
   void testDurationAddition() {
     testExpressionTranslationWithContext(
-        "(xs:dayTimeDuration('P3D') + xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text())))",
+        "(xs:dayTimeDuration('P3D') + (xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text()))))",
         "ND-Root", "P3D + (BT-00-StartDate - BT-00-EndDate)");
   }
 
   @Test
   void testDurationSubtraction() {
     testExpressionTranslationWithContext(
-        "(xs:dayTimeDuration('P3D') - xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text())))",
+        "(xs:dayTimeDuration('P3D') - (xs:dayTimeDuration(PathNode/StartDateField/xs:date(text()) - PathNode/EndDateField/xs:date(text()))))",
         "ND-Root", "P3D - (BT-00-StartDate - BT-00-EndDate)");
   }
 

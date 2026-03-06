@@ -276,7 +276,7 @@ public class CallStack {
    * @param parameterName The identifier of the parameter.
    * @return The value of the parameter.
    */
-  Optional<TypedExpression> getParameter(String parameterName) {
+  public Optional<TypedExpression> getParameter(String parameterName) {
     return this.frames.stream()
         .filter(f -> f.identifierRegistry.containsKey(parameterName)
             && ParsedParameter.class.isAssignableFrom(f.identifierRegistry.get(parameterName).getClass()))
@@ -301,7 +301,7 @@ public class CallStack {
         .map(registry -> registry.get(identifier));
   }
 
-  Optional<Variable> getVariable(String identifier) {
+  public Optional<Variable> getVariable(String identifier) {
     return Stream.concat(
             this.frames.stream().map(f -> f.identifierRegistry),
             Stream.of(this.globalIdentifierRegistry))
@@ -447,6 +447,19 @@ public class CallStack {
    */
   public synchronized ParsedEntity peek() {
     return this.frames.peek().peek();
+  }
+
+  public synchronized TypedExpression peekType() {
+    return this.peekType(0);
+  }
+
+  public synchronized TypedExpression peekType(int offset) {
+    StackFrame frame = this.frames.peek();
+    ParsedEntity item = frame.get(frame.size() - 1 + offset);
+    if (item instanceof TypedExpression) {
+      return (TypedExpression) item;
+    }
+    throw TypeMismatchException.cannotConvert(TypedExpression.class, item.getClass());
   }
 
   /**
