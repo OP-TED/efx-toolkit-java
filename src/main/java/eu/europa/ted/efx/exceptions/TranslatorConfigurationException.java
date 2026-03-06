@@ -31,7 +31,8 @@ public class TranslatorConfigurationException extends IllegalStateException {
         UNHANDLED_LINKED_FIELD_PROPERTY,
         UNHANDLED_PREDICATE_CONTEXT,
         INCLUDE_RESOLVER_NOT_CONFIGURED,
-        UNRESOLVED_INCLUDE_DIRECTIVE
+        UNRESOLVED_INCLUDE_DIRECTIVE,
+        UNHANDLED_OPERATOR
     }
 
     private static final String TYPE_NOT_REGISTERED =
@@ -87,6 +88,11 @@ public class TranslatorConfigurationException extends IllegalStateException {
     private static final String UNRESOLVED_INCLUDE_DIRECTIVE =
         "Unresolved #include directive '%s' found during preprocessing. " +
         "Include resolution may have been skipped or failed silently.";
+
+    private static final String UNHANDLED_OPERATOR =
+        "Operator '%s' is not handled in %s. " +
+        "If the grammar was updated to allow new operators, " +
+        "add a handler for this operator.";
 
     private final ErrorCode errorCode;
 
@@ -145,5 +151,9 @@ public class TranslatorConfigurationException extends IllegalStateException {
 
     public static TranslatorConfigurationException unresolvedIncludeDirective(String path) {
         return new TranslatorConfigurationException(ErrorCode.UNRESOLVED_INCLUDE_DIRECTIVE, UNRESOLVED_INCLUDE_DIRECTIVE, path);
+    }
+
+    public static TranslatorConfigurationException unhandledOperator(String operator, String handlerName) {
+        return new TranslatorConfigurationException(ErrorCode.UNHANDLED_OPERATOR, UNHANDLED_OPERATOR, operator, handlerName);
     }
 }

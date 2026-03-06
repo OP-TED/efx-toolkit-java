@@ -27,6 +27,7 @@ public class TypeMismatchException extends EfxCompilationException {
     public enum ErrorCode {
         CANNOT_CONVERT,
         CANNOT_COMPARE,
+        INCOMPATIBLE_OPERANDS,
         FIELD_MAY_REPEAT,
         NODE_CONTEXT_AS_VALUE,
         IDENTIFIER_IS_SEQUENCE,
@@ -36,6 +37,7 @@ public class TypeMismatchException extends EfxCompilationException {
 
     private static final String CANNOT_CONVERT = "Type mismatch. Expected %s instead of %s.";
     private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s.";
+    private static final String INCOMPATIBLE_OPERANDS = "Type mismatch. Operator '%s' cannot be applied to %s and %s.";
     private static final String FIELD_MAY_REPEAT = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
     private static final String NODE_CONTEXT_AS_VALUE = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
     private static final String IDENTIFIER_IS_SEQUENCE = "Type mismatch. Variable '$%s' is declared as a sequence, but is used as a scalar.";
@@ -76,6 +78,11 @@ public class TypeMismatchException extends EfxCompilationException {
     public static TypeMismatchException cannotCompare(ParserRuleContext ctx, Expression left, Expression right) {
         return new TypeMismatchException(ErrorCode.CANNOT_COMPARE, ctx, CANNOT_COMPARE,
                 left.getClass().getSimpleName(), right.getClass().getSimpleName());
+    }
+
+    public static TypeMismatchException incompatibleOperands(String operator, Expression left, Expression right) {
+        return new TypeMismatchException(ErrorCode.INCOMPATIBLE_OPERANDS, INCOMPATIBLE_OPERANDS,
+                operator, left.getClass().getSimpleName(), right.getClass().getSimpleName());
     }
 
     public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, String fieldId, String contextSymbol) {
