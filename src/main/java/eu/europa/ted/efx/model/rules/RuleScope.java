@@ -13,21 +13,8 @@
  */
 package eu.europa.ted.efx.model.rules;
 
-public class AssertRule extends ValidationRule {
-    public AssertRule() {
-        super();
-    }
-
-    public AssertRule(ValidationRule other) {
-        this.id = other.id;
-        this.subject = other.subject;
-        this.severity = other.severity;
-        this.condition = other.condition;
-        this.invertedCondition = other.invertedCondition;
-        this.expression = other.expression;
-        this.invertedConditionOrExpression = other.invertedConditionOrExpression;
-        this.noticeSubtypeRange = other.noticeSubtypeRange;
-        this.flag = other.flag;
-        this.scope = other.scope;
-    }
+public enum RuleScope {
+    PRE,
+    POST,
+    ANY
 }

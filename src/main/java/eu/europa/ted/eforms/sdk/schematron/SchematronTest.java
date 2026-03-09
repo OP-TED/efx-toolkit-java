@@ -69,6 +69,11 @@ public abstract class SchematronTest {
     return this.rule.getNature().name();
   }
 
+  /** Used by pattern.ftl - returns the flag value from SCOPE clause, or null if not set */
+  public String getFlag() {
+    return this.rule.getFlag();
+  }
+
   /** Used by pattern.ftl - returns the Schematron element name ("assert" or "report") */
   public abstract String getElementName();
 }
