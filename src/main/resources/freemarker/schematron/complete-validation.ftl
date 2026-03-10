@@ -40,6 +40,11 @@
     </#list>
     </phase>
 </#list>
+
+    <#-- Includes for all pattern files -->
+<#list includes as include>
+    <include href="${include}"/>
+</#list>
 <#if diagnostics?has_content>
 
     <diagnostics>
@@ -48,10 +53,5 @@
     </#list>
     </diagnostics>
 </#if>
-
-    <#-- Includes for all pattern files -->
-<#list includes as include>
-    <include href="${include}"/>
-</#list>
 
 </schema>

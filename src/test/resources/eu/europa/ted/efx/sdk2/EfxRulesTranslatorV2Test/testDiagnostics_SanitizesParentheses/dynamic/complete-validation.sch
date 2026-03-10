@@ -24,11 +24,11 @@
         <active pattern="EFORMS-validation-stage-1a-2" />
     </phase>
 
+    <include href="validation-stage-1a-1.sch"/>
+    <include href="validation-stage-1a-2.sch"/>
+
     <diagnostics>
         <diagnostic id="ND-Root_BT-00_a_-Text" see="field:BT-00(a)-Text">PathNode/TextFieldA</diagnostic>
     </diagnostics>
-
-    <include href="validation-stage-1a-1.sch"/>
-    <include href="validation-stage-1a-2.sch"/>
 
 </schema>

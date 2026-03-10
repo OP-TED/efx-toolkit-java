@@ -78,6 +78,13 @@
         <active pattern="EFORMS-validation-stage-3a" />
     </phase>
 
+    <include href="validation-stage-1a.sch"/>
+    <include href="validation-stage-1b-1.sch"/>
+    <include href="validation-stage-1b-2.sch"/>
+    <include href="validation-stage-1b-3.sch"/>
+    <include href="validation-stage-2a.sch"/>
+    <include href="validation-stage-3a.sch"/>
+
     <diagnostics>
         <diagnostic id="ND-Root_BT-00-Text" see="field:BT-00-Text">PathNode/TextField</diagnostic>
         <diagnostic id="ND-SubNode_BT-00-Text" see="field:BT-00-Text">../PathNode/TextField</diagnostic>
@@ -86,12 +93,5 @@
         <diagnostic id="ND-Root_BT-00-Indicator" see="field:BT-00-Indicator">PathNode/IndicatorField</diagnostic>
         <diagnostic id="ND-SubSubNode_BT-00-Indicator" see="field:BT-00-Indicator">../../PathNode/IndicatorField</diagnostic>
     </diagnostics>
-
-    <include href="validation-stage-1a.sch"/>
-    <include href="validation-stage-1b-1.sch"/>
-    <include href="validation-stage-1b-2.sch"/>
-    <include href="validation-stage-1b-3.sch"/>
-    <include href="validation-stage-2a.sch"/>
-    <include href="validation-stage-3a.sch"/>
 
 </schema>
