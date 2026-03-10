@@ -1658,6 +1658,33 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "BT-00-Repeatable-Text:rawValue");
   }
 
+  @Test
+  void testFieldRawValue_ScalarFieldInSequenceContext() {
+    // rawValue of a non-repeatable field used in a sequence context
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextField/text()",
+        "ND-Root",
+        "'test' in BT-00-Text:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_RepeatableFieldInSequenceContext() {
+    // rawValue of a repeatable field used in a sequence context (the 'in' operator expects a sequence)
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/RepeatableTextField/text()",
+        "ND-Root",
+        "'test' in BT-00-Repeatable-Text:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_RepeatableFieldInScalarContext_Throws() {
+    // rawValue of a repeatable field used in a scalar context should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Repeatable-Text:rawValue == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
+  }
+
   // #endregion: Boolean functions
 
   // #region: Numeric functions -----------------------------------------------

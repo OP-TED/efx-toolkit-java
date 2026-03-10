@@ -2614,6 +2614,14 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
   }
 
+  @Override
+  public void exitFieldRawValuePropertySequence(FieldRawValuePropertySequenceContext ctx) {
+    final String fieldId = getFieldId(ctx.fieldMention());
+    final PathExpression fieldPath =
+        this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
+  }
+
 
   private BooleanExpression composeWasWithheldCondition(String fieldId, String privacyCode) {
     final String privacyCodeFieldId = this.symbols.getPrivacySettingOfField(fieldId, PrivacySetting.PRIVACY_CODE_FIELD);

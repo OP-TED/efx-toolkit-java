@@ -47,6 +47,7 @@ import eu.europa.ted.efx.model.expressions.scalar.NumericLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
+import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeLiteral;
 import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
@@ -55,6 +56,7 @@ import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.StringSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
@@ -127,8 +129,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   }
 
   @Override
-  public StringExpression composeFieldRawValueReference(PathExpression fieldReference) {
-    return new StringExpression(fieldReference.getScript() + "/text()");
+  public PathExpression composeFieldRawValueReference(PathExpression fieldReference) {
+    String script = fieldReference.getScript() + "/text()";
+    if (fieldReference instanceof SequenceExpression) {
+      return new StringSequencePath(script);
+    }
+    return new StringPath(script);
   }
 
   @Override
