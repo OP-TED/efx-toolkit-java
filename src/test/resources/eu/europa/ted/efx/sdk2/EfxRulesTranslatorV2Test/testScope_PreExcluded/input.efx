@@ -1,0 +1,17 @@
+// Test: SCOPE @PRE rule is excluded from Schematron output
+// Verifies that @PRE rules are not included, @POST and no-scope rules are included
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1 SCOPE @PRE
+
+    REPORT empty(BT-00-Text)
+    AS WARNING R-X3F-N8W
+    FOR BT-00-Text IN 1 SCOPE @POST
+
+    ASSERT not(empty(BT-00-Text))
+    AS INFO R-A1B-C2D
+    FOR BT-00-Text IN 1

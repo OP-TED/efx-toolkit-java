@@ -35,7 +35,6 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.efx.interfaces.EfxRulesTranslator;
-import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
@@ -47,10 +46,8 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
-import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
-import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
@@ -65,10 +62,10 @@ import eu.europa.ted.efx.model.rules.CompleteValidation;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.efx.model.rules.ReportRule;
 import eu.europa.ted.efx.model.rules.RuleSet;
+import eu.europa.ted.efx.model.rules.RuleScope;
 import eu.europa.ted.efx.model.rules.RuleSeverity;
 import eu.europa.ted.efx.model.rules.ValidationRule;
 import eu.europa.ted.efx.model.rules.ValidationStage;
-import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
@@ -558,6 +555,21 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.cachedSortedNoticeSubtypeIds);
     this.stack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
     this.completeValidation.addNoticeSubtypes(noticeSubtypes.asList());
+  }
+
+  @Override
+  public void exitScopeClause(ScopeClauseContext ctx) {
+    var rule = this.stack.peek(ValidationRule.class);
+    if (ctx.flag() != null) {
+      rule.setFlag(ctx.flag().flagName.getText());
+    }
+    if (ctx.scopeAnnotation() != null) {
+      if (ctx.scopeAnnotation().Pre() != null) {
+        rule.setScope(RuleScope.PRE);
+      } else {
+        rule.setScope(RuleScope.POST);
+      }
+    }
   }
 
   /**

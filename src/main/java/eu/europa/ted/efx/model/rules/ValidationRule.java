@@ -28,6 +28,8 @@ public class ValidationRule implements ParsedEntity {
     BooleanExpression expression;
     BooleanExpression invertedConditionOrExpression;
     NoticeSubtypeRange noticeSubtypeRange;
+    String flag;
+    RuleScope scope = RuleScope.ANY;
 
     public void setId(String id) {
         this.id = id;
@@ -90,5 +92,19 @@ public class ValidationRule implements ParsedEntity {
     }
     public NoticeSubtypeRange getNoticeSubtypeRange() {
         return this.noticeSubtypeRange;
+    }
+
+    public void setFlag(String flag) {
+        this.flag = flag;
+    }
+    public String getFlag() {
+        return this.flag;
+    }
+
+    public void setScope(RuleScope scope) {
+        this.scope = scope;
+    }
+    public RuleScope getScope() {
+        return this.scope;
     }
 }

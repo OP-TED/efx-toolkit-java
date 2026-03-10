@@ -20,7 +20,7 @@
     </#list>
     <#list rule.tests as test>
     <#if tags?seq_contains(test.tag)>
-        <${test.elementName} id="${test.id}" role="${test.role}"<#if test.diagnostic??> diagnostics="${test.diagnostic.id}"</#if> test="${test.test?xml?replace("&apos;", "'")}">${test.message}</${test.elementName}>
+        <${test.elementName} id="${test.id}" role="${test.role}"<#if test.flag??> flag="${test.flag}"</#if><#if test.diagnostic??> diagnostics="${test.diagnostic.id}"</#if> test="${test.test?xml?replace("&apos;", "'")}">${test.message}</${test.elementName}>
     </#if>
     </#list>
     </rule>

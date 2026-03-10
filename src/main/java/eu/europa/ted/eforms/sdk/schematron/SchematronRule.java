@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.rules.RuleNature;
+import eu.europa.ted.efx.model.rules.RuleScope;
 import eu.europa.ted.efx.model.rules.ReportRule;
 import eu.europa.ted.efx.model.rules.RuleSet;
 import eu.europa.ted.efx.model.rules.ValidationRule;
@@ -39,7 +40,7 @@ public class SchematronRule {
    * Creates a SchematronRule for rules that apply to all notice subtypes (shared pattern).
    */
   public static SchematronRule createUniversalRule(RuleSet ruleSet) {
-    return new SchematronRule(ruleSet, SchematronRule::isUniversal);
+    return new SchematronRule(ruleSet, rule -> isUniversal(rule) && isForPostValidation(rule));
   }
 
   /**
@@ -48,7 +49,7 @@ public class SchematronRule {
    */
   public static SchematronRule createSubtypeSpecificRule(RuleSet ruleSet, String noticeSubtype) {
     return new SchematronRule(ruleSet,
-        rule -> !isUniversal(rule) && appliesToNoticeSubtype(rule, noticeSubtype));
+        rule -> !isUniversal(rule) && isForPostValidation(rule) && appliesToNoticeSubtype(rule, noticeSubtype));
   }
 
   private SchematronRule(RuleSet ruleSet, Predicate<ValidationRule> filter) {
@@ -92,6 +93,14 @@ public class SchematronRule {
   private static boolean appliesToNoticeSubtype(ValidationRule rule, String noticeSubtype) {
     return rule.getNoticeSubtypeRange() != null
         && rule.getNoticeSubtypeRange().asList().contains(noticeSubtype);
+  }
+
+  private static boolean isForPostValidation(ValidationRule rule) {
+    return rule.getScope() != RuleScope.PRE;
+  }
+
+  private static boolean isForPreValidation(ValidationRule rule) {
+    return rule.getScope() != RuleScope.POST;
   }
 
   /** Used by pattern.ftl */

@@ -310,6 +310,28 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
   //#endregion IN clause tests
 
+  //#region SCOPE clause tests
+
+  @Test
+  void testScope_Flag() throws IOException {
+    String testName = "testScope_Flag";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testScope_PreExcluded() throws IOException {
+    String testName = "testScope_PreExcluded";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  //#endregion SCOPE clause tests
+
   //#region Variable tests (output verification)
 
   @Test
