@@ -102,11 +102,13 @@ public interface ScriptGenerator {
   /**
    * Given a PathExpression, this method should return the target language script for retrieving
    * the raw text content of the field, without any type-specific processing.
+   * The returned PathExpression preserves the cardinality of the input (scalar or sequence)
+   * while always having string type.
    *
    * @param fieldReference The PathExpression that points to the field.
-   * @return A StringExpression that retrieves the raw text value of the field.
+   * @return A PathExpression that retrieves the raw text value of the field.
    */
-  public StringExpression composeFieldRawValueReference(final PathExpression fieldReference);
+  public PathExpression composeFieldRawValueReference(final PathExpression fieldReference);
 
   /**
    * Given a PathExpression and an attribute name, this method should return the target language
