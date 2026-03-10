@@ -2408,9 +2408,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testFormatNumberFunction() {
-    testExpressionTranslationWithContext("format-number(PathNode/NumberField/number(), '# ##0,00')",
-        "ND-Root", "format-number(BT-00-Number, '#,##0.00')");
+  void testFormatNumber_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "format-number(BT-00-Number, '#,##0.00')"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
   }
 
   @Test

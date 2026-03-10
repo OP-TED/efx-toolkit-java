@@ -949,6 +949,17 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testModuloExpression() {
+    testExpressionTranslationWithContext("5 mod 3", "BT-00-Text", "5 % 3");
+  }
+
+  @Test
+  void testModuloForIntegerCheck() {
+    testExpressionTranslationWithContext(
+        "PathNode/NumberField/number() mod 1 = 0", "ND-Root", "BT-00-Number % 1 == 0");
+  }
+
+  @Test
   void testNumericLiteralExpression() {
     testExpressionTranslationWithContext("3.1415", "BT-00-Text", "3.1415");
   }

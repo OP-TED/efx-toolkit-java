@@ -3001,9 +3001,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitFormatNumberFunction(FormatNumberFunctionContext ctx) {
-    final StringExpression format = this.stack.pop(StringExpression.class);
-    final NumericExpression number = this.stack.pop(NumericExpression.class);
-    this.stack.push(this.script.composeNumberFormatting(number, format));
+    throw InvalidUsageException.templateOnlyFunction(ctx, "format-number");
   }
 
   @Override

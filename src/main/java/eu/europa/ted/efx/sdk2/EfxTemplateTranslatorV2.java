@@ -888,6 +888,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   @Override
+  public void exitFormatNumberFunction(FormatNumberFunctionContext ctx) {
+    final StringExpression format = this.stack.pop(StringExpression.class);
+    final NumericExpression number = this.stack.pop(NumericExpression.class);
+    this.stack.push(this.script.composeNumberFormatting(number, format));
+  }
+
+  @Override
   public void exitFormatShortDateFunction(FormatShortDateFunctionContext ctx) {
     this.stack.push(this.script.composeFormatDateShort(this.stack.pop(DateExpression.class)));
   }
