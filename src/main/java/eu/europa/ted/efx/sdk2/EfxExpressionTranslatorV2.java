@@ -2605,20 +2605,26 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitFieldRawValueProperty(FieldRawValuePropertyContext ctx) {
-    final String fieldId = getFieldId(ctx.fieldMention());
-    if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
+    final TypedExpression top = this.stack.peekType();
+    if (!(top instanceof PathExpression)) {
+      throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+    }
+    if (top instanceof SequenceExpression) {
+      final String fieldId = getFieldId(ctx.fieldReferenceWithVariableContextOverride()
+          .reference.reference.reference);
       throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
     }
-    final PathExpression fieldPath =
-        this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    final PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
     this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
   }
 
   @Override
   public void exitFieldRawValuePropertySequence(FieldRawValuePropertySequenceContext ctx) {
-    final String fieldId = getFieldId(ctx.fieldMention());
-    final PathExpression fieldPath =
-        this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    final TypedExpression top = this.stack.peekType();
+    if (!(top instanceof PathExpression)) {
+      throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+    }
+    final PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
     this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
   }
 
