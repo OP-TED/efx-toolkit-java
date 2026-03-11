@@ -1527,6 +1527,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{/} ${format-long(date('2026-02-15'), time('14:30:00Z'))}"));
   }
 
+  @Test
+  void testFormatNumber_WithFieldReference() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(format-number(PathNode/NumberField/number(), '# ##0,00')) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} ${format-number(BT-00-Number, '#,##0.00')}"));
+  }
+
   // #endregion Formatting functions ---------------------------------------------
 
   // #region Preferred language functions ----------------------------------------
