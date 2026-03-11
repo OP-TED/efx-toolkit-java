@@ -32,7 +32,7 @@ public class TypeMismatchException extends EfxCompilationException {
         NODE_CONTEXT_AS_VALUE,
         IDENTIFIER_IS_SEQUENCE,
         IDENTIFIER_IS_SCALAR,
-        DICTIONARY_IS_SCALAR
+        DICTIONARY_IS_SEQUENCE
     }
 
     private static final String CANNOT_CONVERT = "Type mismatch. Expected %s instead of %s.";
@@ -42,7 +42,7 @@ public class TypeMismatchException extends EfxCompilationException {
     private static final String NODE_CONTEXT_AS_VALUE = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
     private static final String IDENTIFIER_IS_SEQUENCE = "Type mismatch. Variable '$%s' is declared as a sequence, but is used as a scalar.";
     private static final String IDENTIFIER_IS_SCALAR = "Type mismatch. Variable '$%s' is declared as a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s].";
-    private static final String DICTIONARY_IS_SCALAR = "Type mismatch. Dictionary lookup '$%s' returns a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s['key']].";
+    private static final String DICTIONARY_IS_SEQUENCE = "Type mismatch. Dictionary lookup '$%s' returns a sequence, but is used where a scalar is expected. Use an index to select a single value: $%s['key'][1].";
 
     private final ErrorCode errorCode;
 
@@ -102,7 +102,7 @@ public class TypeMismatchException extends EfxCompilationException {
         return new TypeMismatchException(ErrorCode.IDENTIFIER_IS_SCALAR, ctx, IDENTIFIER_IS_SCALAR, variableName, variableName);
     }
 
-    public static TypeMismatchException dictionaryIsScalar(ParserRuleContext ctx, String dictionaryName) {
-        return new TypeMismatchException(ErrorCode.DICTIONARY_IS_SCALAR, ctx, DICTIONARY_IS_SCALAR, dictionaryName, dictionaryName);
+    public static TypeMismatchException dictionaryIsSequence(ParserRuleContext ctx, String dictionaryName) {
+        return new TypeMismatchException(ErrorCode.DICTIONARY_IS_SEQUENCE, ctx, DICTIONARY_IS_SEQUENCE, dictionaryName, dictionaryName);
     }
 }

@@ -16,8 +16,9 @@ package eu.europa.ted.efx.model.variables;
 import java.util.Objects;
 
 import eu.europa.ted.efx.model.expressions.PathExpression;
-import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.sequence.SequencePath;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 
 /**
  * A dictionary variable declared in EFX source code.
@@ -28,13 +29,13 @@ import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 public class Dictionary extends Identifier {
   public final StringExpression keyExpression;
   public final PathExpression pathExpression;
-  public final Class<? extends TypedExpression> type;
+  public final Class<? extends SequencePath> type;
 
   public Dictionary(String dictionaryName, PathExpression pathExpression, StringExpression keyExpression) {
     super(dictionaryName, pathExpression.getDataType());
     this.keyExpression = keyExpression;
     this.pathExpression = pathExpression;
-    this.type = pathExpression.getClass();
+    this.type = SequencePath.fromEfxDataType.get(EfxTypeLattice.toPrimitive(pathExpression.getDataType()));
   }
 
   @Override
