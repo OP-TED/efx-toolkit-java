@@ -264,11 +264,12 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   // #region resolveDictionaryLookup --------------------------------------------
 
   @Test
-  void testResolveDictionaryLookup_Scalar_InPredicate() {
-    assertDoesNotThrow(
+  void testResolveDictionaryLookup_Scalar_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
             "let $dic index BT-00-Number by BT-00-Text;",
             "with BT-00-Text[$dic['key'] == 1] display foo;")));
+    assertEquals(TypeMismatchException.ErrorCode.DICTIONARY_IS_SEQUENCE, ex.getErrorCode());
   }
 
   @Test
@@ -280,12 +281,11 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   }
 
   @Test
-  void testResolveDictionaryLookup_Sequence_Throws() {
-    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+  void testResolveDictionaryLookup_Sequence_InCountFunction() {
+    assertDoesNotThrow(
         () -> translateTemplate(lines(
             "let $dic index BT-00-Number by BT-00-Text;",
             "display ${count($dic['key'])};")));
-    assertEquals(TypeMismatchException.ErrorCode.DICTIONARY_IS_SCALAR, ex.getErrorCode());
   }
 
   // #endregion resolveDictionaryLookup -----------------------------------------

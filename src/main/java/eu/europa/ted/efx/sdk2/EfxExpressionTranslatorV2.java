@@ -3167,8 +3167,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void exitDictionaryLookup(DictionaryLookupContext ctx) {
-    if (this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SEQUENCE) {
-      throw TypeMismatchException.dictionaryIsScalar(ctx, ctx.dictionaryName.getText());
+    if (this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SCALAR) {
+      throw TypeMismatchException.dictionaryIsSequence(ctx, ctx.dictionaryName.getText());
     }
     var dictionary = this.stack.getDictionary(ctx.dictionaryName.getText());
     this.stack.push(this.script.composeDictionaryLookup(
