@@ -90,7 +90,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_absoluteNodeReference, "node reference"),
             Map.entry(RULE_nodeReferenceWithPredicate, "node reference"),
             Map.entry(RULE_nodeContext, "node reference"),
-            Map.entry(RULE_noticeReference, "notice reference"),
             Map.entry(RULE_codelistReference, "codelist reference"),
             Map.entry(RULE_variableReference, "variable reference"),
 

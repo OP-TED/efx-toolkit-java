@@ -306,25 +306,23 @@ public interface ScriptGenerator {
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
 
   /**
-   * When we need data from an external source, we need some script that gets that data. Getting the
-   * data is a two-step process: a) we need to access the data source, b) we need to get the actual
-   * data from the data source. This method should return the target language script that connects
-   * to the data source and permits us to subsequently get the data by using a PathExpression.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data source.
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeExternalReference(final StringExpression externalReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeExternalReference(final StringExpression externalReference) {
+    return null;
+  }
 
   /**
-   * See {@link #composeExternalReference} for more details.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @param fieldReference The PathExpression that points to the field in the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data. 
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
-      final PathExpression fieldReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeFieldInExternalReference(final PathExpression externalReference,
+      final PathExpression fieldReference) {
+    return null;
+  }
 
 
   /**

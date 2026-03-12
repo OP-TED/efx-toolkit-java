@@ -21,6 +21,7 @@ import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
@@ -97,5 +98,17 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
             return Expression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getClass());
         }
         return super.composeFieldValueReference(fieldReference);
+    }
+
+    @Override
+    public PathExpression composeExternalReference(StringExpression externalReference) {
+        return new NodePath(
+            "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
+    }
+
+    @Override
+    public PathExpression composeFieldInExternalReference(PathExpression externalReference,
+        PathExpression fieldReference) {
+        return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
     }
 }

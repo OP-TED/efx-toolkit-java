@@ -258,8 +258,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return getFieldId(ctx.absoluteFieldReference());
     }
 
-    if (ctx.fieldReferenceInOtherNotice() != null) {
-      return getFieldId(ctx.fieldReferenceInOtherNotice());
+    if (ctx.fieldReferenceWithVariableContextOverride() != null) {
+      return getFieldId(ctx.fieldReferenceWithVariableContextOverride());
     }
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
@@ -272,11 +272,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return getFieldId(ctx.reference.reference);
   }
 
-  protected String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
+    protected String getFieldId(FieldReferenceWithVariableContextOverrideContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return getFieldId(ctx.reference.reference.reference.reference.reference);
+    return getFieldId(ctx.reference.reference.reference.reference);
   }
 
   protected String getFieldId(FieldContextContext ctx) {
@@ -312,8 +312,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return getNodeId(ctx.absoluteNodeReference().nodeReferenceWithPredicate());
     }
 
-    if (ctx.nodeReferenceInOtherNotice() != null) {
-      return getNodeId(ctx.nodeReferenceInOtherNotice().nodeReferenceWithPredicate());
+    if (ctx.nodeReferenceWithPredicate() != null) {
+      return getNodeId(ctx.nodeReferenceWithPredicate());
     }
 
     assert false : "Unexpected context type for node reference: " + ctx.getClass().getSimpleName();
@@ -1872,35 +1872,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   // #endregion References with Predicates ------------------------------------
-
-  // #region External References ----------------------------------------------
-
-  @Override
-  public void exitNoticeReference(NoticeReferenceContext ctx) {
-    this.stack.push(this.script.composeExternalReference(this.stack.pop(StringExpression.class)));
-  }
-
-  @Override
-  public void enterFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
-    if (ctx.noticeReference() != null) {
-      // We push a null context as we switch to an external notice and we need XPaths to be absolute
-      this.efxContext.push(null);
-    }
-  }
-
-  @Override
-  public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
-    if (ctx.noticeReference() != null) {
-      PathExpression field = this.stack.pop(PathExpression.class);
-      PathExpression notice = this.stack.pop(PathExpression.class);
-      this.stack.push(this.script.composeFieldInExternalReference(notice, field));
-
-      // Finally, pop the null context we pushed during enterFieldReferenceInOtherNotice
-      this.efxContext.pop();
-    }
-  }
-
-  // #endregion External References -------------------------------------------
 
   // #region Value References -------------------------------------------------
 

@@ -296,19 +296,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
   }
 
-  @Override
-  public PathExpression composeExternalReference(StringExpression externalReference) {
-    return new NodePath(
-        "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
-  }
-
-
-  @Override
-  public PathExpression composeFieldInExternalReference(PathExpression externalReference,
-      PathExpression fieldReference) {
-    return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
-  }
-
 
   @Override
   public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
