@@ -24,7 +24,11 @@ public enum EfxLinkedProperty {
   IS_MASKED(":isMasked", INDICATOR),
 
   // Raw value (textExpression rule)
-  RAW_VALUE(":rawValue", TEXT);
+  RAW_VALUE(":rawValue", TEXT),
+
+  // Preferred language properties (stringExpression rule, template-only)
+  PREFERRED_LANGUAGE(":preferredLanguage", TEXT),
+  PREFERRED_LANGUAGE_TEXT(":preferredLanguageText", TEXT);
 
   private final String label;
   private final EfxDataType dataType;

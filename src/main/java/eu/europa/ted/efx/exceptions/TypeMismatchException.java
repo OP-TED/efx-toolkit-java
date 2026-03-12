@@ -29,6 +29,7 @@ public class TypeMismatchException extends EfxCompilationException {
         CANNOT_COMPARE,
         INCOMPATIBLE_OPERANDS,
         FIELD_MAY_REPEAT,
+        FIELD_IS_MULTILINGUAL,
         NODE_CONTEXT_AS_VALUE,
         IDENTIFIER_IS_SEQUENCE,
         IDENTIFIER_IS_SCALAR,
@@ -39,6 +40,7 @@ public class TypeMismatchException extends EfxCompilationException {
     private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s.";
     private static final String INCOMPATIBLE_OPERANDS = "Type mismatch. Operator '%s' cannot be applied to %s and %s.";
     private static final String FIELD_MAY_REPEAT = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
+    private static final String FIELD_IS_MULTILINGUAL = "Type mismatch. Field '%s' is multilingual and has multiple values (one per language), but is used as a scalar. Use :preferredLanguageText to select the preferred language, or an indexer [n] to select a specific element.";
     private static final String NODE_CONTEXT_AS_VALUE = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
     private static final String IDENTIFIER_IS_SEQUENCE = "Type mismatch. Variable '$%s' is declared as a sequence, but is used as a scalar.";
     private static final String IDENTIFIER_IS_SCALAR = "Type mismatch. Variable '$%s' is declared as a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s].";
@@ -88,6 +90,10 @@ public class TypeMismatchException extends EfxCompilationException {
     public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, String fieldId, String contextSymbol) {
         return new TypeMismatchException(ErrorCode.FIELD_MAY_REPEAT, ctx, FIELD_MAY_REPEAT, fieldId,
                 contextSymbol != null ? contextSymbol : "root");
+    }
+
+    public static TypeMismatchException fieldIsMultilingual(ParserRuleContext ctx, String fieldId) {
+        return new TypeMismatchException(ErrorCode.FIELD_IS_MULTILINGUAL, ctx, FIELD_IS_MULTILINGUAL, fieldId);
     }
 
     public static TypeMismatchException nodeContextUsedAsValue(ParserRuleContext ctx, String variableName, String nodeId) {

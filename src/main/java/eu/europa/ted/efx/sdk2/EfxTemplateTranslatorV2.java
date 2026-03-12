@@ -42,7 +42,6 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
-import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -60,10 +59,8 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
-import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
-import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
@@ -82,7 +79,6 @@ import eu.europa.ted.efx.model.templates.TemplateDefinition;
 import eu.europa.ted.efx.model.templates.TemplateInvocation;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Dictionary;
 import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.StrictArguments;
@@ -92,7 +88,7 @@ import eu.europa.ted.efx.model.variables.ParsedParameters;
 import eu.europa.ted.efx.model.variables.Template;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
-import eu.europa.ted.efx.model.expressions.scalar.MultilingualStringPath;
+import eu.europa.ted.efx.model.expressions.sequence.MultilingualStringSequencePath;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
@@ -978,12 +974,22 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitPreferredLanguageFunction(PreferredLanguageFunctionContext ctx) {
-    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringSequencePath.class)));
   }
 
   @Override
   public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
-    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringPath.class)));
+    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringSequencePath.class)));
+  }
+
+  @Override
+  public void exitFieldPreferredLanguageProperty(FieldPreferredLanguagePropertyContext ctx) {
+    this.stack.push(this.script.getPreferredLanguage(this.stack.pop(MultilingualStringSequencePath.class)));
+  }
+
+  @Override
+  public void exitFieldPreferredLanguageTextProperty(FieldPreferredLanguageTextPropertyContext ctx) {
+    this.stack.push(this.script.getTextInPreferredLanguage(this.stack.pop(MultilingualStringSequencePath.class)));
   }
 
   // #endregion Preferred language functions -------------------------------------

@@ -1435,7 +1435,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       final String contextFieldId = getFieldId(ctx.fieldContext());
       this.efxContext.declareContextVariable(variable.name,
           new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
+              path));
     } else if (ctx.nodeContext() != null) {
       final String contextNodeId =
           getNodeId(ctx.nodeContext());
@@ -1794,6 +1794,20 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitFieldContext(FieldContextContext ctx) {
+    if (ctx.indexer() != null) {
+      NumericExpression index = this.stack.pop(NumericExpression.class);
+      final TypedExpression top = this.stack.peekType();
+      if (!(top instanceof PathExpression)) {
+        throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+      }
+      PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
+      this.stack.push(this.script.composeIndexer(fieldPath.asSequence(), index,
+          ScalarPath.fromEfxDataType.get(EfxTypeLattice.toPrimitive(fieldPath.getDataType()))));
+    }
+  }
+
+  @Override
   public void enterAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.push(null);
@@ -1956,8 +1970,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.stack.push(result);
         break;
       case RESOLVE_SCALAR:
-        if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
-          throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
+        if (this.fieldMayReturnMultipleValues(fieldId)) {
+          throw this.fieldMayReturnMultipleValuesException(ctx, fieldId);
         }
         this.stack.push(result);
         break;
@@ -1965,7 +1979,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.stack.push(result.asSequence());
         break;
       case RESOLVE_EITHER:
-        if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
+        if (this.fieldMayReturnMultipleValues(fieldId)) {
           this.stack.push(result.asSequence());
         } else {
           this.stack.push(result);
@@ -1975,11 +1989,13 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   /**
-   * Returns true if a field is repeatable from the current EFX context.
+   * Returns true if a field may return multiple values from the current EFX context.
+   * This includes fields that are repeatable (from SDK metadata or node hierarchy)
+   * and multilingual fields (which have multiple XML elements, one per language).
    * A field is not considered repeatable if it IS the current context (e.g., inside a WITH block
    * on this field, we're referencing the current element being iterated, not the whole sequence).
    */
-  private boolean isFieldRepeatableFromCurrentContext(String fieldId) {
+  private boolean fieldMayReturnMultipleValues(String fieldId) {
     if (!this.efxContext.isEmpty()
         && this.efxContext.peek() != null
         && this.efxContext.peek().isFieldContext()
@@ -1987,6 +2003,18 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return false;
     }
     return this.symbols.isFieldRepeatableFromContext(fieldId, this.getContextNodeId());
+  }
+
+  /**
+   * Creates the appropriate exception for a field that may return multiple values but is used
+   * as a scalar. Returns {@link TypeMismatchException#fieldIsMultilingual} for multilingual fields,
+   * or {@link TypeMismatchException#fieldMayRepeat} for structurally repeatable fields.
+   */
+  private TypeMismatchException fieldMayReturnMultipleValuesException(ParserRuleContext ctx, String fieldId) {
+    if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(this.symbols.getTypeOfField(fieldId))) {
+      return TypeMismatchException.fieldIsMultilingual(ctx, fieldId);
+    }
+    return TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
   }
 
   /**
@@ -2018,12 +2046,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    */
   @Override
   public void exitContextFieldSpecifier(ContextFieldSpecifierContext ctx) {
-    this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
-                                          // the context field.
+    final PathExpression contextFieldPath = this.stack.pop(PathExpression.class);
     final String contextFieldId = getFieldId(ctx.fieldContext());
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
+            contextFieldPath));
   }
 
 
@@ -2518,10 +2545,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitFieldWasWithheldProperty(FieldWasWithheldPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
-    if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
-
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
       throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
@@ -2533,10 +2556,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitFieldIsWithheldProperty(FieldIsWithheldPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
-    if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
-
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
       throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
@@ -2558,10 +2577,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitFieldIsDisclosedProperty(FieldIsDisclosedPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
-    if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
-
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
       throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
@@ -2572,16 +2587,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         this.script.composeLogicalAnd(
             this.composeWasWithheldCondition(fieldId, privacyCode),
             this.script.composeLogicalNot(this.composeStillWithheldCondition(fieldId))),
-        this.script.composeLogicalNot(this.composeIsMaskedCondition(ctx, fieldId))));
+        this.script.composeLogicalNot(this.composeIsMaskedCondition(fieldId))));
   }
 
   @Override
   public void exitFieldIsMaskedProperty(FieldIsMaskedPropertyContext ctx) {
     final String fieldId = getFieldId(ctx.fieldMention());
-    if (this.isFieldRepeatableFromCurrentContext(fieldId)) {
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
-
     final String privacyCode = this.symbols.getPrivacyCodeOfField(fieldId);
     if (privacyCode == null || privacyCode.isEmpty()) {
       throw InvalidUsageException.fieldNotWithholdable(ctx, fieldId);
@@ -2590,7 +2601,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     // "isMasked" = was withheld AND field value equals the privacy mask
     this.stack.push(this.script.composeLogicalAnd(
         this.composeWasWithheldCondition(fieldId, privacyCode),
-        this.composeIsMaskedCondition(ctx, fieldId)));
+        this.composeIsMaskedCondition(fieldId)));
   }
 
   @Override
@@ -2604,25 +2615,15 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldRawValueProperty(FieldRawValuePropertyContext ctx) {
+  public void exitRawValueReference(RawValueReferenceContext ctx) {
     final TypedExpression top = this.stack.peekType();
     if (!(top instanceof PathExpression)) {
       throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
     }
-    if (top instanceof SequenceExpression) {
-      final String fieldId = getFieldId(ctx.fieldReferenceWithVariableContextOverride()
-          .reference.reference.reference);
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
-    final PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
-    this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
-  }
-
-  @Override
-  public void exitFieldRawValuePropertySequence(FieldRawValuePropertySequenceContext ctx) {
-    final TypedExpression top = this.stack.peekType();
-    if (!(top instanceof PathExpression)) {
-      throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+    if (top instanceof SequenceExpression
+        && this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SCALAR) {
+      final String fieldId = getFieldId(ctx.fieldContext());
+      throw this.fieldMayReturnMultipleValuesException(ctx, fieldId);
     }
     final PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
     this.stack.push(this.script.composeFieldRawValueReference(fieldPath));
@@ -2660,13 +2661,9 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
         BooleanExpression.class);
   }
 
-  private BooleanExpression composeIsMaskedCondition(ParserRuleContext ctx, String fieldId) {
+  private BooleanExpression composeIsMaskedCondition(String fieldId) {
     final String maskingValue = this.symbols.getPrivacyMask(fieldId);
     final PathExpression fieldValue = this.script.composeFieldValueReference(this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol()));
-
-    if (!(fieldValue instanceof ScalarExpression)) {
-      throw TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
-    }
 
     return this.script.composeComparisonOperation(
         TypedExpression.from(fieldValue, ScalarExpression.class),
@@ -3163,6 +3160,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitPreferredLanguageTextFunction(PreferredLanguageTextFunctionContext ctx) {
     throw InvalidUsageException.templateOnlyFunction(ctx, "preferred-language-text");
+  }
+
+  @Override
+  public void exitFieldPreferredLanguageProperty(FieldPreferredLanguagePropertyContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction(ctx, ":preferredLanguage");
+  }
+
+  @Override
+  public void exitFieldPreferredLanguageTextProperty(FieldPreferredLanguageTextPropertyContext ctx) {
+    throw InvalidUsageException.templateOnlyFunction(ctx, ":preferredLanguageText");
   }
 
   @Override

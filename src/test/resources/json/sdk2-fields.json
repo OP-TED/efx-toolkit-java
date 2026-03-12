@@ -104,6 +104,13 @@
       "repeatable": false
     },
     {
+      "id": "ND-PrivacyForMultilingualText",
+      "parentId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']",
+      "xpathRelative": "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']",
+      "repeatable": false
+    },
+    {
       "id": "ND-PrivacyInRepeatableNode",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']",
@@ -194,7 +201,14 @@
       "type": "text-multilingual",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/TextMultilingualField",
-      "xpathRelative": "PathNode/TextMultilingualField"
+      "xpathRelative": "PathNode/TextMultilingualField",
+      "privacy": {
+        "code": "ml-text-priv",
+        "unpublishedFieldId": "BT-195(BT-00)-Text-Multilingual",
+        "reasonCodeFieldId": "BT-197(BT-00)-Text-Multilingual",
+        "reasonDescriptionFieldId": "BT-196(BT-00)-Text-Multilingual",
+        "publicationDateFieldId": "BT-198(BT-00)-Text-Multilingual"
+      }
     },
     {
       "id": "BT-00-StartDate",
@@ -1084,6 +1098,35 @@
       "type": "date",
       "parentNodeId": "ND-PrivacyForRepeatableText",
       "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/PublicationDate",
+      "xpathRelative": "PublicationDate"
+    },
+    {
+      "id": "BT-195(BT-00)-Text-Multilingual",
+      "type": "code",
+      "parentNodeId": "ND-PrivacyForMultilingualText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']/FieldIdentifierCode",
+      "xpathRelative": "FieldIdentifierCode",
+      "presetValue": "ml-text-priv"
+    },
+    {
+      "id": "BT-196(BT-00)-Text-Multilingual",
+      "type": "text-multilingual",
+      "parentNodeId": "ND-PrivacyForMultilingualText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']/ReasonDescription",
+      "xpathRelative": "ReasonDescription"
+    },
+    {
+      "id": "BT-197(BT-00)-Text-Multilingual",
+      "type": "code",
+      "parentNodeId": "ND-PrivacyForMultilingualText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']/ReasonCode",
+      "xpathRelative": "ReasonCode"
+    },
+    {
+      "id": "BT-198(BT-00)-Text-Multilingual",
+      "type": "date",
+      "parentNodeId": "ND-PrivacyForMultilingualText",
+      "xpathAbsolute": "/*/PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']/PublicationDate",
       "xpathRelative": "PublicationDate"
     }
   ]

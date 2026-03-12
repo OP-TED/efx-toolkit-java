@@ -257,7 +257,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends TypedExpression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type) {
     return Expression.instantiate(
-        "(if " + condition.getScript() + " then " + whenTrue.getScript() + " else " + whenFalse.getScript() + ")",
+        "(if (" + condition.getScript() + ") then " + whenTrue.getScript() + " else " + whenFalse.getScript() + ")",
         type);
   }
 
