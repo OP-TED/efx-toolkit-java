@@ -442,6 +442,11 @@ public class SdkSymbolResolver implements SymbolResolver {
       return !sdkField.equals(context);
     }
 
+    // Multilingual fields have multiple XML elements (one per language)
+    if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(sdkField.getType())) {
+      return true;
+    }
+
     // Use cached ancestry from node
     List<String> contextAncestry = context != null
         ? context.getParentNode().getAncestry()
@@ -477,6 +482,11 @@ public class SdkSymbolResolver implements SymbolResolver {
   private boolean isFieldRepeatableFromContext(final SdkField sdkField, final SdkNode context) {
     // If the field itself is repeatable, it returns multiple values
     if (sdkField.isRepeatable()) {
+      return true;
+    }
+
+    // Multilingual fields have multiple XML elements (one per language)
+    if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(sdkField.getType())) {
       return true;
     }
 

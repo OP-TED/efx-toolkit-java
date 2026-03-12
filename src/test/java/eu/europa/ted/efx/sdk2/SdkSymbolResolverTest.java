@@ -35,7 +35,7 @@ import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanPath;
 import eu.europa.ted.efx.model.expressions.scalar.DatePath;
 import eu.europa.ted.efx.model.expressions.scalar.DurationPath;
-import eu.europa.ted.efx.model.expressions.scalar.MultilingualStringPath;
+import eu.europa.ted.efx.model.expressions.sequence.MultilingualStringSequencePath;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericPath;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
@@ -365,11 +365,11 @@ class SdkSymbolResolverTest {
     }
 
     @Test
-    @DisplayName("Multilingual field returns MultilingualStringPath")
-    void multilingualField_shouldReturnMultilingualStringPath() {
+    @DisplayName("Multilingual field returns MultilingualStringSequencePath")
+    void multilingualField_shouldReturnMultilingualStringSequencePath() {
       PathExpression path = resolver.getAbsolutePathOfField("BT-00-Text-Multilingual");
-      assertEquals(MultilingualStringPath.class, path.getClass(),
-          "Multilingual field should return MultilingualStringPath");
+      assertEquals(MultilingualStringSequencePath.class, path.getClass(),
+          "Multilingual field should return MultilingualStringSequencePath");
     }
 
     @Test

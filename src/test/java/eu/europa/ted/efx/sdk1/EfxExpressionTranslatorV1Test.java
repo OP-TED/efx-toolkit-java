@@ -392,42 +392,42 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testConditionalExpression() {
-    testExpressionTranslationWithContext("(if 1 > 2 then 'a' else 'b')", "ND-Root",
+    testExpressionTranslationWithContext("(if (1 > 2) then 'a' else 'b')", "ND-Root",
         "if 1 > 2 then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingLiterals() {
-    testExpressionTranslationWithContext("(if 'a' > 'b' then 'a' else 'b')", "ND-Root",
+    testExpressionTranslationWithContext("(if ('a' > 'b') then 'a' else 'b')", "ND-Root",
         "if 'a' > 'b' then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingFieldReferenceInCondition() {
     testExpressionTranslationWithContext(
-        "(if 'a' > PathNode/TextField/normalize-space(text()) then 'a' else 'b')", "ND-Root",
+        "(if ('a' > PathNode/TextField/normalize-space(text())) then 'a' else 'b')", "ND-Root",
         "if 'a' > BT-00-Text then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/TextField/normalize-space(text()) >= 'a' then 'a' else 'b')", "ND-Root",
+        "(if (PathNode/TextField/normalize-space(text()) >= 'a') then 'a' else 'b')", "ND-Root",
         "if BT-00-Text >= 'a' then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/TextField/normalize-space(text()) >= PathNode/TextField/normalize-space(text()) then 'a' else 'b')",
+        "(if (PathNode/TextField/normalize-space(text()) >= PathNode/TextField/normalize-space(text())) then 'a' else 'b')",
         "ND-Root", "if BT-00-Text >= BT-00-Text then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/StartDateField/xs:date(text()) >= PathNode/EndDateField/xs:date(text()) then 'a' else 'b')",
+        "(if (PathNode/StartDateField/xs:date(text()) >= PathNode/EndDateField/xs:date(text())) then 'a' else 'b')",
         "ND-Root", "if BT-00-StartDate >= BT-00-EndDate then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then PathNode/TextField/normalize-space(text()) else 'b')", "ND-Root",
+        "(if ('a' > 'b') then PathNode/TextField/normalize-space(text()) else 'b')", "ND-Root",
         "if 'a' > 'b' then BT-00-Text else 'b'");
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then 'a' else PathNode/TextField/normalize-space(text()))", "ND-Root",
+        "(if ('a' > 'b') then 'a' else PathNode/TextField/normalize-space(text()))", "ND-Root",
         "if 'a' > 'b' then 'a' else BT-00-Text");
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then PathNode/TextField/normalize-space(text()) else PathNode/TextField/normalize-space(text()))",
+        "(if ('a' > 'b') then PathNode/TextField/normalize-space(text()) else PathNode/TextField/normalize-space(text()))",
         "ND-Root", "if 'a' > 'b' then BT-00-Text else BT-00-Text");
   }
 
@@ -439,34 +439,34 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testConditionalBooleanExpression() {
-    testExpressionTranslationWithContext("(if PathNode/IndicatorField then true() else false())",
+    testExpressionTranslationWithContext("(if (PathNode/IndicatorField) then true() else false())",
         "ND-Root", "if BT-00-Indicator then TRUE else FALSE");
   }
 
   @Test
   void testConditionalNumericExpression() {
-    testExpressionTranslationWithContext("(if 1 > 2 then 1 else PathNode/NumberField/number())",
+    testExpressionTranslationWithContext("(if (1 > 2) then 1 else PathNode/NumberField/number())",
         "ND-Root", "if 1 > 2 then 1 else BT-00-Number");
   }
 
   @Test
   void testConditionalDateExpression() {
     testExpressionTranslationWithContext(
-        "(if xs:date('2012-01-01Z') > PathNode/EndDateField/xs:date(text()) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02Z'))",
+        "(if (xs:date('2012-01-01Z') > PathNode/EndDateField/xs:date(text())) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02Z'))",
         "ND-Root", "if 2012-01-01Z > BT-00-EndDate then BT-00-StartDate else 2012-01-02Z");
   }
 
   @Test
   void testConditionalTimeExpression() {
     testExpressionTranslationWithContext(
-        "(if PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01Z') then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01Z'))",
+        "(if (PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01Z')) then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01Z'))",
         "ND-Root", "if BT-00-EndTime > 00:00:01Z then BT-00-StartTime else 00:00:01Z");
   }
 
   @Test
   void testConditionalDurationExpression() {
     assertEquals(
-        "(if boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + (for $F in PathNode/DurationField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
+        "(if (boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + (for $F in PathNode/DurationField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
         translateExpressionWithContext("ND-Root", "if P1D > BT-00-Duration then P1D else P2D"));
   }
 

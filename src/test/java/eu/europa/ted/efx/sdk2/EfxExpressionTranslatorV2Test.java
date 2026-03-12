@@ -166,11 +166,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "{ND-Root} ${BT-00-Text like '[0-9]*'}");
   }
 
-  @Test
-  void testLikePatternCondition_WithTextMultilingualField() {
-    testExpressionTranslation("every $lang in PathNode/TextMultilingualField/@languageID satisfies fn:matches(normalize-space(PathNode/TextMultilingualField[./@languageID = $lang]/normalize-space(text())), '[0-9]*')",
-        "{ND-Root} ${every text:$lang in BT-00-Text-Multilingual/@languageID satisfies BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == $lang]  like '[0-9]*'}");
-  }
 
   @Test
   void testPreferredLanguage_ThrowsInExpressionContext() {
@@ -188,10 +183,24 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testFieldValueComparison_UsingTextFields() {
-    testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
-        "Root", "textField == textMultilingualField");
+  void testPreferredLanguageProperty_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text-Multilingual:preferredLanguage"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_ThrowsInExpressionContext() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text-Multilingual:preferredLanguageText"));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
+  }
+
+  @Test
+  void testFieldValueComparison_UsingTextFields_ThrowsBecauseMultilingual() {
+    TypeMismatchException exception = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("Root", "textField == textMultilingualField"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL, exception.getErrorCode());
   }
 
   @Test
@@ -504,42 +513,42 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testConditionalExpression() {
-    testExpressionTranslationWithContext("(if 1 > 2 then 'a' else 'b')", "ND-Root",
+    testExpressionTranslationWithContext("(if (1 > 2) then 'a' else 'b')", "ND-Root",
         "if 1 > 2 then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingLiterals() {
-    testExpressionTranslationWithContext("(if 'a' > 'b' then 'a' else 'b')", "ND-Root",
+    testExpressionTranslationWithContext("(if ('a' > 'b') then 'a' else 'b')", "ND-Root",
         "if 'a' > 'b' then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingFieldReferenceInCondition() {
     testExpressionTranslationWithContext(
-        "(if 'a' > PathNode/TextField/normalize-space(text()) then 'a' else 'b')", "ND-Root",
+        "(if ('a' > PathNode/TextField/normalize-space(text())) then 'a' else 'b')", "ND-Root",
         "if 'a' > BT-00-Text then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/TextField/normalize-space(text()) >= 'a' then 'a' else 'b')", "ND-Root",
+        "(if (PathNode/TextField/normalize-space(text()) >= 'a') then 'a' else 'b')", "ND-Root",
         "if BT-00-Text >= 'a' then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/TextField/normalize-space(text()) >= PathNode/TextField/normalize-space(text()) then 'a' else 'b')",
+        "(if (PathNode/TextField/normalize-space(text()) >= PathNode/TextField/normalize-space(text())) then 'a' else 'b')",
         "ND-Root", "if BT-00-Text >= BT-00-Text then 'a' else 'b'");
     testExpressionTranslationWithContext(
-        "(if PathNode/StartDateField/xs:date(text()) >= PathNode/EndDateField/xs:date(text()) then 'a' else 'b')",
+        "(if (PathNode/StartDateField/xs:date(text()) >= PathNode/EndDateField/xs:date(text())) then 'a' else 'b')",
         "ND-Root", "if BT-00-StartDate >= BT-00-EndDate then 'a' else 'b'");
   }
 
   @Test
   void testConditionalStringExpression_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then PathNode/TextField/normalize-space(text()) else 'b')", "ND-Root",
+        "(if ('a' > 'b') then PathNode/TextField/normalize-space(text()) else 'b')", "ND-Root",
         "if 'a' > 'b' then BT-00-Text else 'b'");
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then 'a' else PathNode/TextField/normalize-space(text()))", "ND-Root",
+        "(if ('a' > 'b') then 'a' else PathNode/TextField/normalize-space(text()))", "ND-Root",
         "if 'a' > 'b' then 'a' else BT-00-Text");
     testExpressionTranslationWithContext(
-        "(if 'a' > 'b' then PathNode/TextField/normalize-space(text()) else PathNode/TextField/normalize-space(text()))",
+        "(if ('a' > 'b') then PathNode/TextField/normalize-space(text()) else PathNode/TextField/normalize-space(text()))",
         "ND-Root", "if 'a' > 'b' then BT-00-Text else BT-00-Text");
   }
 
@@ -551,34 +560,34 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testConditionalBooleanExpression() {
-    testExpressionTranslationWithContext("(if PathNode/IndicatorField then true() else false())",
+    testExpressionTranslationWithContext("(if (PathNode/IndicatorField) then true() else false())",
         "ND-Root", "if BT-00-Indicator then TRUE else FALSE");
   }
 
   @Test
   void testConditionalNumericExpression() {
-    testExpressionTranslationWithContext("(if 1 > 2 then 1 else PathNode/NumberField/number())",
+    testExpressionTranslationWithContext("(if (1 > 2) then 1 else PathNode/NumberField/number())",
         "ND-Root", "if 1 > 2 then 1 else BT-00-Number");
   }
 
   @Test
   void testConditionalDateExpression() {
     testExpressionTranslationWithContext(
-        "(if xs:date('2012-01-01Z') > PathNode/EndDateField/xs:date(text()) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02Z'))",
+        "(if (xs:date('2012-01-01Z') > PathNode/EndDateField/xs:date(text())) then PathNode/StartDateField/xs:date(text()) else xs:date('2012-01-02Z'))",
         "ND-Root", "if 2012-01-01Z > BT-00-EndDate then BT-00-StartDate else 2012-01-02Z");
   }
 
   @Test
   void testConditionalTimeExpression() {
     testExpressionTranslationWithContext(
-        "(if PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01Z') then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01Z'))",
+        "(if (PathNode/EndTimeField/xs:time(text()) > xs:time('00:00:01Z')) then PathNode/StartTimeField/xs:time(text()) else xs:time('00:00:01Z'))",
         "ND-Root", "if BT-00-EndTime > 00:00:01Z then BT-00-StartTime else 00:00:01Z");
   }
 
   @Test
   void testConditionalDurationExpression() {
     assertEquals(
-        "(if boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + (for $F in PathNode/DurationField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ())))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
+        "(if (boolean(for $T in (current-date()) return ($T + xs:dayTimeDuration('P1D') > $T + (for $F in PathNode/DurationField return (if ($F/@unitCode='WEEK') then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D')) else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D')) else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y')) else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))))) then xs:dayTimeDuration('P1D') else xs:dayTimeDuration('P2D'))",
         translateExpressionWithContext("ND-Root", "if P1D > BT-00-Duration then P1D else P2D"));
   }
 
@@ -1305,6 +1314,21 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ND-Root", "BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng']");
   }
 
+  @Test
+  void testMultilingualTextFieldReference_InScalarContext_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Text-Multilingual == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL, ex.getErrorCode());
+  }
+
+  @Test
+  void testMultilingualTextFieldReference_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextMultilingualField/normalize-space(text())",
+        "ND-Root",
+        "'test' in BT-00-Text-Multilingual");
+  }
 
   // #endregion: References
 
@@ -1507,9 +1531,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testComputedProperty_isMasked_repeatingFieldFromContext() {
-    assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("ND-Root",
-            "BT-00-Text-In-Repeatable-Node:isMasked"));
+    final String privacyPath = "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "RepeatableNode/TextField/normalize-space(text()) = 'unpublished'",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:isMasked");
   }
 
   @Test
@@ -1714,6 +1742,22 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         () -> translateExpressionWithContext("ND-Root",
             "BT-00-Repeatable-Text:rawValue == 'test'"));
     assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
+  }
+
+  @Test
+  void testFieldRawValue_MultilingualFieldInScalarContext_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Text-Multilingual:rawValue == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL, ex.getErrorCode());
+  }
+
+  @Test
+  void testFieldRawValue_MultilingualFieldInSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextMultilingualField/text()",
+        "ND-Root",
+        "'test' in BT-00-Text-Multilingual:rawValue");
   }
 
   // #endregion: Boolean functions
@@ -3549,4 +3593,933 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   // #endregion: B1 Grammar Issue
+
+  // #region: Field Reference Structural Combinations -------------------------
+  //   Tests covering fieldReference grammar structural forms
+  //   (predicates, absolute refs, context overrides, indexers)
+  //   in different consumer contexts (scalar, sequence, presence).
+
+  // #region: Absolute and predicate combinations
+
+  @Test
+  void testAbsoluteFieldReference_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = /*/PathNode/TextField/normalize-space(text())",
+        "BT-00-Text",
+        "'test' in /BT-00-Text");
+  }
+
+  @Test
+  void testAbsoluteFieldReference_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/TextField",
+        "BT-00-Text",
+        "/BT-00-Text is present");
+  }
+
+  @Test
+  void testAbsoluteFieldReference_WithPredicate() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/IndicatorField['a' = 'a']",
+        "BT-00-Text",
+        "/BT-00-Indicator['a' == 'a']");
+  }
+
+  @Test
+  void testFieldReferenceWithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextField['a' = 'a']/normalize-space(text())",
+        "ND-Root",
+        "'test' in BT-00-Text['a' == 'a']");
+  }
+
+  @Test
+  void testFieldReferenceWithPredicate_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "PathNode/TextField['a' = 'a']",
+        "ND-Root",
+        "BT-00-Text['a' == 'a'] is present");
+  }
+
+  @Test
+  void testLinkedProperty_InScalarComparison() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/PublicationDate/xs:date(text()) = xs:date('2025-01-01Z')",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:publicationDate == 2025-01-01Z");
+  }
+
+  // Row 2 ATTR
+  @Test
+  void testFieldReferenceWithPredicate_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "PathNode/CodeField['a' = 'a']/@listName",
+        "ND-Root",
+        "BT-00-Code['a' == 'a']/@listName");
+  }
+
+  // Row 3 ATTR
+  @Test
+  void testAbsoluteFieldReference_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/CodeField/@listName",
+        "BT-00-Text",
+        "/BT-00-Code/@listName");
+  }
+
+  // Row 4 SC
+  @Test
+  void testAbsoluteFieldReferenceWithPredicate_InScalarContext() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/TextField['a' = 'a']/normalize-space(text()) = 'test'",
+        "BT-00-Text",
+        "/BT-00-Text['a' == 'a'] == 'test'");
+  }
+
+  // Row 4 SEQ
+  @Test
+  void testAbsoluteFieldReferenceWithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = /*/PathNode/TextField['a' = 'a']/normalize-space(text())",
+        "BT-00-Text",
+        "'test' in /BT-00-Text['a' == 'a']");
+  }
+
+  // Row 4 ATTR
+  @Test
+  void testAbsoluteFieldReferenceWithPredicate_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/CodeField['a' = 'a']/@listName",
+        "BT-00-Text",
+        "/BT-00-Code['a' == 'a']/@listName");
+  }
+
+  // Row 5 SEQ
+  @Test
+  void testLinkedProperty_InSequenceContext() {
+    final String privacyPath = "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        "xs:date('2025-01-01Z') = " + privacyPath + "/PublicationDate/xs:date(text())",
+        "ND-Root",
+        "2025-01-01Z in BT-00-Text-In-Repeatable-Node:publicationDate");
+  }
+
+  // #endregion: Absolute and predicate combinations
+
+  // #region: Context override combinations (field::, node::, $var::, stacked)
+
+  @Test
+  void testFieldContextOverride_WithPredicateOnContext() {
+    // joinPaths simplifies: ../ChildNode/SubLevelTextField['a'='a']/../../TextField → ../TextField
+    // because navigating UP from a predicated node reaches the parent regardless
+    testExpressionTranslationWithContext(
+        "../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
+  }
+
+  @Test
+  void testFieldContextOverride_WithIndexerOnContext() {
+    // joinPaths simplifies the indexed context path the same way as predicates
+    testExpressionTranslationWithContext(
+        "../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text[1]::BT-00-Text");
+  }
+
+  @Test
+  void testFieldContextOverride_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "'test' in BT-01-SubLevel-Text::BT-00-Text");
+  }
+
+  @Test
+  void testNodeContextOverride_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../../PathNode/TextField/normalize-space(text())",
+        "BT-00-Text",
+        "'test' in ND-Root::BT-00-Text");
+  }
+
+  @Test
+  void testStackedOverride_NodeAndField() {
+    // joinPaths simplifies: .../ChildNode/SubLevelTextField/../../TextField → .../TextField
+    testExpressionTranslationWithContext(
+        "../../PathNode/TextField/normalize-space(text())",
+        "BT-00-Text",
+        "ND-Root::BT-01-SubLevel-Text::BT-00-Text");
+  }
+
+  // Row 6 PRES
+  @Test
+  void testFieldContextOverride_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../TextField",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text::BT-00-Text is present");
+  }
+
+  // Row 6 ATTR
+  @Test
+  void testFieldContextOverride_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../CodeField/@listName",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text::BT-00-Code/@listName");
+  }
+
+  // Row 7 SEQ
+  @Test
+  void testFieldContextOverride_WithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "'test' in BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
+  }
+
+  // Row 7 PRES
+  @Test
+  void testFieldContextOverride_WithPredicate_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../TextField",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text is present");
+  }
+
+  // Row 7 ATTR
+  @Test
+  void testFieldContextOverride_WithPredicate_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../CodeField/@listName",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Code/@listName");
+  }
+
+  // Row 8 SEQ
+  @Test
+  void testFieldContextOverride_WithIndexer_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "'test' in BT-01-SubLevel-Text[1]::BT-00-Text");
+  }
+
+  // Row 8 PRES
+  @Test
+  void testFieldContextOverride_WithIndexer_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../TextField",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text[1]::BT-00-Text is present");
+  }
+
+  // Row 8 ATTR
+  @Test
+  void testFieldContextOverride_WithIndexer_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../CodeField/@listName",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text[1]::BT-00-Code/@listName");
+  }
+
+  // Row 9 PRES
+  @Test
+  void testNodeContextOverride_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/TextField",
+        "BT-00-Text",
+        "ND-Root::BT-00-Text is present");
+  }
+
+  // Row 9 ATTR
+  @Test
+  void testNodeContextOverride_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/CodeField/@listName",
+        "BT-00-Text",
+        "ND-Root::BT-00-Code/@listName");
+  }
+
+  // Row 10 SEQ
+  @Test
+  void testNodeContextOverride_WithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../../PathNode/TextField/normalize-space(text())",
+        "BT-00-Text",
+        "'test' in ND-Root[BT-00-Indicator == TRUE]::BT-00-Text");
+  }
+
+  // Row 10 PRES
+  @Test
+  void testNodeContextOverride_WithPredicate_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/TextField",
+        "BT-00-Text",
+        "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text is present");
+  }
+
+  // Row 10 ATTR
+  @Test
+  void testNodeContextOverride_WithPredicate_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/CodeField/@listName",
+        "BT-00-Text",
+        "ND-Root[BT-00-Indicator == TRUE]::BT-00-Code/@listName");
+  }
+
+  // Row 11 SEQ
+  @Test
+  void testVariableContextOverride_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return 'test' = $n/SubTextField/normalize-space(text())",
+        "ND-Root",
+        "for context:$n in ND-SubNode return 'test' in $n::BT-01-SubNode-Text");
+  }
+
+  // Row 11 PRES
+  @Test
+  void testVariableContextOverride_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return $n/SubTextField",
+        "ND-Root",
+        "for context:$n in ND-SubNode return $n::BT-01-SubNode-Text is present");
+  }
+
+  // Row 11 ATTR
+  @Test
+  void testVariableContextOverride_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "for $n in . return $n/PathNode/CodeField/@listName",
+        "ND-Root",
+        "for context:$n in ND-Root return $n::BT-00-Code/@listName");
+  }
+
+  // Row 12 SEQ
+  @Test
+  void testFieldReferenceInOtherNotice_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField/normalize-space(text())",
+        "ND-Root",
+        "'test' in notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text");
+  }
+
+  // Row 12 PRES
+  @Test
+  void testFieldReferenceInOtherNotice_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField",
+        "ND-Root",
+        "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text is present");
+  }
+
+  // Row 12 ATTR
+  @Test
+  void testFieldReferenceInOtherNotice_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/CodeField/@listName",
+        "ND-Root",
+        "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Code/@listName");
+  }
+
+  // Row 13 SEQ
+  @Test
+  void testStackedOverride_NodeAndField_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ../../PathNode/TextField/normalize-space(text())",
+        "BT-00-Text",
+        "'test' in ND-Root::BT-01-SubLevel-Text::BT-00-Text");
+  }
+
+  // Row 13 PRES
+  @Test
+  void testStackedOverride_NodeAndField_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/TextField",
+        "BT-00-Text",
+        "ND-Root::BT-01-SubLevel-Text::BT-00-Text is present");
+  }
+
+  // Row 13 ATTR
+  @Test
+  void testStackedOverride_NodeAndField_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "../../PathNode/CodeField/@listName",
+        "BT-00-Text",
+        "ND-Root::BT-01-SubLevel-Text::BT-00-Code/@listName");
+  }
+
+  // Row 14 SC
+  @Test
+  void testVariableAndNodeContextOverride_InScalarContext() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return $n/../PathNode/IntegerField/number()",
+        "ND-Root",
+        "for context:$n in ND-SubNode return $n::ND-Root::integerField");
+  }
+
+  // Row 14 SEQ
+  @Test
+  void testVariableAndNodeContextOverride_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return 'test' = $n/../PathNode/TextField/normalize-space(text())",
+        "ND-Root",
+        "for context:$n in ND-SubNode return 'test' in $n::ND-Root::BT-00-Text");
+  }
+
+  // Row 14 PRES
+  @Test
+  void testVariableAndNodeContextOverride_InPresenceCondition() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return $n/../PathNode/TextField",
+        "ND-Root",
+        "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Text is present");
+  }
+
+  // Row 14 ATTR
+  @Test
+  void testVariableAndNodeContextOverride_InAttributeContext() {
+    testExpressionTranslationWithContext(
+        "for $n in SubNode return $n/../PathNode/CodeField/@listName",
+        "ND-Root",
+        "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Code/@listName");
+  }
+
+  // #endregion: Context override combinations
+
+  // #region: Indexer interactions
+
+  @Test
+  void testIndexer_MultilingualField_InScalarContext() {
+    // Indexer narrows multilingual field to a single element, allowing scalar use
+    testExpressionTranslationWithContext(
+        "(PathNode/TextMultilingualField/normalize-space(text()))[1] = 'test'",
+        "ND-Root",
+        "BT-00-Text-Multilingual[1] == 'test'");
+  }
+
+  // Note: testIndexer_MultilingualField_InSequenceContext is not possible because
+  // the 'in' operator uses fieldReference (not fieldContext), and [indexer] is only
+  // available on fieldContext. This is a grammar-level limitation.
+
+  @Test
+  void testIndexer_MultilingualFieldWithPredicate_InScalarContext() {
+    testExpressionTranslationWithContext(
+        "(PathNode/TextMultilingualField[./@languageID = 'eng']/normalize-space(text()))[1] = 'test'",
+        "ND-Root",
+        "BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng'][1] == 'test'");
+  }
+
+  // #endregion: Indexer interactions
+
+  // #endregion: Field Reference Structural Combinations
+
+  // #region: fieldContext Consumer Coverage -----------------------------------
+  //   Tests covering fieldContext forms (predicate, indexer, absolute)
+  //   in rawValue, context iterator, and template context declaration contexts.
+
+  // #region: rawValue with structural variations
+
+  @Test
+  void testFieldRawValue_WithIndexer() {
+    // Indexer applies at node level, then rawValue appends /text()
+    testExpressionTranslationWithContext(
+        "PathNode/RepeatableTextField[1]/text() = 'test'",
+        "ND-Root",
+        "BT-00-Repeatable-Text[1]:rawValue == 'test'");
+  }
+
+  @Test
+  // @Disabled("BUG: composeIndexer maps MultilingualStringPath back to MultilingualStringPath instead of narrowing to StringPath")
+  void testFieldRawValue_MultilingualWithIndexer() {
+    // Indexer should narrow multilingual to scalar, then rawValue appends /text()
+    testExpressionTranslationWithContext(
+        "PathNode/TextMultilingualField[1]/text() = 'test'",
+        "ND-Root",
+        "BT-00-Text-Multilingual[1]:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReference() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/TextField/text() = 'test'",
+        "BT-00-Text",
+        "/BT-00-Text:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_FieldInRepeatableNode_WithIndexer() {
+    // Indexer resolves the repeatability, rawValue appends /text()
+    testExpressionTranslationWithContext(
+        "RepeatableNode/TextField[1]/text() = 'test'",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node[1]:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_WithPredicateAndIndexer() {
+    // Predicate + indexer at node level, then rawValue appends /text()
+    testExpressionTranslationWithContext(
+        "PathNode/RepeatableTextField['a' = 'a'][1]/text() = 'test'",
+        "ND-Root",
+        "BT-00-Repeatable-Text['a' == 'a'][1]:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_WithIndexer_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/RepeatableTextField[1]/text()",
+        "ND-Root",
+        "'test' in BT-00-Repeatable-Text[1]:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_WithPredicateAndIndexer_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/RepeatableTextField['a' = 'a'][1]/text()",
+        "ND-Root",
+        "'test' in BT-00-Repeatable-Text['a' == 'a'][1]:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReference_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = /*/PathNode/TextField/text()",
+        "BT-00-Text",
+        "'test' in /BT-00-Text:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReferenceWithPredicate() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/TextField['a' = 'a']/text() = 'test'",
+        "BT-00-Text",
+        "/BT-00-Text['a' == 'a']:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReferenceWithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = /*/PathNode/TextField['a' = 'a']/text()",
+        "BT-00-Text",
+        "'test' in /BT-00-Text['a' == 'a']:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReferenceWithIndexer() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/RepeatableTextField[1]/text() = 'test'",
+        "BT-00-Repeatable-Text",
+        "/BT-00-Repeatable-Text[1]:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_AbsoluteReferenceWithIndexer_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = /*/PathNode/RepeatableTextField[1]/text()",
+        "BT-00-Repeatable-Text",
+        "'test' in /BT-00-Repeatable-Text[1]:rawValue");
+  }
+
+  // #endregion: rawValue with structural variations
+
+  // #region: Context iterator with structural variations
+
+  @Test
+  void testContextIterator_WithIndexer() {
+    // Indexer applies at node level in context iterator
+    testExpressionTranslationWithContext(
+        "for $x in PathNode/RepeatableTextField[1] return $x = 'test'",
+        "ND-Root",
+        "for context:$x in BT-00-Repeatable-Text[1] return $x == 'test'");
+  }
+
+  @Test
+  void testContextIterator_WithPredicateAndIndexer() {
+    testExpressionTranslationWithContext(
+        "for $x in PathNode/TextField['a' = 'a'][1] return $x = 'test'",
+        "ND-Root",
+        "for context:$x in BT-00-Text['a' == 'a'][1] return $x == 'test'");
+  }
+
+  @Test
+  void testContextIterator_AbsoluteReference() {
+    testExpressionTranslationWithContext(
+        "for $x in /*/PathNode/TextField return $x = 'test'",
+        "BT-00-Text",
+        "for context:$x in /BT-00-Text return $x == 'test'");
+  }
+
+  @Test
+  void testContextIterator_AbsoluteReferenceWithPredicate() {
+    testExpressionTranslationWithContext(
+        "for $x in /*/PathNode/TextField['a' = 'a'] return $x = 'test'",
+        "BT-00-Text",
+        "for context:$x in /BT-00-Text['a' == 'a'] return $x == 'test'");
+  }
+
+  @Test
+  void testContextIterator_AbsoluteReferenceWithIndexer() {
+    testExpressionTranslationWithContext(
+        "for $x in /*/PathNode/RepeatableTextField[1] return $x = 'test'",
+        "BT-00-Repeatable-Text",
+        "for context:$x in /BT-00-Repeatable-Text[1] return $x == 'test'");
+  }
+
+  // #endregion: Context iterator with structural variations
+
+  // #endregion: fieldContext Consumer Coverage
+
+  // #region: Cardinality x Consumer Gaps -------------------------------------
+  //   Tests covering cardinality (repeatable, in-rep-node, multilingual)
+  //   crossed with consumer contexts where coverage was missing.
+
+  // #region: rawValue cardinality
+
+  @Test
+  void testFieldRawValue_FieldInRepeatableNode_ScalarContext_Throws() {
+    // Field in repeatable node used as rawValue scalar from root should throw
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Text-In-Repeatable-Node:rawValue == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
+  }
+
+  @Test
+  void testFieldRawValue_FieldInRepeatableNode_SequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = RepeatableNode/TextField/text()",
+        "ND-Root",
+        "'test' in BT-00-Text-In-Repeatable-Node:rawValue");
+  }
+
+  @Test
+  void testFieldRawValue_FieldInRepeatableNode_FromOwnContext() {
+    testExpressionTranslationWithContext(
+        "TextField/text() = 'test'",
+        "ND-RepeatableNode",
+        "BT-00-Text-In-Repeatable-Node:rawValue == 'test'");
+  }
+
+  @Test
+  void testFieldRawValue_RepeatableField_FromOwnContext_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ./text()",
+        "BT-00-Repeatable-Text",
+        "'test' in BT-00-Repeatable-Text:rawValue");
+  }
+
+  // Matrix 3, Row 3 SEQ: Repeatable field from own context in sequence context
+  @Test
+  void testSequence_RepeatableFieldFromOwnContext() {
+    testExpressionTranslationWithContext(
+        "'test' = ./normalize-space(text())",
+        "BT-00-Repeatable-Text",
+        "'test' in BT-00-Repeatable-Text");
+  }
+
+  // Matrix 3, Row 4 SEQ: Field in repeatable node from root in sequence context
+  @Test
+  void testSequence_FieldInRepeatableNode_FromRoot() {
+    testExpressionTranslationWithContext(
+        "'test' = RepeatableNode/TextField/normalize-space(text())",
+        "ND-Root",
+        "'test' in BT-00-Text-In-Repeatable-Node");
+  }
+
+  // Matrix 3, Row 5 SEQ: Field in repeatable node from own node in sequence context
+  @Test
+  void testSequence_FieldInRepeatableNode_FromOwnNode() {
+    testExpressionTranslationWithContext(
+        "'test' = TextField/normalize-space(text())",
+        "ND-RepeatableNode",
+        "'test' in BT-00-Text-In-Repeatable-Node");
+  }
+
+  // Matrix 3, Row 5 RV-SEQ: Field in repeatable node from own node rawValue in sequence context
+  @Test
+  void testFieldRawValue_FieldInRepeatableNode_FromOwnNode_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = TextField/text()",
+        "ND-RepeatableNode",
+        "'test' in BT-00-Text-In-Repeatable-Node:rawValue");
+  }
+
+  // Matrix 3, Row 7 SEQ: Multilingual[pred] in sequence context
+  @Test
+  void testSequence_MultilingualWithPredicate() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextMultilingualField['a' = 'a']/normalize-space(text())",
+        "ND-Root",
+        "'test' in BT-00-Text-Multilingual['a' == 'a']");
+  }
+
+  // Matrix 3, Row 7 RV-SC: Multilingual[pred]:rawValue in scalar context — should throw FIELD_IS_MULTILINGUAL
+  @Test
+  void testFieldRawValue_MultilingualWithPredicate_InScalarContext_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "BT-00-Text-Multilingual['a' == 'a']:rawValue == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL, ex.getErrorCode());
+  }
+
+  // Matrix 3, Row 7 RV-SEQ: Multilingual[pred]:rawValue in sequence context
+  @Test
+  void testFieldRawValue_MultilingualWithPredicate_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextMultilingualField['a' = 'a']/text()",
+        "ND-Root",
+        "'test' in BT-00-Text-Multilingual['a' == 'a']:rawValue");
+  }
+
+  // Matrix 3, Row 8 RV-SEQ: Multilingual[idx]:rawValue in sequence context
+  @Test
+  void testFieldRawValue_MultilingualWithIndexer_InSequenceContext() {
+    testExpressionTranslationWithContext(
+        "'test' = PathNode/TextMultilingualField[1]/text()",
+        "ND-Root",
+        "'test' in BT-00-Text-Multilingual[1]:rawValue");
+  }
+
+  // #endregion: rawValue cardinality
+
+  // #region: Privacy property cardinality
+
+  @Test
+  void testComputedProperty_wasWithheld_FieldInRepeatableNode_FromRoot() {
+    testExpressionTranslationWithContext(
+        "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']/FieldIdentifierCode/normalize-space(text()) = 'test-priv'",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:wasWithheld");
+  }
+
+  @Test
+  void testComputedProperty_isWithheld_FieldInRepeatableNode_FromRoot() {
+    final String privacyPath = "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "(not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:isWithheld");
+  }
+
+  @Test
+  void testComputedProperty_isDisclosed_FieldInRepeatableNode_FromRoot() {
+    final String privacyPath = "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "not((not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
+            + " and "
+            + "not(RepeatableNode/TextField/normalize-space(text()) = 'unpublished')",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:isDisclosed");
+  }
+
+  @Test
+  void testComputedProperty_isMasked_FieldInRepeatableNode_FromRoot() {
+    final String privacyPath = "RepeatableNode/FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
+            + " and "
+            + "RepeatableNode/TextField/normalize-space(text()) = 'unpublished'",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:isMasked");
+  }
+
+  // Matrix 4, Row 1 PC: privacyCode on withholdable scalar field
+  @Test
+  void testComputedProperty_privacyCode_WithholdableField() {
+    testExpressionTranslationWithContext(
+        "'test-priv'",
+        "BT-00-Text-In-Repeatable-Node",
+        "BT-00-Text-In-Repeatable-Node:privacyCode");
+  }
+
+  // Matrix 4, Row 2 PC: privacyCode on non-withholdable field — should throw FIELD_NOT_WITHHOLDABLE
+  @Test
+  void testComputedProperty_privacyCode_NonWithholdableField_Throws() {
+    InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+        () -> translateExpressionWithContext("BT-00-Text",
+            "BT-00-Text:privacyCode"));
+    assertEquals(InvalidUsageException.ErrorCode.FIELD_NOT_WITHHOLDABLE, ex.getErrorCode());
+  }
+
+  // Matrix 4, Row 3 IH: isWithholdable on repeatable field from root
+  @Test
+  void testComputedProperty_isWithholdable_RepeatableFromRoot() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "ND-Root",
+        "BT-00-Repeatable-Text:isWithholdable");
+  }
+
+  // Matrix 4, Row 3 ID: isDisclosed on repeatable field from root
+  @Test
+  void testComputedProperty_isDisclosed_RepeatableFromRoot() {
+    final String privacyPath = "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "not((not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
+            + " and "
+            + "not(PathNode/RepeatableTextField/normalize-space(text()) = 'unpublished')",
+        "ND-Root",
+        "BT-00-Repeatable-Text:isDisclosed");
+  }
+
+  // Matrix 4, Row 4 ID: isDisclosed on repeatable field from own context
+  @Test
+  void testComputedProperty_isDisclosed_RepeatableFromOwnContext() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "not((not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
+            + " and "
+            + "not(./normalize-space(text()) = 'unpublished')",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isDisclosed");
+  }
+
+  // Matrix 4, Row 4 IM: isMasked on repeatable field from own context
+  @Test
+  void testComputedProperty_isMasked_RepeatableFromOwnContext() {
+    final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
+            + " and "
+            + "./normalize-space(text()) = 'unpublished'",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isMasked");
+  }
+
+  // Matrix 4, Row 5 IH: isWithholdable on field in repeatable node from root
+  @Test
+  void testComputedProperty_isWithholdable_FieldInRepeatableNode_FromRoot() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:isWithholdable");
+  }
+
+  // Matrix 4, Row 6 WW: wasWithheld on multilingual field
+  @Test
+  void testComputedProperty_wasWithheld_Multilingual() {
+    testExpressionTranslationWithContext(
+        "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'",
+        "ND-Root",
+        "BT-00-Text-Multilingual:wasWithheld");
+  }
+
+  // Matrix 4, Row 6 IW: isWithheld on multilingual field
+  @Test
+  void testComputedProperty_isWithheld_Multilingual() {
+    final String privacyPath = "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'"
+            + " and "
+            + "(not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
+        "ND-Root",
+        "BT-00-Text-Multilingual:isWithheld");
+  }
+
+  // Matrix 4, Row 6 ID: isDisclosed on multilingual field
+  @Test
+  void testComputedProperty_isDisclosed_Multilingual() {
+    final String privacyPath = "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'"
+            + " and "
+            + "not((not(" + privacyPath + "/PublicationDate)"
+            + " or "
+            + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
+            + " and "
+            + "not(PathNode/TextMultilingualField/normalize-space(text()) = 'unpublished')",
+        "ND-Root",
+        "BT-00-Text-Multilingual:isDisclosed");
+  }
+
+  // Matrix 4, Row 6 IM: isMasked on multilingual field
+  @Test
+  void testComputedProperty_isMasked_Multilingual() {
+    final String privacyPath = "PathNode/FieldsPrivacy[FieldIdentifierCode/text()='ml-text-priv']";
+    testExpressionTranslationWithContext(
+        privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'"
+            + " and "
+            + "PathNode/TextMultilingualField/normalize-space(text()) = 'unpublished'",
+        "ND-Root",
+        "BT-00-Text-Multilingual:isMasked");
+  }
+
+  // Matrix 4, Row 3 PC: privacyCode on repeatable field from root
+  @Test
+  void testComputedProperty_privacyCode_RepeatableFromRoot() {
+    testExpressionTranslationWithContext(
+        "'rep-text-priv'",
+        "ND-Root",
+        "BT-00-Repeatable-Text:privacyCode");
+  }
+
+  // Matrix 4, Row 4 IH: isWithholdable on repeatable field from own context
+  @Test
+  void testComputedProperty_isWithholdable_RepeatableFromOwnContext() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:isWithholdable");
+  }
+
+  // Matrix 4, Row 4 PC: privacyCode on repeatable field from own context
+  @Test
+  void testComputedProperty_privacyCode_RepeatableFromOwnContext() {
+    testExpressionTranslationWithContext(
+        "'rep-text-priv'",
+        "BT-00-Repeatable-Text",
+        "BT-00-Repeatable-Text:privacyCode");
+  }
+
+  // Matrix 4, Row 5 PC: privacyCode on field in repeatable node from root
+  @Test
+  void testComputedProperty_privacyCode_FieldInRepeatableNode_FromRoot() {
+    testExpressionTranslationWithContext(
+        "'test-priv'",
+        "ND-Root",
+        "BT-00-Text-In-Repeatable-Node:privacyCode");
+  }
+
+  // Matrix 4, Row 6 IH: isWithholdable on multilingual field
+  @Test
+  void testComputedProperty_isWithholdable_Multilingual() {
+    testExpressionTranslationWithContext(
+        "true()",
+        "ND-Root",
+        "BT-00-Text-Multilingual:isWithholdable");
+  }
+
+  // Matrix 4, Row 6 PC: privacyCode on multilingual field — succeeds (compile-time constant)
+  @Test
+  void testComputedProperty_privacyCode_Multilingual() {
+    testExpressionTranslationWithContext(
+        "'ml-text-priv'",
+        "ND-Root",
+        "BT-00-Text-Multilingual:privacyCode");
+  }
+
+  // #endregion: Privacy property cardinality
+
+  // #endregion: Cardinality x Consumer Gaps
 }

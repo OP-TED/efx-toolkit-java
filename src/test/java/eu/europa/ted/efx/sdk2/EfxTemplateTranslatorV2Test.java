@@ -1558,6 +1558,176 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate("{/} ${preferred-language-text(BT-00-Text-Multilingual)}"));
   }
 
+  @Test
+  void testPreferredLanguageFunction_WithPredicate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField['a' = 'a'])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language(BT-00-Text-Multilingual['a' == 'a'])}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction_WithPredicate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField['a' = 'a'])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language-text(BT-00-Text-Multilingual['a' == 'a'])}"));
+  }
+
+  @Test
+  void testPreferredLanguageFunction_RepeatableField() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language(BT-13-TextMultilingual)}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction_RepeatableField() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual)}"));
+  }
+
+  @Test
+  void testPreferredLanguageFunction_RepeatableFieldWithIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual[1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language(BT-13-TextMultilingual[1])}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction_RepeatableFieldWithIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual[1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual[1])}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction_RepeatableFieldWithPredicateAndIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual['a' = 'a'][1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual['a' == 'a'][1])}"));
+  }
+
+  @Test
+  void testPreferredLanguageFunction_NonMultilingualField_Throws() {
+    assertThrows(TypeMismatchException.class,
+        () -> translateTemplate("{/} ${preferred-language(BT-00-Text)}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextFunction_NonMultilingualField_Throws() {
+    assertThrows(TypeMismatchException.class,
+        () -> translateTemplate("{/} ${preferred-language-text(BT-00-Text)}"));
+  }
+
+  // Property syntax: fieldContext:preferredLanguage / fieldContext:preferredLanguageText
+
+  @Test
+  void testPreferredLanguageProperty() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Text-Multilingual:preferredLanguage}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Text-Multilingual:preferredLanguageText}"));
+  }
+
+  @Test
+  void testPreferredLanguageProperty_WithPredicate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField['a' = 'a'])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguage}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_WithPredicate() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField['a' = 'a'])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguageText}"));
+  }
+
+  @Test
+  void testPreferredLanguageProperty_RepeatableField() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-13-TextMultilingual:preferredLanguage}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_RepeatableField() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual)) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-13-TextMultilingual:preferredLanguageText}"));
+  }
+
+  @Test
+  void testPreferredLanguageProperty_RepeatableFieldWithIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual[1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-13-TextMultilingual[1]:preferredLanguage}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_RepeatableFieldWithIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual[1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-13-TextMultilingual[1]:preferredLanguageText}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_RepeatableFieldWithPredicateAndIndexer() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual['a' = 'a'][1])) }",
+            "MAIN:", "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-13-TextMultilingual['a' == 'a'][1]:preferredLanguageText}"));
+  }
+
+  @Test
+  void testPreferredLanguageProperty_NonMultilingualField_Throws() {
+    assertThrows(TypeMismatchException.class,
+        () -> translateTemplate("{/} ${BT-00-Text:preferredLanguage}"));
+  }
+
+  @Test
+  void testPreferredLanguageTextProperty_NonMultilingualField_Throws() {
+    assertThrows(TypeMismatchException.class,
+        () -> translateTemplate("{/} ${BT-00-Text:preferredLanguageText}"));
+  }
+
   // #endregion Preferred language functions -------------------------------------
 
   // #region contextDeclarationBlock -------------------------------------------
@@ -2070,4 +2240,63 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   // #endregion Include directive ------------------------------------------------
+
+  // #region: fieldContext structural variations in template context declarations
+
+  @Test
+  void testContextDeclaration_WithFieldContextIndexer() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/RepeatableTextField[1]).call(body01())"),
+        translateTemplate("{BT-00-Repeatable-Text[1]} ${BT-00-Repeatable-Text}"));
+  }
+
+  @Test
+  void testContextDeclaration_WithFieldContextPredicate() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField['a' = 'a']).call(body01())"),
+        translateTemplate("{BT-00-Text['a' == 'a']} ${BT-00-Text}"));
+  }
+
+  @Test
+  void testContextDeclaration_WithFieldContextPredicateAndIndexer() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/RepeatableTextField['a' = 'a'][1]).call(body01())"),
+        translateTemplate("{BT-00-Repeatable-Text['a' == 'a'][1]} ${BT-00-Repeatable-Text}"));
+  }
+
+  @Test
+  void testContextDeclaration_AbsoluteReferenceWithPredicate() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField['a' = 'a']).call(body01())"),
+        translateTemplate("{/BT-00-Text['a' == 'a']} ${BT-00-Text}"));
+  }
+
+  @Test
+  void testContextDeclaration_AbsoluteReferenceWithIndexer() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/RepeatableTextField[1]).call(body01())"),
+        translateTemplate("{/BT-00-Repeatable-Text[1]} ${BT-00-Repeatable-Text}"));
+  }
+
+  // #endregion: fieldContext structural variations in template context declarations
 }
