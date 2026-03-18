@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 European Union
+ * Copyright 2026 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -143,7 +143,12 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_inClause, "in clause"),
             Map.entry(RULE_noticeTypeList, "notice type list"),
             Map.entry(RULE_noticeTypeRange, "notice type range"),
-            Map.entry(RULE_noticeType, "notice type")
+            Map.entry(RULE_noticeType, "notice type"),
+
+            // API declarations
+            Map.entry(RULE_apiEndpointDeclaration, "API endpoint declaration"),
+            Map.entry(RULE_dynamicFunctionDeclaration, "dynamic function declaration"),
+            Map.entry(RULE_onErrorClause, "ON ERROR clause")
     );
 
     @Override

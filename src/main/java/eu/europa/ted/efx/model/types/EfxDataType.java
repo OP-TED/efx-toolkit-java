@@ -50,6 +50,7 @@ public interface EfxDataType {
 
     // EFX primitive types (extend Primitive marker)
     interface Boolean extends Primitive {}
+    interface Dynamic extends Boolean {}
     interface String extends Primitive {}
     interface MultilingualString extends String {}
     interface Number extends Primitive {}
@@ -62,6 +63,7 @@ public interface EfxDataType {
 
     // Concrete scalar types (primitive + Cardinality.Scalar + ConcreteScalar)
     interface BooleanScalar extends Boolean, Cardinality.Scalar, ConcreteScalar {}
+    interface DynamicScalar extends BooleanScalar, Dynamic {}
     interface StringScalar extends String, Cardinality.Scalar, ConcreteScalar {}
     interface MultilingualStringScalar extends StringScalar, MultilingualString {}
     interface NumberScalar extends Number, Cardinality.Scalar, ConcreteScalar {}
@@ -72,6 +74,7 @@ public interface EfxDataType {
 
     // Concrete sequence types (primitive + Cardinality.Sequence + ConcreteSequence)
     interface BooleanSequence extends Boolean, Cardinality.Sequence, ConcreteSequence {}
+    interface DynamicSequence extends BooleanSequence, Dynamic {}
     interface StringSequence extends String, Cardinality.Sequence, ConcreteSequence {}
     interface MultilingualStringSequence extends StringSequence, MultilingualString {}
     interface NumberSequence extends Number, Cardinality.Sequence, ConcreteSequence {}

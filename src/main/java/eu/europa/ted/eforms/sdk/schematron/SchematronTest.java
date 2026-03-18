@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -30,6 +30,11 @@ public abstract class SchematronTest {
     this.diagnostic = rule.getSubject().symbol().equals(ruleContext.symbol())
         ? null
         : new SchematronDiagnostic(rule.getSubject(), ruleContext);
+  }
+
+  /** Used by pattern.ftl — let element to render right before this test, or null. */
+  public SchematronLet getLetElement() {
+    return null;
   }
 
   /** Used by pattern.ftl */
@@ -66,7 +71,7 @@ public abstract class SchematronTest {
 
   /** Used by pattern.ftl - returns the tag for filtering (derived from rule nature) */
   public String getTag() {
-    return this.rule.getNature().name();
+    return this.getRuleNature().name();
   }
 
   /** Used by pattern.ftl - returns the flag value from SCOPE clause, or null if not set */

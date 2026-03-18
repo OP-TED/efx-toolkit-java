@@ -1,0 +1,12 @@
+// Test: API declarations imported via #include.
+// Verifies that endpoint and function declarations in an included file
+// are available for use in the main rules file.
+
+#include "api-defs.efx"
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

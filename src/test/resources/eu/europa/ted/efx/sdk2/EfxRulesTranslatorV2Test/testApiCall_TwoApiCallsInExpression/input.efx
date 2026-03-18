@@ -1,0 +1,62 @@
+// Test: Two inline API calls in the same ASSERT expression.
+// Verifies that each call gets its own binding variable (__apiResult1, __apiResult2),
+// both get error guards on the main assert, and each gets its own companion error assert.
+// Also tests mixed error handling: default (ERROR) vs ON ERROR WARN.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-buyer(text : $id) CALL API;
+LET dynamic : ?check-code(text : $code) CALL API, ON ERROR WARN;
+
+---- STAGE 1a ----
+
+// Context 1: two API calls in one expression
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — two API calls combined
+    ASSERT ?check-buyer(BT-00-Identifier) and ?check-code(BT-00-Code)
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: WHEN clause with dual API calls
+WITH BT-00-Text
+    // Static report
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-003
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert with WHEN — two API calls
+    WHEN BT-00-Indicator is present
+        ASSERT ?check-buyer(BT-00-Identifier) and ?check-code(BT-00-Code)
+        AS ERROR R-S1A-004
+        FOR BT-00-Text IN 1
+
+---- STAGE 2a ----
+
+// Context 1: single API call per rule
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — single API call for contrast
+    ASSERT ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S2A-002
+    FOR BT-00-Text IN 1
+
+// Context 2
+WITH ND-SubNode
+    // Static report
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-003
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert
+    ASSERT ?check-code(BT-00-Code)
+    AS ERROR R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1

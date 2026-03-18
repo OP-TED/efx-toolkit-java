@@ -67,6 +67,9 @@ public final class EfxTypeLattice {
         new TypeVariants(EfxDataType.Number.class,
                          EfxDataType.NumberScalar.class,
                          EfxDataType.NumberSequence.class),
+        new TypeVariants(EfxDataType.Dynamic.class,
+                         EfxDataType.DynamicScalar.class,
+                         EfxDataType.DynamicSequence.class),
         new TypeVariants(EfxDataType.Boolean.class,
                          EfxDataType.BooleanScalar.class,
                          EfxDataType.BooleanSequence.class),
@@ -173,7 +176,8 @@ public final class EfxTypeLattice {
      */
     public static boolean isRegistered(Class<?> type) {
         for (TypeVariants variants : TYPE_VARIANTS) {
-            if (variants.scalar.equals(type) || variants.sequence.equals(type)) {
+            if (variants.scalar != null && variants.scalar.equals(type)
+                || variants.sequence != null && variants.sequence.equals(type)) {
                 return true;
             }
         }

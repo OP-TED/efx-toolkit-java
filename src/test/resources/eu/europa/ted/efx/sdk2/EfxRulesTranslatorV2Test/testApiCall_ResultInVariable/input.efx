@@ -1,0 +1,75 @@
+// Test: API variables at all declaration levels combined with inline calls.
+// Exercises five ways to reach an API call:
+//   1. Global LET      → schema-level <let> in complete-validation.sch
+//   2. Stage LET        → pattern-level <let>
+//   3. WITH before ctx  → pattern-level <let> (stage variable in RuleSet)
+//   4. WITH after ctx   → rule-level <let> (local variable in RuleSet)
+//   5. Inline in ASSERT → rule-level <let> via ApiCallBinding
+// Also tests that stage variables from inactive RuleSets are excluded from subtype patterns.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-buyer(text : $buyerId) CALL API;
+LET dynamic : ?confirm-status(text : $code) CALL API, ON ERROR WARN;
+LET dynamic : ?verify-code(text : $id, text : $code) CALL API;
+LET dynamic : ?check-global(text : $val) CALL API;
+
+// Level 1: Global API variable
+LET dynamic : $globalOk = ?check-global(BT-00-Code);
+
+---- STAGE 1a ----
+
+// Level 2: Stage API variable
+LET dynamic : $stageOk = ?confirm-status(BT-00-Code);
+
+// Context 1: WITH local API variables — tests levels 3, 4, and 5
+WITH dynamic : $statusOk = ?confirm-status(BT-00-Code), BT-00-Text, dynamic : $buyerOk = ?check-buyer(BT-00-Identifier)
+    // Static assert — appears in both static and dynamic output
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert: local + stage vars + inline call — guards for referenced vars only
+    ASSERT $buyerOk and $stageOk and ?verify-code(BT-00-Identifier, BT-00-Code)
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: no local API variables, IN 1-2 to create subtype 2 where context 1 is absent.
+// In subtype 2, $statusOk and $buyerOk should NOT appear at pattern level.
+WITH BT-00-Text
+    // Static report
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-003
+    FOR BT-00-Text IN 1-2
+
+    // Dynamic assert with WHEN: stage + global vars, no inline call
+    WHEN BT-00-Indicator is present
+        ASSERT $stageOk and $globalOk
+        AS ERROR R-S1A-004
+        FOR BT-00-Text IN 1-2
+
+---- STAGE 2a ----
+
+// Context 1: no stage API variable here — only global is in scope
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert: global var only — tests guard filtering across stages
+    ASSERT $globalOk
+    AS ERROR R-S2A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: different context node — global var + inline call
+WITH ND-SubNode
+    // Static report
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-003
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert: global var + inline call from different context
+    ASSERT $globalOk and ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1

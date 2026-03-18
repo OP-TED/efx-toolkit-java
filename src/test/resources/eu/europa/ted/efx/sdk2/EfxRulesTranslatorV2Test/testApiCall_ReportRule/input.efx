@@ -1,0 +1,61 @@
+// Test: REPORT rule with inline API call.
+// Verifies that report guards use "not($var = -1) and" semantics (suppresses the report
+// when API errors), unlike asserts which use "($var = -1) or" (suppresses the assert).
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+
+---- STAGE 1a ----
+
+// Context 1: report + assert with same API call — compare guard semantics
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic report — guards use "not(...) and"
+    REPORT not(?check(BT-00-Identifier))
+    AS WARNING R-S1A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: assert for contrast — guards use "(...) or"
+WITH BT-00-Text
+    // Static report
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-003
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert with WHEN — guards use "(...) or"
+    WHEN BT-00-Indicator is present
+        ASSERT ?check(BT-00-Identifier)
+        AS ERROR R-S1A-004
+        FOR BT-00-Text IN 1
+
+---- STAGE 2a ----
+
+// Context 1: report with WHEN clause
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic report with WHEN
+    WHEN BT-00-Indicator is present
+        REPORT not(?check(BT-00-Identifier))
+        AS WARNING R-S2A-002
+        FOR BT-00-Text IN 1
+
+// Context 2
+WITH ND-SubNode
+    // Static report
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-003
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1

@@ -30,7 +30,11 @@ public class InvalidUsageException extends EfxCompilationException {
         FIELD_NOT_WITHHOLDABLE,
         TEMPLATE_ONLY_FUNCTION,
         UNSUPPORTED_REGEX_CONSTRUCT,
-        CIRCULAR_INCLUDE
+        CIRCULAR_INCLUDE,
+        EMPTY_RULES_FILE,
+        API_CALL_IN_COMPOUND_INITIALIZER,
+        NOT_A_DYNAMIC_FUNCTION,
+        DYNAMIC_FUNCTION_OUTSIDE_RULE
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -41,6 +45,10 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String TEMPLATE_ONLY_FUNCTION = "Function '%s' can only be used in templates, not in expressions or validation rules.";
     private static final String UNSUPPORTED_REGEX_CONSTRUCT = "Invalid regex pattern %s at position %d: %s";
     private static final String CIRCULAR_INCLUDE = "Circular #include detected: '%s'.";
+    private static final String EMPTY_RULES_FILE = "Rules file must contain at least one validation stage.";
+    private static final String API_CALL_IN_COMPOUND_INITIALIZER = "Dynamic function '%s' cannot be used inside a compound expression in a variable initializer. Declare a separate variable for the dynamic function call.";
+    private static final String NOT_A_DYNAMIC_FUNCTION = "Function '%s' is not declared as a dynamic function. Only functions declared with CALL API can be used in a dynamic variable initializer.";
+    private static final String DYNAMIC_FUNCTION_OUTSIDE_RULE = "Dynamic function '%s' can only be called inline within a rule expression (ASSERT/REPORT). Use 'LET dynamic : $var = ?%s(...)' to declare a dynamic variable at this scope.";
 
     private final ErrorCode errorCode;
 
@@ -88,5 +96,21 @@ public class InvalidUsageException extends EfxCompilationException {
 
     public static InvalidUsageException circularInclude(String path) {
         return new InvalidUsageException(ErrorCode.CIRCULAR_INCLUDE, CIRCULAR_INCLUDE, path);
+    }
+
+    public static InvalidUsageException emptyRulesFile() {
+        return new InvalidUsageException(ErrorCode.EMPTY_RULES_FILE, EMPTY_RULES_FILE);
+    }
+
+    public static InvalidUsageException apiCallInCompoundInitializer(String functionName) {
+        return new InvalidUsageException(ErrorCode.API_CALL_IN_COMPOUND_INITIALIZER, API_CALL_IN_COMPOUND_INITIALIZER, functionName);
+    }
+
+    public static InvalidUsageException notADynamicFunction(String functionName) {
+        return new InvalidUsageException(ErrorCode.NOT_A_DYNAMIC_FUNCTION, NOT_A_DYNAMIC_FUNCTION, functionName);
+    }
+
+    public static InvalidUsageException dynamicFunctionOutsideRule(String functionName) {
+        return new InvalidUsageException(ErrorCode.DYNAMIC_FUNCTION_OUTSIDE_RULE, DYNAMIC_FUNCTION_OUTSIDE_RULE, functionName, functionName);
     }
 }

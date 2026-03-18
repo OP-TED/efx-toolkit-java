@@ -1,0 +1,15 @@
+// Test: Error — API function references an endpoint that was never declared.
+// The grammar enforces that endpoints are declared before functions, but this test
+// uses an endpoint name that simply doesn't exist anywhere.
+// The compiler should throw a ParseCancellationException at declaration time.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API 'nonexistent';
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

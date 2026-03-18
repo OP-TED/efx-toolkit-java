@@ -41,7 +41,6 @@ import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationLiteral;
-import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
@@ -943,6 +942,18 @@ public class XPathScriptGenerator implements ScriptGenerator {
         ? namespace + ":" + functionName
         : functionName;
     return Expression.instantiate(qualifiedFunctionName + "(" + parameters.stream().map(p -> p.getScript()).collect(Collectors.joining(", ")) + ")", type);
+  }
+
+  @Override
+  public NumericExpression composeDynamicFunction(String endpointName, String apiName,
+      List<? extends TypedExpression> arguments) {
+    StringBuilder sb = new StringBuilder("efx:call-api('");
+    sb.append(endpointName).append("', '").append(apiName).append("'");
+    for (TypedExpression arg : arguments) {
+      sb.append(", ").append(arg.getScript());
+    }
+    sb.append(")");
+    return new NumericExpression(sb.toString());
   }
 
   //#region Helpers -----------------------------------------------------------

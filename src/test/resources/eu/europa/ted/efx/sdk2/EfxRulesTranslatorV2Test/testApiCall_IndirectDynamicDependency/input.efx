@@ -1,0 +1,38 @@
+// Test: indirect dynamic dependencies through regular variable aliases.
+// Verifies that guard asserts and DYNAMIC tagging propagate transitively.
+//
+// Scenarios:
+//   1. Direct alias: LET indicator : $alias = $dynamicVar
+//   2. Transitive alias: LET indicator : $alias2 = $alias (where $alias depends on $dynamicVar)
+//   3. Combined: LET indicator : $combined = $dynamicVar and BT-00-Text is present
+//   4. Static variable (no dynamic dependency) — should remain STATIC
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-buyer(text : $buyerId) CALL API;
+
+---- STAGE 1a ----
+
+LET dynamic : $apiResult = ?check-buyer(BT-00-Identifier);
+
+// Combined expression with dynamic and static parts
+LET indicator : $alias = $apiResult and BT-00-Text is present;
+
+// Transitive: depends on $alias which depends on $apiResult
+LET indicator : $alias2 = $alias or BT-00-Indicator is present;
+
+WITH BT-00-Text
+    // Rule using direct alias — needs guard for $apiResult
+    ASSERT $alias
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Rule using transitive alias — also needs guard for $apiResult
+    ASSERT $alias2
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1
+
+    // Static rule — no dynamic dependency, should appear in static bundle
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-003
+    FOR BT-00-Text IN 1

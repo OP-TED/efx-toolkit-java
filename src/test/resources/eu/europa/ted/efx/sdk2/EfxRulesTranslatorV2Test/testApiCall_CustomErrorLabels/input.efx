@@ -1,0 +1,64 @@
+// Test: Custom error labels on API function declarations.
+// Verifies that each companion error assert uses the custom label from the declaration:
+// - No error clause: default label (rule|text|api-error)
+// - ON ERROR WARN 'label': role=WARNING, message=label
+// - ON ERROR REJECT 'label': role=ERROR, message=label
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-default(text : $id-a) CALL API;
+LET dynamic : ?check-warn(text : $id-b) CALL API, ON ERROR WARN 'auxiliary|text|custom-warning';
+LET dynamic : ?check-reject(text : $id-c) CALL API, ON ERROR REJECT 'auxiliary|text|custom-error';
+
+---- STAGE 1a ----
+
+// Context 1: all three error modes in one expression
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — three API calls with different error labels
+    ASSERT ?check-default(BT-00-Identifier) and ?check-warn(BT-00-Identifier) and ?check-reject(BT-00-Identifier)
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: WHEN clause with custom-label API call
+WITH BT-00-Text
+    // Static report
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-003
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert with WHEN — custom warn label
+    WHEN BT-00-Indicator is present
+        ASSERT ?check-warn(BT-00-Identifier)
+        AS ERROR R-S1A-004
+        FOR BT-00-Text IN 1
+
+---- STAGE 2a ----
+
+// Context 1
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — custom reject label
+    ASSERT ?check-reject(BT-00-Identifier)
+    AS ERROR R-S2A-002
+    FOR BT-00-Text IN 1
+
+// Context 2
+WITH ND-SubNode
+    // Static report
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-003
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert — default label
+    ASSERT ?check-default(BT-00-Identifier)
+    AS ERROR R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1

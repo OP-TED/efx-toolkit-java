@@ -4,12 +4,13 @@
 
   Parameters:
     title           - Schema title (e.g., "eForms validation (dynamic)")
-    globalVariables - List<SchematronLet> of schema-level variables
+    params          - List<SchematronParam> of API endpoint parameters
+    letElements     - List<SchematronLet> of schema-level let element declarations
     phases          - List<SchematronPhase> defining validation phases per notice type
     diagnostics     - List<SchematronDiagnostic> for subject path information
     includes        - List<String> of pattern file paths to include
 -->
-<schema xmlns="http://purl.oclc.org/dsdl/schematron" queryBinding="xslt2">
+<schema xmlns="http://purl.oclc.org/dsdl/schematron"<#if params?has_content> xmlns:efx="http://eforms.ted.europa.eu/efx"</#if> queryBinding="xslt2">
 
     <title>${title}</title>
 
@@ -26,10 +27,18 @@
     <ns prefix="cn" uri="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2" />
     <ns prefix="pin" uri="urn:oasis:names:specification:ubl:schema:xsd:PriorInformationNotice-2" />
     <ns prefix="fn" uri="http://www.w3.org/2005/xpath-functions" />
+<#if params?has_content>
+    <ns prefix="efx" uri="http://eforms.ted.europa.eu/efx" />
+
+    <#-- API endpoint parameters -->
+<#list params as param>
+    <param name="${param.name}" value="${param.value}" />
+</#list>
+</#if>
 
     <#-- Global variables from schema-level LET statements -->
-<#list globalVariables as variable>
-    <let name="${variable.name}" value="${variable.value?xml?replace("&apos;", "'")}"/>
+<#list letElements as letElement>
+    <let name="${letElement.name}" value="${letElement.value?xml?replace("&apos;", "'")}"/>
 </#list>
 
     <#-- Phases for each notice type -->

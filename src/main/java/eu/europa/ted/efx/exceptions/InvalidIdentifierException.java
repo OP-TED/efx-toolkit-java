@@ -24,12 +24,14 @@ public class InvalidIdentifierException extends EfxCompilationException {
     public enum ErrorCode {
         UNDECLARED_IDENTIFIER,
         IDENTIFIER_ALREADY_DECLARED,
-        NOT_A_CONTEXT_VARIABLE
+        NOT_A_CONTEXT_VARIABLE,
+        UNDECLARED_ENDPOINT
     }
 
     private static final String UNDECLARED_IDENTIFIER = "Identifier '%s' is not declared.";
     private static final String IDENTIFIER_ALREADY_DECLARED = "Identifier '%s' is already declared in this scope.";
     private static final String NOT_A_CONTEXT_VARIABLE = "Variable '%s' is not a context variable.";
+    private static final String UNDECLARED_ENDPOINT = "Dynamic function '%s' references undeclared API endpoint '%s'.";
 
     private final ErrorCode errorCode;
 
@@ -57,5 +59,9 @@ public class InvalidIdentifierException extends EfxCompilationException {
 
     public static InvalidIdentifierException notAContextVariable(ParserRuleContext ctx, String variableName) {
         return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, ctx, NOT_A_CONTEXT_VARIABLE, variableName);
+    }
+
+    public static InvalidIdentifierException undeclaredEndpoint(String functionName, String endpointName) {
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_ENDPOINT, UNDECLARED_ENDPOINT, functionName, endpointName);
     }
 }

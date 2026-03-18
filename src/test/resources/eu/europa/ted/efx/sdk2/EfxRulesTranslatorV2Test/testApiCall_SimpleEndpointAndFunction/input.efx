@@ -1,0 +1,60 @@
+// Test: Basic API call — one endpoint, one function.
+// Verifies static/dynamic split, error guards, companion asserts, and WHEN clause
+// interaction, all within a realistic rule structure.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-buyer(text : $buyerId) CALL API;
+
+---- STAGE 1a ----
+
+// Context 1: static + dynamic mixed
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — inline API call
+    ASSERT ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: WHEN clause with API call
+WITH BT-00-Text
+    // Static report
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-003
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert with WHEN
+    WHEN BT-00-Indicator is present
+        ASSERT ?check-buyer(BT-00-Identifier)
+        AS ERROR R-S1A-004
+        FOR BT-00-Text IN 1
+
+---- STAGE 2a ----
+
+// Context 1: static + dynamic mixed
+WITH BT-00-Text
+    // Static assert
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert
+    ASSERT ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S2A-002
+    FOR BT-00-Text IN 1
+
+// Context 2: different context node
+WITH ND-SubNode
+    // Static report
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-003
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert from different context
+    ASSERT ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1

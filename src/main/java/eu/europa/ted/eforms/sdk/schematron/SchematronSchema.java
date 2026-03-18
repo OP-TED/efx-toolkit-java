@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -22,7 +22,8 @@ import java.util.List;
  */
 public class SchematronSchema {
   private final String title;
-  private final List<SchematronLet> globalVariables = new ArrayList<>();
+  private final List<SchematronParam> params = new ArrayList<>();
+  private final List<SchematronLet> letElements = new ArrayList<>();
   private final List<SchematronDiagnostic> diagnostics = new ArrayList<>();
   private final List<SchematronPhase> phases = new ArrayList<>();
   private final List<String> includes = new ArrayList<>();
@@ -37,8 +38,13 @@ public class SchematronSchema {
   }
 
   /** Used by complete-validation.ftl */
-  public List<SchematronLet> getGlobalVariables() {
-    return this.globalVariables;
+  public List<SchematronParam> getParams() {
+    return this.params;
+  }
+
+  /** Used by complete-validation.ftl */
+  public List<SchematronLet> getLetElements() {
+    return this.letElements;
   }
 
   /** Used by complete-validation.ftl */
@@ -56,8 +62,12 @@ public class SchematronSchema {
     return this.includes;
   }
 
-  public void addGlobalVariable(SchematronLet variable) {
-    this.globalVariables.add(variable);
+  public void addParam(SchematronParam param) {
+    this.params.add(param);
+  }
+
+  public void addLetElement(SchematronLet letElement) {
+    this.letElements.add(letElement);
   }
 
   public void addDiagnostic(SchematronDiagnostic diagnostic) {

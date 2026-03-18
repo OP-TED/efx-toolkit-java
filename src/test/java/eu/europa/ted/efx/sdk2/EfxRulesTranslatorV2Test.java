@@ -39,9 +39,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.EfxTranslatorOptions;
+import eu.europa.ted.efx.exceptions.InvalidArgumentException;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.interfaces.IncludedFileResolver;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
@@ -255,31 +259,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     String testName = "testInClause_MixedAllAndSpecific";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
 
-    // 1 shared + 2 specific per config (dynamic + static) + 2 complete-validation + schematrons.json
     assertEquals(9, outputFiles.size(), "Should generate 9 files");
-
-    // Shared pattern exists (no subtype suffix)
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a.sch"));
-    // Subtype-specific patterns exist
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a-1.sch"));
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a-2.sch"));
-
-    // Shared pattern should contain R-K7P-M2Q (the IN * rule)
-    String sharedPattern = outputFiles.get("dynamic/validation-stage-1a.sch");
-    assertTrue(sharedPattern.contains("R-K7P-M2Q"));
-    assertFalse(sharedPattern.contains("R-X3F-N8W"), "Specific rule should not be in shared pattern");
-
-    // Specific patterns should contain R-X3F-N8W but not R-K7P-M2Q
-    String specific1 = outputFiles.get("dynamic/validation-stage-1a-1.sch");
-    assertTrue(specific1.contains("R-X3F-N8W"));
-    assertFalse(specific1.contains("R-K7P-M2Q"), "Shared rule should not be in specific pattern");
-
-    // Complete validation should reference both shared and specific patterns in phases
-    String completeValidation = outputFiles.get("dynamic/complete-validation.sch");
-    String phase1 = extractPhase(completeValidation, "eforms-1");
-    assertTrue(phase1.contains("EFORMS-validation-stage-1a\""), "Phase 1 should include shared pattern");
-    assertTrue(phase1.contains("EFORMS-validation-stage-1a-1"), "Phase 1 should include specific pattern");
-
     assertAllOutputs(testName, outputFiles);
   }
 
@@ -341,13 +321,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
     assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
     assertAllOutputs(testName, outputFiles);
-
-    // Verify global variables appear before <include> elements in complete-validation.sch
-    String completeValidation = outputFiles.get("dynamic/complete-validation.sch");
-    int letIndex = completeValidation.indexOf("<let name=");
-    int includeIndex = completeValidation.indexOf("<include href=");
-    assertTrue(letIndex < includeIndex,
-        "Schema-level variables should appear before <include> elements");
   }
 
   @Test
@@ -357,16 +330,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
     assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
     assertAllOutputs(testName, outputFiles);
-
-    // Verify each pattern has its own variable with the correct value
-    String stage1a = outputFiles.get("dynamic/validation-stage-1a-1.sch");
-    String stage1b = outputFiles.get("dynamic/validation-stage-1b-1.sch");
-
-    assertTrue(stage1a.contains("name=\"stageVar\""), "Stage 1a should have stageVar variable");
-    assertTrue(stage1a.contains("&quot;first&quot;"), "Stage 1a stageVar should have value 'first'");
-
-    assertTrue(stage1b.contains("name=\"stageVar\""), "Stage 1b should have stageVar variable");
-    assertTrue(stage1b.contains("&quot;second&quot;"), "Stage 1b stageVar should have value 'second'");
   }
 
   //#endregion Variable tests (output verification)
@@ -518,35 +481,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
     assertEquals(19, outputFiles.size(), "Should generate exactly 19 files");
     assertAllOutputs(testName, outputFiles);
-
-    // Verify phase generation logic
-    String completeValidation = outputFiles.get("dynamic/complete-validation.sch");
-
-    assertTrue(completeValidation.contains("<phase id=\"eforms-1\">"));
-    assertTrue(completeValidation.contains("<phase id=\"eforms-2\">"));
-    assertTrue(completeValidation.contains("<phase id=\"eforms-3\">"));
-    assertFalse(completeValidation.contains("<phase id=\"eforms-4\">"));
-
-    String phase1 = extractPhase(completeValidation, "eforms-1");
-    assertTrue(phase1.contains("validation-stage-1"));
-    assertTrue(phase1.contains("validation-stage-2"));
-    assertTrue(phase1.contains("validation-stage-3"));
-
-    String phase2 = extractPhase(completeValidation, "eforms-2");
-    assertTrue(phase2.contains("validation-stage-1"));
-    assertTrue(phase2.contains("validation-stage-2"));
-    assertFalse(phase2.contains("validation-stage-3"));
-
-    String phase3 = extractPhase(completeValidation, "eforms-3");
-    assertTrue(phase3.contains("validation-stage-1"));
-    assertTrue(phase3.contains("validation-stage-2"));
-    assertTrue(phase3.contains("validation-stage-3"));
-  }
-
-  private String extractPhase(String content, String phaseId) {
-    int start = content.indexOf("<phase id=\"" + phaseId + "\">");
-    int end = content.indexOf("</phase>", start);
-    return content.substring(start, end);
   }
 
   //#region Comprehensive/Integration tests
@@ -556,35 +490,8 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     String testName = "testOutput_FromSampleRulesFile";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
 
-    assertFalse(outputFiles.isEmpty(), "Output files should not be empty");
     assertEquals(15, outputFiles.size(), "Should generate exactly 15 files");
-
-    // Verify we have the expected files
-    assertTrue(outputFiles.containsKey("dynamic/complete-validation.sch"));
-    assertTrue(outputFiles.containsKey("static/complete-validation.sch"));
-    assertTrue(outputFiles.containsKey("schematrons.json"));
-
-    // Stages with only IN * rules produce shared patterns (no subtype suffix)
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-1a.sch"));
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-2a.sch"));
-    assertTrue(outputFiles.containsKey("dynamic/validation-stage-3a.sch"));
-    assertTrue(outputFiles.containsKey("static/validation-stage-1a.sch"));
-
-    // Stage 1b has subtype-specific rules
-    assertTrue(outputFiles.keySet().stream().anyMatch(f -> f.startsWith("dynamic/validation-stage-1b-")));
-
-    // Verify XML well-formedness for all .sch files
-    for (Map.Entry<String, String> entry : outputFiles.entrySet()) {
-      if (entry.getKey().endsWith(".sch")) {
-        assertValidXml(entry.getValue(), entry.getKey());
-      }
-    }
-
-    // Verify schematrons.json structure
-    String schematronsJson = outputFiles.get("schematrons.json");
-    assertTrue(schematronsJson.contains("\"schematrons\""));
-    assertTrue(schematronsJson.contains("\"type\" : \"dynamic\""));
-    assertTrue(schematronsJson.contains("\"type\" : \"static\""));
+    assertAllOutputs(testName, outputFiles);
   }
 
   @Test
@@ -694,4 +601,207 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion Include directive tests
+
+  //#region API call tests
+
+  @Test
+  void testApiCall_SimpleEndpointAndFunction() throws IOException {
+    String testName = "testApiCall_SimpleEndpointAndFunction";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_DefaultEndpointName() throws IOException {
+    String testName = "testApiCall_DefaultEndpointName";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_NamedEndpoint() throws IOException {
+    String testName = "testApiCall_NamedEndpoint";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_EndpointWithoutUrl() throws IOException {
+    String testName = "testApiCall_EndpointWithoutUrl";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_MultipleArguments() throws IOException {
+    String testName = "testApiCall_MultipleArguments";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_UndeclaredFunction_ThrowsError() throws IOException {
+    String rules = readInput("testApiCall_UndeclaredFunction_ThrowsError");
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidIdentifierException.ErrorCode.UNDECLARED_IDENTIFIER, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_UndeclaredEndpoint_ThrowsError() throws IOException {
+    String rules = readInput("testApiCall_UndeclaredEndpoint_ThrowsError");
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidIdentifierException.ErrorCode.UNDECLARED_ENDPOINT, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_CompositeVariableInitializer_ThrowsError() throws IOException {
+    // The grammar enforces that dynamicVariableInitializer only accepts a single function
+    // invocation, so a compound expression is rejected at parse time.
+    String rules = readInput("testApiCall_CompositeVariableInitializer_ThrowsError");
+    assertThrows(Exception.class, () -> translator.translateRules(rules));
+  }
+
+  @Test
+  void testApiCall_WrongArgumentCount_ThrowsError() throws IOException {
+    String rules = readInput("testApiCall_WrongArgumentCount_ThrowsError");
+    InvalidArgumentException exception = assertThrows(InvalidArgumentException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidArgumentException.ErrorCode.ARGUMENT_NUMBER_MISMATCH, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_WrongArgumentType_ThrowsError() throws IOException {
+    String rules = readInput("testApiCall_WrongArgumentType_ThrowsError");
+    InvalidArgumentException exception = assertThrows(InvalidArgumentException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidArgumentException.ErrorCode.ARGUMENT_TYPE_MISMATCH, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_TranslatorReuse() throws IOException {
+    // Verify that calling translateRules twice on the same translator instance works.
+    String rules = readInput("testApiCall_Comprehensive");
+    translator.translateRules(rules);
+    // Second call should not fail with "already declared" errors.
+    Map<String, String> outputFiles = translator.translateRules(rules);
+    assertEquals(11, outputFiles.size());
+  }
+
+  @Test
+  void testApiCall_ViaInclude() throws IOException {
+    String testName = "testApiCall_ViaInclude";
+    IncludedFileResolver resolver = path -> readExpected(testName, path);
+    TranslatorOptions options = TranslatorOptions.withResolver(EfxTranslatorOptions.DEFAULT, resolver);
+
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName), options);
+
+    assertEquals(4, outputFiles.size(), "Should generate exactly 4 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_InBooleanExpression() throws IOException {
+    String testName = "testApiCall_InBooleanExpression";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_TypeMismatch_InArithmeticExpression() throws IOException {
+    String rules = readInput("testApiCall_TypeMismatch_InArithmeticExpression");
+    TypeMismatchException exception = assertThrows(TypeMismatchException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(TypeMismatchException.ErrorCode.CANNOT_CONVERT, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_TwoApiCallsInExpression() throws IOException {
+    String testName = "testApiCall_TwoApiCallsInExpression";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_OnErrorReject() throws IOException {
+    String testName = "testApiCall_OnErrorReject";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_CustomErrorLabels() throws IOException {
+    String testName = "testApiCall_CustomErrorLabels";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_ReportRule() throws IOException {
+    String testName = "testApiCall_ReportRule";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  /**
+   * Comprehensive test exercising all API call features together:
+   * - 3 endpoints (with URL, with URL, without URL)
+   * - 4 API functions across multiple endpoints
+   * - 2 stages with multiple rules per stage
+   * - Mix of static and dynamic rules
+   * - Mix of ASSERT and REPORT
+   * - Mix of ON ERROR WARN / REJECT
+   * - Mix of default and custom error labels
+   * - Single and multiple API calls per rule
+   * - Multiple function arguments
+   */
+  @Test
+  void testApiCall_Comprehensive() throws IOException {
+    String testName = "testApiCall_Comprehensive";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(11, outputFiles.size(), "Should generate exactly 11 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_ResultInVariable() throws IOException {
+    String testName = "testApiCall_ResultInVariable";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(9, outputFiles.size());
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testApiCall_IndirectDynamicDependency() throws IOException {
+    String testName = "testApiCall_IndirectDynamicDependency";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size());
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  //#endregion API call tests
 }

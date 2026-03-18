@@ -2129,7 +2129,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    *
    * @param ctx the variable reference context
    */
-  private void resolveAndPushVariableReference(VariableReferenceContext ctx) {
+  protected void resolveAndPushVariableReference(VariableReferenceContext ctx) {
     String variableName = ctx.variableName.getText();
     Context variableContext = this.efxContext.getContextFromVariable(variableName);
 
@@ -2250,7 +2250,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return efxDataTypeToScalarExpressionMap.get(primitive).asSubclass(ScalarExpression.class);
   }
 
-  private Class<? extends ScalarExpression> resolveScalarType(Class<? extends EfxDataType> primitiveType) {
+  protected Class<? extends ScalarExpression> resolveScalarType(Class<? extends EfxDataType> primitiveType) {
     Class<? extends TypedExpression> expressionType = efxDataTypeToScalarExpressionMap.get(primitiveType);
     if (expressionType == null || !ScalarExpression.class.isAssignableFrom(expressionType)) {
       throw TranslatorConfigurationException.missingTypeMapping(primitiveType, "resolveScalarType");
@@ -2464,7 +2464,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DurationSequenceExpression.class);
   }
 
-  private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
+  protected void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionArguments.isEmpty()) {
       throw InvalidArgumentException.missingArgument(ctx, parameterName);
     }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pattern id="EFORMS-validation-stage-1a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
+    <rule context="/*/PathNode/TextField">
+        <assert id="R-S1A-001" role="ERROR" test=".">rule|text|R-S1A-001</assert>
+        <let name="__apiResult1" value="efx:call-api('default', 'check-buyer', ../IdField/normalize-space(text()))"/>
+        <assert id="R-S1A-002-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
+        <let name="__apiResult2" value="efx:call-api('default', 'check-code', ../CodeField/normalize-space(text()))"/>
+        <assert id="R-S1A-002-api-error-2" role="WARNING" test="not($__apiResult2 = -1)">rule|text|api-warning</assert>
+        <assert id="R-S1A-002" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult2 = -1) or ($__apiResult1 = 1 and $__apiResult2 = 1)">rule|text|R-S1A-002</assert>
+    </rule>
+    <rule context="/*/PathNode/TextField">
+        <report id="R-S1A-003" role="WARNING" test="./normalize-space(text()) = ''">rule|text|R-S1A-003</report>
+        <let name="__apiResult3" value="efx:call-api('default', 'check-buyer', ../IdField/normalize-space(text()))"/>
+        <assert id="R-S1A-004-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">rule|text|api-error</assert>
+        <let name="__apiResult4" value="efx:call-api('default', 'check-code', ../CodeField/normalize-space(text()))"/>
+        <assert id="R-S1A-004-api-error-2" role="WARNING" test="not($__apiResult4 = -1)">rule|text|api-warning</assert>
+        <assert id="R-S1A-004" role="ERROR" test="($__apiResult3 = -1) or ($__apiResult4 = -1) or ($__apiResult3 = 1 and $__apiResult4 = 1) or (not(../IndicatorField))">rule|text|R-S1A-004</assert>
+    </rule>
+</pattern>
