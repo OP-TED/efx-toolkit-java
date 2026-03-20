@@ -34,7 +34,8 @@ public class InvalidUsageException extends EfxCompilationException {
         EMPTY_RULES_FILE,
         API_CALL_IN_COMPOUND_INITIALIZER,
         NOT_A_DYNAMIC_FUNCTION,
-        DYNAMIC_FUNCTION_OUTSIDE_RULE
+        DYNAMIC_FUNCTION_OUTSIDE_RULE,
+        INVALID_ENDPOINT_NAME
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -49,6 +50,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String API_CALL_IN_COMPOUND_INITIALIZER = "Dynamic function '%s' cannot be used inside a compound expression in a variable initializer. Declare a separate variable for the dynamic function call.";
     private static final String NOT_A_DYNAMIC_FUNCTION = "Function '%s' is not declared as a dynamic function. Only functions declared with CALL API can be used in a dynamic variable initializer.";
     private static final String DYNAMIC_FUNCTION_OUTSIDE_RULE = "Dynamic function '%s' can only be called inline within a rule expression (ASSERT/REPORT). Use 'LET dynamic : $var = ?%s(...)' to declare a dynamic variable at this scope.";
+    private static final String INVALID_ENDPOINT_NAME = "Endpoint name '%s' is not valid. Endpoint names must start with a letter and contain only letters, digits, hyphens, and underscores.";
 
     private final ErrorCode errorCode;
 
@@ -112,5 +114,9 @@ public class InvalidUsageException extends EfxCompilationException {
 
     public static InvalidUsageException dynamicFunctionOutsideRule(String functionName) {
         return new InvalidUsageException(ErrorCode.DYNAMIC_FUNCTION_OUTSIDE_RULE, DYNAMIC_FUNCTION_OUTSIDE_RULE, functionName, functionName);
+    }
+
+    public static InvalidUsageException invalidEndpointName(String endpointName) {
+        return new InvalidUsageException(ErrorCode.INVALID_ENDPOINT_NAME, INVALID_ENDPOINT_NAME, endpointName);
     }
 }

@@ -826,9 +826,14 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #region Dynamic Function Declarations
 
+  private static final java.util.regex.Pattern VALID_ENDPOINT_NAME = java.util.regex.Pattern.compile("[a-zA-Z][a-zA-Z0-9_-]*");
+
   @Override
   public void exitApiEndpointDeclaration(ApiEndpointDeclarationContext ctx) {
     String name = unquote(ctx.endpointName.getText());
+    if (!VALID_ENDPOINT_NAME.matcher(name).matches()) {
+      throw InvalidUsageException.invalidEndpointName(name);
+    }
     String url = ctx.endpointUrl != null ? unquote(ctx.endpointUrl.getText()) : null;
     this.validationPlan.declareEndpoint(name, url);
   }

@@ -10,7 +10,7 @@
     diagnostics     - List<SchematronDiagnostic> for subject path information
     includes        - List<String> of pattern file paths to include
 -->
-<schema xmlns="http://purl.oclc.org/dsdl/schematron"<#if params?has_content> xmlns:efx="http://eforms.ted.europa.eu/efx"</#if> queryBinding="xslt2">
+<schema xmlns="http://purl.oclc.org/dsdl/schematron"<#if params?has_content> xmlns:efx="http://eforms.ted.europa.eu/efx" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema"</#if> queryBinding="xslt2">
 
     <title>${title}</title>
 
@@ -30,10 +30,29 @@
 <#if params?has_content>
     <ns prefix="efx" uri="http://eforms.ted.europa.eu/efx" />
 
-    <#-- API endpoint parameters -->
+    <#-- API endpoint parameters (schema-level <let> becomes <xsl:param> via SchXSLT, overridable at runtime) -->
 <#list params as param>
-    <param name="${param.name}" value="${param.value}" />
+    <let name="${param.name}" value="${param.value}" />
 </#list>
+
+    <xsl:function name="efx:call-api" as="xs:integer">
+        <xsl:param name="endpoint-url" as="xs:string"/>
+        <xsl:param name="function" as="xs:string"/>
+        <xsl:param name="args" as="xs:string*"/>
+        <xsl:variable name="base-url" select="concat(
+            if (ends-with($endpoint-url, '/')) then $endpoint-url else concat($endpoint-url, '/'),
+            $function)"/>
+        <xsl:variable name="query-params" select="string-join(
+            for $i in 1 to count($args)
+            return concat('arg', $i, '=', encode-for-uri(string($args[$i]))),
+            '&amp;')"/>
+        <xsl:variable name="url" select="if ($query-params != '') then concat($base-url, '?', $query-params) else $base-url"/>
+        <xsl:variable name="response" select="
+            if ($endpoint-url = '' or not(unparsed-text-available($url)))
+            then '-1'
+            else unparsed-text($url)"/>
+        <xsl:value-of select="if ($response castable as xs:integer) then xs:integer($response) else -1"/>
+    </xsl:function>
 </#if>
 
     <#-- Global variables from schema-level LET statements -->

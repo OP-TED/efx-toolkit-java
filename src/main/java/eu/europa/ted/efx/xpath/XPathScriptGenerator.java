@@ -947,12 +947,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeDynamicFunction(String endpointName, String apiName,
       List<? extends TypedExpression> arguments) {
-    StringBuilder sb = new StringBuilder("efx:call-api('");
-    sb.append(endpointName).append("', '").append(apiName).append("'");
-    for (TypedExpression arg : arguments) {
-      sb.append(", ").append(arg.getScript());
-    }
-    sb.append(")");
+    StringBuilder sb = new StringBuilder("efx:call-api($apiUrl-");
+    sb.append(endpointName).append(", '").append(apiName).append("', (");
+    sb.append(arguments.stream().map(TypedExpression::getScript).collect(Collectors.joining(", ")));
+    sb.append("))");
     return new NumericExpression(sb.toString());
   }
 

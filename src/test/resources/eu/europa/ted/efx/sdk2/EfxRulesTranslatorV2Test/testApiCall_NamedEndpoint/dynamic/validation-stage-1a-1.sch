@@ -4,7 +4,7 @@
         <assert id="R-S1A-001" role="ERROR" test=".">rule|text|R-S1A-001</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult1" value="efx:call-api('ext-db', 'validate-ext', ../IdField/normalize-space(text()))"/>
+        <let name="__apiResult1" value="efx:call-api($apiUrl-ext-db, 'validate-ext', (../IdField/normalize-space(text())))"/>
         <assert id="R-K7P-M2Q-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
         <assert id="R-K7P-M2Q" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1)">rule|text|R-K7P-M2Q</assert>
     </rule>
