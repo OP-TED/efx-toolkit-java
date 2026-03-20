@@ -35,11 +35,6 @@ public class InvalidIdentifierException extends EfxCompilationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidIdentifierException(ErrorCode errorCode, String template, Object... args) {
-        super(template, args);
-        this.errorCode = errorCode;
-    }
-
     private InvalidIdentifierException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
         super(ctx, template, args);
         this.errorCode = errorCode;
@@ -49,19 +44,19 @@ public class InvalidIdentifierException extends EfxCompilationException {
         return this.errorCode;
     }
 
-    public static InvalidIdentifierException undeclaredIdentifier(String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, UNDECLARED_IDENTIFIER, identifierName);
+    public static InvalidIdentifierException undeclaredIdentifier(ParserRuleContext ctx, String identifierName) {
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, ctx, UNDECLARED_IDENTIFIER, identifierName);
     }
 
-    public static InvalidIdentifierException alreadyDeclared(String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, IDENTIFIER_ALREADY_DECLARED, identifierName);
+    public static InvalidIdentifierException alreadyDeclared(ParserRuleContext ctx, String identifierName) {
+        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, ctx, IDENTIFIER_ALREADY_DECLARED, identifierName);
     }
 
     public static InvalidIdentifierException notAContextVariable(ParserRuleContext ctx, String variableName) {
         return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, ctx, NOT_A_CONTEXT_VARIABLE, variableName);
     }
 
-    public static InvalidIdentifierException undeclaredEndpoint(String functionName, String endpointName) {
-        return new InvalidIdentifierException(ErrorCode.UNDECLARED_ENDPOINT, UNDECLARED_ENDPOINT, functionName, endpointName);
+    public static InvalidIdentifierException undeclaredEndpoint(ParserRuleContext ctx, String functionName, String endpointName) {
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_ENDPOINT, ctx, UNDECLARED_ENDPOINT, functionName, endpointName);
     }
 }

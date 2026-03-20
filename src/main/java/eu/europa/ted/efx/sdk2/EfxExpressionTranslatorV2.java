@@ -152,6 +152,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void enterEveryRule(final ParserRuleContext ctx) {
+    this.stack.pushContext(ctx);
+  }
+
+  @Override
+  public void exitEveryRule(final ParserRuleContext ctx) {
+    this.stack.popContext();
+  }
+
+  @Override
   public String translateExpression(final String expression, final String... arguments) {
     this.expressionArguments.addAll(Arrays.asList(arguments));
 
@@ -1799,7 +1809,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       NumericExpression index = this.stack.pop(NumericExpression.class);
       final TypedExpression top = this.stack.peekType();
       if (!(top instanceof PathExpression)) {
-        throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+        throw TypeMismatchException.cannotConvert(ctx, PathExpression.class, top.getClass());
       }
       PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
       this.stack.push(this.script.composeIndexer(fieldPath.asSequence(), index,
@@ -2144,7 +2154,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       Optional<TypedExpression> refExpr = this.stack.getParameter(variableName)
           .or(() -> this.stack.getVariable(variableName).map(v -> v.referenceExpression));
       boolean isSequence = EfxTypeLattice.isSequence(
-          refExpr.orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(variableName)).getDataType());
+          refExpr.orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(ctx, variableName)).getDataType());
       switch (this.currentCardinalityResolutionContext()) {
         case RESOLVE_SEQUENCE:
           if (!isSequence) {
@@ -2589,7 +2599,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitRawValueReference(RawValueReferenceContext ctx) {
     final TypedExpression top = this.stack.peekType();
     if (!(top instanceof PathExpression)) {
-      throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+      throw TypeMismatchException.cannotConvert(ctx, PathExpression.class, top.getClass());
     }
     if (top instanceof SequenceExpression
         && this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SCALAR) {
@@ -2824,7 +2834,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (BooleanExpression.class.isAssignableFrom(type)) {
       this.stack.push(this.script.composeToNumberConversion(this.stack.pop(BooleanExpression.class)));
     } else {
-      throw TypeMismatchException.cannotConvert(StringExpression.class, type);
+      throw TypeMismatchException.cannotConvert(ctx, StringExpression.class, type);
     }
   }
 
@@ -2946,7 +2956,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (DurationExpression.class.isAssignableFrom(type)) {
       this.stack.push(this.script.composeToStringConversion(this.stack.pop(DurationExpression.class)));
     } else {
-      throw TypeMismatchException.cannotConvert(NumericExpression.class, type);
+      throw TypeMismatchException.cannotConvert(ctx, NumericExpression.class, type);
     }
   }
 
@@ -3913,7 +3923,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       } else if (this.isNumeric(right) && this.isNumeric(left)) {
         this.exitNumericOperation(operator);
       } else {
-        throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+        throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
       }
     } else if (ctx.operator.getType() == EfxLexer.Minus) {
       if (this.isDuration(right) && this.isDuration(left)) {
@@ -3925,7 +3935,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       } else if (this.isNumeric(right) && this.isNumeric(left)) {
         this.exitNumericOperation(operator);
       } else {
-        throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+        throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
       }
     } else {
       throw TranslatorConfigurationException.unhandledOperator(operator,
@@ -3945,7 +3955,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (this.isNumeric(right) && this.isNumeric(left)) {
       this.exitNumericOperation(operator);
     } else {
-      throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+      throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
     }
   }
 

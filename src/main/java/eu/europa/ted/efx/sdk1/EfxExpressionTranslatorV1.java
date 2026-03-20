@@ -135,6 +135,16 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
+  public void enterEveryRule(final ParserRuleContext ctx) {
+    this.stack.pushContext(ctx);
+  }
+
+  @Override
+  public void exitEveryRule(final ParserRuleContext ctx) {
+    this.stack.popContext();
+  }
+
+  @Override
   public String translateExpression(final String expression, final String... parameters) {
     this.expressionParameters.addAll(Arrays.asList(parameters));
 

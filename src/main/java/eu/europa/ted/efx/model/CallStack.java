@@ -13,6 +13,8 @@
  */
 package eu.europa.ted.efx.model;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
@@ -51,6 +54,12 @@ public class CallStack {
    * The type checker used for type conversion checks.
    */
   private final TypeChecker typeChecker;
+
+  /**
+   * Tracks the current parser rule context for error reporting.
+   * Mirrors the ANTLR parse tree walk via {@link #pushContext} / {@link #popContext}.
+   */
+  private final Deque<ParserRuleContext> contextStack = new ArrayDeque<>();
 
   /**
    * Stack frames are means of controlling the scope of variables and parameters.
@@ -98,10 +107,10 @@ public class CallStack {
         if (typeChecker.canConvert(actual, expected)) {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.pop(), expected));
         }
-        throw TypeMismatchException.cannotConvert(expected, actual);
+        throw TypeMismatchException.cannotConvert(currentContext(), expected, actual);
       }
 
-      throw TypeMismatchException.cannotConvert(expectedType, actualType);
+      throw TypeMismatchException.cannotConvert(currentContext(), expectedType, actualType);
     }
 
     synchronized <T extends ParsedEntity> T peek(Class<T> expectedType) {
@@ -117,7 +126,7 @@ public class CallStack {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.peek(), expected));
         }
       }
-      throw TypeMismatchException.cannotConvert(expectedType, actualType);
+      throw TypeMismatchException.cannotConvert(currentContext(), expectedType, actualType);
     }
 
     /**
@@ -160,6 +169,28 @@ public class CallStack {
   }
 
   /**
+   * Pushes a parser rule context onto the context stack.
+   * Called by the translator's {@code enterEveryRule}.
+   */
+  public void pushContext(final ParserRuleContext context) {
+    this.contextStack.push(context);
+  }
+
+  /**
+   * Pops the current parser rule context from the context stack.
+   * Called by the translator's {@code exitEveryRule}.
+   */
+  public void popContext() {
+    if (!this.contextStack.isEmpty()) {
+      this.contextStack.pop();
+    }
+  }
+
+  private ParserRuleContext currentContext() {
+    return this.contextStack.isEmpty() ? null : this.contextStack.peek();
+  }
+
+  /**
    * Creates a new stack frame and pushes it on top of the call stack.
    * 
    * This method is called at the begin boundary of scoped sub-expression to allow
@@ -199,7 +230,7 @@ public class CallStack {
    */
   public void declareIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), identifier.name);
     }
     this.frames.peek().declareIdentifier(identifier);
   }
@@ -211,21 +242,21 @@ public class CallStack {
    */
   public void declareGlobalIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), identifier.name);
     }
     this.globalIdentifierRegistry.put(identifier.name, identifier);
   }
 
   public void declareFunction(Function function) {
     if (this.inScope(function.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(function.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), function.name);
     }
     this.globalIdentifierRegistry.put(function.name, function);
   }
 
   public void declareTemplate(Template template) {
     if (this.inScope(template.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(template.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), template.name);
     }
     this.globalIdentifierRegistry.put(template.name, template);
   }
@@ -324,7 +355,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
         .filter(Function.class::isInstance)
         .map(Function.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(functionName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), functionName));
   }
 
   /**
@@ -339,7 +370,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(templateName))
         .filter(Template.class::isInstance)
         .map(Template.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(templateName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), templateName));
   }
 
   /**
@@ -354,7 +385,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(dictionaryName))
         .filter(Dictionary.class::isInstance)
         .map(Dictionary.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(dictionaryName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), dictionaryName));
   }
 
   /**
@@ -368,7 +399,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
       .filter(Function.class::isInstance)
       .map(identifier -> ((Function) identifier).parameters)
-      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(functionName));
+      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), functionName));
   }
 
   /**
@@ -387,7 +418,7 @@ public class CallStack {
     Optional<Identifier> identifier = this.getIdentifier(identifierName)
         .or(() -> Optional.ofNullable((Identifier) this.getFunction(identifierName)));
     if (!identifier.isPresent()) {
-      throw InvalidIdentifierException.undeclaredIdentifier(identifierName);
+      throw InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), identifierName);
     }
     return identifier.get().dataType;
   }
@@ -406,7 +437,7 @@ public class CallStack {
         () -> getVariable(identifierName).ifPresentOrElse(
             variable -> this.push(variable.referenceExpression),
             () -> {
-              throw InvalidIdentifierException.undeclaredIdentifier(identifierName);
+              throw InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), identifierName);
             }));
   }
 
@@ -459,7 +490,7 @@ public class CallStack {
     if (item instanceof TypedExpression) {
       return (TypedExpression) item;
     }
-    throw TypeMismatchException.cannotConvert(TypedExpression.class, item.getClass());
+    throw TypeMismatchException.cannotConvert(this.currentContext(), TypedExpression.class, item.getClass());
   }
 
   /**

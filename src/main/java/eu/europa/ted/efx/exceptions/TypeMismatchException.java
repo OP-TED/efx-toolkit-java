@@ -48,11 +48,6 @@ public class TypeMismatchException extends EfxCompilationException {
 
     private final ErrorCode errorCode;
 
-    private TypeMismatchException(ErrorCode errorCode, String template, Object... args) {
-        super(template, args);
-        this.errorCode = errorCode;
-    }
-
     private TypeMismatchException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
         super(ctx, template, args);
         this.errorCode = errorCode;
@@ -62,18 +57,18 @@ public class TypeMismatchException extends EfxCompilationException {
         return this.errorCode;
     }
 
-    public static TypeMismatchException cannotConvert(Class<? extends ParsedEntity> expectedType,
+    public static TypeMismatchException cannotConvert(ParserRuleContext ctx,
+            Class<? extends ParsedEntity> expectedType,
             Class<? extends ParsedEntity> actualType) {
         if (TypedExpression.class.isAssignableFrom(actualType)
                 && TypedExpression.class.isAssignableFrom(expectedType)) {
             var actual = actualType.asSubclass(TypedExpression.class);
             var expected = expectedType.asSubclass(TypedExpression.class);
-
-            return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, CANNOT_CONVERT,
+            return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, ctx, CANNOT_CONVERT,
                     TypedExpression.getEfxDataType(expected).getSimpleName(),
                     TypedExpression.getEfxDataType(actual).getSimpleName());
         }
-        return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, CANNOT_CONVERT,
+        return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, ctx, CANNOT_CONVERT,
                 expectedType.getSimpleName(), actualType.getSimpleName());
     }
 
@@ -82,8 +77,8 @@ public class TypeMismatchException extends EfxCompilationException {
                 left.getClass().getSimpleName(), right.getClass().getSimpleName());
     }
 
-    public static TypeMismatchException incompatibleOperands(String operator, Expression left, Expression right) {
-        return new TypeMismatchException(ErrorCode.INCOMPATIBLE_OPERANDS, INCOMPATIBLE_OPERANDS,
+    public static TypeMismatchException incompatibleOperands(ParserRuleContext ctx, String operator, Expression left, Expression right) {
+        return new TypeMismatchException(ErrorCode.INCOMPATIBLE_OPERANDS, ctx, INCOMPATIBLE_OPERANDS,
                 operator, left.getClass().getSimpleName(), right.getClass().getSimpleName());
     }
 
