@@ -2599,6 +2599,56 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "distinct-values(BT-00-Text)");
   }
 
+  // #region: Count-duplicates
+
+  @Test
+  void testCountDuplicatesFunction_WithStringSequences() {
+    testExpressionTranslationWithContext(
+        "count(('one','two','one')) - count(distinct-values(('one','two','one')))", "ND-Root",
+        "count-duplicates(['one', 'two', 'one'])");
+  }
+
+  @Test
+  void testCountDuplicatesFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext(
+        "count((1,2,3,2,3,4)) - count(distinct-values((1,2,3,2,3,4)))", "ND-Root",
+        "count-duplicates([1, 2, 3, 2, 3, 4])");
+  }
+
+  @Test
+  void testCountDuplicatesFunction_WithFieldReferences() {
+    testExpressionTranslationWithContext(
+        "count(PathNode/TextField/normalize-space(text())) - count(distinct-values(PathNode/TextField/normalize-space(text())))",
+        "ND-Root", "count-duplicates(BT-00-Text)");
+  }
+
+  // #endregion: Count-duplicates
+
+  // #region: Get-duplicates
+
+  @Test
+  void testGetDuplicatesFunction_WithStringSequences() {
+    testExpressionTranslationWithContext(
+        "for $v in distinct-values(('one','two','one')) return if (count(('one','two','one')[. = $v]) > 1) then $v else ()",
+        "ND-Root", "get-duplicates(['one', 'two', 'one'])");
+  }
+
+  @Test
+  void testGetDuplicatesFunction_WithNumberSequences() {
+    testExpressionTranslationWithContext(
+        "for $v in distinct-values((1,2,3,2,3,4)) return if (count((1,2,3,2,3,4)[. = $v]) > 1) then $v else ()",
+        "ND-Root", "get-duplicates([1, 2, 3, 2, 3, 4])");
+  }
+
+  @Test
+  void testGetDuplicatesFunction_WithFieldReferences() {
+    testExpressionTranslationWithContext(
+        "for $v in distinct-values(PathNode/TextField/normalize-space(text())) return if (count(PathNode/TextField/normalize-space(text())[. = $v]) > 1) then $v else ()",
+        "ND-Root", "get-duplicates(BT-00-Text)");
+  }
+
+  // #endregion: Get-duplicates
+
   // #region: Union
 
   @Test

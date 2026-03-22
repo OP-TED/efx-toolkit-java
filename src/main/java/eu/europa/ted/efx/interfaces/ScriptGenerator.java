@@ -1037,6 +1037,25 @@ public interface ScriptGenerator {
       T list, Class<T> listType);
 
   /**
+   * Returns the target language script that counts the number of duplicate values in a sequence.
+   *
+   * @param sequence The sequence to count duplicates in.
+   * @return A numeric expression representing the number of duplicate values.
+   */
+  public NumericExpression composeCountDuplicatesFunction(SequenceExpression sequence);
+
+  /**
+   * Returns the target language script that extracts the duplicate values from a sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to extract duplicates from.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the values that appear more than once.
+   */
+  public <T extends SequenceExpression> T composeGetDuplicatesFunction(
+      T list, Class<T> listType);
+
+  /**
    * Returns the target language script that computes the union of two sequences
    * (all values from both, with duplicates removed).
    *

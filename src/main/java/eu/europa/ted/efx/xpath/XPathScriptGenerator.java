@@ -459,6 +459,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   //#region Numeric functions -------------------------------------------------
 
   @Override
+  public NumericExpression composeCountDuplicatesFunction(final SequenceExpression sequence) {
+    return new NumericExpression(
+        "count(" + sequence.getScript() + ") - count(distinct-values(" + sequence.getScript() + "))");
+  }
+
+  @Override
   public NumericExpression composeCountOperation(SequenceExpression list) {
     return new NumericExpression("count(" + list.getScript() + ")");
   }
@@ -867,6 +873,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends SequenceExpression> T composeDistinctValuesFunction(
       T list, Class<T> listType) {
     return Expression.instantiate("distinct-values(" + list.getScript() + ")", listType);
+  }
+
+  @Override
+  public <T extends SequenceExpression> T composeGetDuplicatesFunction(
+      final T list, final Class<T> listType) {
+    final String seq = list.getScript();
+    return Expression.instantiate(
+        "for $v in distinct-values(" + seq + ") return if (count(" + seq + "[. = $v]) > 1) then $v else ()",
+        listType);
   }
 
   @Override
