@@ -36,9 +36,17 @@
 </#list>
 
     <xsl:function name="efx:call-api" as="xs:integer">
-        <xsl:param name="endpoint-url" as="xs:string"/>
+        <xsl:param name="endpoint-name" as="xs:string"/>
         <xsl:param name="function" as="xs:string"/>
         <xsl:param name="args" as="xs:string*"/>
+        <xsl:variable name="endpoint-url" as="xs:string">
+            <xsl:choose>
+<#list params as param>
+                <xsl:when test="$endpoint-name = '${param.name?remove_beginning("apiUrl-")}'"><xsl:value-of select="$${param.name}"/></xsl:when>
+</#list>
+                <xsl:otherwise><xsl:value-of select="''"/></xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <xsl:variable name="base-url" select="concat(
             if (ends-with($endpoint-url, '/')) then $endpoint-url else concat($endpoint-url, '/'),
             $function)"/>

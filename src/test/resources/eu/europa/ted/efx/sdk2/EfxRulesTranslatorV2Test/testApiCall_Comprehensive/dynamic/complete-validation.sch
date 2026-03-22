@@ -22,9 +22,17 @@
     <let name="apiUrl-staging" value="''" />
 
     <xsl:function name="efx:call-api" as="xs:integer">
-        <xsl:param name="endpoint-url" as="xs:string"/>
+        <xsl:param name="endpoint-name" as="xs:string"/>
         <xsl:param name="function" as="xs:string"/>
         <xsl:param name="args" as="xs:string*"/>
+        <xsl:variable name="endpoint-url" as="xs:string">
+            <xsl:choose>
+                <xsl:when test="$endpoint-name = 'default'"><xsl:value-of select="$apiUrl-default"/></xsl:when>
+                <xsl:when test="$endpoint-name = 'ext-db'"><xsl:value-of select="$apiUrl-ext-db"/></xsl:when>
+                <xsl:when test="$endpoint-name = 'staging'"><xsl:value-of select="$apiUrl-staging"/></xsl:when>
+                <xsl:otherwise><xsl:value-of select="''"/></xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <xsl:variable name="base-url" select="concat(
             if (ends-with($endpoint-url, '/')) then $endpoint-url else concat($endpoint-url, '/'),
             $function)"/>
@@ -40,7 +48,7 @@
         <xsl:value-of select="if ($response castable as xs:integer) then xs:integer($response) else -1"/>
     </xsl:function>
 
-    <let name="globalCheck" value="efx:call-api($apiUrl-default, 'check-global', (/*/PathNode/CodeField/normalize-space(text())))"/>
+    <let name="globalCheck" value="efx:call-api('default', 'check-global', (/*/PathNode/CodeField/normalize-space(text())))"/>
 
     <phase id="eforms-1">
         <active pattern="EFORMS-validation-stage-1a-1" />
