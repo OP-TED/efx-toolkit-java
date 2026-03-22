@@ -2476,6 +2476,37 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "ND-Root", "date(BT-00-Text)");
   }
 
+  @Test
+  void testCurrentDateFunction() {
+    testExpressionTranslationWithContext("current-date()", "ND-Root", "current-date()");
+  }
+
+  @Test
+  void testCurrentDateComparedToField() {
+    testExpressionTranslationWithContext(
+        "current-date() > PathNode/StartDateField/xs:date(text())",
+        "ND-Root", "current-date() > BT-00-StartDate");
+  }
+
+  @Test
+  void testCurrentDatePlusDuration() {
+    testExpressionTranslationWithContext(
+        "(current-date() + xs:dayTimeDuration('P30D'))",
+        "ND-Root", "add-duration(current-date(), P30D)");
+  }
+
+  @Test
+  void testYearFromCurrentDate() {
+    testExpressionTranslationWithContext("year-from-date(current-date())",
+        "ND-Root", "year(current-date())");
+  }
+
+  @Test
+  void testMonthFromCurrentDate() {
+    testExpressionTranslationWithContext("month-from-date(current-date())",
+        "ND-Root", "month(current-date())");
+  }
+
   // #endregion: Date functions
 
   // #region: Time functions --------------------------------------------------
@@ -2484,6 +2515,24 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTimeFromStringFunction() {
     testExpressionTranslationWithContext("xs:time(PathNode/TextField/normalize-space(text()))",
         "ND-Root", "time(BT-00-Text)");
+  }
+
+  @Test
+  void testCurrentTimeFunction() {
+    testExpressionTranslationWithContext("current-time()", "ND-Root", "current-time()");
+  }
+
+  @Test
+  void testCurrentTimeComparedToField() {
+    testExpressionTranslationWithContext(
+        "current-time() > PathNode/StartTimeField/xs:time(text())",
+        "ND-Root", "current-time() > BT-00-StartTime");
+  }
+
+  @Test
+  void testHoursFromCurrentTime() {
+    testExpressionTranslationWithContext("hours-from-time(current-time())",
+        "ND-Root", "hours(current-time())");
   }
 
   // #endregion: Time functions

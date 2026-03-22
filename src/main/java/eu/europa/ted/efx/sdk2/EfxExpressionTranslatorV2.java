@@ -3198,6 +3198,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitCurrentDateFunction(CurrentDateFunctionContext ctx) {
+    this.stack.push(this.script.getCurrentDate());
+  }
+
+  @Override
   public void exitYearFromDateFunction(YearFromDateFunctionContext ctx) {
     this.stack.push(this.script.composeYearFunction(this.stack.pop(DateExpression.class)));
   }
@@ -3219,6 +3224,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToTimeConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitCurrentTimeFunction(CurrentTimeFunctionContext ctx) {
+    this.stack.push(this.script.getCurrentTime());
   }
 
   @Override

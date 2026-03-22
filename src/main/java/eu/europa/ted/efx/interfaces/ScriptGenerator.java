@@ -926,6 +926,13 @@ public interface ScriptGenerator {
    */
   public TimeExpression composeToTimeConversion(StringExpression pop);
 
+  /**
+   * Returns the current time as a time expression in the target language.
+   *
+   * @return A time expression representing the current time.
+   */
+  public TimeExpression getCurrentTime();
+
   // #endregion Time Functions ------------------------------------------------
 
   // #region Duration Functions -----------------------------------------------

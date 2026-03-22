@@ -821,6 +821,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new TimeExpression("xs:time(" + time.getScript() + ")");
   }
 
+  @Override
+  public TimeExpression getCurrentTime() {
+    return new TimeExpression("current-time()");
+  }
+
   //#endregion Time functions -------------------------------------------------
 
   //#region Duration functions ------------------------------------------------
