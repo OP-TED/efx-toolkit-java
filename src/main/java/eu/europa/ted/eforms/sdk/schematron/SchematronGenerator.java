@@ -15,6 +15,8 @@ package eu.europa.ted.eforms.sdk.schematron;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -37,6 +39,11 @@ import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import freemarker.cache.ClassTemplateLoader;
+import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -57,15 +64,43 @@ public class SchematronGenerator implements ValidatorGenerator {
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
       .enable(SerializationFeature.INDENT_OUTPUT);
 
+  private static final String CLASSPATH_TEMPLATES = "/freemarker/schematron";
+
   private final Configuration freemarkerConfig;
 
   public SchematronGenerator() {
-    this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_31);
-    this.freemarkerConfig.setClassForTemplateLoading(SchematronGenerator.class,
-        "/freemarker/schematron");
+    this(null);
+  }
+
+  public SchematronGenerator(final TranslatorOptions options) {
+    this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
+    this.freemarkerConfig.setTemplateLoader(this.resolveTemplateLoader(options));
     this.freemarkerConfig.setDefaultEncoding("UTF-8");
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.freemarkerConfig.setLogTemplateExceptions(false);
+  }
+
+  private TemplateLoader resolveTemplateLoader(final TranslatorOptions options) {
+    final ClassTemplateLoader classpathLoader =
+            new ClassTemplateLoader(SchematronGenerator.class, CLASSPATH_TEMPLATES);
+
+    if (options == null) {
+      return classpathLoader;
+    }
+
+    final Path templatesRoot = options.getTemplatesRoot();
+    if (templatesRoot == null || !Files.isDirectory(templatesRoot)) {
+      return classpathLoader;
+    }
+
+    try {
+      return new MultiTemplateLoader(new TemplateLoader[] {
+              new FileTemplateLoader(templatesRoot.toFile()), classpathLoader
+      });
+    } catch (final IOException e) {
+      logger.warn("Failed to load templates from {}, using classpath defaults", templatesRoot);
+      return classpathLoader;
+    }
   }
 
   // #region ValidatorMarkupGenerator Implementation
