@@ -2817,6 +2817,42 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitLateBoundCountDuplicatesFunction(LateBoundCountDuplicatesFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(
+        this.stack.pop(this.resolveSequenceType(this.stack.peekType()))));
+  }
+
+  @Override
+  public void exitCountDuplicatesStringsFunction(CountDuplicatesStringsFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(StringSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitCountDuplicatesBooleansFunction(CountDuplicatesBooleansFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(BooleanSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitCountDuplicatesNumbersFunction(CountDuplicatesNumbersFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(NumericSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitCountDuplicatesDatesFunction(CountDuplicatesDatesFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(DateSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitCountDuplicatesTimesFunction(CountDuplicatesTimesFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(TimeSequenceExpression.class)));
+  }
+
+  @Override
+  public void exitCountDuplicatesDurationsFunction(CountDuplicatesDurationsFunctionContext ctx) {
+    this.stack.push(this.script.composeCountDuplicatesFunction(this.stack.pop(DurationSequenceExpression.class)));
+  }
+
+  @Override
   public void exitNumberFromStringFunction(NumberFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToNumberConversion(this.stack.pop(StringExpression.class)));
   }
@@ -3198,6 +3234,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void exitCurrentDateFunction(CurrentDateFunctionContext ctx) {
+    this.stack.push(this.script.getCurrentDate());
+  }
+
+  @Override
   public void exitYearFromDateFunction(YearFromDateFunctionContext ctx) {
     this.stack.push(this.script.composeYearFunction(this.stack.pop(DateExpression.class)));
   }
@@ -3219,6 +3260,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   @Override
   public void exitTimeFromStringFunction(TimeFromStringFunctionContext ctx) {
     this.stack.push(this.script.composeToTimeConversion(this.stack.pop(StringExpression.class)));
+  }
+
+  @Override
+  public void exitCurrentTimeFunction(CurrentTimeFunctionContext ctx) {
+    this.stack.push(this.script.getCurrentTime());
   }
 
   @Override
@@ -3315,6 +3361,50 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   // #endregion Distinct-values ------------------------------------------------
+
+  // #region Get-duplicates ---------------------------------------------------
+
+  @Override
+  public void exitStringGetDuplicatesFunction(StringGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(StringSequenceExpression.class);
+  }
+
+  @Override
+  public void exitBooleanGetDuplicatesFunction(BooleanGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void exitNumericGetDuplicatesFunction(NumericGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(NumericSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDateGetDuplicatesFunction(DateGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(DateSequenceExpression.class);
+  }
+
+  @Override
+  public void exitTimeGetDuplicatesFunction(TimeGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void exitDurationGetDuplicatesFunction(DurationGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(DurationSequenceExpression.class);
+  }
+
+  @Override
+  public void exitLateBoundGetDuplicatesFunction(LateBoundGetDuplicatesFunctionContext ctx) {
+    this.exitGetDuplicatesFunction(this.resolveSequenceType(this.stack.peekType()));
+  }
+
+  private <T extends SequenceExpression> void exitGetDuplicatesFunction(final Class<T> listType) {
+    final T list = this.stack.pop(listType);
+    this.stack.push(this.script.composeGetDuplicatesFunction(list, listType));
+  }
+
+  // #endregion Get-duplicates ------------------------------------------------
 
   // #region Union ------------------------------------------------------------
 
