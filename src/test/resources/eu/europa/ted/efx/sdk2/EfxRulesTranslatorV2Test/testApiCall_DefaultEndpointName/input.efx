@@ -1,0 +1,18 @@
+// Test: API function without explicit endpoint name defaults to 'default'.
+// Verifies that CALL API (without endpoint) binds to the 'default' endpoint.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

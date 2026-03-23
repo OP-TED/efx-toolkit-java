@@ -32,7 +32,8 @@ public class TranslatorConfigurationException extends IllegalStateException {
         UNHANDLED_PREDICATE_CONTEXT,
         INCLUDE_RESOLVER_NOT_CONFIGURED,
         UNRESOLVED_INCLUDE_DIRECTIVE,
-        UNHANDLED_OPERATOR
+        UNHANDLED_OPERATOR,
+        RULES_STACK_ERROR
     }
 
     private static final String TYPE_NOT_REGISTERED =
@@ -93,6 +94,10 @@ public class TranslatorConfigurationException extends IllegalStateException {
         "Operator '%s' is not handled in %s. " +
         "If the grammar was updated to allow new operators, " +
         "add a handler for this operator.";
+
+    private static final String RULES_STACK_ERROR =
+        "Expected %s on rules stack, but found %s. " +
+        "This indicates a bug in the rules translator.";
 
     private final ErrorCode errorCode;
 
@@ -155,5 +160,15 @@ public class TranslatorConfigurationException extends IllegalStateException {
 
     public static TranslatorConfigurationException unhandledOperator(String operator, String handlerName) {
         return new TranslatorConfigurationException(ErrorCode.UNHANDLED_OPERATOR, UNHANDLED_OPERATOR, operator, handlerName);
+    }
+
+    public static TranslatorConfigurationException rulesStackError(Class<?> expectedType, Class<?> actualType) {
+        return new TranslatorConfigurationException(ErrorCode.RULES_STACK_ERROR, RULES_STACK_ERROR,
+                expectedType.getSimpleName(), actualType.getSimpleName());
+    }
+
+    public static TranslatorConfigurationException rulesStackEmpty(Class<?> expectedType) {
+        return new TranslatorConfigurationException(ErrorCode.RULES_STACK_ERROR, RULES_STACK_ERROR,
+                expectedType.getSimpleName(), "empty stack");
     }
 }

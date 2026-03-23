@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -18,17 +18,22 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import java.util.stream.Collectors;
+
 import eu.europa.ted.efx.model.ParsedEntity;
+import eu.europa.ted.efx.model.variables.DynamicVariable;
 import eu.europa.ted.efx.model.variables.Variable;
 
 public class ValidationStage implements ParsedEntity {
 
     String name;
+    ValidationPlan validationPlan;
     List<RuleSet> ruleSets;
     List<Variable> variables;
 
-    public ValidationStage(String name) {
+    public ValidationStage(final String name, final ValidationPlan validationPlan) {
         this.name = name;
+        this.validationPlan = validationPlan;
         this.ruleSets = new ArrayList<>();
         this.variables = new ArrayList<>();
     }
@@ -45,12 +50,33 @@ public class ValidationStage implements ParsedEntity {
         return this.name;
     }
 
+    public ValidationPlan getValidationPlan() {
+        return this.validationPlan;
+    }
+
     public List<RuleSet> getRuleSets() {
         return this.ruleSets;
     }
 
     public List<Variable> getVariables() {
         return this.variables;
+    }
+
+    public List<Variable> getInheritedVariables() {
+        return this.validationPlan.getVariables();
+    }
+
+    public List<Variable> getAllVariables() {
+        List<Variable> allVariables = new ArrayList<>(this.validationPlan.getVariables());
+        allVariables.addAll(this.variables);
+        return allVariables;
+    }
+
+    public List<DynamicVariable> getDynamicVariables() {
+        return this.variables.stream()
+                .filter(DynamicVariable.class::isInstance)
+                .map(DynamicVariable.class::cast)
+                .collect(Collectors.toList());
     }
 
     public boolean containsUniversalRules() {

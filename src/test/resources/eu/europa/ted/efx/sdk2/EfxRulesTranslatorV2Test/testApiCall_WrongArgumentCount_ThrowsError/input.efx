@@ -1,0 +1,13 @@
+// Intentionally invalid: passing two arguments to a function that expects one.
+// The compiler should throw an exception.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier, BT-00-Code)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

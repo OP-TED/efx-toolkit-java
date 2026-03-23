@@ -13,6 +13,9 @@
  */
 package eu.europa.ted.efx.model.variables;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import eu.europa.ted.efx.model.expressions.DeclarationExpression;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
@@ -32,6 +35,7 @@ public class Variable extends Identifier {
   public final Expression declarationExpression;
   public final TypedExpression initializationExpression;
   public final TypedExpression referenceExpression;
+  private final List<DynamicVariable> dynamicDependencies = new ArrayList<>();
 
   public Variable(String variableName, TypedExpression initializationExpression, TypedExpression referenceExpression) {
     this(variableName, DeclarationExpression.empty(), initializationExpression, referenceExpression);
@@ -46,6 +50,18 @@ public class Variable extends Identifier {
     // Use isAssignableFrom to allow compatible types (e.g., MultilingualString is assignable to String)
     assert EfxTypeLattice.toPrimitive(referenceExpression.getDataType())
         .isAssignableFrom(EfxTypeLattice.toPrimitive(initializationExpression.getDataType()));
+  }
+
+  public void addDynamicDependencies(final List<DynamicVariable> dependencies) {
+    this.dynamicDependencies.addAll(dependencies);
+  }
+
+  public List<DynamicVariable> getDynamicDependencies() {
+    return this.dynamicDependencies;
+  }
+
+  public boolean hasDynamicDependencies() {
+    return !this.dynamicDependencies.isEmpty();
   }
 
   @Override

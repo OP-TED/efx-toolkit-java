@@ -41,7 +41,6 @@ import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationLiteral;
-import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericLiteral;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
@@ -294,19 +293,6 @@ public class XPathScriptGenerator implements ScriptGenerator {
     } catch (Exception e) {
       throw new ParseCancellationException(e);
     }
-  }
-
-  @Override
-  public PathExpression composeExternalReference(StringExpression externalReference) {
-    return new NodePath(
-        "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
-  }
-
-
-  @Override
-  public PathExpression composeFieldInExternalReference(PathExpression externalReference,
-      PathExpression fieldReference) {
-    return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
   }
 
 
@@ -956,6 +942,16 @@ public class XPathScriptGenerator implements ScriptGenerator {
         ? namespace + ":" + functionName
         : functionName;
     return Expression.instantiate(qualifiedFunctionName + "(" + parameters.stream().map(p -> p.getScript()).collect(Collectors.joining(", ")) + ")", type);
+  }
+
+  @Override
+  public NumericExpression composeDynamicFunction(String endpointName, String apiName,
+      List<? extends TypedExpression> arguments) {
+    StringBuilder sb = new StringBuilder("efx:call-api('");
+    sb.append(endpointName).append("', '").append(apiName).append("', (");
+    sb.append(arguments.stream().map(TypedExpression::getScript).collect(Collectors.joining(", ")));
+    sb.append("))");
+    return new NumericExpression(sb.toString());
   }
 
   //#region Helpers -----------------------------------------------------------

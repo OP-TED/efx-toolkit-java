@@ -38,11 +38,6 @@ public class InvalidIndentationException extends EfxCompilationException {
 
     private final ErrorCode errorCode;
 
-    private InvalidIndentationException(ErrorCode errorCode, String template, Object... args) {
-        super(template, args);
-        this.errorCode = errorCode;
-    }
-
     private InvalidIndentationException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
         super(ctx, template, args);
         this.errorCode = errorCode;

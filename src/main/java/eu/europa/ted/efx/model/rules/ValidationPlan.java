@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -14,18 +14,25 @@
 package eu.europa.ted.efx.model.rules;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import java.util.stream.Collectors;
 
 import eu.europa.ted.efx.model.ParsedEntity;
+import eu.europa.ted.efx.model.variables.DynamicVariable;
 import eu.europa.ted.efx.model.variables.Variable;
 
-public class CompleteValidation implements ParsedEntity {
+public class ValidationPlan implements ParsedEntity {
 
-    List<Variable> globalVariables = new ArrayList<>();
-    
+    List<Variable> variables = new ArrayList<>();
+
     List<ValidationStage> stages = new ArrayList<>();
 
     List<String> noticeSubtypes = new ArrayList<>();
+
+    Map<String, String> endpoints = new LinkedHashMap<>();
 
     public List<String> getNoticeSubtypes() {
         return new ArrayList<>(this.noticeSubtypes);
@@ -59,12 +66,27 @@ public class CompleteValidation implements ParsedEntity {
         }
     }
 
-    public void addGlobalVariable(Variable variable) {
-        this.globalVariables.add(variable);
+    public void addVariable(Variable variable) {
+        this.variables.add(variable);
     }
 
-    public List<Variable> getGlobalVariables() {
-        return new ArrayList<>(this.globalVariables);
+    public List<Variable> getVariables() {
+        return new ArrayList<>(this.variables);
+    }
+
+    public List<DynamicVariable> getDynamicVariables() {
+        return this.variables.stream()
+                .filter(DynamicVariable.class::isInstance)
+                .map(DynamicVariable.class::cast)
+                .collect(Collectors.toList());
+    }
+
+    public void declareEndpoint(String name, String url) {
+        this.endpoints.put(name, url);
+    }
+
+    public Map<String, String> getEndpoints() {
+        return new LinkedHashMap<>(this.endpoints);
     }
 
     private void sortNoticeSubtypes() {

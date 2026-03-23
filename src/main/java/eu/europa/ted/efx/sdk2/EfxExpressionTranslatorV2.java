@@ -152,6 +152,16 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   @Override
+  public void enterEveryRule(final ParserRuleContext ctx) {
+    this.stack.pushContext(ctx);
+  }
+
+  @Override
+  public void exitEveryRule(final ParserRuleContext ctx) {
+    this.stack.popContext();
+  }
+
+  @Override
   public String translateExpression(final String expression, final String... arguments) {
     this.expressionArguments.addAll(Arrays.asList(arguments));
 
@@ -258,8 +268,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return getFieldId(ctx.absoluteFieldReference());
     }
 
-    if (ctx.fieldReferenceInOtherNotice() != null) {
-      return getFieldId(ctx.fieldReferenceInOtherNotice());
+    if (ctx.fieldReferenceWithVariableContextOverride() != null) {
+      return getFieldId(ctx.fieldReferenceWithVariableContextOverride());
     }
     assert false : "Unexpected context type for field reference: " + ctx.getClass().getSimpleName();
     return null;
@@ -272,11 +282,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return getFieldId(ctx.reference.reference);
   }
 
-  protected String getFieldId(FieldReferenceInOtherNoticeContext ctx) {
+    protected String getFieldId(FieldReferenceWithVariableContextOverrideContext ctx) {
     if (ctx == null) {
       return null;
     }
-    return getFieldId(ctx.reference.reference.reference.reference.reference);
+    return getFieldId(ctx.reference.reference.reference.reference);
   }
 
   protected String getFieldId(FieldContextContext ctx) {
@@ -312,8 +322,8 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       return getNodeId(ctx.absoluteNodeReference().nodeReferenceWithPredicate());
     }
 
-    if (ctx.nodeReferenceInOtherNotice() != null) {
-      return getNodeId(ctx.nodeReferenceInOtherNotice().nodeReferenceWithPredicate());
+    if (ctx.nodeReferenceWithPredicate() != null) {
+      return getNodeId(ctx.nodeReferenceWithPredicate());
     }
 
     assert false : "Unexpected context type for node reference: " + ctx.getClass().getSimpleName();
@@ -1799,7 +1809,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       NumericExpression index = this.stack.pop(NumericExpression.class);
       final TypedExpression top = this.stack.peekType();
       if (!(top instanceof PathExpression)) {
-        throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+        throw TypeMismatchException.cannotConvert(ctx, PathExpression.class, top.getClass());
       }
       PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
       this.stack.push(this.script.composeIndexer(fieldPath.asSequence(), index,
@@ -1872,35 +1882,6 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   }
 
   // #endregion References with Predicates ------------------------------------
-
-  // #region External References ----------------------------------------------
-
-  @Override
-  public void exitNoticeReference(NoticeReferenceContext ctx) {
-    this.stack.push(this.script.composeExternalReference(this.stack.pop(StringExpression.class)));
-  }
-
-  @Override
-  public void enterFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
-    if (ctx.noticeReference() != null) {
-      // We push a null context as we switch to an external notice and we need XPaths to be absolute
-      this.efxContext.push(null);
-    }
-  }
-
-  @Override
-  public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
-    if (ctx.noticeReference() != null) {
-      PathExpression field = this.stack.pop(PathExpression.class);
-      PathExpression notice = this.stack.pop(PathExpression.class);
-      this.stack.push(this.script.composeFieldInExternalReference(notice, field));
-
-      // Finally, pop the null context we pushed during enterFieldReferenceInOtherNotice
-      this.efxContext.pop();
-    }
-  }
-
-  // #endregion External References -------------------------------------------
 
   // #region Value References -------------------------------------------------
 
@@ -2158,7 +2139,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    *
    * @param ctx the variable reference context
    */
-  private void resolveAndPushVariableReference(VariableReferenceContext ctx) {
+  protected void resolveAndPushVariableReference(VariableReferenceContext ctx) {
     String variableName = ctx.variableName.getText();
     Context variableContext = this.efxContext.getContextFromVariable(variableName);
 
@@ -2173,7 +2154,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       Optional<TypedExpression> refExpr = this.stack.getParameter(variableName)
           .or(() -> this.stack.getVariable(variableName).map(v -> v.referenceExpression));
       boolean isSequence = EfxTypeLattice.isSequence(
-          refExpr.orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(variableName)).getDataType());
+          refExpr.orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(ctx, variableName)).getDataType());
       switch (this.currentCardinalityResolutionContext()) {
         case RESOLVE_SEQUENCE:
           if (!isSequence) {
@@ -2279,7 +2260,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     return efxDataTypeToScalarExpressionMap.get(primitive).asSubclass(ScalarExpression.class);
   }
 
-  private Class<? extends ScalarExpression> resolveScalarType(Class<? extends EfxDataType> primitiveType) {
+  protected Class<? extends ScalarExpression> resolveScalarType(Class<? extends EfxDataType> primitiveType) {
     Class<? extends TypedExpression> expressionType = efxDataTypeToScalarExpressionMap.get(primitiveType);
     if (expressionType == null || !ScalarExpression.class.isAssignableFrom(expressionType)) {
       throw TranslatorConfigurationException.missingTypeMapping(primitiveType, "resolveScalarType");
@@ -2493,7 +2474,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.exitParameterDeclaration(ctx, ctx.parameterName.getText(), DurationSequenceExpression.class);
   }
 
-  private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
+  protected void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionArguments.isEmpty()) {
       throw InvalidArgumentException.missingArgument(ctx, parameterName);
     }
@@ -2618,7 +2599,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitRawValueReference(RawValueReferenceContext ctx) {
     final TypedExpression top = this.stack.peekType();
     if (!(top instanceof PathExpression)) {
-      throw TypeMismatchException.cannotConvert(PathExpression.class, top.getClass());
+      throw TypeMismatchException.cannotConvert(ctx, PathExpression.class, top.getClass());
     }
     if (top instanceof SequenceExpression
         && this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SCALAR) {
@@ -2853,7 +2834,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (BooleanExpression.class.isAssignableFrom(type)) {
       this.stack.push(this.script.composeToNumberConversion(this.stack.pop(BooleanExpression.class)));
     } else {
-      throw TypeMismatchException.cannotConvert(StringExpression.class, type);
+      throw TypeMismatchException.cannotConvert(ctx, StringExpression.class, type);
     }
   }
 
@@ -2975,7 +2956,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (DurationExpression.class.isAssignableFrom(type)) {
       this.stack.push(this.script.composeToStringConversion(this.stack.pop(DurationExpression.class)));
     } else {
-      throw TypeMismatchException.cannotConvert(NumericExpression.class, type);
+      throw TypeMismatchException.cannotConvert(ctx, NumericExpression.class, type);
     }
   }
 
@@ -3942,7 +3923,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       } else if (this.isNumeric(right) && this.isNumeric(left)) {
         this.exitNumericOperation(operator);
       } else {
-        throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+        throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
       }
     } else if (ctx.operator.getType() == EfxLexer.Minus) {
       if (this.isDuration(right) && this.isDuration(left)) {
@@ -3954,7 +3935,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
       } else if (this.isNumeric(right) && this.isNumeric(left)) {
         this.exitNumericOperation(operator);
       } else {
-        throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+        throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
       }
     } else {
       throw TranslatorConfigurationException.unhandledOperator(operator,
@@ -3974,7 +3955,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     } else if (this.isNumeric(right) && this.isNumeric(left)) {
       this.exitNumericOperation(operator);
     } else {
-      throw TypeMismatchException.incompatibleOperands(operator, (Expression) left, (Expression) right);
+      throw TypeMismatchException.incompatibleOperands(ctx, operator, (Expression) left, (Expression) right);
     }
   }
 

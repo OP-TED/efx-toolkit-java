@@ -306,25 +306,23 @@ public interface ScriptGenerator {
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
 
   /**
-   * When we need data from an external source, we need some script that gets that data. Getting the
-   * data is a two-step process: a) we need to access the data source, b) we need to get the actual
-   * data from the data source. This method should return the target language script that connects
-   * to the data source and permits us to subsequently get the data by using a PathExpression.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data source.
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeExternalReference(final StringExpression externalReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeExternalReference(final StringExpression externalReference) {
+    return null;
+  }
 
   /**
-   * See {@link #composeExternalReference} for more details.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @param fieldReference The PathExpression that points to the field in the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data. 
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
-      final PathExpression fieldReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeFieldInExternalReference(final PathExpression externalReference,
+      final PathExpression fieldReference) {
+    return null;
+  }
 
 
   /**
@@ -1181,6 +1179,25 @@ public interface ScriptGenerator {
    */
   public <T extends TypedExpression> T composeFunctionInvocation(String functionName,
           List<? extends TypedExpression> parameters, Class<T> type);
+
+  /**
+   * Composes the raw dynamic function call expression. Dynamic functions are external
+   * functions that delegate to a REST API at validation runtime.
+   * The function returns a tri-state integer (1 = true, 0 = false, -1 = error).
+   * The returned expression is used as the value of a Schematron &lt;let&gt; variable.
+   *
+   * @param endpointName The name of the API endpoint to call.
+   * @param apiName The name of the dynamic function.
+   * @param arguments The evaluated arguments to pass to the function.
+   * @return A numeric expression representing the raw dynamic function call (without error handling).
+   */
+  default NumericExpression composeDynamicFunction(String endpointName, String apiName,
+      List<? extends TypedExpression> arguments) {
+    throw new UnsupportedOperationException(
+        "This translator does not support dynamic rules. "
+        + "Override composeDynamicFunction() in " + this.getClass().getSimpleName()
+        + " to enable dynamic function calling.");
+  }
 
   // #endregion Function Invocation -----------------------------------------
 }

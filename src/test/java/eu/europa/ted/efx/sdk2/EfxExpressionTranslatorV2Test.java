@@ -1239,19 +1239,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "BT-00-Indicator[BT-00-Code == 'a']");
   }
 
-  @Test
-  void testFieldReferenceInOtherNotice() {
-    testExpressionTranslationWithContext(
-        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField/normalize-space(text())",
-        "ND-Root", "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text");
-  }
-
-  @Test
-  void testFieldReferenceInOtherNotice_UsingAReference() {
-    testExpressionTranslationWithContext(
-        "fn:doc(concat($urlPrefix, /*/PathNode/IdField/normalize-space(text())))/*/PathNode/TextField/normalize-space(text())",
-        "ND-Root", "notice(BT-00-Identifier)/BT-00-Text");
-  }
 
   @Test
   void testFieldReferenceWithFieldContextOverride() {
@@ -3895,33 +3882,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "for $n in . return $n/PathNode/CodeField/@listName",
         "ND-Root",
         "for context:$n in ND-Root return $n::BT-00-Code/@listName");
-  }
-
-  // Row 12 SEQ
-  @Test
-  void testFieldReferenceInOtherNotice_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField/normalize-space(text())",
-        "ND-Root",
-        "'test' in notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text");
-  }
-
-  // Row 12 PRES
-  @Test
-  void testFieldReferenceInOtherNotice_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/TextField",
-        "ND-Root",
-        "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Text is present");
-  }
-
-  // Row 12 ATTR
-  @Test
-  void testFieldReferenceInOtherNotice_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "fn:doc(concat($urlPrefix, 'da4d46e9-490b-41ff-a2ae-8166d356a619'))/*/PathNode/CodeField/@listName",
-        "ND-Root",
-        "notice('da4d46e9-490b-41ff-a2ae-8166d356a619')/BT-00-Code/@listName");
   }
 
   // Row 13 SEQ

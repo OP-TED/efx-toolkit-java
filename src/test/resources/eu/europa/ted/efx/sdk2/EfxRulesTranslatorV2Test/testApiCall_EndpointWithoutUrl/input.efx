@@ -1,0 +1,18 @@
+// Test: Endpoint declared without a URL.
+// Verifies that ENDPOINT without AT clause produces an empty apiUrl param value.
+
+ENDPOINT 'staging';
+
+LET dynamic : ?check(text : $id) CALL API 'staging';
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

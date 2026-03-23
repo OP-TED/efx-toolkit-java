@@ -1,0 +1,19 @@
+// Test: API function with multiple parameters.
+// Verifies that a function declared with two parameters correctly receives
+// and passes both arguments through to the efx:call-api output.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check-multi(text : $buyerId, text : $code) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+WITH BT-00-Text
+    ASSERT ?check-multi(BT-00-Identifier, BT-00-Code)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -32,7 +33,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.interfaces.ValidatorGenerator;
-import eu.europa.ted.efx.model.rules.CompleteValidation;
+import eu.europa.ted.efx.model.rules.ValidationPlan;
+import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.efx.model.variables.Variable;
 import freemarker.template.Configuration;
@@ -69,31 +71,59 @@ public class SchematronGenerator implements ValidatorGenerator {
   // #region ValidatorMarkupGenerator Implementation
 
   @Override
-  public Map<String, String> generateOutput(CompleteValidation completeValidation) {
-    logger.debug("Generating Schematron output from {} stages", completeValidation.getStages().size());
+  public Map<String, String> generateOutput(ValidationPlan validationPlan) {
+    logger.debug("Generating Schematron output from {} stages", validationPlan.getStages().size());
 
     // Create local state for this generation run
     SchematronSchema schema = new SchematronSchema("eForms schematron rules");
     List<SchematronPattern> patterns = new ArrayList<>();
     Map<String, SchematronDiagnostic> diagnosticsMap = new LinkedHashMap<>();
 
+    // Add endpoint params to schema
+    for (Map.Entry<String, String> endpoint : validationPlan.getEndpoints().entrySet()) {
+      String url = endpoint.getValue() != null ? endpoint.getValue() : "";
+      SchematronParam param = new SchematronParam("apiUrl-" + endpoint.getKey(), "'" + url + "'");
+      schema.addParam(param);
+      logger.debug("Added endpoint param: {} = {}", param.getName(), param.getValue());
+    }
+
     // Add global variables to schema
-    for (Variable variable : completeValidation.getGlobalVariables()) {
-      String xpathValue = variable.initializationExpression.getScript();
-      SchematronLet globalVar = new SchematronLet(variable.name, xpathValue);
-      schema.addGlobalVariable(globalVar);
-      logger.debug("Added global variable: {} = {}", variable.name, xpathValue);
+    for (Variable variable : validationPlan.getVariables()) {
+      SchematronLet letElement = new SchematronLet(variable);
+      schema.addLetElement(letElement);
+      logger.debug("Added global variable: {} = {}", variable.name, variable.initializationExpression.getScript());
     }
 
     // Transform intermediate model (ValidationStage) to Schematron model (SchematronPattern)
-    transformStagesToPatterns(completeValidation.getStages(), patterns, diagnosticsMap);
+    for (ValidationStage stage : validationPlan.getStages()) {
+      if (stage.containsUniversalRules()) {
+        SchematronPattern sharedPattern = new SchematronPattern(stage);
+        if (sharedPattern.hasRules()) {
+          patterns.add(sharedPattern);
+          diagnosticsMap.putAll(sharedPattern.getDiagnostics());
+          logger.debug("Created shared pattern {} for stage {}",
+              sharedPattern.getId(), stage.getName());
+        }
+      }
+      for (String noticeSubtype : stage.getNoticeSubtypes()) {
+        SchematronPattern pattern = new SchematronPattern(stage, noticeSubtype);
+        if (pattern.hasRules()) {
+          patterns.add(pattern);
+          diagnosticsMap.putAll(pattern.getDiagnostics());
+          logger.debug("Created pattern {} for stage {} / notice subtype {}",
+              pattern.getId(), stage.getName(), noticeSubtype);
+        }
+      }
+    }
 
     // Add collected diagnostics to schema
-    addDiagnosticsToSchema(diagnosticsMap, schema);
+    for (SchematronDiagnostic diagnostic : diagnosticsMap.values()) {
+      schema.addDiagnostic(diagnostic);
+    }
 
     // Generate all output files
     try {
-      return generateOutputFiles(completeValidation.getNoticeSubtypes(), patterns, schema);
+      return this.generateOutputFiles(validationPlan.getNoticeSubtypes(), patterns, schema);
     } catch (IOException e) {
       throw new RuntimeException("Failed to generate Schematron output", e);
     }
@@ -135,60 +165,19 @@ public class SchematronGenerator implements ValidatorGenerator {
 
     Map<String, Object> model = new HashMap<>();
     model.put("id", pattern.getId());
-    model.put("variables", pattern.getVariables());
+    List<String> tags = config.ruleNatures().stream()
+        .map(Enum::name).collect(Collectors.toList());
+    List<SchematronLet> letElements = pattern.getLetElements().stream()
+        .filter(v -> tags.contains(v.getTag())).collect(Collectors.toList());
+    model.put("letElements", letElements);
     model.put("rules", pattern.getRules());
-    model.put("tags", config.ruleNatures().stream()
-        .map(Enum::name)
-        .collect(Collectors.toList()));
+    model.put("tags", tags);
 
     template.process(model, writer);
     return writer.toString();
   }
 
   // #endregion Freemarker Template Methods
-
-  // #region Transformation Methods
-
-  /**
-   * Transforms validation stages into Schematron patterns.
-   * For each stage, first creates a shared pattern for rules that apply to all subtypes,
-   * then creates subtype-specific patterns for the remaining rules.
-   */
-  private void transformStagesToPatterns(List<ValidationStage> stages,
-      List<SchematronPattern> patterns, Map<String, SchematronDiagnostic> diagnosticsMap) {
-    for (ValidationStage stage : stages) {
-      // Create shared pattern for rules that apply to all subtypes
-      if (stage.containsUniversalRules()) {
-        SchematronPattern sharedPattern = new SchematronPattern(stage);
-        if (sharedPattern.hasRules()) {
-          patterns.add(sharedPattern);
-          diagnosticsMap.putAll(sharedPattern.getDiagnostics());
-          logger.debug("Created shared pattern {} for stage {}",
-              sharedPattern.getId(), stage.getName());
-        }
-      }
-
-      // Create subtype-specific patterns for remaining rules
-      for (String noticeSubtype : stage.getNoticeSubtypes()) {
-        SchematronPattern pattern = new SchematronPattern(stage, noticeSubtype);
-        if (pattern.hasRules()) {
-          patterns.add(pattern);
-          diagnosticsMap.putAll(pattern.getDiagnostics());
-          logger.debug("Created pattern {} for stage {} / notice subtype {}",
-              pattern.getId(), stage.getName(), noticeSubtype);
-        }
-      }
-    }
-  }
-
-  private void addDiagnosticsToSchema(Map<String, SchematronDiagnostic> diagnosticsMap,
-      SchematronSchema schema) {
-    for (SchematronDiagnostic diagnostic : diagnosticsMap.values()) {
-      schema.addDiagnostic(diagnostic);
-    }
-  }
-
-  // #endregion Transformation Methods
 
   // #region Output Generation Methods
 
@@ -219,11 +208,11 @@ public class SchematronGenerator implements ValidatorGenerator {
 
     try {
       for (SchematronOutputConfig config : configs) {
-        generateOutputForConfig(config, noticeSubtypeIds, patterns, baseSchema, outputFiles, schematronsMetadata);
+        this.generateOutputForConfig(config, noticeSubtypeIds, patterns, baseSchema, outputFiles, schematronsMetadata);
       }
 
       // Generate schematrons.json with entries from all configurations
-      String schematronsJson = generateSchematronsJson(schematronsMetadata);
+      String schematronsJson = this.generateSchematronsJson(schematronsMetadata);
       outputFiles.put("schematrons.json", schematronsJson);
 
       logger.debug("Generated {} Schematron files", outputFiles.size());
@@ -251,8 +240,18 @@ public class SchematronGenerator implements ValidatorGenerator {
 
     // Create a fresh schema for this configuration
     SchematronSchema schema = new SchematronSchema(baseSchema.getTitle());
-    for (SchematronLet globalVar : baseSchema.getGlobalVariables()) {
-      schema.addGlobalVariable(globalVar);
+    // API endpoint params are only relevant for configurations that include dynamic rules
+    if (config.ruleNatures().contains(RuleNature.DYNAMIC)) {
+      for (SchematronParam param : baseSchema.getParams()) {
+        schema.addParam(param);
+      }
+    }
+    Set<String> configTags = config.ruleNatures().stream()
+        .map(Enum::name).collect(Collectors.toSet());
+    for (SchematronLet letElement : baseSchema.getLetElements()) {
+      if (configTags.contains(letElement.getTag())) {
+        schema.addLetElement(letElement);
+      }
     }
     for (SchematronDiagnostic diagnostic : baseSchema.getDiagnostics()) {
       schema.addDiagnostic(diagnostic);
@@ -307,9 +306,9 @@ public class SchematronGenerator implements ValidatorGenerator {
     }
 
     // Generate complete-validation.sch for this configuration
-    String completeValidation = generateCompleteValidation(schema);
+    String completeValidationContent = generateCompleteValidation(schema);
     String completeFilename = folderPrefix + "complete-validation.sch";
-    outputFiles.put(completeFilename, completeValidation);
+    outputFiles.put(completeFilename, completeValidationContent);
 
     // Add complete-validation to metadata at the beginning of this config's entries
     Map<String, Object> completeMetadata = new LinkedHashMap<>();

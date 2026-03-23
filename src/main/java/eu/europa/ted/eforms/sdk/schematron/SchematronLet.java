@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 European Union
+ * Copyright 2025 European Union
  *
  * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
  * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
@@ -13,16 +13,32 @@
  */
 package eu.europa.ted.eforms.sdk.schematron;
 
+import eu.europa.ted.efx.model.rules.RuleNature;
+import eu.europa.ted.efx.model.variables.DynamicVariable;
+import eu.europa.ted.efx.model.variables.Variable;
+
 /**
  * Represents a Schematron &lt;let&gt; element for variable declarations.
  */
 public class SchematronLet {
   private final String name;
   private final String value;
+  private final RuleNature nature;
+
+  public SchematronLet(final Variable variable) {
+    this(variable.name, variable.initializationExpression.getScript(),
+        variable instanceof DynamicVariable || variable.hasDynamicDependencies()
+            ? RuleNature.DYNAMIC : RuleNature.STATIC);
+  }
 
   public SchematronLet(String name, String value) {
+    this(name, value, RuleNature.STATIC);
+  }
+
+  public SchematronLet(String name, String value, RuleNature nature) {
     this.name = name;
     this.value = value;
+    this.nature = nature;
   }
 
   /** Used by pattern.ftl and complete-validation.ftl */
@@ -33,5 +49,10 @@ public class SchematronLet {
   /** Used by pattern.ftl and complete-validation.ftl */
   public String getValue() {
     return this.value;
+  }
+
+  /** Used by pattern.ftl — returns the tag for filtering (derived from nature) */
+  public String getTag() {
+    return this.nature.name();
   }
 }

@@ -4,22 +4,27 @@
 
   Parameters:
     id            - Pattern identifier (e.g., "validation-stage-1a-1")
-    variables     - List<SchematronLet> of pattern-level variables
-    rules         - List<SchematronRule> containing the validation rules
-    tags          - List<String> of tags specifying which tests to include
+    letElements          - List<SchematronLet> of pattern-level let element declarations
+    rules                - List<SchematronRule> containing the validation rules
+    tags                 - List<String> of tags specifying which tests to include
 -->
 <pattern id="EFORMS-${id}" xmlns="http://purl.oclc.org/dsdl/schematron">
-<#list variables as variable>
-    <let name="${variable.name}" value="${variable.value?xml?replace("&apos;", "'")}"/>
+<#list letElements as letElement>
+    <let name="${letElement.name}" value="${letElement.value?xml?replace("&apos;", "'")}"/>
 </#list>
 <#list rules as rule>
-<#if rule.hasTestsForTags(tags)>
+<#if rule.hasTestsFor(tags)>
     <rule context="${rule.context}">
-    <#list rule.variables as variable>
-        <let name="${variable.name}" value="${variable.value?xml?replace("&apos;", "'")}"/>
+    <#list rule.letElements as letElement>
+    <#if tags?seq_contains(letElement.tag)>
+        <let name="${letElement.name}" value="${letElement.value?xml?replace("&apos;", "'")}"/>
+    </#if>
     </#list>
     <#list rule.tests as test>
     <#if tags?seq_contains(test.tag)>
+    <#if test.letElement?? && tags?seq_contains(test.letElement.tag)>
+        <let name="${test.letElement.name}" value="${test.letElement.value?xml?replace("&apos;", "'")}"/>
+    </#if>
         <${test.elementName} id="${test.id}" role="${test.role}"<#if test.flag??> flag="${test.flag}"</#if><#if test.diagnostic??> diagnostics="${test.diagnostic.id}"</#if> test="${test.test?xml?replace("&apos;", "'")}">${test.message}</${test.elementName}>
     </#if>
     </#list>
