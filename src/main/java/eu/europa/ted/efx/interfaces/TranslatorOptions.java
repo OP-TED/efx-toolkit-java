@@ -32,6 +32,16 @@ public interface TranslatorOptions {
     public Path getProfilerOutputPath();
 
     /**
+     * Returns the root directory for Freemarker templates. When set, templates are loaded
+     * from this directory first, falling back to the classpath-bundled defaults.
+     *
+     * @return The templates root directory, or null to use classpath defaults only.
+     */
+    default Path getTemplatesRoot() {
+        return null;
+    }
+
+    /**
      * Returns the include resolver for resolving {@code #include} directives in rules files.
      *
      * @return The include resolver, or null if include resolution is not configured.
