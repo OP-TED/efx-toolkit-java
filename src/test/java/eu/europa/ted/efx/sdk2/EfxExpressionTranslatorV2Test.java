@@ -4581,4 +4581,74 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   // #endregion: Privacy property cardinality
 
   // #endregion: Cardinality x Consumer Gaps
+
+  // #region: EFX-2 COMPUTE syntax ---------------------------------------------
+
+  @Test
+  void testCompute_BooleanExpression() {
+    testComputeExpressionWithContext("(true() or true()) and false()", "BT-00-Text",
+        "(ALWAYS or TRUE) and NEVER");
+  }
+
+  @Test
+  void testCompute_PresenceCondition() {
+    testComputeExpressionWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
+  }
+
+  @Test
+  void testCompute_NumericExpression() {
+    testComputeExpressionWithContext("1 + 2", "BT-00-Text", "1 + 2");
+  }
+
+  @Test
+  void testCompute_StringComparison() {
+    testComputeExpressionWithContext("'abc' = 'def'", "BT-00-Text", "'abc' == 'def'");
+  }
+
+  @Test
+  void testCompute_FieldReference() {
+    testComputeExpressionWithContext("PathNode/TextField/normalize-space(text())", "ND-Root",
+        "BT-00-Text");
+  }
+
+  @Test
+  void testCompute_WithNodeContext() {
+    testComputeExpressionWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
+  }
+
+  @Test
+  void testCompute_WithParameters() {
+    testExpressionTranslation("'hello' = 'world'",
+        "WITH ND-Root, text:$p1, text:$p2 COMPUTE $p1 == $p2", "'hello'", "'world'");
+  }
+
+  @Test
+  void testCompute_WithNumericParameters() {
+    testExpressionTranslation("1 = 2",
+        "WITH ND-Root, number:$p1, number:$p2 COMPUTE $p1 == $p2", "1", "2");
+  }
+
+  @Test
+  void testCompute_WithDateParameters() {
+    testExpressionTranslation("xs:date('2018-01-01Z') = xs:date('2020-01-01Z')",
+        "WITH ND-Root, date:$p1, date:$p2 COMPUTE $p1 == $p2", "2018-01-01Z", "2020-01-01Z");
+  }
+
+  @Test
+  void testCompute_WithSequenceParameter() {
+    testExpressionTranslation("count(('a','b','c'))",
+        "WITH ND-Root, text*:$items COMPUTE count($items)", "['a', 'b', 'c']");
+  }
+
+  @Test
+  void testCompute_CaseInsensitive() {
+    testComputeExpressionWithContext("(true() or true()) and false()", "BT-00-Text",
+        "(ALWAYS or TRUE) and NEVER");
+    // Also test lowercase
+    assertEquals(
+        translateComputeExpressionWithContext("BT-00-Text", "(ALWAYS or TRUE) and NEVER"),
+        translateExpression("with BT-00-Text compute (ALWAYS or TRUE) and NEVER"));
+  }
+
+  // #endregion: EFX-2 COMPUTE syntax
 }
