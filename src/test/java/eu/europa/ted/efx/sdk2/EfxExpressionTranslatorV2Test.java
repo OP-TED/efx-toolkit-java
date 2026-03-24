@@ -66,6 +66,29 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testPresenceCondition_WithNodeReference() {
+    testExpressionTranslationWithContext("SubNode", "ND-Root", "ND-SubNode is present");
+  }
+
+  @Test
+  void testPresenceCondition_WithNodeReference_WithNot() {
+    testExpressionTranslationWithContext("not(SubNode)", "ND-Root",
+        "ND-SubNode is not present");
+  }
+
+  @Test
+  void testPresenceCondition_WithAbsoluteNodeReference() {
+    testExpressionTranslationWithContext("/*/SubNode", "BT-00-Text",
+        "/ND-SubNode is present");
+  }
+
+  @Test
+  void testPresenceCondition_WithNodeReferenceWithPredicate() {
+    testExpressionTranslationWithContext("SubNode['a' = 'a']", "ND-Root",
+        "ND-SubNode['a' == 'a'] is present");
+  }
+
+  @Test
   void testUniqueValueCondition() {
     testExpressionTranslationWithContext(
         "count(for $n in PathNode/TextField/normalize-space(text()), $x in /*/PathNode/TextField/normalize-space(text())[. = $n] return $x) = 1",
