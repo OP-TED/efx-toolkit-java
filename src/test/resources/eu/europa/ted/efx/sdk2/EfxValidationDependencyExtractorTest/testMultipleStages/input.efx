@@ -1,0 +1,20 @@
+// Test: Rules spread across multiple stages
+
+---- STAGE first ----
+
+WITH ND-Root
+    ASSERT BT-00-Text is present
+    AS ERROR R-S01-001
+    FOR BT-00-Number IN *
+
+---- STAGE second ----
+
+WITH ND-SubNode
+    ASSERT BT-01-SubNode-Text is present
+    AS ERROR R-S02-001
+    FOR BT-00-Number IN *
+
+WITH ND-Root
+    ASSERT BT-00-Number > 0
+    AS ERROR R-S02-002
+    FOR BT-00-Text IN *

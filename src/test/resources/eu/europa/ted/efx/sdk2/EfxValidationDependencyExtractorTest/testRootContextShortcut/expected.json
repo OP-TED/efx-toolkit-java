@@ -1,0 +1,19 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-R01-001",
+        "fields" : [ "BT-00-Text" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  } ],
+  "nodes" : [ ]
+}

@@ -1,0 +1,8 @@
+// Test: Field references with predicates
+
+---- STAGE test ----
+
+WITH ND-Root
+    ASSERT BT-00-Repeatable-Text[BT-00-Repeatable-Text != ''] is present
+    AS ERROR R-P01-001
+    FOR BT-00-Number IN *

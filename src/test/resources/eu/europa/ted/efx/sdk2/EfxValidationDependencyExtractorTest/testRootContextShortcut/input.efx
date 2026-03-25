@@ -1,0 +1,8 @@
+// Test: Root context shortcut /
+
+---- STAGE test ----
+
+WITH /
+    ASSERT BT-00-Text is present
+    AS ERROR R-R01-001
+    FOR BT-00-Number IN *
