@@ -50,3 +50,9 @@ WITH ND-Root
     ASSERT BT-00-StartDate is present and BT-00-EndDate is present and BT-00-StartDate <= BT-00-EndDate
     AS ERROR R-C02-002
     FOR BT-00-EndDate IN *
+
+// Rule 8: Codelist reference
+WITH ND-Root
+    ASSERT BT-00-Code in [...accessibility]
+    AS ERROR R-C02-003
+    FOR BT-00-Code IN *

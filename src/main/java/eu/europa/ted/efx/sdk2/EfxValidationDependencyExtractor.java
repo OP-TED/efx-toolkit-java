@@ -183,7 +183,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
         ? this.graph.getOrCreateFieldEntry(targetId)
         : this.graph.getOrCreateNodeEntry(targetId);
 
-    target.addAssertDependency(new RuleDependency(ruleId, ruleDeps.getFieldIds(), ruleDeps.getNodeIds()));
+    target.addAssertDependency(new RuleDependency(ruleId, ruleDeps.getFieldIds(), ruleDeps.getNodeIds(), ruleDeps.getCodelistNames()));
   }
 
   // #endregion Rule lifecycle

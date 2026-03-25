@@ -105,6 +105,7 @@ public class DependencyGraph {
       ruleNode.put("ruleId", rule.getRuleId());
       this.putIfNotEmpty("fields", this.toStringArray(rule.getFields()), ruleNode);
       this.putIfNotEmpty("nodes", this.toStringArray(rule.getNodes()), ruleNode);
+      this.putIfNotEmpty("codeLists", this.toStringArray(rule.getCodelists()), ruleNode);
       assertArray.add(ruleNode);
     }
     this.putIfNotEmpty("assert", assertArray, dependsOn);

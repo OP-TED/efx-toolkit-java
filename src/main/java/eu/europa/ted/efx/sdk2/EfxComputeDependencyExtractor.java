@@ -118,6 +118,11 @@ public class EfxComputeDependencyExtractor extends EfxBaseListener
     this.stack.peek().addNode(ctx.NodeId().getText());
   }
 
+  @Override
+  public void enterCodelistReference(final CodelistReferenceContext ctx) {
+    this.stack.peek().addCodelist(ctx.codelistName.getText());
+  }
+
   // #endregion Listener methods
 
   protected void resolveAlias(final String alias) {

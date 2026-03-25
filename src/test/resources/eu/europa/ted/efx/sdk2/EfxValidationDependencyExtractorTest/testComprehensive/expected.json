@@ -68,6 +68,20 @@
       } ]
     }
   }, {
+    "id" : "BT-00-Code",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C02-003",
+        "nodes" : [ "ND-Root" ],
+        "codeLists" : [ "accessibility" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text" ]
+      }
+    }
+  }, {
     "id" : "BT-01-SubSubNode-Text",
     "requiredBy" : {
       "assert" : {
@@ -79,13 +93,6 @@
     "requiredBy" : {
       "assert" : {
         "fields" : [ "BT-00-Number" ]
-      }
-    }
-  }, {
-    "id" : "BT-00-Code",
-    "requiredBy" : {
-      "assert" : {
-        "fields" : [ "BT-00-Text" ]
       }
     }
   }, {
@@ -135,7 +142,7 @@
     "id" : "ND-Root",
     "requiredBy" : {
       "assert" : {
-        "fields" : [ "BT-00-Number", "BT-00-Text", "BT-00-EndDate" ],
+        "fields" : [ "BT-00-Number", "BT-00-Text", "BT-00-EndDate", "BT-00-Code" ],
         "nodes" : [ "ND-RepeatableNode" ]
       }
     }

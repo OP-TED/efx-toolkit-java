@@ -12,6 +12,7 @@ public class DependencySet {
 
   private final Set<String> fieldIds = new LinkedHashSet<>();
   private final Set<String> nodeIds = new LinkedHashSet<>();
+  private final Set<String> codelistNames = new LinkedHashSet<>();
 
   public void addField(final String fieldId) {
     this.fieldIds.add(fieldId);
@@ -19,6 +20,10 @@ public class DependencySet {
 
   public void addNode(final String nodeId) {
     this.nodeIds.add(nodeId);
+  }
+
+  public void addCodelist(final String codelistName) {
+    this.codelistNames.add(codelistName);
   }
 
   public void removeField(final String fieldId) {
@@ -32,6 +37,7 @@ public class DependencySet {
   public void addAll(final DependencySet other) {
     this.fieldIds.addAll(other.fieldIds);
     this.nodeIds.addAll(other.nodeIds);
+    this.codelistNames.addAll(other.codelistNames);
   }
 
   public Set<String> getFieldIds() {
@@ -42,14 +48,19 @@ public class DependencySet {
     return Collections.unmodifiableSet(this.nodeIds);
   }
 
+  public Set<String> getCodelistNames() {
+    return Collections.unmodifiableSet(this.codelistNames);
+  }
+
   public boolean isEmpty() {
-    return this.fieldIds.isEmpty() && this.nodeIds.isEmpty();
+    return this.fieldIds.isEmpty() && this.nodeIds.isEmpty() && this.codelistNames.isEmpty();
   }
 
   public Set<String> allIds() {
     final Set<String> result = new LinkedHashSet<>();
     result.addAll(this.fieldIds);
     result.addAll(this.nodeIds);
+    result.addAll(this.codelistNames);
     return Collections.unmodifiableSet(result);
   }
 }
