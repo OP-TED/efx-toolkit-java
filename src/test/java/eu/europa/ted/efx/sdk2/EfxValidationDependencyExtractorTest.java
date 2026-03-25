@@ -120,6 +120,11 @@ class EfxValidationDependencyExtractorTest extends EfxTestsBase {
     assertDependencyGraph("testMultipleStages");
   }
 
+  @Test
+  void testGlobalAndStageVariables() throws IOException {
+    assertDependencyGraph("testGlobalAndStageVariables");
+  }
+
   // #endregion: Structure
 
   // #region: Comprehensive ----------------------------------------------------

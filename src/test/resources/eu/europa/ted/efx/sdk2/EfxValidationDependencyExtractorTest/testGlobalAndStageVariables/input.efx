@@ -1,0 +1,12 @@
+// Test: Dependencies inherited through global and stage variables
+
+LET text:$globalLabel = BT-00-Text;
+
+---- STAGE test ----
+
+LET number:$stageThreshold = BT-00-Number;
+
+WITH ND-Root
+    ASSERT $globalLabel == 'expected' and $stageThreshold > 0
+    AS ERROR R-GS0-001
+    FOR BT-00-Code IN *

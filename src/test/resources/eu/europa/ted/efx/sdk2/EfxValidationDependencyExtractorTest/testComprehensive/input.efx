@@ -56,3 +56,9 @@ WITH ND-Root
     ASSERT BT-00-Code in [...accessibility]
     AS ERROR R-C02-003
     FOR BT-00-Code IN *
+
+// Rule 9: @POST rule — should be excluded from the dependency graph
+WITH ND-Root
+    ASSERT BT-00-Number > 0 and BT-00-Text is present
+    AS ERROR R-C02-004
+    FOR BT-00-Indicator IN * SCOPE @POST
