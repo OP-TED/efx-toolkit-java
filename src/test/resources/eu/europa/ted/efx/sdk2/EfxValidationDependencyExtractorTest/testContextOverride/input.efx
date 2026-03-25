@@ -1,0 +1,8 @@
+// Test: Context override with ND-xxx::BT-xxx
+
+---- STAGE test ----
+
+WITH ND-Root
+    ASSERT ND-SubNode::BT-01-SubNode-Text is present
+    AS ERROR R-O01-001
+    FOR BT-00-Text IN *

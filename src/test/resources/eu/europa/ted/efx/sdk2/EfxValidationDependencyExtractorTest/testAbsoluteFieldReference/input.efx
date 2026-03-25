@@ -1,0 +1,8 @@
+// Test: Absolute field references with /
+
+---- STAGE test ----
+
+WITH ND-SubNode
+    ASSERT /BT-00-Text is present and /BT-00-Number > 0
+    AS ERROR R-A01-001
+    FOR BT-01-SubNode-Text IN *

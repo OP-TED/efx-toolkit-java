@@ -17,10 +17,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import eu.europa.ted.efx.model.dependencies.DependencyGraph;
 
 /**
  * Provided for convenience, this class exposes static methods that allow you to quickly instantiate
@@ -270,4 +272,63 @@ public class EfxTranslator {
   }
 
   //#endregion Translate EFX rules --------------------------------------------
+
+  //#region Extract EFX dependencies -------------------------------------------
+
+  /**
+   * Instantiates an EFX compute dependency extractor and extracts all field and node identifiers
+   * referenced in the given expression.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the extractor.
+   * @param sdkVersion The version of the eForms SDK that defines the EFX grammar used by the
+   *        expression to be analysed.
+   * @param expression The EFX expression to analyse.
+   * @return An unmodifiable set of field and node identifiers referenced in the expression.
+   * @throws InstantiationException If the dependency extractor cannot be instantiated.
+   */
+  public static Set<String> extractComputeDependencies(final TranslatorDependencyFactory dependencyFactory,
+      final String sdkVersion, final String expression) throws InstantiationException {
+    return EfxTranslatorFactory.getEfxComputeDependencyExtractor(sdkVersion, dependencyFactory)
+        .extractDependencies(expression);
+  }
+
+  /**
+   * Instantiates an EFX validation dependency extractor and extracts the dependency graph
+   * from the given EFX rules string.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the extractor.
+   * @param sdkVersion The version of the eForms SDK.
+   * @param rules The EFX rules to analyse.
+   * @return A {@link DependencyGraph} with all dependencies and reverse dependencies.
+   * @throws InstantiationException If the dependency extractor cannot be instantiated.
+   */
+  public static DependencyGraph extractValidationDependencies(
+      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final String rules) throws InstantiationException {
+    return EfxTranslatorFactory.getEfxValidationDependencyExtractor(sdkVersion, dependencyFactory)
+        .extractDependencyGraph(rules);
+  }
+
+  /**
+   * Instantiates an EFX validation dependency extractor and extracts the dependency graph
+   * from the given EFX rules file.
+   *
+   * @param dependencyFactory A {@link TranslatorDependencyFactory} to be used for instantiating the
+   *        dependencies of the extractor.
+   * @param sdkVersion The version of the eForms SDK.
+   * @param pathname The path to the EFX rules file.
+   * @return A {@link DependencyGraph} with all dependencies and reverse dependencies.
+   * @throws IOException If the file cannot be read.
+   * @throws InstantiationException If the dependency extractor cannot be instantiated.
+   */
+  public static DependencyGraph extractValidationDependencies(
+      final TranslatorDependencyFactory dependencyFactory, final String sdkVersion,
+      final Path pathname) throws IOException, InstantiationException {
+    return EfxTranslatorFactory.getEfxValidationDependencyExtractor(sdkVersion, dependencyFactory)
+        .extractDependencyGraph(pathname);
+  }
+
+  //#endregion Extract EFX dependencies ----------------------------------------
 }

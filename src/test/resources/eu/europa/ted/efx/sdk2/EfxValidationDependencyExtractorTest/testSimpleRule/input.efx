@@ -1,0 +1,8 @@
+// Test: Simple rule with field and node dependencies
+
+---- STAGE test ----
+
+WITH ND-Root
+    ASSERT BT-00-Text is present
+    AS ERROR R-T01-001
+    FOR BT-00-Number IN *

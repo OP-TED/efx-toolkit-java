@@ -1,0 +1,27 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-P01-001",
+        "fields" : [ "BT-00-Repeatable-Text" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Repeatable-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  } ]
+}

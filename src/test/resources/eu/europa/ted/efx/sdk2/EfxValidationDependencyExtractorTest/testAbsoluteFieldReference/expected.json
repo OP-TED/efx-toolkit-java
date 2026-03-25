@@ -1,0 +1,34 @@
+{
+  "fields" : [ {
+    "id" : "BT-01-SubNode-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-A01-001",
+        "fields" : [ "BT-00-Text", "BT-00-Number" ],
+        "nodes" : [ "ND-SubNode" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Number",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-SubNode",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text" ]
+      }
+    }
+  } ]
+}

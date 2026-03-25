@@ -1,0 +1,27 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Text",
+    "requiredBy" : {
+      "assert" : {
+        "nodes" : [ "ND-SubNode" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-SubNode",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T05-001",
+        "fields" : [ "BT-00-Text" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "nodes" : [ "ND-SubNode" ]
+      }
+    }
+  } ]
+}

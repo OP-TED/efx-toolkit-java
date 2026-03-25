@@ -10,6 +10,8 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorDependencyFactory;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
+import eu.europa.ted.efx.interfaces.EfxComputeDependencyExtractor;
+import eu.europa.ted.efx.interfaces.EfxValidationDependencyExtractor;
 import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 
 public class EfxTranslatorFactory extends SdkComponentFactory {
@@ -70,5 +72,37 @@ public class EfxTranslatorFactory extends SdkComponentFactory {
     return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
         SdkComponentType.EFX_RULES_TRANSLATOR, qualifier, EfxRulesTranslator.class,
         validatorGenerator, symbolResolver, scriptGenerator, factory.createErrorListener());
+  }
+
+  public static EfxComputeDependencyExtractor getEfxComputeDependencyExtractor(final String sdkVersion,
+      final TranslatorDependencyFactory factory) throws InstantiationException {
+    return getEfxComputeDependencyExtractor(sdkVersion, "", factory);
+  }
+
+  public static EfxComputeDependencyExtractor getEfxComputeDependencyExtractor(final String sdkVersion,
+      final String qualifier, final TranslatorDependencyFactory factory)
+      throws InstantiationException {
+
+    SymbolResolver symbolResolver = factory.createSymbolResolver(sdkVersion, qualifier);
+
+    return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
+        SdkComponentType.EFX_COMPUTE_DEPENDENCY_EXTRACTOR, qualifier, EfxComputeDependencyExtractor.class,
+        symbolResolver, factory.createErrorListener());
+  }
+
+  public static EfxValidationDependencyExtractor getEfxValidationDependencyExtractor(final String sdkVersion,
+      final TranslatorDependencyFactory factory) throws InstantiationException {
+    return getEfxValidationDependencyExtractor(sdkVersion, "", factory);
+  }
+
+  public static EfxValidationDependencyExtractor getEfxValidationDependencyExtractor(final String sdkVersion,
+      final String qualifier, final TranslatorDependencyFactory factory)
+      throws InstantiationException {
+
+    SymbolResolver symbolResolver = factory.createSymbolResolver(sdkVersion, qualifier);
+
+    return EfxTranslatorFactory.INSTANCE.getComponentImpl(sdkVersion,
+        SdkComponentType.EFX_VALIDATION_DEPENDENCY_EXTRACTOR, qualifier, EfxValidationDependencyExtractor.class,
+        symbolResolver, factory.createErrorListener());
   }
 }
