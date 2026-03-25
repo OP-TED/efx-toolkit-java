@@ -87,6 +87,16 @@ public abstract class EfxTestsBase {
     return translateExpression(String.format("{%s} ${%s}", context, expression));
   }
 
+  protected void testComputeExpressionWithContext(final String expectedTranslation,
+      final String context, final String expression) {
+    assertEquals(expectedTranslation, translateComputeExpressionWithContext(context, expression));
+  }
+
+  protected String translateComputeExpressionWithContext(final String context,
+      final String expression) {
+    return translateExpression(String.format("WITH %s COMPUTE %s", context, expression));
+  }
+
   protected String translateExpression(final String expression, final String... params) {
     try {
       String result = EfxTranslator.translateExpression(DependencyFactoryMock.INSTANCE,
