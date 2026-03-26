@@ -3,7 +3,7 @@
 
   <groupId>eu.europa.ted.eforms</groupId>
   <artifactId>efx-toolkit-java</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>2.0.0-alpha.6</version>
   <packaging>jar</packaging>
 
   <name>EFX Toolkit for Java</name>
@@ -47,8 +47,8 @@
 
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.13.0</version.eforms-sdk-1>
-    <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
-    <version.eforms-core>1.6.0-SNAPSHOT</version.eforms-core>
+    <version.eforms-sdk-2>2.0.0-alpha.2</version.eforms-sdk-2>
+    <version.eforms-core>1.6.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
