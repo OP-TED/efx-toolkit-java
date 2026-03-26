@@ -1,3 +1,16 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk1.xpath;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
@@ -5,7 +18,13 @@ import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.eforms.xpath.XPathInfo;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
+import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
@@ -14,6 +33,19 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
 
     public XPathScriptGeneratorV1(TranslatorOptions translatorOptions) {
         super(translatorOptions);
+    }
+
+    @Override
+    public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+        final String axis) {
+        String resultXPath = XPathProcessor.addAxis(axis, fieldReference.getScript());
+        return Expression.instantiate(resultXPath, fieldReference.getClass());
+    }
+
+    @Override
+    public StringExpression composeToStringConversion(NumericExpression number) {
+        String formatString = this.translatorOptions.getDecimalFormat().adaptFormatString("0.##########");
+        return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
     }
 
     /***
@@ -39,12 +71,44 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      * This function returns the list of languages used in the visualisation in the
      * order of preference (visualisation language followed by notice language(s)).
      */
+    /**
+     * Preserved V1 behavior: pass EFX string literal through as-is without converting
+     * escape sequences to XPath format.
+     */
+    @Override
+    public StringLiteral getStringLiteralEquivalent(String literal) {
+        return new StringLiteral(literal);
+    }
+
+    /**
+     * Preserved V1 behavior: pass EFX pattern literal through as-is without converting
+     * escape sequences to XPath format.
+     */
+    @Override
+    public BooleanExpression composePatternMatchCondition(StringExpression expression,
+        String pattern) {
+        return new BooleanExpression(
+            String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(), pattern));
+    }
+
     @Override
     public PathExpression composeFieldValueReference(PathExpression fieldReference) {
         XPathInfo xpathInfo = XPathProcessor.parse(fieldReference.getScript());
         if (fieldReference.is(EfxDataType.MultilingualString.class) && !xpathInfo.hasPredicate("@languageID")) {
-            return PathExpression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getDataType());
+            return Expression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getClass());
         }
         return super.composeFieldValueReference(fieldReference);
+    }
+
+    @Override
+    public PathExpression composeExternalReference(StringExpression externalReference) {
+        return new NodePath(
+            "fn:doc(concat($urlPrefix, " + externalReference.getScript() + "))");
+    }
+
+    @Override
+    public PathExpression composeFieldInExternalReference(PathExpression externalReference,
+        PathExpression fieldReference) {
+        return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
     }
 }

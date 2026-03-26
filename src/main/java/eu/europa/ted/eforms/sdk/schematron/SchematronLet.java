@@ -1,0 +1,58 @@
+/*
+ * Copyright 2025 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
+package eu.europa.ted.eforms.sdk.schematron;
+
+import eu.europa.ted.efx.model.rules.RuleNature;
+import eu.europa.ted.efx.model.variables.DynamicVariable;
+import eu.europa.ted.efx.model.variables.Variable;
+
+/**
+ * Represents a Schematron &lt;let&gt; element for variable declarations.
+ */
+public class SchematronLet {
+  private final String name;
+  private final String value;
+  private final RuleNature nature;
+
+  public SchematronLet(final Variable variable) {
+    this(variable.name, variable.initializationExpression.getScript(),
+        variable instanceof DynamicVariable || variable.hasDynamicDependencies()
+            ? RuleNature.DYNAMIC : RuleNature.STATIC);
+  }
+
+  public SchematronLet(String name, String value) {
+    this(name, value, RuleNature.STATIC);
+  }
+
+  public SchematronLet(String name, String value, RuleNature nature) {
+    this.name = name;
+    this.value = value;
+    this.nature = nature;
+  }
+
+  /** Used by pattern.ftl and complete-validation.ftl */
+  public String getName() {
+    return this.name;
+  }
+
+  /** Used by pattern.ftl and complete-validation.ftl */
+  public String getValue() {
+    return this.value;
+  }
+
+  /** Used by pattern.ftl — returns the tag for filtering (derived from nature) */
+  public String getTag() {
+    return this.nature.name();
+  }
+}

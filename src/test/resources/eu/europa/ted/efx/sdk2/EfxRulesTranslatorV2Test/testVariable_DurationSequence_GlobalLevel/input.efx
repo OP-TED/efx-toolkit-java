@@ -1,0 +1,8 @@
+LET duration* : $durations = [P1D, P2D];
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT count($durations) > 0
+AS ERROR R-SEQ-006
+FOR BT-00-Text IN 1, 2

@@ -9,7 +9,7 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the Licence for the specific language governing permissions and limitations under
- * the Lic
+ * the Licence.
  */
 package eu.europa.ted.efx.interfaces;
 
@@ -48,11 +48,14 @@ public interface TranslatorDependencyFactory {
    * This method is called by the EFX translator to instantiate the ScriptGenerator it will use to
    * translate EFX expressions to the target script language.
    * 
-   * @param sdkVersion The version of the SDK that contains the version of the EFX grammar that the
-   *        EFX translator will attempt to translate. This is important as it defines the EFX
-   *        language features that ScriptGenerator instance should be able to handle.
-   * @param qualifier Qualifier to choose between several implementations.
-   * @param options The options to be used by the ScriptGenerator.
+   * @param sdkVersion The version of the SDK that contains the version of the EFX
+   *                   grammar that the
+   *                   EFX translator will attempt to translate. This is important
+   *                   as it defines the EFX
+   *                   language features that ScriptGenerator instance should be
+   *                   able to handle.
+   * @param qualifier  Qualifier to choose between several implementations.
+   * @param options    The options to be used by the ScriptGenerator.
    * @return An instance of ScriptGenerator to be used by the EFX translator.
    */
   public ScriptGenerator createScriptGenerator(String sdkVersion, String qualifier, TranslatorOptions options);
@@ -71,6 +74,19 @@ public interface TranslatorDependencyFactory {
    * @return The instance of MarkupGenerator to be used by the EFX translator.
    */
   public MarkupGenerator createMarkupGenerator(String sdkVersion, String qualifier, TranslatorOptions options);
+
+  /**
+   * Instantiates a validator generator.
+   *
+   * @param sdkVersion The version of the SDK for which the markup generator will
+   *                   be instantiated.
+   * @param qualifier  The component qualifier to identify the implementation.
+   * @param options    The validation options associated with this generator.
+   * @return The instantiated validator generator.
+   */
+  ValidatorGenerator createValidatorGenerator(String sdkVersion, String qualifier,
+      TranslatorOptions options);
+
 
   /**
    * Creates an error listener instance.

@@ -1,0 +1,16 @@
+// Test: Multiple STAGE sections in one file
+// Verifies that stages 1a and 1b generate separate patterns
+
+---- STAGE 1a ----
+
+WITH ND-Root
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2
+
+---- STAGE 1b ----
+
+WITH ND-SubSubNode
+    ASSERT BT-00-Text is present
+    AS ERROR R-X3F-N8W
+    FOR BT-00-Text IN 1, 2

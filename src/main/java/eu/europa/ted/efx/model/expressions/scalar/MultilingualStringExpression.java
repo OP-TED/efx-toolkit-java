@@ -1,16 +1,30 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model.expressions.scalar;
 
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxDataTypeAssociation;
 
-@EfxDataTypeAssociation(dataType = EfxDataType.MultilingualString.class)
+/**
+ * A multilingual-string-typed scalar AST node, extending {@link StringExpression}.
+ *
+ * Represents strings that may have multiple language versions in eForms documents.
+ */
+@EfxDataTypeAssociation(dataType = EfxDataType.MultilingualStringScalar.class)
 public class MultilingualStringExpression extends StringExpression {
 
   public MultilingualStringExpression(final String script) {
-    super(script, false, EfxDataType.MultilingualString.class);
-  }
-
-  public MultilingualStringExpression(final String script, final Boolean isLiteral) {
-    super(script, isLiteral, EfxDataType.MultilingualString.class);
+    super(script, EfxDataType.MultilingualStringScalar.class);
   }
 }

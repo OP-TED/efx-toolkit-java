@@ -3,7 +3,7 @@
 
   <groupId>eu.europa.ted.eforms</groupId>
   <artifactId>efx-toolkit-java</artifactId>
-  <version>2.0.0-alpha.5</version>
+  <version>2.0.0-alpha.6</version>
   <packaging>jar</packaging>
 
   <name>EFX Toolkit for Java</name>
@@ -46,22 +46,26 @@
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
-    <version.eforms-core>1.5.0</version.eforms-core>
+    <version.eforms-sdk-1>1.13.0</version.eforms-sdk-1>
+    <version.eforms-sdk-2>2.0.0-alpha.2</version.eforms-sdk-2>
+    <version.eforms-core>1.6.0</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
-    <version.commons-lang3>3.12.0</version.commons-lang3>
-    <version.logback>1.2.11</version.logback>
-    <version.jackson>2.13.4</version.jackson>
-    <version.jackson-databind>2.13.4.2</version.jackson-databind>
+    <version.commons-lang3>3.18.0</version.commons-lang3>
+    <version.freemarker>2.3.34</version.freemarker>
+    <version.logback>1.5.18</version.logback>
+    <version.jackson>2.18.3</version.jackson>
+    <version.jackson-databind>2.18.3</version.jackson-databind>
     <version.junit-jupiter>5.7.2</version.junit-jupiter>
-    <version.slf4j>1.7.36</version.slf4j>
+    <version.saxon-he>11.3</version.saxon-he>
+    <version.slf4j>2.0.13</version.slf4j>
 
     <!-- Versions - Plugins -->
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
     <version.install.plugin>2.5.2</version.install.plugin>
-    <version.jacoco.plugin>0.8.8</version.jacoco.plugin>
+    <version.jacoco.plugin>0.8.12</version.jacoco.plugin>
     <version.jar.plugin>3.2.0</version.jar.plugin>
     <version.javadoc.plugin>3.4.0</version.javadoc.plugin>
     <version.pgp.plugin>1.5</version.pgp.plugin>
@@ -119,6 +123,16 @@
         <artifactId>antlr4-runtime</artifactId>
         <version>${version.antlr4}</version>
       </dependency>
+      <dependency>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>${version.freemarker}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.sf.saxon</groupId>
+        <artifactId>Saxon-HE</artifactId>
+        <version>${version.saxon-he}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -140,9 +154,18 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>net.sf.saxon</groupId>
+      <artifactId>Saxon-HE</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -219,6 +242,15 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${version.javadoc.plugin}</version>
+          <configuration>
+            <doclint>all,-missing</doclint>
+            <sourceFileExcludes>
+              <exclude>**/EfxLexer.java</exclude>
+              <exclude>**/EfxParser.java</exclude>
+              <exclude>**/EfxListener.java</exclude>
+              <exclude>**/EfxBaseListener.java</exclude>
+            </sourceFileExcludes>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -257,7 +289,7 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>2.0.0-alpha.1</version>
+              <version>${version.eforms-sdk-2}</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk2</outputDirectory>
@@ -269,7 +301,7 @@
             <artifactItem>
               <groupId>eu.europa.ted.eforms</groupId>
               <artifactId>eforms-sdk</artifactId>
-              <version>1.6.0</version>
+              <version>${version.eforms-sdk-1}</version>
               <type>jar</type>
               <includes>eforms-sdk/efx-grammar/**/*.g4</includes>
               <outputDirectory>${sdk.antlr4.dir}/eu/europa/ted/efx/sdk1</outputDirectory>

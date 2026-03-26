@@ -9,13 +9,15 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the Licence for the specific language governing permissions and limitations under
- * the Lic
+ * the Licence.
  */
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
+import eu.europa.ted.efx.model.PrivacySetting;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 
 /**
  * A SymbolResolver is a mechanism used by EFX translators to resolve symbols.
@@ -48,27 +50,61 @@ public interface SymbolResolver {
    * JsonPath. If you intend to use a function call to retrieve the data from the data source then
    * that is what you should return as path. In general keep in mind that the path is used as target
    * language script.
-   * 
+   *
    * @param fieldId The identifier of the field to look for.
    * @param contextPath The path relative to which we expect to find the return value.
    * @return The path to the given field relative to the given contextPath.
+   * @deprecated Use {@link #getRelativePathOfField(String, String)} instead.
    */
+  @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
   public PathExpression getRelativePathOfField(final String fieldId,
       final PathExpression contextPath);
 
   /**
+   * Gets the path that can be used to locate the given field in the data source, relative to the
+   * given context (node or field).
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @param contextId The identifier of the context node or field.
+   * @return The path to the given field relative to the given context.
+   */
+  public PathExpression getRelativePathOfField(final String fieldId, final String contextId);
+
+  /**
    * Gets the path that can be used to locate the given node in the data source, relative to another
    * given path.
-   * 
+   *
    * See {@link getRelativePathOfField} for a description of the concept of "path".
-   * 
+   *
    * @param nodeId The identifier of the node to look for.
    * @param contextPath The path relative to which we expect to find the return value.
    * @return The path to the given node relative to the given context path.
+   * @deprecated Use {@link #getRelativePathOfNode(String, String)} instead.
    */
+  @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
   public PathExpression getRelativePathOfNode(final String nodeId,
       final PathExpression contextPath);
 
+  /**
+   * Gets the path that can be used to locate the given node in the data source, relative to the
+   * given context (node or field).
+   *
+   * @param nodeId The identifier of the node to look for.
+   * @param contextId The identifier of the context node or field.
+   * @return The path to the given node relative to the given context.
+   */
+  public PathExpression getRelativePathOfNode(final String nodeId, final String contextId);
+
+  /**
+   * Converts an absolute path to a relative path based on the given context.
+   *
+   * @param absolutePath The absolute path to convert.
+   * @param contextPath The context path to make the result relative to.
+   * @return The path relative to the given context.
+   * @deprecated Use {@link ScriptGenerator#contextualizePath(PathExpression, PathExpression)} instead.
+   *             Path contextualization is target-language-specific and belongs on ScriptGenerator.
+   */
+  @Deprecated(forRemoval = true)
   public PathExpression getRelativePath(PathExpression absolutePath, PathExpression contextPath);
 
   /**
@@ -151,4 +187,108 @@ public interface SymbolResolver {
    * @return The list of codes in the given codelist.
    */
   public List<String> expandCodelist(final String codelistId);
+
+  /**
+   * Gets all valid notice subtypes.
+   *
+   * @return List of notice subtypes
+   */
+  public List<SdkNoticeSubtype> getAllNoticeSubtypes();
+
+  /**
+   * Resolves a field alias to its canonical field identifier.
+   *
+   * Returns null if the alias is not recognized as a field alias. This allows callers to implement
+   * fallback logic (e.g., trying {@link #getNodeIdFromAlias} next). The translator throws
+   * {@code SymbolResolutionException.unknownAlias()} only when both field and node lookups fail.
+   *
+   * @param alias The alias to resolve.
+   * @return The canonical field ID, or null if the alias is not a known field alias.
+   */
+  public String getFieldIdFromAlias(final String alias);
+
+  /**
+   * Resolves a node alias to its canonical node identifier.
+   *
+   * Returns null if the alias is not recognized as a node alias. This allows callers to implement
+   * fallback logic. The translator throws {@code SymbolResolutionException.unknownAlias()} only
+   * when both field and node lookups fail.
+   *
+   * @param alias The alias to resolve.
+   * @return The canonical node ID, or null if the alias is not a known node alias.
+   */
+  public String getNodeIdFromAlias(final String alias);
+
+  /**
+   * Determines if a field reference would return multiple values when evaluated from a given
+   * context.
+   *
+   * A field is considered repeatable from a context if:
+   * 1. The field itself is marked as repeatable, OR
+   * 2. Any node between the field's parent and the context (exclusive) is repeatable
+   *
+   * @param fieldId The identifier of the field to check.
+   * @param contextNodeId The identifier of the context node, or null for root context.
+   * @return true if the field would return multiple values from the given context.
+   */
+  public boolean isFieldRepeatableFromContext(final String fieldId, final String contextNodeId);
+
+  /**
+   * Determines if a node reference would return multiple values when evaluated from a given
+   * context.
+   *
+   * A node is considered repeatable from a context if:
+   * 1. The node itself is marked as repeatable, OR
+   * 2. Any ancestor node between the node and the context (exclusive) is repeatable
+   *
+   * @param nodeId The identifier of the node to check.
+   * @param contextNodeId The identifier of the context node, or null for root context.
+   * @return true if the node would return multiple values from the given context.
+   */
+  public boolean isNodeRepeatableFromContext(final String nodeId, final String contextNodeId);
+
+  /**
+   * Gets the identifier of the root node.
+   *
+   * @return The root node ID (e.g., "ND-Root").
+   */
+  public String getRootNodeId();
+
+  /**
+   * Gets the absolute path to the root node.
+   *
+   * @return The absolute path of the root node as a PathExpression.
+   */
+  public PathExpression getRootPath();
+
+  /**
+   * Gets the privacy code of the given field. The privacy code is a value from a codelist that
+   * groups fields into withholding categories. Its presence indicates that the field is
+   * withholdable.
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @return The privacy code (e.g., "cod-bus"), or null if the field is not withholdable.
+   */
+  public String getPrivacyCodeOfField(final String fieldId);
+
+  /**
+   * Gets the identifier of a companion privacy field associated with the given field.
+   * Companion fields carry the runtime privacy state (withholding flag, publication date,
+   * justification) for a withholdable field.
+   *
+   * @param fieldId The identifier of the withholdable field.
+   * @param privacyField The type of companion field to look up.
+   * @return The identifier of the companion field, or null if the field has no privacy settings.
+   */
+  public String getPrivacySettingOfField(final String fieldId, final PrivacySetting privacyField);
+
+  /**
+   * Gets the privacy masking value for the given field.
+   * The masking value depends on the field's type (e.g. "unpublished" for text fields,
+   * "1970-01-01Z" for date fields, "-1" for numeric fields).
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @return The masking value as a string.
+   */
+  public String getPrivacyMask(final String fieldId);
 }

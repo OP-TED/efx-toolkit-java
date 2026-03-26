@@ -1,0 +1,71 @@
+// Test: Comprehensive coverage of EFX rules features
+// Covers: multiple stages, multiple WITH per stage, multiple rules per WITH,
+// mix of simple rules (no WHEN) and conditional rules (WHEN/OTHERWISE),
+// mix of ASSERT and REPORT, OTHERWISE REPORT and OTHERWISE ASSERT
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+        AS ERROR R-K7P-M2Q
+        FOR BT-00-Text IN 1, 2
+    REPORT empty(BT-00-Text)
+        AS WARNING R-X3F-N8W
+        FOR BT-00-Text IN 1, 2
+    WHEN BT-00-Text == 'open'
+        ASSERT BT-00-Number is present
+        AS ERROR R-H9T-V5L
+        FOR BT-00-Number IN 1, 2
+    WHEN BT-00-Text == 'closed'
+        REPORT BT-00-Indicator is not present
+        AS INFO R-B6J-C4R
+        FOR BT-00-Indicator IN 1, 2
+
+WITH ND-SubNode
+    WHEN BT-00-Text == 'pending'
+        ASSERT BT-00-Number is present
+        AS ERROR R-Y2N-G7S
+        FOR BT-00-Number IN 1, 2
+    WHEN BT-00-Text == 'active'
+        ASSERT BT-00-Indicator == TRUE
+        AS WARNING R-D4K-P9M
+        FOR BT-00-Indicator IN 1, 2
+    OTHERWISE REPORT TRUE
+        AS INFO R-Z8H-A3X
+        FOR BT-00-Text IN 1, 2
+
+WITH BT-00-Number
+    WHEN BT-00-Number > 0
+        REPORT not(empty(BT-00-Text))
+        AS INFO R-F5V-T6B
+        FOR BT-00-Text IN 1, 2
+    WHEN BT-00-Number < 100
+        REPORT BT-00-Indicator is present
+        AS WARNING R-W1D-J2Y
+        FOR BT-00-Indicator IN 1, 2
+    OTHERWISE ASSERT FALSE
+        AS ERROR R-Q7G-E4Z
+        FOR BT-00-Number IN 1, 2
+
+---- STAGE 2a ----
+
+WITH BT-00-Indicator
+    REPORT BT-00-Indicator is present
+        AS INFO R-M3C-U8N
+        FOR BT-00-Indicator IN 1, 2
+    ASSERT not(empty(BT-00-Text))
+        AS ERROR R-S9L-R5K
+        FOR BT-00-Text IN 1, 2
+    WHEN BT-00-Indicator == TRUE
+        ASSERT BT-00-Number > 0
+        AS WARNING R-N6P-I2F
+        FOR BT-00-Number IN 1, 2
+
+WITH ND-Root
+    WHEN BT-00-Text is present
+        REPORT BT-00-Number is present
+        AS INFO R-V4T-O7J
+        FOR BT-00-Number IN 1, 2
+    OTHERWISE ASSERT BT-00-Indicator is present
+        AS ERROR R-A8Q-H3W
+        FOR BT-00-Indicator IN 1, 2

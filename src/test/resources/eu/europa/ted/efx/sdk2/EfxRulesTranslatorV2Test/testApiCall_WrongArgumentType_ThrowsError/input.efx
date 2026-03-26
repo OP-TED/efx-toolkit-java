@@ -1,0 +1,13 @@
+// Intentionally invalid: passing a text argument where a number is expected.
+// The compiler should throw an exception.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(number : $num) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

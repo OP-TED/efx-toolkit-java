@@ -1,0 +1,26 @@
+// Test: Multiple WHEN conditions with OTHERWISE fallback
+// Verifies conditional logic with varying notice types and mixed ASSERT/REPORT:
+// - WHEN ASSERT, WHEN REPORT, OTHERWISE REPORT
+// - Different IN clauses per condition
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    WHEN BT-00-Text == 'open'
+        ASSERT BT-00-Number is present
+        AS ERROR R-K7P-M2Q
+        FOR BT-00-Text IN 1
+
+    WHEN BT-00-Text == 'restricted'
+        REPORT BT-00-Number > 0
+        AS INFO R-X3F-N8W
+        FOR BT-00-Text IN 1, 2
+
+    WHEN BT-00-Text == 'negotiated'
+        ASSERT BT-00-Indicator is present
+        AS WARNING R-H9T-V5L
+        FOR BT-00-Text IN 2
+
+    OTHERWISE REPORT not(empty(BT-00-Text))
+        AS INFO R-B6J-C4R
+        FOR BT-00-Text IN 2

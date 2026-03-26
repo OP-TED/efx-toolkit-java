@@ -1,0 +1,10 @@
+// Test: Context variable syntax (WITH context : $var = FieldRef)
+// Verifies context : $ctx = BT-00-Text declares $ctx with value="."
+// No diagnostics when context == subject
+
+---- STAGE 1a ----
+
+WITH context : $ctx = BT-00-Text
+    ASSERT not(empty($ctx))
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2

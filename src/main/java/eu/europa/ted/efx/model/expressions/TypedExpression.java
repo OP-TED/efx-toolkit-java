@@ -1,95 +1,89 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model.expressions;
 
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxDataTypeAssociation;
-import eu.europa.ted.efx.model.types.EfxExpressionType;
-import eu.europa.ted.efx.model.types.EfxExpressionTypeAssociation;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 
+/**
+ * An {@link Expression} with an associated {@link EfxDataType}.
+ *
+ * Each concrete implementation is annotated with {@link EfxDataTypeAssociation} to declare its
+ * type in the EFX type system. This enables compile-time type checking and type-safe conversions
+ * during EFX translation.
+ *
+ * @see EfxDataType for the complete type hierarchy
+ * @see EfxDataTypeAssociation for the annotation linking expressions to types
+ */
 public interface TypedExpression extends Expression {
-
-  public Class<? extends EfxExpressionType> getExpressionType();
 
   public Class<? extends EfxDataType> getDataType();
 
-  public Boolean is(Class<? extends EfxDataType> dataType);
-
-  public Boolean is(Class<? extends EfxExpressionType> referenceType, Class<? extends EfxDataType> dataType);
-
-  static <T extends EfxDataType, E extends TypedExpression> Class<? extends T> getEfxDataType(
-      Class<? extends E> clazz, Class<? extends T> dataType1) {
-    EfxDataTypeAssociation annotation = clazz.getAnnotation(EfxDataTypeAssociation.class);
-    if (annotation == null) {
-      return EfxDataType.ANY.asSubclass(dataType1); // throw new IllegalArgumentException("Missing
-                                                    // @EfxDataTypeAssociation annotation");
-    }
-    return annotation.dataType().asSubclass(dataType1);
-  }
+  public boolean is(Class<? extends EfxDataType> dataType);
 
   static Class<? extends EfxDataType> getEfxDataType(Class<? extends TypedExpression> clazz) {
     EfxDataTypeAssociation annotation = clazz.getAnnotation(EfxDataTypeAssociation.class);
     if (annotation == null) {
-      throw new IllegalArgumentException("Missing @EfxDataTypeAssociation annotation");
+      throw TranslatorConfigurationException.missingTypeAnnotation(clazz);
     }
     return annotation.dataType();
   }
 
   public static <T extends TypedExpression> T from(TypedExpression source, Class<T> targetType) {
+    // When target is PathExpression, delegate to PathExpression.from
     if (PathExpression.class.isAssignableFrom(targetType)) {
       return targetType.cast(PathExpression.from(source, targetType.asSubclass(PathExpression.class)));
-    } else if (SequenceExpression.class.isAssignableFrom(targetType)) {
+    }
+
+    // When converting PathExpression to SequenceExpression, use the appropriate concrete sequence type
+    if (source instanceof PathExpression && SequenceExpression.class.isAssignableFrom(targetType)) {
+      Class<? extends EfxDataType> primitiveType = EfxTypeLattice.toPrimitive(source.getDataType());
+      Class<? extends SequenceExpression> concreteType = SequenceExpression.fromEfxDataType.get(primitiveType);
+      if (concreteType != null) {
+        return targetType.cast(Expression.from(source, concreteType));
+      }
+    }
+
+    // When converting PathExpression to ScalarExpression, use the appropriate concrete scalar type
+    if (source instanceof PathExpression && ScalarExpression.class.isAssignableFrom(targetType)) {
+      Class<? extends EfxDataType> primitiveType = EfxTypeLattice.toPrimitive(source.getDataType());
+      Class<? extends ScalarExpression> concreteType = ScalarExpression.fromEfxDataType.get(primitiveType);
+      if (concreteType != null) {
+        return targetType.cast(Expression.from(source, concreteType));
+      }
+    }
+
+    if (SequenceExpression.class.isAssignableFrom(targetType)) {
       return targetType.cast(SequenceExpression.from(source, targetType.asSubclass(SequenceExpression.class)));
     } else if (ScalarExpression.class.isAssignableFrom(targetType)) {
       return targetType.cast(ScalarExpression.from(source, targetType.asSubclass(ScalarExpression.class)));
     } else {
-      throw new RuntimeException("Unknown expression type: " + targetType);
+      throw TranslatorConfigurationException.unknownExpressionType(targetType);
     }
-  }
-
-  public static <E extends EfxExpressionType, D extends EfxDataType> TypedExpression instantiate(String script,
-      Class<E> expressionType, Class<D> dataType) {
-    if (PathExpression.class.isAssignableFrom(expressionType)) {
-      return PathExpression.instantiate(script, dataType);
-    } else if (SequenceExpression.class.isAssignableFrom(expressionType)) {
-      return SequenceExpression.instantiate(script, dataType);
-    } else if (ScalarExpression.class.isAssignableFrom(expressionType)) {
-      return ScalarExpression.instantiate(script, dataType);
-    } else {
-      throw new RuntimeException("Unknown expression type: " + expressionType);
-    }
-  }
-
-  public static Boolean canConvert(Class<? extends TypedExpression> from, Class<? extends TypedExpression> to) {
-    var fromExpressionType = from.getAnnotation(EfxExpressionTypeAssociation.class).expressionType();
-    var fromDataType = from.getAnnotation(EfxDataTypeAssociation.class).dataType();
-    var toExpressionType = to.getAnnotation(EfxExpressionTypeAssociation.class).expressionType();
-    var toDataType = to.getAnnotation(EfxDataTypeAssociation.class).dataType();
-
-    return toExpressionType.isAssignableFrom(fromExpressionType) && toDataType.isAssignableFrom(fromDataType);
   }
 
   public abstract class Impl<T extends EfxDataType> extends Expression.Impl implements TypedExpression {
 
-    private Class<? extends EfxExpressionType> expressionType;
     private Class<? extends T> dataType;
 
-    public Impl(final String script, Class<? extends EfxExpressionType> expressionType,
-        Class<? extends T> dataType) {
-      this(script, false, expressionType, dataType);
-    }
-
-    public Impl(final String script, final Boolean isLiteral,
-        Class<? extends EfxExpressionType> expressionType, Class<? extends T> dataType) {
-      super(script, isLiteral);
-      this.expressionType = expressionType;
+    protected Impl(final String script, Class<? extends T> dataType) {
+      super(script);
       this.dataType = dataType;
-    }
-
-    @Override
-    public Class<? extends EfxExpressionType> getExpressionType() {
-        return this.expressionType;
     }
 
     @Override
@@ -98,13 +92,8 @@ public interface TypedExpression extends Expression {
     }
 
     @Override
-    public Boolean is(Class<? extends EfxDataType> dataType) {
+    public boolean is(Class<? extends EfxDataType> dataType) {
       return dataType.isAssignableFrom(this.dataType);
-    }
-
-    @Override
-    public Boolean is(Class<? extends EfxExpressionType> referenceType, Class<? extends EfxDataType> dataType) {
-      return referenceType.isAssignableFrom(this.expressionType) && dataType.isAssignableFrom(this.dataType);
     }
   }
 }

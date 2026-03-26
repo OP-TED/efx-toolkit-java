@@ -1,0 +1,13 @@
+// Test: Conditional rule with WHEN/OTHERWISE
+
+---- STAGE test ----
+
+WITH ND-Root
+    WHEN BT-00-Text is present
+        ASSERT BT-00-Number > 0
+        AS ERROR R-T04-001
+        FOR BT-00-Number IN *
+    OTHERWISE
+        ASSERT ALWAYS
+        AS ERROR R-T04-002
+        FOR BT-00-Number IN *

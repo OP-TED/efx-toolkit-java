@@ -1,0 +1,34 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Code",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-GS0-001",
+        "fields" : [ "BT-00-Text", "BT-00-Number" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Code" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Number",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Code" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Code" ]
+      }
+    }
+  } ]
+}

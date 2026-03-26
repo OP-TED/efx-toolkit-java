@@ -1,0 +1,64 @@
+// Comprehensive test: multiple stages, various contexts, predicates, cross-references
+
+---- STAGE validation ----
+
+// Rule 1: SubNode context, references fields in different nodes
+WITH ND-SubNode
+    ASSERT BT-01-SubNode-Text is present and BT-00-Text is present
+    AS ERROR R-C01-001
+    FOR BT-01-SubNode-Text IN *
+
+// Rule 2: Same target as Rule 1, different dependencies
+WITH ND-SubNode
+    ASSERT BT-01-SubSubNode-Text is present
+    AS ERROR R-C01-002
+    FOR BT-01-SubNode-Text IN *
+
+// Rule 3: Absolute field reference with predicate
+WITH ND-Root
+    ASSERT /BT-00-Repeatable-Text[BT-00-Repeatable-Text != ''] is present
+    AS ERROR R-C01-003
+    FOR BT-00-Number IN *
+
+// Rule 4: Conditional rule with context override
+WITH ND-Root
+    WHEN BT-00-Code is present
+        ASSERT ND-SubNode::BT-01-SubNode-Text is present
+        AS ERROR R-C01-004
+        FOR BT-00-Text IN *
+    OTHERWISE
+        ASSERT BT-00-Indicator == TRUE
+        AS ERROR R-C01-005
+        FOR BT-00-Text IN *
+
+// Rule 5: Node target
+WITH ND-Root
+    ASSERT BT-00-Text-In-Repeatable-Node is present
+    AS ERROR R-C01-006
+    FOR ND-RepeatableNode IN *
+
+---- STAGE cross-check ----
+
+// Rule 6: Field from repeatable node context
+WITH ND-RepeatableNode
+    ASSERT BT-00-Text-In-Repeatable-Node is present and BT-00-Date-In-Repeatable-Node is present
+    AS ERROR R-C02-001
+    FOR BT-00-Text-In-Repeatable-Node IN *
+
+// Rule 7: References multiple types
+WITH ND-Root
+    ASSERT BT-00-StartDate is present and BT-00-EndDate is present and BT-00-StartDate <= BT-00-EndDate
+    AS ERROR R-C02-002
+    FOR BT-00-EndDate IN *
+
+// Rule 8: Codelist reference
+WITH ND-Root
+    ASSERT BT-00-Code in [...accessibility]
+    AS ERROR R-C02-003
+    FOR BT-00-Code IN *
+
+// Rule 9: @POST rule — should be excluded from the dependency graph
+WITH ND-Root
+    ASSERT BT-00-Number > 0 and BT-00-Text is present
+    AS ERROR R-C02-004
+    FOR BT-00-Indicator IN * SCOPE @POST

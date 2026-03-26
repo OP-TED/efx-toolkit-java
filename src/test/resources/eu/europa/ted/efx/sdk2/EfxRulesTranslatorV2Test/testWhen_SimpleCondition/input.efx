@@ -1,0 +1,10 @@
+// Test: WHEN conditional clause without OTHERWISE
+// Verifies conditional assertion that only fires when WHEN condition is met
+
+---- STAGE 1a ----
+
+WITH ND-SubNode
+    WHEN BT-00-Text is present
+        ASSERT BT-00-Text == 'open'
+        AS ERROR R-K7P-M2Q
+        FOR BT-00-Text IN 1, 2

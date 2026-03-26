@@ -1,0 +1,8 @@
+LET indicator* : $flags = [TRUE, FALSE, TRUE];
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT count($flags) > 0
+AS ERROR R-SEQ-003
+FOR BT-00-Text IN 1, 2

@@ -1,0 +1,150 @@
+{
+  "fields" : [ {
+    "id" : "BT-01-SubNode-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C01-001",
+        "fields" : [ "BT-00-Text" ],
+        "nodes" : [ "ND-SubNode" ]
+      }, {
+        "ruleId" : "R-C01-002",
+        "fields" : [ "BT-01-SubSubNode-Text" ],
+        "nodes" : [ "ND-SubNode" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C01-003",
+        "fields" : [ "BT-00-Repeatable-Text" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C01-004",
+        "fields" : [ "BT-00-Code", "BT-01-SubNode-Text" ],
+        "nodes" : [ "ND-Root", "ND-SubNode" ]
+      }, {
+        "ruleId" : "R-C01-005",
+        "fields" : [ "BT-00-Indicator" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Text-In-Repeatable-Node",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C02-001",
+        "fields" : [ "BT-00-Date-In-Repeatable-Node" ],
+        "nodes" : [ "ND-RepeatableNode" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "nodes" : [ "ND-RepeatableNode" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-EndDate",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C02-002",
+        "fields" : [ "BT-00-StartDate" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Code",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C02-003",
+        "nodes" : [ "ND-Root" ],
+        "codeLists" : [ "accessibility" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-01-SubSubNode-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Repeatable-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Indicator",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Date-In-Repeatable-Node",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text-In-Repeatable-Node" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-StartDate",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-EndDate" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-RepeatableNode",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-C01-006",
+        "fields" : [ "BT-00-Text-In-Repeatable-Node" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text-In-Repeatable-Node" ]
+      }
+    }
+  }, {
+    "id" : "ND-SubNode",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-01-SubNode-Text", "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number", "BT-00-Text", "BT-00-EndDate", "BT-00-Code" ],
+        "nodes" : [ "ND-RepeatableNode" ]
+      }
+    }
+  } ]
+}

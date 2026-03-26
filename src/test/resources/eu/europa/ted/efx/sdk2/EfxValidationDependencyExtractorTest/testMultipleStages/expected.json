@@ -1,0 +1,57 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-S01-001",
+        "fields" : [ "BT-00-Text" ],
+        "nodes" : [ "ND-Root" ]
+      }, {
+        "ruleId" : "R-S02-001",
+        "fields" : [ "BT-01-SubNode-Text" ],
+        "nodes" : [ "ND-SubNode" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-S02-002",
+        "fields" : [ "BT-00-Number" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    },
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  }, {
+    "id" : "BT-01-SubNode-Text",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number", "BT-00-Text" ]
+      }
+    }
+  }, {
+    "id" : "ND-SubNode",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  } ]
+}

@@ -1,0 +1,18 @@
+// Test: API function bound to a named (non-default) endpoint.
+// Verifies that CALL API 'ext-db' generates the correct endpoint reference in output.
+
+ENDPOINT 'ext-db' AT 'https://other.api.eu/v2';
+
+LET dynamic : ?validate-ext(text : $id) CALL API 'ext-db';
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+WITH BT-00-Text
+    ASSERT ?validate-ext(BT-00-Identifier)
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

@@ -1,0 +1,130 @@
+// Comprehensive test: exercises all API call features in a realistic scenario.
+// - 3 endpoints: default (with URL), ext-db (with URL), staging (no URL)
+// - 5 API functions across multiple endpoints
+// - 2 stages, 2 contexts per stage, static + dynamic mixed per context
+// - Mix of ASSERT and REPORT
+// - Mix of ON ERROR WARN / REJECT, default and custom error labels
+// - Single and multiple API calls per rule
+// - Multiple arguments
+// - API variables at global, stage, and WITH levels
+// - WHEN clauses with API calls and API variables as conditions
+// - Report with API variable guards
+// - Guard filtering: only referenced API variables appear in guards
+// - Varied IN clauses: single subtype (IN 1), range (IN 1-2), multiple subtypes (IN 1, 2)
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+ENDPOINT 'ext-db' AT 'https://other.api.eu/v2';
+ENDPOINT 'staging';
+
+LET dynamic : ?check-buyer(text : $buyerId) CALL API;
+LET dynamic : ?confirm-status(text : $statusId) CALL API, ON ERROR WARN 'auxiliary|text|status-unavailable';
+LET dynamic : ?verify-code(text : $codeId, text : $code) CALL API 'ext-db', ON ERROR WARN;
+LET dynamic : ?validate-ref(text : $ref) CALL API 'staging', ON ERROR REJECT 'auxiliary|text|ref-check-failed';
+LET dynamic : ?check-global(text : $val) CALL API;
+
+// Global API variable
+LET dynamic : $globalCheck = ?check-global(BT-00-Code);
+
+---- STAGE 1a ----
+
+// Stage-level API variable
+LET dynamic : $stageStatus = ?confirm-status(BT-00-Code);
+
+// Context 1: WITH-level API variable + inline calls, mixed with static rules
+WITH dynamic : $buyerOk = ?check-buyer(BT-00-Identifier), BT-00-Text
+    // Static assert — single subtype
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    // Static report — range of subtypes
+    REPORT empty(BT-00-Text)
+    AS WARNING R-S1A-002
+    FOR BT-00-Text IN 1-2
+
+    // Dynamic assert — single inline API call, single subtype
+    ASSERT ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S1A-003
+    FOR BT-00-Text IN 1
+
+    // Dynamic assert — two inline API calls, range
+    ASSERT ?check-buyer(BT-00-Identifier) and ?verify-code(BT-00-Identifier, BT-00-Code)
+    AS ERROR R-S1A-004
+    FOR BT-00-Text IN 1-2
+
+    // Dynamic report — inline API call with custom warning label, multiple subtypes
+    REPORT not(?confirm-status(BT-00-Identifier))
+    AS WARNING R-S1A-005
+    FOR BT-00-Text IN 1, 2
+
+    // Dynamic assert — WITH-level API variable + inline call, single subtype
+    ASSERT $buyerOk and ?verify-code(BT-00-Identifier, BT-00-Code)
+    AS ERROR R-S1A-006
+    FOR BT-00-Text IN 1
+
+// Context 2: outer API variables, WHEN clauses, report guards
+WITH BT-00-Text
+    // Dynamic assert — stage + global API variables only, single subtype
+    ASSERT $stageStatus and $globalCheck
+    AS ERROR R-S1A-007
+    FOR BT-00-Text IN 1
+
+    // Dynamic report — API variable guards, range
+    REPORT not($stageStatus) and not($globalCheck)
+    AS WARNING R-S1A-008
+    FOR BT-00-Text IN 1-2
+
+    // Dynamic assert with WHEN — combined variable + inline call, multiple subtypes
+    WHEN BT-00-Indicator is present
+        ASSERT $stageStatus and ?check-buyer(BT-00-Identifier)
+        AS ERROR R-S1A-009
+        FOR BT-00-Text IN 1, 2
+
+    // Dynamic assert with WHEN condition that IS an API call
+    WHEN ?check-buyer(BT-00-Identifier)
+        ASSERT BT-00-Text is present
+        AS ERROR R-S1A-010
+        FOR BT-00-Text IN 1
+
+    // Dynamic assert with WHEN condition that references an API variable
+    WHEN $stageStatus
+        ASSERT BT-00-Text is present
+        AS ERROR R-S1A-011
+        FOR BT-00-Text IN 1-2
+
+    // Dynamic assert — only globalCheck guard (tests filtering), single subtype
+    ASSERT $globalCheck
+    AS ERROR R-S1A-012
+    FOR BT-00-Text IN 1
+
+---- STAGE 2a ----
+
+// Context 1: cross-endpoint calls, static + dynamic mixed
+WITH BT-00-Text
+    // Static assert — range
+    ASSERT BT-00-Text is present
+    AS ERROR R-S2A-001
+    FOR BT-00-Text IN 1-2
+
+    // Dynamic assert — two API calls from different endpoints, single subtype
+    ASSERT ?validate-ref(BT-00-Identifier) and ?check-buyer(BT-00-Identifier)
+    AS ERROR R-S2A-002
+    FOR BT-00-Text IN 1
+
+    // Dynamic report — two API calls, multiple subtypes
+    REPORT not(?verify-code(BT-00-Identifier, BT-00-Code)) and not(?confirm-status(BT-00-Identifier))
+    AS INFO R-S2A-003
+    FOR BT-00-Text IN 1, 2
+
+// Context 2: WHEN clause with API call from different context node
+WITH ND-SubNode
+    // Static report — single subtype
+    REPORT empty(BT-01-SubLevel-Text)
+    AS WARNING R-S2A-004
+    FOR BT-01-SubLevel-Text IN 1
+
+    // Dynamic assert with WHEN — API call + global var, range
+    WHEN BT-00-Indicator is present
+        ASSERT ?validate-ref(BT-00-Identifier) and $globalCheck
+        AS ERROR R-S2A-005
+        FOR BT-01-SubLevel-Text IN 1-2

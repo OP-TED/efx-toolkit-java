@@ -9,17 +9,17 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the Licence for the specific language governing permissions and limitations under
- * the Lic
+ * the Licence.
  */
 package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
@@ -27,9 +27,13 @@ import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
+import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 
 /**
  * A ScriptGenerator is used by the EFX expression translator to translate specific computations to
@@ -74,8 +78,17 @@ public interface ScriptGenerator {
   public PathExpression composeFieldReferenceWithPredicate(
       final PathExpression fieldReference, final BooleanExpression predicate);
 
-  public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
-      final String axis);
+  /**
+   * Applies an XPath axis to a field reference.
+   *
+   * @deprecated Axis syntax has been removed from EFX-2. This method is only used by EFX-1
+   *     and will be removed in a future version.
+   */
+  @Deprecated(forRemoval = true)
+  default PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
+      final String axis) {
+    return fieldReference;
+  }
 
   /**
    * Given a PathExpression, this method should return the target language script for retrieving the
@@ -85,6 +98,17 @@ public interface ScriptGenerator {
    * @return The target language script that retrieves the value of the field.
    */
   public PathExpression composeFieldValueReference(final PathExpression fieldReference);
+
+  /**
+   * Given a PathExpression, this method should return the target language script for retrieving
+   * the raw text content of the field, without any type-specific processing.
+   * The returned PathExpression preserves the cardinality of the input (scalar or sequence)
+   * while always having string type.
+   *
+   * @param fieldReference The PathExpression that points to the field.
+   * @return A PathExpression that retrieves the raw text value of the field.
+   */
+  public PathExpression composeFieldRawValueReference(final PathExpression fieldReference);
 
   /**
    * Given a PathExpression and an attribute name, this method should return the target language
@@ -110,9 +134,13 @@ public interface ScriptGenerator {
    */
   public <T extends TypedExpression> T composeVariableReference(String variableName, Class<T> type);
 
+  public <T extends TypedExpression> T composeParameterReference(String parameterName, Class<T> type);
+
   public <T extends TypedExpression> T composeVariableDeclaration(String variableName, Class<T> type);
 
   public <T extends TypedExpression> T composeParameterDeclaration(String parameterName, Class<T> type);
+
+  public <T extends TypedExpression> T composeDictionaryLookup(String dictionaryName, StringExpression keyExpression, Class<T> type);
 
   /**
    * Takes a list of expressions and returns the target language script that corresponds to a
@@ -128,7 +156,7 @@ public interface ScriptGenerator {
 
   /**
    * Takes a Java Boolean value and returns the corresponding target language script.
-   * 
+   *
    * @param value The Java Boolean value.
    * @return The target language script that corresponds to the given Java Boolean value.
    */
@@ -207,33 +235,94 @@ public interface ScriptGenerator {
   public <T extends TypedExpression> T composeConditionalExpression(BooleanExpression condition,
       T whenTrue, T whenFalse, Class<T> type);
 
+  /**
+   * Composes a "for ... return" expression that maps each iteration to a scalar value,
+   * collecting the results into a sequence (a map operation).
+   *
+   * EFX:   for text:$x in ['a', 'b', 'c'] return concat($x, '!')
+   * XPath: for $x in ('a','b','c') return concat($x, '!')
+   *
+   * Java:
+   *   List&lt;String&gt; result = new ArrayList&lt;&gt;();
+   *   for (String x : List.of("a", "b", "c")) {
+   *       result.add(x + "!");
+   *   }
+   *   // result = ["a!", "b!", "c!"]
+   *
+   * JavaScript:
+   *   const result = ["a", "b", "c"].map(x =&gt; x + "!");
+   *
+   * Python:
+   *   result = [x + "!" for x in ["a", "b", "c"]]
+   *
+   * @param iterators the iterator list (one or more typed iterators)
+   * @param expression the scalar expression evaluated per iteration
+   * @param targetListType the class of the resulting sequence expression
+   * @return the target-language script for the for-return expression
+   */
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType);
 
-  public  IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList);
+  /**
+   * Composes a "for ... return" expression where the return body is a sequence,
+   * concatenating all results into a single flat sequence (a flatMap operation).
+   *
+   * Unlike {@link #composeForExpression} where the body is a scalar (map), here the
+   * body produces a sequence per iteration. The results are concatenated without
+   * removing duplicates.
+   *
+   * EFX:   for number:$x in [1, 2, 3] return [$x, $x * 10]
+   * XPath: for $x in (1, 2, 3) return ($x, $x * 10)
+   *        (XPath flattens sequences automatically)
+   *
+   * Java:
+   *   List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+   *   for (int x : List.of(1, 2, 3)) {
+   *       result.addAll(List.of(x, x * 10));
+   *   }
+   *   // result = [1, 10, 2, 20, 3, 30]
+   *
+   * JavaScript:
+   *   const result = [1, 2, 3].flatMap(x =&gt; [x, x * 10]);
+   *
+   * Python:
+   *   result = [item for x in [1, 2, 3] for item in [x, x * 10]]
+   *
+   * The key difference from composeForExpression is add() vs addAll():
+   * composeForExpression (scalar body) adds one element per iteration,
+   * composeForExpression (sequence body) adds all elements of a
+   * sub-sequence per iteration.
+   *
+   * @param iterators the iterator list (one or more typed iterators)
+   * @param sequenceExpression the sequence expression evaluated per iteration
+   * @param targetListType the class of the resulting sequence expression
+   * @return the target-language script for the for expression
+   */
+  public <T extends SequenceExpression> T composeForExpression(
+      IteratorListExpression iterators, SequenceExpression sequenceExpression, Class<T> targetListType);
+
+  public IteratorExpression composeIteratorExpression(Expression variableDeclarationExpression, SequenceExpression sourceList);
 
   public IteratorListExpression composeIteratorList(List<IteratorExpression> iterators);
 
   /**
-   * When we need data from an external source, we need some script that gets that data. Getting the
-   * data is a two-step process: a) we need to access the data source, b) we need to get the actual
-   * data from the data source. This method should return the target language script that connects
-   * to the data source and permits us to subsequently get the data by using a PathExpression.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data source.
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeExternalReference(final StringExpression externalReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeExternalReference(final StringExpression externalReference) {
+    return null;
+  }
 
   /**
-   * See {@link #composeExternalReference} for more details.
-   * 
-   * @param externalReference The PathExpression that points to the external data source.
-   * @param fieldReference The PathExpression that points to the field in the external data source.
-   * @return a PathExpression with the target language script that retrieves the external data. 
+   * @deprecated Cross-notice references have been removed from EFX-2.
+   *     This method is only used by EFX-1 and will be removed in a future version.
    */
-  public PathExpression composeFieldInExternalReference(final PathExpression externalReference,
-      final PathExpression fieldReference);
+  @Deprecated(forRemoval = true)
+  default PathExpression composeFieldInExternalReference(final PathExpression externalReference,
+      final PathExpression fieldReference) {
+    return null;
+  }
 
 
   /**
@@ -247,8 +336,20 @@ public interface ScriptGenerator {
   public PathExpression joinPaths(PathExpression first, PathExpression second);
 
   /**
+   * Makes the given absolute path relative to the given context path.
+   *
+   * This is target-language-specific because different target languages (XPath, JavaScript, etc.)
+   * may have different path contextualization semantics.
+   *
+   * @param absolutePath The absolute path to contextualize.
+   * @param contextPath The context path to make the result relative to.
+   * @return The path relative to the given context.
+   */
+  public PathExpression contextualizePath(PathExpression absolutePath, PathExpression contextPath);
+
+  /**
    * Gets a piece of text and returns it inside quotes as expected by the target language.
-   * 
+   *
    * @param value The text to be quoted.
    * @return The quoted text.
    */
@@ -281,7 +382,7 @@ public interface ScriptGenerator {
 
   /**
    * Returns the numeric literal passed in target language script. The passed literal is in EFX.
-   * 
+   *
    * @param efxLiteral The numeric literal in EFX.
    * @return The numeric literal in the target language.
    */
@@ -290,7 +391,7 @@ public interface ScriptGenerator {
   /**
    * Returns the string literal in the target language. Note that the string literal passed as a
    * parameter is already between quotes in EFX.
-   * 
+   *
    * @param efxLiteral The string literal in EFX.
    * @return The string literal in the target language.
    */
@@ -302,21 +403,168 @@ public interface ScriptGenerator {
 
   public DurationExpression getDurationLiteralEquivalent(final String efxLiteral);
 
-  /*
-   * Numeric Functions
-   */
+  // #region Numeric Functions ------------------------------------------------
 
+  /**
+   * Returns the target language script that counts the number of elements in a sequence.
+   *
+   * @param list The sequence whose elements are to be counted.
+   * @return A numeric expression representing the count.
+   */
   public NumericExpression composeCountOperation(final SequenceExpression list);
 
+  /**
+   * Returns the target language script that converts a string to a number.
+   *
+   * @param text The string expression to convert.
+   * @return A numeric expression representing the converted value.
+   */
   public NumericExpression composeToNumberConversion(StringExpression text);
+
+  /**
+   * Returns the target language script that converts a boolean to a number.
+   * Typically {@code TRUE} maps to {@code 1} and {@code FALSE} maps to {@code 0}.
+   *
+   * @param bool The boolean expression to convert.
+   * @return A numeric expression representing the converted value.
+   */
+  public NumericExpression composeToNumberConversion(BooleanExpression bool);
 
   public NumericExpression composeSumOperation(NumericSequenceExpression list);
 
+  /**
+   * Returns the target language script that computes the minimum value in a numeric sequence.
+   *
+   * @param list The numeric sequence to find the minimum of.
+   * @return A numeric expression representing the minimum value.
+   */
+  public NumericExpression composeMinFunction(NumericSequenceExpression list);
+
+  /**
+   * Returns the target language script that computes the maximum value in a numeric sequence.
+   *
+   * @param list The numeric sequence to find the maximum of.
+   * @return A numeric expression representing the maximum value.
+   */
+  public NumericExpression composeMaxFunction(NumericSequenceExpression list);
+
+  /**
+   * Returns the target language script that computes the average of a numeric sequence.
+   *
+   * @param list The numeric sequence to average.
+   * @return A numeric expression representing the average value.
+   */
+  public NumericExpression composeAvgFunction(NumericSequenceExpression list);
+
   public NumericExpression composeStringLengthCalculation(StringExpression text);
 
-  /*
-   * String Functions
+  /**
+   * Returns the target language script that extracts the year component from a date.
+   *
+   * @param date The date expression to extract the year from.
+   * @return A numeric expression representing the year.
    */
+  public NumericExpression composeYearFunction(DateExpression date);
+
+  /**
+   * Returns the target language script that extracts the month component from a date.
+   *
+   * @param date The date expression to extract the month from.
+   * @return A numeric expression representing the month (1-12).
+   */
+  public NumericExpression composeMonthFunction(DateExpression date);
+
+  /**
+   * Returns the target language script that extracts the day component from a date.
+   *
+   * @param date The date expression to extract the day from.
+   * @return A numeric expression representing the day of the month (1-31).
+   */
+  public NumericExpression composeDayFunction(DateExpression date);
+
+  /**
+   * Returns the target language script that extracts the hours component from a time.
+   *
+   * @param time The time expression to extract the hours from.
+   * @return A numeric expression representing the hours (0-23).
+   */
+  public NumericExpression composeHoursFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the minutes component from a time.
+   *
+   * @param time The time expression to extract the minutes from.
+   * @return A numeric expression representing the minutes (0-59).
+   */
+  public NumericExpression composeMinutesFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the seconds component from a time.
+   *
+   * @param time The time expression to extract the seconds from.
+   * @return A numeric expression representing the seconds (0-59).
+   */
+  public NumericExpression composeSecondsFunction(TimeExpression time);
+
+  /**
+   * Returns the target language script that extracts the years component from a duration.
+   *
+   * @param duration The duration expression to extract the years from.
+   * @return A numeric expression representing the years component.
+   */
+  public NumericExpression composeYearsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total months from a duration.
+   *
+   * @param duration The duration expression to extract the total months from.
+   * @return A numeric expression representing the total months (years * 12 + months).
+   */
+  public NumericExpression composeMonthsFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that extracts the total days from a duration.
+   *
+   * @param duration The duration expression to extract the total days from.
+   * @return A numeric expression representing the total days.
+   */
+  public NumericExpression composeDaysFromDurationFunction(DurationExpression duration);
+
+  /**
+   * Returns the target language script that computes the absolute value of a number.
+   *
+   * @param number The numeric expression whose absolute value is to be computed.
+   * @return A numeric expression representing the absolute value.
+   */
+  public NumericExpression composeAbsFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number to the nearest integer.
+   *
+   * @param number The numeric expression to round.
+   * @return A numeric expression representing the rounded value.
+   */
+  public NumericExpression composeRoundFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number down (towards negative infinity).
+   *
+   * @param number The numeric expression to round down.
+   * @return A numeric expression representing the rounded-down value.
+   */
+  public NumericExpression composeFloorFunction(NumericExpression number);
+
+  /**
+   * Returns the target language script that rounds a number up (towards positive infinity).
+   *
+   * @param number The numeric expression to round up.
+   * @return A numeric expression representing the rounded-up value.
+   */
+  public NumericExpression composeCeilingFunction(NumericExpression number);
+
+  // #endregion Numeric Functions -------------------------------------------
+
+  // #region String Functions -----------------------------------------------
 
   public StringExpression composeStringConcatenation(List<StringExpression> list);
 
@@ -337,7 +585,67 @@ public interface ScriptGenerator {
   public StringExpression composeSubstringExtraction(StringExpression text, NumericExpression start,
       NumericExpression length);
 
+  /**
+   * Returns the target language script that extracts the part of the text before the first
+   * occurrence of the delimiter. Returns an empty string if the delimiter is not found.
+   *
+   * @param text The text to search in.
+   * @param delimiter The delimiter to search for.
+   * @return The target language script for the substring before the delimiter.
+   */
+  public StringExpression composeSubstringBeforeFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
+   * Returns the target language script that extracts the part of the text after the first
+   * occurrence of the delimiter. Returns an empty string if the delimiter is not found.
+   *
+   * @param text The text to search in.
+   * @param delimiter The delimiter to search for.
+   * @return The target language script for the substring after the delimiter.
+   */
+  public StringExpression composeSubstringAfterFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
+   * Returns the target language script that converts a number to its string representation.
+   *
+   * @param number The numeric expression to convert.
+   * @return A string expression representing the converted value.
+   */
   public StringExpression composeToStringConversion(NumericExpression number);
+
+  /**
+   * Returns the target language script that converts a boolean to its string representation.
+   *
+   * @param bool The boolean expression to convert.
+   * @return A string expression representing the converted value.
+   */
+  public StringExpression composeToStringConversion(BooleanExpression bool);
+
+  /**
+   * Returns the target language script that converts a date to its string representation.
+   *
+   * @param date The date expression to convert.
+   * @return A string expression representing the converted value.
+   */
+  public StringExpression composeToStringConversion(DateExpression date);
+
+  /**
+   * Returns the target language script that converts a time to its string representation.
+   *
+   * @param time The time expression to convert.
+   * @return A string expression representing the converted value.
+   */
+  public StringExpression composeToStringConversion(TimeExpression time);
+
+  /**
+   * Returns the target language script that converts a duration to its string representation.
+   *
+   * @param duration The duration expression to convert.
+   * @return A string expression representing the converted value.
+   */
+  public StringExpression composeToStringConversion(DurationExpression duration);
 
   /**
    * Returns the target language script that converts the given text to upper case.
@@ -360,6 +668,115 @@ public interface ScriptGenerator {
    * @return       The target language script that converts the text to lower case.
    */
   public StringExpression composeToLowerCaseConversion(StringExpression text);
+
+  /**
+   * Returns the target language script that strips leading/trailing whitespace and collapses
+   * internal whitespace sequences to a single space.
+   *
+   * @param text The text to normalize.
+   * @return The target language script that normalizes whitespace in the text.
+   */
+  public StringExpression composeNormalizeSpaceFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that removes leading and trailing whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims whitespace from both ends.
+   */
+  public StringExpression composeTrimFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that removes leading whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims leading whitespace.
+   */
+  public StringExpression composeTrimLeftFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that removes trailing whitespace from the text.
+   *
+   * @param text The text to trim.
+   * @return The target language script that trims trailing whitespace.
+   */
+  public StringExpression composeTrimRightFunction(StringExpression text);
+
+  /**
+   * Returns the target language script that pads the text on the left with the given character
+   * until it reaches the specified length. If the text is already at least the specified length,
+   * it is returned unchanged.
+   *
+   * @param text The text to pad.
+   * @param length The desired minimum length.
+   * @param padChar The character to pad with.
+   * @return The target language script that left-pads the text.
+   */
+  public StringExpression composePadLeftFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar);
+
+  /**
+   * Returns the target language script that pads the text on the right with the given character
+   * until it reaches the specified length. If the text is already at least the specified length,
+   * it is returned unchanged.
+   *
+   * @param text The text to pad.
+   * @param length The desired minimum length.
+   * @param padChar The character to pad with.
+   * @return The target language script that right-pads the text.
+   */
+  public StringExpression composePadRightFunction(StringExpression text, NumericExpression length,
+      StringExpression padChar);
+
+  /**
+   * Returns the target language script that repeats the text the specified number of times.
+   *
+   * @param text The text to repeat.
+   * @param count The number of repetitions.
+   * @return The target language script that repeats the text.
+   */
+  public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count);
+
+  /**
+   * Returns the target language script that replaces all occurrences of a literal search string
+   * with the replacement string.
+   *
+   * @param text The text to search in.
+   * @param search The literal string to search for.
+   * @param replacement The replacement string.
+   * @return The target language script that performs literal replacement.
+   */
+  public StringExpression composeReplaceFunction(StringExpression text, StringExpression search,
+      StringExpression replacement);
+
+  /**
+   * Returns the target language script that replaces all matches of a regular expression pattern
+   * with the replacement string. The pattern uses the EFX regex profile.
+   *
+   * @param text The text to search in.
+   * @param pattern The regex pattern to match.
+   * @param replacement The replacement string (may use capture group references).
+   * @return The target language script that performs regex replacement.
+   */
+  public StringExpression composeReplaceRegexFunction(StringExpression text,
+      StringExpression pattern, StringExpression replacement);
+
+  /**
+   * Composes a URL-encoding function call in the target language.
+   *
+   * @param text The string to URL-encode.
+   * @return The target language script that URL-encodes the string.
+   */
+  public StringExpression composeUrlEncodeFunction(StringExpression text);
+
+  /**
+   * Composes a capitalize-first function call in the target language.
+   * Converts the first character of the string to upper case.
+   *
+   * @param text The string whose first character to capitalize.
+   * @return The target language script that capitalizes the first character.
+   */
+  public StringExpression composeCapitalizeFirstFunction(StringExpression text);
 
   /**
    * Gets the target language script that retrieves the preferred language ID
@@ -392,22 +809,96 @@ public interface ScriptGenerator {
    */
   public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference);
 
-  /*
-   * Boolean Functions
-   */
+  // #endregion String Functions ----------------------------------------------
+
+  // #region Boolean Functions ------------------------------------------------
 
   public BooleanExpression composeExistsCondition(PathExpression reference);
 
+  /**
+   * Returns the target language script that converts a number to a boolean.
+   * Typically {@code 0} maps to {@code FALSE} and any non-zero value maps to {@code TRUE}.
+   *
+   * @param number The numeric expression to convert.
+   * @return A boolean expression representing the converted value.
+   */
+  public BooleanExpression composeToBooleanConversion(NumericExpression number);
+
+  /**
+   * Uniqueness check for EFX 1 syntax.
+   * <p>
+   * This method supports the limited uniqueness syntax available in EFX 1.
+   * It is used exclusively by the EFX 1 translator and is kept for backward
+   * compatibility with EFX 1.
+   * <p>
+   * <b>EFX 2 does not use this method.</b> EFX 2's stricter type checking enables
+   * more powerful uniqueness syntax, supported by the typed overloads below.
+   *
+   * @param needle The value to check for uniqueness
+   * @param haystack The collection to search within
+   * @return A boolean expression evaluating to true if needle appears exactly once in haystack
+   */
   public BooleanExpression composeUniqueValueCondition(PathExpression needle,
       PathExpression haystack);
 
+  // Typed uniqueness conditions (EFX 2)
+  public BooleanExpression composeUniqueValueCondition(StringExpression needle,
+      StringSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(NumericExpression needle,
+      NumericSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(BooleanExpression needle,
+      BooleanSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(DateExpression needle,
+      DateSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(TimeExpression needle,
+      TimeSequenceExpression haystack);
+
+  public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
+      DurationSequenceExpression haystack);
+
+  /**
+   * Returns the target language script that checks whether two sequences contain the same
+   * elements, regardless of order.
+   *
+   * @param one The first sequence.
+   * @param two The second sequence.
+   * @return A boolean expression that is true when the two sequences are equal.
+   */
   public BooleanExpression composeSequenceEqualFunction(SequenceExpression one,
       SequenceExpression two);
 
-  /*
-   * Date Functions
+  /**
+   * Returns the target language script that checks whether a sequence is empty
+   * (contains no elements).
+   *
+   * @param sequence The sequence to check.
+   * @return A boolean expression that is true when the sequence is empty.
    */
+  public BooleanExpression composeEmptySequenceCondition(SequenceExpression sequence);
 
+  /**
+   * Returns the target language script that checks whether all values in a sequence are
+   * distinct (i.e. the sequence has no duplicate values).
+   *
+   * @param sequence The sequence to check.
+   * @return A boolean expression that is true when all values are distinct.
+   */
+  public BooleanExpression composeIsDistinctCondition(SequenceExpression sequence);
+
+  // #endregion Boolean Functions --------------------------------------------
+
+  // #region Date Functions ---------------------------------------------------
+
+  /**
+   * Returns the target language script that converts a string to a date.
+   *
+   * @param pop The string expression to convert.
+   * @return A date expression representing the converted value.
+   */
   public DateExpression composeToDateConversion(StringExpression pop);
 
   public DateExpression composeAddition(final DateExpression date,
@@ -416,26 +907,109 @@ public interface ScriptGenerator {
   public DateExpression composeSubtraction(final DateExpression date,
       final DurationExpression duration);
 
-  /*
-   * Time Functions
+  /**
+   * Returns the current date as a date expression in the target language.
+   *
+   * @return A date expression representing today's date.
    */
+  public DateExpression getCurrentDate();
 
+  //#endregion Date Functions -------------------------------------------------
+
+  // #region Time Functions ---------------------------------------------------
+
+  /**
+   * Returns the target language script that converts a string to a time.
+   *
+   * @param pop The string expression to convert.
+   * @return A time expression representing the converted value.
+   */
   public TimeExpression composeToTimeConversion(StringExpression pop);
 
-
-
-  /*
-   * Duration Functions
+  /**
+   * Returns the current time as a time expression in the target language.
+   *
+   * @return A time expression representing the current time.
    */
+  public TimeExpression getCurrentTime();
 
+  // #endregion Time Functions ------------------------------------------------
+
+  // #region Duration Functions -----------------------------------------------
+
+  /**
+   * Returns the target language script that converts a string to a day-time duration
+   * (e.g. {@code "P3DT4H"} for 3 days and 4 hours).
+   *
+   * @param text The string expression to convert.
+   * @return A duration expression representing the converted value.
+   */
   public DurationExpression composeToDayTimeDurationConversion(StringExpression text);
 
+  /**
+   * Returns the target language script that converts a string to a year-month duration
+   * (e.g. {@code "P2Y3M"} for 2 years and 3 months).
+   *
+   * @param text The string expression to convert.
+   * @return A duration expression representing the converted value.
+   */
   public DurationExpression composeToYearMonthDurationConversion(StringExpression text);
 
   public DurationExpression composeSubtraction(DateExpression startDate, DateExpression endDate);
 
   public StringExpression composeNumberFormatting(NumericExpression number,
       StringExpression format);
+
+  /**
+   * Formats a date using a short locale-aware format (e.g. 15/02/2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateShort(DateExpression date);
+
+  /**
+   * Formats a date using a medium locale-aware format with abbreviated month name
+   * (e.g. 15 Feb 2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateMedium(DateExpression date);
+
+  /**
+   * Formats a date using a long locale-aware format with full month name
+   * (e.g. 15 February 2026).
+   *
+   * @param date The date expression to format.
+   * @return A string expression representing the formatted date.
+   */
+  public StringExpression composeFormatDateLong(DateExpression date);
+
+  /**
+   * Formats a time using a short locale-aware format (e.g. 14:30 CET).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeShort(TimeExpression time);
+
+  /**
+   * Formats a time using a medium locale-aware format with seconds (e.g. 14:30:00).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeMedium(TimeExpression time);
+
+  /**
+   * Formats a time using a long locale-aware format with seconds and timezone
+   * (e.g. 14:30:00 CET).
+   *
+   * @param time The time expression to format.
+   * @return A string expression representing the formatted time.
+   */
+  public StringExpression composeFormatTimeLong(TimeExpression time);
 
   public DurationExpression composeMultiplication(final NumericExpression number,
       final DurationExpression duration);
@@ -446,22 +1020,210 @@ public interface ScriptGenerator {
   public DurationExpression composeSubtraction(final DurationExpression left,
       final DurationExpression right);
 
-  /*
-   * Sequence Functions
-   */
+  // #endregion Duration Functions --------------------------------------------
 
+  // #region Sequence Functions --------------------------------------------
+
+  /**
+   * Returns the target language script that removes duplicate values from a sequence,
+   * preserving only distinct values.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to remove duplicates from.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the distinct values.
+   */
   public <T extends SequenceExpression> T composeDistinctValuesFunction(
       T list, Class<T> listType);
 
+  /**
+   * Returns the target language script that counts the number of duplicate values in a sequence.
+   *
+   * @param sequence The sequence to count duplicates in.
+   * @return A numeric expression representing the number of duplicate values.
+   */
+  public NumericExpression composeCountDuplicatesFunction(SequenceExpression sequence);
+
+  /**
+   * Returns the target language script that extracts the duplicate values from a sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to extract duplicates from.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the values that appear more than once.
+   */
+  public <T extends SequenceExpression> T composeGetDuplicatesFunction(
+      T list, Class<T> listType);
+
+  /**
+   * Returns the target language script that computes the union of two sequences
+   * (all values from both, with duplicates removed).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing the union of both sequences.
+   */
   public <T extends SequenceExpression> T composeUnionFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that computes the intersection of two sequences
+   * (only values present in both).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing only the values present in both sequences.
+   */
   public <T extends SequenceExpression> T composeIntersectFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that computes the difference of two sequences
+   * (values in the first sequence that are not in the second).
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param listOne  The first sequence.
+   * @param listTwo  The second sequence.
+   * @param listType The class of the sequence expression type.
+   * @return A sequence containing values from the first sequence not present in the second.
+   */
   public <T extends SequenceExpression> T composeExceptFunction(T listOne,
       T listTwo, Class<T> listType);
 
+  /**
+   * Returns the target language script that sorts a sequence in ascending order.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to sort.
+   * @param listType The class of the sequence expression type.
+   * @return A sorted sequence.
+   */
+  public <T extends SequenceExpression> T composeSortFunction(T list, Class<T> listType);
+
+  /**
+   * Returns the target language script that reverses the order of elements in a sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The sequence to reverse.
+   * @param listType The class of the sequence expression type.
+   * @return A reversed sequence.
+   */
+  public <T extends SequenceExpression> T composeReverseFunction(T list, Class<T> listType);
+
+  /**
+   * Returns the target language script that extracts a contiguous subsequence starting
+   * at the given position, through the end of the sequence.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The source sequence.
+   * @param start    The 1-based starting position.
+   * @param listType The class of the sequence expression type.
+   * @return A subsequence from the starting position to the end.
+   */
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, Class<T> listType);
+
+  /**
+   * Returns the target language script that extracts a contiguous subsequence of the
+   * given length, starting at the given position.
+   *
+   * @param <T>      The type of the sequence expression.
+   * @param list     The source sequence.
+   * @param start    The 1-based starting position.
+   * @param length   The maximum number of elements to extract.
+   * @param listType The class of the sequence expression type.
+   * @return A subsequence of the given length starting at the given position.
+   */
+  public <T extends SequenceExpression> T composeSubsequenceFunction(T list,
+      NumericExpression start, NumericExpression length, Class<T> listType);
+
+  /**
+   * Returns the target language script that finds the 1-based position of the first occurrence of a
+   * value within a sequence. Returns 0 if the value is not found.
+   *
+   * @param list  The sequence to search in.
+   * @param value The value to search for.
+   * @return A numeric expression with the 1-based position of the first occurrence, or 0 if not
+   *         found.
+   */
+  public NumericExpression composeIndexOfFunction(SequenceExpression list,
+      ScalarExpression value);
+
+  /**
+   * Returns the target language script that splits a string into a sequence of substrings
+   * using the given literal delimiter.
+   *
+   * @param text The text to split.
+   * @param delimiter The literal delimiter to split on.
+   * @return A string sequence expression with the split parts.
+   */
+  public StringSequenceExpression composeSplitFunction(StringExpression text,
+      StringExpression delimiter);
+
+  /**
+   * Returns the target language script that finds the 1-based position of the first occurrence
+   * of a substring within a string. Returns 0 if the substring is not found.
+   *
+   * @param text The text to search in.
+   * @param substring The substring to search for.
+   * @return A numeric expression with the 1-based position, or 0 if not found.
+   */
+  public NumericExpression composeIndexOfSubstringFunction(StringExpression text,
+      StringExpression substring);
+
+  /**
+   * Returns the target language script that retrieves the element at a given position
+   * in a sequence.
+   *
+   * @param <T>   The scalar type of the elements in the sequence.
+   * @param list  The sequence to index into.
+   * @param index The 1-based position of the element to retrieve.
+   * @param type  The class of the scalar expression type.
+   * @return The element at the given position.
+   */
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type);
+
+  // #endregion Sequence Functions -----------------------------------------
+
+  // #region Function Invocation ------------------------------------------
+
+  /**
+   * Composes a function invocation expression with the specified function name, parameters, 
+   * and return type.
+   *
+   * @param <T> The type of the resulting expression, which must extend {@link TypedExpression}.
+   * @param functionName The name of the function to be invoked.
+   * @param parameters A list of parameters to be passed to the function, each of which must 
+   *                   extend {@link TypedExpression}.
+   * @param type The class object representing the expected return type of the function invocation.
+   * @return An expression that will invoke the function at runtime.
+   */
+  public <T extends TypedExpression> T composeFunctionInvocation(String functionName,
+          List<? extends TypedExpression> parameters, Class<T> type);
+
+  /**
+   * Composes the raw dynamic function call expression. Dynamic functions are external
+   * functions that delegate to a REST API at validation runtime.
+   * The function returns a tri-state integer (1 = true, 0 = false, -1 = error).
+   * The returned expression is used as the value of a Schematron &lt;let&gt; variable.
+   *
+   * @param endpointName The name of the API endpoint to call.
+   * @param apiName The name of the dynamic function.
+   * @param arguments The evaluated arguments to pass to the function.
+   * @return A numeric expression representing the raw dynamic function call (without error handling).
+   */
+  default NumericExpression composeDynamicFunction(String endpointName, String apiName,
+      List<? extends TypedExpression> arguments) {
+    throw new UnsupportedOperationException(
+        "This translator does not support dynamic rules. "
+        + "Override composeDynamicFunction() in " + this.getClass().getSimpleName()
+        + " to enable dynamic function calling.");
+  }
+
+  // #endregion Function Invocation -----------------------------------------
 }

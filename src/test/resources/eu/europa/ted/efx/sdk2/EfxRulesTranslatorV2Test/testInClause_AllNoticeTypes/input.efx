@@ -1,0 +1,13 @@
+// Test: IN * and IN ANY (all notice types)
+// Verifies both syntaxes expand to all available notice types
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN *
+
+    ASSERT not(empty(BT-00-Text))
+    AS WARNING R-X3F-N8W
+    FOR BT-00-Text IN ANY

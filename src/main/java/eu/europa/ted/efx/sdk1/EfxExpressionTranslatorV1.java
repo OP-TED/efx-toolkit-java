@@ -1,3 +1,16 @@
+/*
+ * Copyright 2022 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.sdk1;
 
 import java.util.ArrayList;
@@ -12,7 +25,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -20,27 +32,32 @@ import org.apache.commons.lang3.StringUtils;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.efx.exceptions.InvalidArgumentException;
+import eu.europa.ted.efx.exceptions.TypeMismatchException;
+import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TypeChecker;
 import eu.europa.ted.efx.model.CallStack;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.ContextStack;
 import eu.europa.ted.efx.model.expressions.Expression;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
-import eu.europa.ted.efx.model.expressions.path.NodePathExpression;
-import eu.europa.ted.efx.model.expressions.path.PathExpression;
-import eu.europa.ted.efx.model.expressions.path.StringPathExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
+import eu.europa.ted.efx.model.expressions.scalar.ScalarPath;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
@@ -50,8 +67,9 @@ import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 import eu.europa.ted.efx.model.types.FieldTypes;
-import eu.europa.ted.efx.model.variables.Parameter;
+import eu.europa.ted.efx.model.variables.ParsedParameter;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 
@@ -80,16 +98,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   private static final String END_EXPRESSION_BLOCK = "}";
 
   /**
-   *
-   */
-  private static final String TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES =
-      "Type mismatch. Cannot compare values of different types: ";
-
-  /**
    * The stack is used by the methods of this listener to pass data to each other as the parse tree
    * is being walked.
    */
-  protected CallStack stack = new CallStack();
+  protected CallStack stack = new CallStack(TypeChecker.V1);
 
   /**
    * The context stack is used to keep track of context switching in nested expressions.
@@ -120,6 +132,16 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.errorListener = errorListener;
 
     this.efxContext = new ContextStack(symbols);
+  }
+
+  @Override
+  public void enterEveryRule(final ParserRuleContext ctx) {
+    this.stack.pushContext(ctx);
+  }
+
+  @Override
+  public void exitEveryRule(final ParserRuleContext ctx) {
+    this.stack.popContext();
   }
 
   @Override
@@ -193,10 +215,6 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
     if (ctx.absoluteFieldReference() != null) {
       return getFieldId(ctx.absoluteFieldReference());
-    }
-
-    if (ctx.fieldReferenceWithFieldContextOverride() != null) {
-      return getFieldId(ctx.fieldReferenceWithFieldContextOverride().fieldReferenceWithPredicate());
     }
 
     if (ctx.fieldReferenceInOtherNotice() != null) {
@@ -307,20 +325,20 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitParenthesizedBooleanExpression(
-      EfxParser.ParenthesizedBooleanExpressionContext ctx) {
+      ParenthesizedBooleanExpressionContext ctx) {
     this.stack.push(this.script.composeParenthesizedExpression(
         this.stack.pop(BooleanExpression.class), BooleanExpression.class));
   }
 
   @Override
-  public void exitLogicalAndCondition(EfxParser.LogicalAndConditionContext ctx) {
+  public void exitLogicalAndCondition(LogicalAndConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalAnd(left, right));
   }
 
   @Override
-  public void exitLogicalOrCondition(EfxParser.LogicalOrConditionContext ctx) {
+  public void exitLogicalOrCondition(LogicalOrConditionContext ctx) {
     BooleanExpression right = this.stack.pop(BooleanExpression.class);
     BooleanExpression left = this.stack.pop(BooleanExpression.class);
     this.stack.push(this.script.composeLogicalOr(left, right));
@@ -333,8 +351,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     ScalarExpression right = this.stack.pop(ScalarExpression.class);
     ScalarExpression left = this.stack.pop(ScalarExpression.class);
     if (!left.getClass().isAssignableFrom(right.getClass()) && !right.getClass().isAssignableFrom(left.getClass()) && !left.getDataType().isAssignableFrom(right.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !right.getDataType().isAssignableFrom(left.getDataType()) && !left.getDataType().isAssignableFrom(right.getDataType())) {
-      throw new ParseCancellationException(TYPE_MISMATCH_CANNOT_COMPARE_VALUES_OF_DIFFERENT_TYPES
-          + left.getClass() + " and " + right.getClass());
+      throw TypeMismatchException.cannotCompare(ctx, left, right);
     }
     this.stack.push(this.script.composeComparisonOperation(left, ctx.operator.getText(), right));
   }
@@ -386,7 +403,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Boolean expressions - Conditions --------------------------------
 
   @Override
-  public void exitEmptinessCondition(EfxParser.EmptinessConditionContext ctx) {
+  public void exitEmptinessCondition(EmptinessConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
     String operator = ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER) ? "!=" : "==";
     this.stack.push(this.script.composeComparisonOperation(expression, operator,
@@ -394,7 +411,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitPresenceCondition(EfxParser.PresenceConditionContext ctx) {
+  public void exitPresenceCondition(PresenceConditionContext ctx) {
     PathExpression reference = this.stack.pop(PathExpression.class);
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
       this.stack.push(this.script.composeLogicalNot(this.script.composeExistsCondition(reference)));
@@ -404,7 +421,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitUniqueValueCondition(EfxParser.UniqueValueConditionContext ctx) {
+  public void exitUniqueValueCondition(UniqueValueConditionContext ctx) {
     PathExpression haystack = this.stack.pop(PathExpression.class);
     PathExpression needle = this.stack.pop(haystack.getClass());
 
@@ -417,7 +434,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitLikePatternCondition(EfxParser.LikePatternConditionContext ctx) {
+  public void exitLikePatternCondition(LikePatternConditionContext ctx) {
     StringExpression expression = this.stack.pop(StringExpression.class);
     BooleanExpression condition = this.script.composePatternMatchCondition(expression, ctx.pattern.getText());
     if (ctx.modifier != null && ctx.modifier.getText().equals(NOT_MODIFIER)) {
@@ -431,7 +448,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Boolean expressions - List membership conditions -----------------
 
   @Override
-  public void exitStringInListCondition(EfxParser.StringInListConditionContext ctx) {
+  public void exitStringInListCondition(StringInListConditionContext ctx) {
     this.exitInListCondition(ctx.modifier, StringExpression.class, StringSequenceExpression.class);
   }
 
@@ -494,14 +511,14 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region Numeric expressions ----------------------------------------------
 
   @Override
-  public void exitAdditionExpression(EfxParser.AdditionExpressionContext ctx) {
+  public void exitAdditionExpression(AdditionExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
   }
 
   @Override
-  public void exitMultiplicationExpression(EfxParser.MultiplicationExpressionContext ctx) {
+  public void exitMultiplicationExpression(MultiplicationExpressionContext ctx) {
     NumericExpression right = this.stack.pop(NumericExpression.class);
     NumericExpression left = this.stack.pop(NumericExpression.class);
     this.stack.push(this.script.composeNumericOperation(left, ctx.operator.getText(), right));
@@ -618,7 +635,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitUntypedConditionalExpression(UntypedConditionalExpressionContext ctx) {
     var topOfStack = this.stack.peek();
     assert topOfStack instanceof TypedExpression : "Expected a TypedExpression at the top of the stack.";
-    final Class<?> typeWhenFalse = ((TypedExpression)topOfStack).getDataType();
+    final Class<? extends EfxDataType> typeWhenFalse = EfxTypeLattice.toPrimitive(((TypedExpression)topOfStack).getDataType());
     if (typeWhenFalse == EfxDataType.Boolean.class) {
       this.exitConditionalBooleanExpression();
     } else if (typeWhenFalse == EfxDataType.Number.class) {
@@ -632,7 +649,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (typeWhenFalse == EfxDataType.Duration.class) {
       this.exitConditionalDurationExpression();
     } else {
-      throw new IllegalStateException("Unknown type " + typeWhenFalse);
+      throw TranslatorConfigurationException.unsupportedTypeInConditional(typeWhenFalse);
     }
   }
 
@@ -752,7 +769,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitContextIteratorExpression(ContextIteratorExpressionContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
 
-    var variableType = path.getClass();
+    // Iterator variable holds the current item (scalar), not the sequence
+    var variableType = path.asScalar().getClass();
     var variableName = getVariableName(ctx.contextVariableDeclaration());
     Variable variable = new Variable(variableName,
         this.script.composeVariableDeclaration(variableName, variableType),
@@ -760,18 +778,18 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
         this.script.composeVariableReference(variableName, variableType));
     this.stack.declareIdentifier(variable);
 
-    this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path));
+    this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path.asSequence()));
     if (ctx.fieldContext() != null) {
       final String contextFieldId = getFieldId(ctx.fieldContext());
       this.efxContext.declareContextVariable(variable.name,
           new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+              this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
     } else if (ctx.nodeContext() != null) {
       final String contextNodeId =
           getNodeId(ctx.nodeContext());
       this.efxContext.declareContextVariable(variable.name,
           new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-              this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+              this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
     }
   }
 
@@ -918,13 +936,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   @Override
   public void exitSimpleNodeReference(SimpleNodeReferenceContext ctx) {
     this.stack.push(
-        this.symbols.getRelativePathOfNode(ctx.NodeId().getText(), this.efxContext.absolutePath()));
+        this.symbols.getRelativePathOfNode(ctx.NodeId().getText(), this.efxContext.symbol()));
   }
 
   @Override
-  public void exitSimpleFieldReference(EfxParser.SimpleFieldReferenceContext ctx) {
+  public void exitSimpleFieldReference(SimpleFieldReferenceContext ctx) {
     this.stack.push(
-        symbols.getRelativePathOfField(ctx.FieldId().getText(), this.efxContext.absolutePath()));
+        symbols.getRelativePathOfField(ctx.FieldId().getText(), this.efxContext.symbol()));
   }
 
   @Override
@@ -935,14 +953,14 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitAbsoluteFieldReference(EfxParser.AbsoluteFieldReferenceContext ctx) {
+  public void exitAbsoluteFieldReference(AbsoluteFieldReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.pop();
     }
   }
 
   @Override
-  public void enterAbsoluteNodeReference(EfxParser.AbsoluteNodeReferenceContext ctx) {
+  public void enterAbsoluteNodeReference(AbsoluteNodeReferenceContext ctx) {
     if (ctx.Slash() != null) {
       this.efxContext.push(null);
     }
@@ -962,13 +980,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitNodeReferenceWithPredicate(NodeReferenceWithPredicateContext ctx) {
     if (ctx.predicate() != null) {
       BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
-      PathExpression nodeReference = this.stack.pop(NodePathExpression.class);
+      PathExpression nodeReference = this.stack.pop(NodePath.class);
       this.stack.push(this.script.composeNodeReferenceWithPredicate(nodeReference, predicate));
     }
   }
 
   @Override
-  public void exitFieldReferenceWithPredicate(EfxParser.FieldReferenceWithPredicateContext ctx) {
+  public void exitFieldReferenceWithPredicate(FieldReferenceWithPredicateContext ctx) {
     if (ctx.predicate() != null) {
       BooleanExpression predicate = this.stack.pop(BooleanExpression.class);
       PathExpression fieldReference = this.stack.pop(PathExpression.class);
@@ -984,7 +1002,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * @param ctx The predicate context
    */
   @Override
-  public void enterPredicate(EfxParser.PredicateContext ctx) {
+  public void enterPredicate(PredicateContext ctx) {
     var parent = ctx.getParent();
     if (parent instanceof NodeReferenceWithPredicateContext) {
       final String nodeId = getNodeId((NodeReferenceWithPredicateContext) parent);
@@ -993,7 +1011,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
       final String fieldId = getFieldId((FieldReferenceWithPredicateContext) parent);
       this.efxContext.pushFieldContext(fieldId);
     } else {
-      throw new ParseCancellationException("Unexpected parent context for predicate: " + parent.getClass().getSimpleName());
+      throw TranslatorConfigurationException.unhandledPredicateContext(parent.getClass().getSimpleName());
     }
   }
 
@@ -1001,7 +1019,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    * After the predicate is parsed we need to switch back to the previous context.
    */
   @Override
-  public void exitPredicate(EfxParser.PredicateContext ctx) {
+  public void exitPredicate(PredicateContext ctx) {
     this.efxContext.pop();
   }
 
@@ -1018,7 +1036,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   // #region External References ----------------------------------------------
 
   @Override
-  public void exitNoticeReference(EfxParser.NoticeReferenceContext ctx) {
+  public void exitNoticeReference(NoticeReferenceContext ctx) {
     this.stack.push(this.script.composeExternalReference(this.stack.pop(StringExpression.class)));
   }
 
@@ -1031,7 +1049,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
-  public void exitFieldReferenceInOtherNotice(EfxParser.FieldReferenceInOtherNoticeContext ctx) {
+  public void exitFieldReferenceInOtherNotice(FieldReferenceInOtherNoticeContext ctx) {
     if (ctx.noticeReference() != null) {
       PathExpression field = this.stack.pop(PathExpression.class);
       PathExpression notice = this.stack.pop(PathExpression.class);
@@ -1053,10 +1071,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
-          this.symbols.getRelativePath(
+          this.script.contextualizePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
           this.symbols.getAttributeNameFromAttributeField(fieldId),
-          PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
+          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
       this.stack.push(this.script.composeFieldValueReference(path));
     }
@@ -1068,10 +1086,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     String fieldId = getFieldId(ctx.fieldReference());
     if (this.symbols.isAttributeField(fieldId)) {
       this.stack.push(this.script.composeFieldAttributeReference(
-          this.symbols.getRelativePath(
+          this.script.contextualizePath(
               this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
           this.symbols.getAttributeNameFromAttributeField(fieldId),
-          PathExpression.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
+          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId)))));
     } else {
       this.stack.push(this.script.composeFieldValueReference(path));
     }
@@ -1080,13 +1098,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.attributeReference().Identifier().getText(), StringPathExpression.class));
+        ctx.attributeReference().Identifier().getText(), StringPath.class));
   }
 
   @Override
   public void exitSequenceFromAttributeReference(SequenceFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
-        ctx.attributeReference().Identifier().getText(), StringPathExpression.class));
+        ctx.attributeReference().Identifier().getText(), StringPath.class));
   }
 
   // #endregion Value References ----------------------------------------------
@@ -1104,7 +1122,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     final String contextFieldId = getFieldId(ctx.fieldContext());
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.absolutePath())));
+            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
   }
 
 
@@ -1133,7 +1151,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     final String contextNodeId = getNodeId(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.absolutePath())));
+            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
   }
 
   /**
@@ -1156,13 +1174,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     if (variableContext.isFieldContext()) {
       this.efxContext.push(new FieldContext(variableContext.symbol(),
           this.symbols.getAbsolutePathOfField(variableContext.symbol()), this.symbols
-              .getRelativePathOfField(variableContext.symbol(), this.efxContext.absolutePath())));
+              .getRelativePathOfField(variableContext.symbol(), this.efxContext.symbol())));
     } else if (variableContext.isNodeContext()) {
       this.efxContext.push(new NodeContext(variableContext.symbol(),
           this.symbols.getAbsolutePathOfNode(variableContext.symbol()), this.symbols
-              .getRelativePathOfNode(variableContext.symbol(), this.efxContext.absolutePath())));
+              .getRelativePathOfNode(variableContext.symbol(), this.efxContext.symbol())));
     } else {
-      throw new IllegalStateException("Variable context is neither a field nor a node context.");
+      throw TranslatorConfigurationException.unhandledVariableContext(variableContext.getClass().getSimpleName());
     }
   }
 
@@ -1203,42 +1221,40 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   @Override
   public void exitStringParameterDeclaration(StringParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), StringExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), StringExpression.class);
   }
 
   @Override
   public void exitNumericParameterDeclaration(NumericParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), NumericExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), NumericExpression.class);
   }
 
   @Override
   public void exitBooleanParameterDeclaration(BooleanParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), BooleanExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), BooleanExpression.class);
   }
 
   @Override
   public void exitDateParameterDeclaration(DateParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DateExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), DateExpression.class);
   }
 
   @Override
   public void exitTimeParameterDeclaration(TimeParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), TimeExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), TimeExpression.class);
   }
 
   @Override
   public void exitDurationParameterDeclaration(DurationParameterDeclarationContext ctx) {
-    this.exitParameterDeclaration(getVariableName(ctx), DurationExpression.class);
+    this.exitParameterDeclaration(ctx, getVariableName(ctx), DurationExpression.class);
   }
 
-  private void exitParameterDeclaration(String parameterName, Class<? extends TypedExpression> parameterType) {
+  private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionParameters.isEmpty()) {
-      throw new ParseCancellationException("No parameter passed for " + parameterName);
+      throw InvalidArgumentException.missingArgument(ctx, parameterName);
     }
 
-    Parameter parameter = new Parameter(parameterName,
-        this.script.composeParameterDeclaration(parameterName, parameterType),
-        this.script.composeVariableReference(parameterName, parameterType),
+    ParsedParameter parameter = new ParsedParameter(parameterName,
         this.translateParameter(this.expressionParameters.pop(), parameterType));
     this.stack.declareIdentifier(parameter);
   }
@@ -1406,7 +1422,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   public void exitDistinctValuesFunction(DistinctValuesFunctionContext ctx) {
     var sequence = this.stack.peek();
     assert sequence instanceof TypedExpression : "Expected a TypedExpression at the top of the stack.";
-    final Class<?> sequenceType = ((TypedExpression)sequence).getDataType();
+    final Class<?> sequenceType = ((TypedExpression) sequence).getDataType();
     if (EfxDataType.String.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(StringSequenceExpression.class);
     } else if (EfxDataType.Number.class.isAssignableFrom(sequenceType)) {
@@ -1420,8 +1436,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitDistinctValuesFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.DistinctValuesFunction));
     }
   }
 
@@ -1449,8 +1465,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitUnionFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.UnionFunction));
     }
   }
 
@@ -1479,8 +1495,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitIntersectFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.IntersectFunction));
     }
   }
 
@@ -1509,8 +1525,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     } else if (EfxDataType.Duration.class.isAssignableFrom(sequenceType)) {
       this.exitExceptFunction(DurationSequenceExpression.class);
     } else {
-      throw new IllegalArgumentException(
-          "Unsupported sequence type: " + sequenceType.getSimpleName());
+      throw InvalidArgumentException.unsupportedSequenceType(ctx, sequenceType.getSimpleName(),
+          EfxLexer.VOCABULARY.getLiteralName(EfxLexer.ExceptFunction));
     }
   }
 
@@ -1530,63 +1546,63 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
   // #region Variable Names ---------------------------------------------------
 
-  static private String getVariableName(String efxVariableIdentifier) {
+  private static String getVariableName(String efxVariableIdentifier) {
     return StringUtils.stripStart(efxVariableIdentifier, "$");
   }
 
-  static private String getVariableName(VariableReferenceContext ctx) {
+  private static String getVariableName(VariableReferenceContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static protected String getVariableName(ContextVariableDeclarationContext ctx) {
+  protected static String getVariableName(ContextVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringVariableDeclarationContext ctx) {
+  private static String getVariableName(StringVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericVariableDeclarationContext ctx) {
+  private static String getVariableName(NumericVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanVariableDeclarationContext ctx) {
+  private static String getVariableName(BooleanVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateVariableDeclarationContext ctx) {
+  private static String getVariableName(DateVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeVariableDeclarationContext ctx) {
+  private static String getVariableName(TimeVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationVariableDeclarationContext ctx) {
+  private static String getVariableName(DurationVariableDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(StringParameterDeclarationContext ctx) {
+  private static String getVariableName(StringParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(NumericParameterDeclarationContext ctx) {
+  private static String getVariableName(NumericParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(BooleanParameterDeclarationContext ctx) {
+  private static String getVariableName(BooleanParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DateParameterDeclarationContext ctx) {
+  private static String getVariableName(DateParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(TimeParameterDeclarationContext ctx) {
+  private static String getVariableName(TimeParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 
-  static private String getVariableName(DurationParameterDeclarationContext ctx) {
+  private static String getVariableName(DurationParameterDeclarationContext ctx) {
     return getVariableName(ctx.Variable().getText());
   }
 

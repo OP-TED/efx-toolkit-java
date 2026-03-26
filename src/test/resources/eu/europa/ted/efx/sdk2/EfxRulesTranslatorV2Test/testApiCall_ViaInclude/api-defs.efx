@@ -1,0 +1,3 @@
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;

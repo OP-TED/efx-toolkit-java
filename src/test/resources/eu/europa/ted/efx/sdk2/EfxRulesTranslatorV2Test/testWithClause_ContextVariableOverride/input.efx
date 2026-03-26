@@ -1,0 +1,10 @@
+// Test: Context variable override syntax ($ctx::FieldRef)
+// Verifies that context variables can be used to override context when accessing fields
+// This exercises the preprocessor's context variable lookup functionality
+
+---- STAGE 1a ----
+
+WITH context : $ctx = ND-Root
+    ASSERT not(empty($ctx::BT-00-Text))
+    AS ERROR R-CTX-001
+    FOR BT-00-Text IN 1, 2

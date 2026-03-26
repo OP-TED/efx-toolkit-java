@@ -1,0 +1,10 @@
+// Test: IN clause with notice type ranges
+// Verifies range expansion: 5-11 -> (5,9,10,11), E1-E2 -> (E1,E2)
+// Range 5-11 crosses alphabetical boundary and spans gaps (6,7,8 don't exist)
+
+---- STAGE 1a ----
+
+WITH ND-SubNode
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 5-11, E1-E2

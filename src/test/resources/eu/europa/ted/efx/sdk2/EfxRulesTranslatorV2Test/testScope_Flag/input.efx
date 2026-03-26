@@ -1,0 +1,13 @@
+// Test: SCOPE clause with #flag
+// Verifies that the flag is carried over to the Schematron output
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1 SCOPE #lawfulness
+
+    REPORT empty(BT-00-Text)
+    AS WARNING R-X3F-N8W
+    FOR BT-00-Text IN 1

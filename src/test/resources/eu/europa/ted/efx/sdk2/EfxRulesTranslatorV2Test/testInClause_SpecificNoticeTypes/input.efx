@@ -1,0 +1,9 @@
+// Test: IN clause with explicit notice type list
+// Verifies filtering rules to specific notice types (1, 2, 3)
+
+---- STAGE 1a ----
+
+WITH ND-SubNode
+    ASSERT BT-00-Text is present
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1, 2, 3

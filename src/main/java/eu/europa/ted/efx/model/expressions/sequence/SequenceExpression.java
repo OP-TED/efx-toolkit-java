@@ -1,3 +1,16 @@
+/*
+ * Copyright 2023 European Union
+ *
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European
+ * Commission – subsequent versions of the EUPL (the "Licence"); You may not use this work except in
+ * compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/software/page/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence
+ * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the Licence for the specific language governing permissions and limitations under
+ * the Licence.
+ */
 package eu.europa.ted.efx.model.expressions.sequence;
 
 import static java.util.Map.entry;
@@ -7,11 +20,19 @@ import java.util.Map;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.types.EfxExpressionType;
-import eu.europa.ted.efx.model.types.EfxExpressionTypeAssociation;
+import eu.europa.ted.efx.model.types.EfxTypeLattice;
 import eu.europa.ted.efx.model.types.FieldTypes;
 
-public interface SequenceExpression extends TypedExpression, EfxExpressionType.Sequence {
+/**
+ * A {@link TypedExpression} representing multiple values (as opposed to a single value).
+ *
+ * Concrete implementations are typed by primitive: {@link BooleanSequenceExpression},
+ * {@link StringSequenceExpression}, {@link NumericSequenceExpression}, {@link DateSequenceExpression},
+ * {@link TimeSequenceExpression}, {@link DurationSequenceExpression}.
+ *
+ * @see eu.europa.ted.efx.model.expressions.scalar.ScalarExpression for single-value expressions
+ */
+public interface SequenceExpression extends TypedExpression {
 
   /**
    * Maps {@link FieldTypes} to the corresponding {@link SequenceExpression}.
@@ -24,7 +45,8 @@ public interface SequenceExpression extends TypedExpression, EfxExpressionType.S
       entry(FieldTypes.INDICATOR, BooleanSequenceExpression.class), //
       entry(FieldTypes.AMOUNT, NumericSequenceExpression.class), //
       entry(FieldTypes.NUMBER, NumericSequenceExpression.class), //
-      entry(FieldTypes.MEASURE, DurationSequenceExpression.class), //
+      entry(FieldTypes.MEASURE, NumericSequenceExpression.class), //
+      entry(FieldTypes.DURATION, DurationSequenceExpression.class), //
       entry(FieldTypes.CODE, StringSequenceExpression.class), //
       entry(FieldTypes.INTERNAL_CODE, StringSequenceExpression.class), //
       entry(FieldTypes.INTEGER, NumericSequenceExpression.class), //
@@ -37,9 +59,9 @@ public interface SequenceExpression extends TypedExpression, EfxExpressionType.S
       entry(FieldTypes.EMAIL, StringSequenceExpression.class));
 
   /**
-   * Maps {@link EfxDataType} to the corresponding {@link SequenceExpression}.
+   * Maps primitive {@link EfxDataType} to the corresponding {@link SequenceExpression}.
    */
-  Map<Class<? extends EfxDataType>, Class<? extends SequenceExpression>> fromEfxDataType = Map
+  Map<Class<? extends EfxDataType.Primitive>, Class<? extends SequenceExpression>> fromEfxDataType = Map
       .ofEntries(
           entry(EfxDataType.String.class, StringSequenceExpression.class), //
           entry(EfxDataType.MultilingualString.class, MultilingualStringSequenceExpression.class), //
@@ -77,22 +99,19 @@ public interface SequenceExpression extends TypedExpression, EfxExpressionType.S
    *         given {@link EfxDataType}.
    */
   static SequenceExpression instantiate(String script, Class<? extends EfxDataType> efxDataType) {
-    return Expression.instantiate(script, fromEfxDataType.get(efxDataType));
+    return Expression.instantiate(script, fromEfxDataType.get(EfxTypeLattice.toPrimitive(efxDataType)));
   }
 
   /**
    * A base class for {@link SequenceExpression} implementations.
+   *
+   * @param <T> the data type of the sequence expression result
    */
-  @EfxExpressionTypeAssociation(expressionType = EfxExpressionType.Sequence.class)
   public abstract class Impl<T extends EfxDataType> extends TypedExpression.Impl<T>
       implements SequenceExpression {
 
     protected Impl(final String script, Class<? extends T> dataType) {
-      this(script, false, dataType);
-    }
-
-    protected Impl(final String script, final Boolean isLiteral, Class<? extends T> dataType) {
-      super(script, isLiteral, EfxExpressionType.Sequence.class, dataType);
+      super(script, dataType);
     }
   }
 }

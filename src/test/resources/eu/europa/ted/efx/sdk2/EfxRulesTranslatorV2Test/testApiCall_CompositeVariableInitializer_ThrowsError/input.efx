@@ -1,0 +1,14 @@
+// Intentionally invalid: API call nested inside a compound boolean expression
+// in a variable initializer. This is not supported because the tri-state error
+// handling requires the raw efx:call-api(...) as the entire variable value.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+
+---- STAGE 1a ----
+
+WITH dynamic : $ok = ?check(BT-00-Identifier) and BT-00-Indicator is present, BT-00-Text
+    ASSERT $ok
+    AS ERROR R-K7P-M2Q
+    FOR BT-00-Text IN 1

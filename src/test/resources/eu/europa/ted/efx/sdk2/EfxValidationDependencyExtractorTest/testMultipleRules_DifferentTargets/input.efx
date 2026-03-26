@@ -1,0 +1,13 @@
+// Test: Two rules targeting different fields, cross-referencing each other
+
+---- STAGE test ----
+
+WITH ND-Root
+    ASSERT BT-00-Number > 0
+    AS ERROR R-T03-001
+    FOR BT-00-Text IN *
+
+WITH ND-Root
+    ASSERT BT-00-Text is present
+    AS ERROR R-T03-002
+    FOR BT-00-Number IN *
