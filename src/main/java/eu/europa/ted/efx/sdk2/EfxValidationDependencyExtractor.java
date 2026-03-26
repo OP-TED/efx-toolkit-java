@@ -128,7 +128,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
 
   @Override
   public void exitSimpleRule(final SimpleRuleContext ctx) {
-    this.commitRule(ctx.asClause(), ctx.forClause());
+    this.commitRule(ctx.asClause(), ctx.forClause(), ctx.scopeClause());
   }
 
   @Override
@@ -138,7 +138,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
 
   @Override
   public void exitConditionalRule(final ConditionalRuleContext ctx) {
-    this.commitRule(ctx.asClause(), ctx.forClause());
+    this.commitRule(ctx.asClause(), ctx.forClause(), ctx.scopeClause());
   }
 
   @Override
@@ -148,7 +148,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
 
   @Override
   public void exitFallbackRule(final FallbackRuleContext ctx) {
-    this.commitRule(ctx.asClause(), ctx.forClause());
+    this.commitRule(ctx.asClause(), ctx.forClause(), ctx.scopeClause());
   }
 
   private void pushRuleFrame() {
@@ -157,8 +157,19 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
     this.stack.push(ruleFrame);
   }
 
-  private void commitRule(final AsClauseContext asClause, final ForClauseContext forClause) {
+  private boolean isPostOnly(final ScopeClauseContext scopeClause) {
+    return scopeClause != null
+        && scopeClause.scopeAnnotation() != null
+        && scopeClause.scopeAnnotation().Post() != null;
+  }
+
+  private void commitRule(final AsClauseContext asClause, final ForClauseContext forClause,
+      final ScopeClauseContext scopeClause) {
     final DependencySet ruleDeps = this.stack.pop();
+
+    if (this.isPostOnly(scopeClause)) {
+      return;
+    }
     final String ruleId = asClause.ruleId().getText().replaceAll("^\"|\"$", "");
 
     final String targetId;
