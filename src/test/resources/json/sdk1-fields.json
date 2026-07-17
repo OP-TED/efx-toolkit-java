@@ -122,6 +122,13 @@
       "xpathRelative": "PathNode/DurationField"
     },
     {
+      "id": "BT-00-Measure",
+      "type": "measure",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/MeasureField",
+      "xpathRelative": "PathNode/MeasureField"
+    },
+    {
       "id": "BT-00-Integer",
       "type": "integer",
       "parentNodeId": "ND-Root",

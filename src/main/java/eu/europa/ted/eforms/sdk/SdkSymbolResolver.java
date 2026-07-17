@@ -305,16 +305,6 @@ public class SdkSymbolResolver implements SymbolResolver {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
 
-    // Temporary: the SDK does not yet distinguish duration from measure.
-    // Both are "measure" in the SDK, but durations use the "duration-unit" codelist.
-    // Remove this when the SDK adds "duration" as a proper data type.
-    if (FieldTypes.MEASURE.getName().equals(sdkField.getType())) {
-      SdkField unitCodeField = sdkField.getAttributeField("unitCode");
-      if (unitCodeField != null && "duration-unit".equals(unitCodeField.getCodelistId())) {
-        return FieldTypes.DURATION.getName();
-      }
-    }
-
     return sdkField.getType();
   }
 

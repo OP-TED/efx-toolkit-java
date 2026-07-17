@@ -161,6 +161,13 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         () -> translateExpressionWithContext("ND-Root", "00:01:00 > BT-00-StartDate"));
   }
 
+  // TEDEFO-5013: In SDK 1.x "measure" is the duration type (SDK 2.x introduced "duration").
+  // A measure field compared with a duration literal should translate successfully.
+  @Test
+  void testDurationComparison_WithMeasureField_TEDEFO5013() {
+    translateExpressionWithContext("ND-Root", "BT-00-Measure > P7Y");
+  }
+
 
   @Test
   void testBooleanComparison_UsingLiterals() {
