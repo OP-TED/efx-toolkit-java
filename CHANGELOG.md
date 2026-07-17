@@ -1,4 +1,4 @@
-# EFX Toolkit 2.0.0-alpha.6 Release Notes
+# EFX Toolkit 2.0.0-alpha.7 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
@@ -6,7 +6,14 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ## In this release
 
-This is a major update that brings the toolkit in line with the complete EFX-2 grammar as released with SDK 2.0.0-alpha.2.
+This is an incremental update over 2.0.0-alpha.6. It refines SDK data-type resolution and updates the eForms Core dependency, while retaining full support for the EFX-2 grammar released with SDK 2.0.0-alpha.2.
+
+### Changes since 2.0.0-alpha.6
+
+- Field data types are now taken directly from the SDK field definitions, removing a temporary `SdkSymbolResolver` heuristic that inferred the `duration` type from `measure` fields using the `duration-unit` codelist. Added regression tests covering measure and duration fields.
+- Upgraded the eForms Core Java dependency to 1.7.0.
+
+The following sections describe the features of the 2.0.0 line, unchanged since 2.0.0-alpha.6.
 
 ### EFX-2 language support
 
@@ -52,16 +59,7 @@ NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit
 
 ## Breaking changes
 
-For users of the Toolkit that have implemented custom transpilers, this release contains breaking changes from 2.0.0-alpha.5:
-
-- The expression model has been refactored to separate scalar and sequence types. The `path` subpackage has been removed and path expression types have been moved and renamed (e.g. `BooleanPathExpression` → `BooleanPath` under `scalar`).
-- `MarkupGenerator.composeOutputFile` signature changed from 2 parameters to 5 (globals, main section, summary section, navigation section, fragments). The old signature is deprecated with a default implementation.
-- Several new methods have been added to the `SymbolResolver`, `ScriptGenerator`, and `MarkupGenerator` interfaces.
-- `TranslatorOptions` has three new methods without defaults: `getUserDefinedFunctionNamespace()`, `isProfilerEnabled()`, `getProfilerOutputPath()`.
-- New typed exception classes replace previously generic exceptions.
-- Axis support and cross-notice references have been removed from the V2 translator.
-
-Users of the Toolkit that only use the included EFX-to-XPath transpiler will not be affected by the above changes.
+No new breaking changes are introduced in 2.0.0-alpha.7. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
 
 ## Future development
 
@@ -81,6 +79,4 @@ This version of the EFX Toolkit has a compile-time dependency on the following e
 - eForms SDK 1.x.x (SDK 1.13.0 grammar)
 - eForms SDK 2.0.0-alpha.2
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.6.0.
-
-NOTE: The POM currently references SNAPSHOT versions for the SDK 2 and Core dependencies. These will be updated to released versions before publication.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.7.0.
