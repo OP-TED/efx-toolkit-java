@@ -359,7 +359,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         ? this.script.composeFieldAttributeReference(
             this.script.contextualizePath(this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), currentContext.absolutePath()),
             this.symbols.getAttributeNameFromAttributeField(fieldId), StringPath.class)
-        : this.script.composeFieldValueReference(
+        : this.composeFieldValueReference(
         this.symbols.getRelativePathOfField(fieldId, currentContext.symbol()));
     Variable loopVariable = new Variable("item",
         this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
@@ -532,12 +532,60 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     if (!this.efxContext.isFieldContext()) {
       throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "$value");
     }
-    this.stack.push(this.script.composeFieldValueReference(
+    this.stack.push(this.composeFieldValueReference(
         this.symbols.getRelativePathOfField(this.efxContext.symbol(), this.efxContext.symbol())));
   }
 
   // #endregion Expression Blocks ${...} --------------------------------------
-  
+
+  // #region Value References -------------------------------------------------
+
+  /***
+   * Multilingual fields are handled by this class, so the value reference is composed here instead
+   * of directly by the script generator. Anything else is left to the inherited behaviour.
+   *
+   * @see #composeFieldValueReference(PathExpression)
+   */
+  @Override
+  public void exitScalarFromFieldReference(final ScalarFromFieldReferenceContext ctx) {
+    if (!this.stack.peekType().is(EfxDataType.MultilingualString.class)) {
+      super.exitScalarFromFieldReference(ctx);
+      return;
+    }
+    this.stack.push(this.composeFieldValueReference(this.stack.pop(PathExpression.class)));
+  }
+
+  /***
+   * @see #exitScalarFromFieldReference(ScalarFromFieldReferenceContext)
+   */
+  @Override
+  public void exitSequenceFromFieldReference(final SequenceFromFieldReferenceContext ctx) {
+    if (!this.stack.peekType().is(EfxDataType.MultilingualString.class)) {
+      super.exitSequenceFromFieldReference(ctx);
+      return;
+    }
+    this.stack.push(this.composeFieldValueReference(this.stack.pop(PathExpression.class)));
+  }
+
+  /***
+   * In a view template the value of a multilingual field must be rendered in the language preferred
+   * by the reader, which EFX-1 gives the template author no syntax to ask for. Template translation
+   * therefore selects the preferred language implicitly, for every multilingual field it renders.
+   *
+   * Outside of view templates no such selection is possible: the function that performs it is
+   * provided by the XSL of the notice viewer and exists nowhere else. There the value of a
+   * multilingual field is retrieved like that of any other text field.
+   */
+  private PathExpression composeFieldValueReference(final PathExpression fieldReference) {
+    if (fieldReference.is(EfxDataType.MultilingualString.class)) {
+      return Expression.from(this.script.getTextInPreferredLanguage(fieldReference),
+          fieldReference.getClass());
+    }
+    return this.script.composeFieldValueReference(fieldReference);
+  }
+
+  // #endregion Value References ----------------------------------------------
+
   // #region Context Declaration Blocks {...} ---------------------------------
 
   /**
