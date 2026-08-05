@@ -377,4 +377,51 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   void testImplicitFormatting_Times() {
     assertEquals("TEMPLATES:\nlet block01() -> { eval(for $item in PathNode/StartTimeField/xs:time(text()) return format-time($item, '[H01]:[m01] [Z]')) }\nMAIN:\nfor-each(/*).call(block01())", translateTemplate("{ND-Root} ${BT-00-StartTime}"));
   }
+
+  /*** Multilingual fields ***/
+
+  /**
+   * In a view template the value of a multilingual field must be retrieved in the preferred
+   * language, so the reference is wrapped in a call to efx:preferred-language-text().
+   * This is the behaviour that template translation must keep.
+   */
+  @Test
+  void testMultilingualTextField_IsRetrievedInPreferredLanguage() {
+    assertEquals(
+        "TEMPLATES:\nlet block01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField)) }\nMAIN:\nfor-each(/*).call(block01())",
+        translateTemplate("{ND-Root} ${BT-00-Text-Multilingual}"));
+  }
+
+  /**
+   * When the reference already pins a language, the value is retrieved as-is: adding the preferred
+   * language call on top would override the language the template author asked for.
+   */
+  @Test
+  void testMultilingualTextField_WithLanguagePredicate_IsRetrievedAsIs() {
+    assertEquals(
+        "TEMPLATES:\nlet block01() -> { eval(PathNode/TextMultilingualField[./@languageID = 'eng']/normalize-space(text())) }\nMAIN:\nfor-each(/*).call(block01())",
+        translateTemplate(
+            "{ND-Root} ${BT-00-Text-Multilingual[BT-00-Text-Multilingual/@languageID == 'eng']}"));
+  }
+
+  /**
+   * A multilingual field used as a sequence goes through its own code path, so it needs its own
+   * coverage.
+   */
+  @Test
+  void testMultilingualTextField_AsSequence_IsRetrievedInPreferredLanguage() {
+    assertEquals(
+        "TEMPLATES:\nlet block01() -> { eval(for $t in efx:preferred-language-text(PathNode/TextMultilingualField) return $t) }\nMAIN:\nfor-each(/*).call(block01())",
+        translateTemplate("{ND-Root} ${for text:$t in BT-00-Text-Multilingual return $t}"));
+  }
+
+  /**
+   * The $value shorthand goes through a template-only code path, so it needs its own coverage.
+   */
+  @Test
+  void testMultilingualTextField_ShorthandValueReference_IsRetrievedInPreferredLanguage() {
+    assertEquals(
+        "TEMPLATES:\nlet block01() -> { eval(efx:preferred-language-text(.)) }\nMAIN:\nfor-each(/*/PathNode/TextMultilingualField).call(block01())",
+        translateTemplate("{BT-00-Text-Multilingual} $value"));
+  }
 }

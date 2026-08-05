@@ -90,7 +90,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   @Test
   void testFieldValueComparison_UsingTextFields() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField/normalize-space(text()) = efx:preferred-language-text(PathNode/TextMultilingualField)",
+        "PathNode/TextField/normalize-space(text()) = PathNode/TextMultilingualField/normalize-space(text())",
         "ND-Root", "BT-00-Text == BT-00-Text-Multilingual");
   }
 
@@ -1135,10 +1135,22 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
         "ND-Root::preceding::BT-00-Integer");
   }
 
+  /**
+   * Outside of view templates there is no preferred language to select: efx:preferred-language-text()
+   * is defined by the notice viewer's XSL and is unavailable anywhere else, so a multilingual field
+   * value is retrieved like any other text value.
+   */
   @Test
   void testMultilingualTextFieldReference() {
-    testExpressionTranslationWithContext("efx:preferred-language-text(PathNode/TextMultilingualField)",
+    testExpressionTranslationWithContext("PathNode/TextMultilingualField/normalize-space(text())",
         "ND-Root", "BT-00-Text-Multilingual");
+  }
+
+  @Test
+  void testMultilingualTextFieldReference_AsSequence() {
+    testExpressionTranslationWithContext(
+        "for $t in PathNode/TextMultilingualField/normalize-space(text()) return $t", "ND-Root",
+        "for text:$t in BT-00-Text-Multilingual return $t");
   }
 
   @Test
