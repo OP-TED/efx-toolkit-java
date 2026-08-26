@@ -1653,4 +1653,131 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
   // #endregion: Compare sequences
 
   // #endregion Sequence Functions
+
+  // #region: Selectors -------------------------------------------------------
+
+  /**
+   * A selector yields the same path an expression would use, without the value step that an
+   * expression appends. It is relative or absolute according to how the reference was written,
+   * exactly as in any other position in the language.
+   */
+  @Test
+  void testSelector_YieldsTheSamePathAsTheEquivalentExpression() {
+    assertEquals(translateExpression("{ND-Root} ${BT-00-Text}"),
+        translateExpression("{ND-Root} &{BT-00-Text}") + "/normalize-space(text())");
+    assertEquals(translateExpression("{ND-SubNode} ${BT-00-Text}"),
+        translateExpression("{ND-SubNode} &{BT-00-Text}") + "/normalize-space(text())");
+    assertEquals(translateExpression("{ND-Root} ${/BT-00-Text}"),
+        translateExpression("{ND-Root} &{/BT-00-Text}") + "/normalize-space(text())");
+    assertEquals(translateExpression("{ND-Root} ${BT-00-Integer}"),
+        translateExpression("{ND-Root} &{BT-00-Integer}") + "/number()");
+  }
+
+  @Test
+  void testSelector_FieldReference() {
+    testExpressionTranslation("PathNode/TextField", "{ND-Root} &{BT-00-Text}");
+  }
+
+  @Test
+  void testSelector_AbsoluteFieldReference() {
+    testExpressionTranslation("/*/PathNode/TextField", "{ND-Root} &{/BT-00-Text}");
+  }
+
+  @Test
+  void testSelector_WithPredicate() {
+    testExpressionTranslation(
+        "/*/PathNode/TextField[../CodeField/normalize-space(text()) = 'x']",
+        "{ND-Root} &{/BT-00-Text[BT-00-Code == 'x']}");
+  }
+
+  @Test
+  void testSelector_NumericFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/IntegerField", "{ND-Root} &{BT-00-Integer}");
+  }
+
+  @Test
+  void testSelector_DurationFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/DurationField", "{ND-Root} &{BT-00-Duration}");
+  }
+
+  @Test
+  void testSelector_IndicatorField() {
+    testExpressionTranslation("PathNode/IndicatorField", "{ND-Root} &{BT-00-Indicator}");
+  }
+
+  @Test
+  void testSelector_MultilingualField() {
+    testExpressionTranslation("PathNode/TextMultilingualField",
+        "{ND-Root} &{BT-00-Text-Multilingual}");
+  }
+
+  @Test
+  void testSelector_AttributeField() {
+    testExpressionTranslation("PathNode/TextField/@Attribute", "{ND-Root} &{BT-00-Attribute}");
+  }
+
+  @Test
+  void testSelector_ExplicitAttributeReference() {
+    testExpressionTranslation("/*/PathNode/TextField/@Attribute",
+        "{ND-Root} &{/BT-00-Text/@Attribute}");
+  }
+
+  @Test
+  void testSelector_NodeReference() {
+    testExpressionTranslation("SubNode", "{ND-Root} &{ND-SubNode}");
+  }
+
+  @Test
+  void testSelector_AbsoluteNodeReference() {
+    testExpressionTranslation("/*/SubNode", "{ND-Root} &{/ND-SubNode}");
+  }
+
+  @Test
+  void testSelector_FieldUnderAnotherNode() {
+    testExpressionTranslation("SubNode/SubTextField", "{ND-Root} &{BT-01-SubNode-Text}");
+  }
+
+  @Test
+  void testSelector_ContextIsTheReferencedFieldItself() {
+    testExpressionTranslation(".", "{BT-00-Text} &{BT-00-Text}");
+  }
+
+  @Test
+  void testSelector_ContextIsAnotherNode() {
+    testExpressionTranslation("SubTextField", "{ND-SubNode} &{BT-01-SubNode-Text}");
+    testExpressionTranslation("../PathNode/TextField", "{ND-SubNode} &{BT-00-Text}");
+  }
+
+  @Test
+  void testSelector_ContextIsAField() {
+    testExpressionTranslation("../CodeField", "{BT-00-Text} &{BT-00-Code}");
+    testExpressionTranslation("../../SubNode/SubTextField", "{BT-00-Text} &{BT-01-SubNode-Text}");
+  }
+
+  @Test
+  void testSelector_ContextIsAFieldWithPredicate() {
+    testExpressionTranslation(".[../CodeField/normalize-space(text()) = 'x']",
+        "{BT-00-Text} &{BT-00-Text[BT-00-Code == 'x']}");
+    testExpressionTranslation(
+        "SubTextField[../../PathNode/CodeField/normalize-space(text()) = 'x']",
+        "{ND-SubNode} &{BT-01-SubNode-Text[BT-00-Code == 'x']}");
+  }
+
+  /**
+   * An absolute selector is obtained the same way as an absolute reference anywhere else: by
+   * writing the leading slash. Consumers that evaluate against a whole document need that.
+   */
+  @Test
+  void testSelector_IsAbsoluteOnlyWhenWrittenAsAbsolute() {
+    testExpressionTranslation("/*/PathNode/TextField", "{ND-SubNode} &{/BT-00-Text}");
+    testExpressionTranslation("/*/PathNode/CodeField", "{BT-00-Text} &{/BT-00-Code}");
+  }
+
+  @Test
+  void testSelector_RejectsValueExpression() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpression("{ND-Root} &{BT-00-Text == 'x'}"));
+  }
+
+  // #endregion: Selectors ----------------------------------------------------
 }

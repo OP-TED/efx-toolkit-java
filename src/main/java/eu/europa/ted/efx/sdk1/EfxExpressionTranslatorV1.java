@@ -1095,6 +1095,23 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     }
   }
 
+  /**
+   * A selector-block yields the reference itself rather than its value: the value step that every
+   * other reference position applies is deliberately not composed here. The path is otherwise
+   * resolved exactly as it would be in an expression-block, relative to the declared context
+   * unless the author wrote it as an absolute reference.
+   */
+  @Override
+  public void exitSelection(final SelectionContext ctx) {
+    if (ctx.attributeReference() != null) {
+      // attributeReference has no exit handler of its own, so the attribute step is composed here
+      // rather than globally, which would double-compose it for the scalar and sequence positions.
+      this.stack.push(this.script.composeFieldAttributeReference(
+          this.stack.pop(PathExpression.class),
+          ctx.attributeReference().Identifier().getText(), StringPath.class));
+    }
+  }
+
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
