@@ -1919,6 +1919,25 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     this.resolveAndPushFieldReference(ctx, result, fieldId);
   }
 
+  /**
+   * A selector yields the reference itself rather than its value: the value step that every other
+   * reference position applies is deliberately not composed here. The path is otherwise resolved
+   * exactly as it would be in an expression, relative to the declared context unless the author
+   * wrote it as an absolute reference.
+   *
+   * <p>The reference tier has already left the path on the stack. Only an attribute reference
+   * needs work, because {@code attributeReference} has no exit handler of its own; composing the
+   * attribute step globally would double-compose it for the scalar and sequence positions.
+   */
+  @Override
+  public void exitSelection(final SelectionContext ctx) {
+    if (ctx.attributeReference() != null) {
+      this.stack.push(this.script.composeFieldAttributeReference(
+          this.stack.pop(PathExpression.class),
+          ctx.attributeReference().attributeName.getText(), StringPath.class));
+    }
+  }
+
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     PathExpression result = this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),

@@ -132,4 +132,41 @@ class EfxComputeDependencyExtractorTest {
   }
 
   // #endregion: Deduplication
+
+  // #region: Selectors -------------------------------------------------------
+
+  /**
+   * The extractor parses the same top-level rule as the translators, so it sees the selector
+   * alternative added to the grammar although it has no handler of its own for it. It nevertheless
+   * derives the correct dependencies, because it listens to the reference exits rather than to the
+   * top-level block. These tests record that, so that the behaviour is not lost inadvertently.
+   */
+  @Test
+  void testSelector_YieldsTheSameDependenciesAsTheEquivalentExpression() {
+    assertEquals(extract("WITH ND-Root COMPUTE BT-00-Text"),
+        extract("WITH ND-Root SELECT BT-00-Text"));
+  }
+
+  @Test
+  void testSelector_IncludesReferencesFromThePredicate() {
+    Set<String> deps = extract("WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']");
+    assertTrue(deps.contains("BT-00-Text"));
+    assertTrue(deps.contains("BT-00-Code"));
+    assertTrue(deps.contains("ND-Root"));
+  }
+
+  @Test
+  void testSelector_IncludesANodeReference() {
+    Set<String> deps = extract("WITH ND-Root SELECT ND-SubNode");
+    assertTrue(deps.contains("ND-SubNode"));
+    assertTrue(deps.contains("ND-Root"));
+  }
+
+  @Test
+  void testSelector_BraceSpellingBehavesTheSame() {
+    assertEquals(extract("WITH ND-Root SELECT /BT-00-Text"),
+        extract("{ND-Root} &{/BT-00-Text}"));
+  }
+
+  // #endregion: Selectors ----------------------------------------------------
 }

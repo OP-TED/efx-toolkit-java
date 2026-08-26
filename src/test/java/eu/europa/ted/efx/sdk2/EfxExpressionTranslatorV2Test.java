@@ -4674,4 +4674,113 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   // #endregion: EFX-2 COMPUTE syntax
+
+  // #region: Selectors -------------------------------------------------------
+
+  /**
+   * A selector yields the same path an expression would use, without the value step that an
+   * expression appends. It is relative or absolute according to how the reference was written.
+   */
+  @Test
+  void testSelector_YieldsTheSamePathAsTheEquivalentExpression() {
+    assertEquals(translateExpression("WITH ND-Root COMPUTE BT-00-Text"),
+        translateExpression("WITH ND-Root SELECT BT-00-Text") + "/normalize-space(text())");
+    assertEquals(translateExpression("WITH ND-Root COMPUTE BT-00-Integer"),
+        translateExpression("WITH ND-Root SELECT BT-00-Integer") + "/number()");
+    assertEquals(translateExpression("WITH ND-SubNode COMPUTE BT-00-Text"),
+        translateExpression("WITH ND-SubNode SELECT BT-00-Text") + "/normalize-space(text())");
+  }
+
+  /** Both spellings of the selector must produce the same result. */
+  @Test
+  void testSelector_BothSpellingsAgree() {
+    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text"),
+        translateExpression("{ND-Root} &{/BT-00-Text}"));
+    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']"),
+        translateExpression("{ND-Root} &{/BT-00-Text[BT-00-Code == 'x']}"));
+  }
+
+  @Test
+  void testSelector_FieldReference() {
+    testExpressionTranslation("PathNode/TextField", "WITH ND-Root SELECT BT-00-Text");
+  }
+
+  @Test
+  void testSelector_AbsoluteFieldReference() {
+    testExpressionTranslation("/*/PathNode/TextField", "WITH ND-Root SELECT /BT-00-Text");
+  }
+
+  @Test
+  void testSelector_WithPredicate() {
+    testExpressionTranslation("/*/PathNode/TextField[../CodeField/normalize-space(text()) = 'x']",
+        "WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']");
+  }
+
+  @Test
+  void testSelector_NumericFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/IntegerField", "WITH ND-Root SELECT BT-00-Integer");
+  }
+
+  @Test
+  void testSelector_DurationFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/DurationField", "WITH ND-Root SELECT BT-00-Duration");
+  }
+
+  @Test
+  void testSelector_NodeReference() {
+    testExpressionTranslation("SubNode", "WITH ND-Root SELECT ND-SubNode");
+    testExpressionTranslation("/*/SubNode", "WITH ND-Root SELECT /ND-SubNode");
+  }
+
+  @Test
+  void testSelector_AttributeReference() {
+    testExpressionTranslation("/*/PathNode/TextField/@Attribute",
+        "WITH ND-Root SELECT /BT-00-Text/@Attribute");
+  }
+
+  @Test
+  void testSelector_IsRelativeToTheDeclaredContext() {
+    testExpressionTranslation("../PathNode/TextField", "WITH ND-SubNode SELECT BT-00-Text");
+    testExpressionTranslation("/*/PathNode/TextField", "WITH ND-SubNode SELECT /BT-00-Text");
+  }
+
+  @Test
+  void testSelector_KeywordIsCaseInsensitive() {
+    assertEquals(translateExpression("WITH ND-Root SELECT BT-00-Text"),
+        translateExpression("with ND-Root select BT-00-Text"));
+  }
+
+  @Test
+  void testSelector_RejectsValueExpression() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpression("WITH ND-Root SELECT BT-00-Text == 'x'"));
+  }
+
+
+  /**
+   * A selector's indexer is a node-level indexer, like every other {@code fieldContext} in the
+   * language: it selects the nth occurrence within each parent, not the nth item of the sequence
+   * overall. This is why an indexed selector differs from an indexed expression, where the index
+   * applies to the sequence of values - the one case where a selector is not simply the expression
+   * without its value step.
+   *
+   * <p>Do not "correct" this into a parenthesised form. Indexing at node level is deliberate and is
+   * shared with {@code :rawValue}, context iterators and context overrides; changing it here alone
+   * would make the selector the odd one out, and changing it everywhere would redefine the language.
+   */
+  @Test
+  void testSelector_IndexerAppliesAtNodeLevel() {
+    testExpressionTranslation("PathNode/TextField[1]", "WITH ND-Root SELECT BT-00-Text[1]");
+    testExpressionTranslation("(PathNode/TextField/normalize-space(text()))[1]",
+        "WITH ND-Root COMPUTE BT-00-Text[1]");
+  }
+
+  @Test
+  void testSelector_IndexerAfterPredicate() {
+    testExpressionTranslation(
+        "/*/PathNode/TextField[../CodeField/normalize-space(text()) = 'x'][1]",
+        "WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x'][1]");
+  }
+
+  // #endregion: Selectors ----------------------------------------------------
 }
