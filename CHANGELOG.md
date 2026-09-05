@@ -1,4 +1,4 @@
-# EFX Toolkit 2.0.0-alpha.7 Release Notes
+# EFX Toolkit 2.0.0-alpha.8 Release Notes
 
 _The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
 
@@ -6,14 +6,15 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ## In this release
 
-This is an incremental update over 2.0.0-alpha.6. It refines SDK data-type resolution and updates the eForms Core dependency, while retaining full support for the EFX-2 grammar released with SDK 2.0.0-alpha.2.
+This is an incremental update over 2.0.0-alpha.7. It adds support for the new EFX selector construct in both versions of the language, corrects the selection of the preferred language outside view templates, and moves to the eForms SDK grammars and eForms Core library released alongside it.
 
-### Changes since 2.0.0-alpha.6
+### Changes since 2.0.0-alpha.7
 
-- Field data types are now taken directly from the SDK field definitions, removing a temporary `SdkSymbolResolver` heuristic that inferred the `duration` type from `measure` fields using the `duration-unit` codelist. Added regression tests covering measure and duration fields.
-- Upgraded the eForms Core Java dependency to 1.7.0.
+- **Selectors**: an EFX expression can now identify the XML elements a reference points to, instead of the values held in them. Written `&{reference}` in EFX-1, and `&{reference}` or `WITH context SELECT reference` in EFX-2, it transpiles to the path of the elements rather than to their values. Everywhere else in EFX a field reference means the field's value; a selector is the one place where an application needs to be told where a value lives. The first use of it is `privacy.undisclosedFieldSelector`, which has to name the elements a notice viewer must withhold from publication. Implemented in both translators, and covered by the compute dependency extractor.
+- **Preferred language selection**: in EFX-1 the language of a multilingual text field is chosen implicitly, using a variable that the notice viewer's XSL defines. That variable exists only while a view template is being translated, so the selection is now applied there and nowhere else.
+- Upgraded the eForms Core Java dependency to 1.8.0, which preserves predicates when paths are joined or given an axis.
 
-The following sections describe the features of the 2.0.0 line, unchanged since 2.0.0-alpha.6.
+The following sections describe the features of the 2.0.0 line, unchanged since 2.0.0-alpha.7.
 
 ### EFX-2 language support
 
@@ -59,7 +60,7 @@ NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit
 
 ## Breaking changes
 
-No new breaking changes are introduced in 2.0.0-alpha.7. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
+No new breaking changes are introduced in 2.0.0-alpha.8. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
 
 ## Future development
 
@@ -76,7 +77,7 @@ Documentation for the EFX Toolkit is available at: <https://docs.ted.europa.eu/e
 
 This version of the EFX Toolkit has a compile-time dependency on the following eForms SDK versions and uses the EFX grammar that each version provides:
 
-- eForms SDK 1.x.x (SDK 1.13.0 grammar)
-- eForms SDK 2.0.0-alpha.2
+- eForms SDK 1.x.x (SDK 1.16.0-beta.2 grammar)
+- eForms SDK 2.0.0-alpha.3
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.7.0.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.8.0.
