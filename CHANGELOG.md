@@ -61,7 +61,7 @@ NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit
 
 ## Breaking changes
 
-No new breaking changes are introduced in 2.0.0-alpha.8. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
+`XPathContextualizer.join` now takes a third argument, which says how far the joined path may be shortened; the two-argument form has been removed. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
 
 ## Future development
 
