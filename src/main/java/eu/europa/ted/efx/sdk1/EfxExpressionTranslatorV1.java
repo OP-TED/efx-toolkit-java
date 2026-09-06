@@ -1095,6 +1095,23 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     }
   }
 
+  /**
+   * A selector-block yields the reference itself rather than its value: the value step that every
+   * other reference position applies is deliberately not composed here. The path is otherwise
+   * resolved exactly as it would be in an expression-block, relative to the declared context
+   * unless the author wrote it as an absolute reference.
+   */
+  @Override
+  public void exitSelection(final SelectionContext ctx) {
+    if (ctx.attributeReference() != null) {
+      // attributeReference has no exit handler of its own, so the attribute step is composed here
+      // rather than globally, which would double-compose it for the scalar and sequence positions.
+      this.stack.push(this.script.composeFieldAttributeReference(
+          this.stack.pop(PathExpression.class),
+          ctx.attributeReference().Identifier().getText(), StringPath.class));
+    }
+  }
+
   @Override
   public void exitScalarFromAttributeReference(ScalarFromAttributeReferenceContext ctx) {
     this.stack.push(this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
@@ -1117,12 +1134,11 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    */
   @Override
   public void exitContextFieldSpecifier(ContextFieldSpecifierContext ctx) {
-    this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
-                                          // the context field.
+    final PathExpression contextFieldPath = this.stack.pop(PathExpression.class);
     final String contextFieldId = getFieldId(ctx.fieldContext());
     this.efxContext
         .push(new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
-            this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
+            contextFieldPath));
   }
 
 
@@ -1146,12 +1162,11 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
    */
   @Override
   public void exitContextNodeSpecifier(ContextNodeSpecifierContext ctx) {
-    this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
-                                          // the context node.
+    final PathExpression contextNodePath = this.stack.pop(PathExpression.class);
     final String contextNodeId = getNodeId(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
+            contextNodePath));
   }
 
   /**

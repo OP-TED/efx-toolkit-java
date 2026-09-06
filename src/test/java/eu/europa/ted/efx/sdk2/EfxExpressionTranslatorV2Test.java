@@ -1265,13 +1265,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithFieldContextOverride() {
-    testExpressionTranslationWithContext("../TextField/normalize-space(text())", "BT-00-Code",
+    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../TextField/normalize-space(text())", "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Text");
   }
 
   @Test
   void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
-    testExpressionTranslationWithContext("../IntegerField/number()", "BT-00-Code",
+    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../IntegerField/number()", "BT-00-Code",
         "BT-01-SubLevel-Text::integerField");
   }
 
@@ -1282,8 +1282,31 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testFieldReferenceWithNodeContextOverride_AbsoluteAnchor() {
+    testExpressionTranslationWithContext("/*/PathNode/TextField", "BT-00-Text",
+        "/ND-Root::BT-00-Text is present");
+  }
+
+  @Test
+  void testFieldReferenceWithFieldContextOverride_AbsoluteAnchor() {
+    testExpressionTranslationWithContext(
+        "/*/PathNode/ChildNode/SubLevelTextField/../../TextField", "BT-00-Code",
+        "/BT-01-SubLevel-Text::BT-00-Text is present");
+  }
+
+  @Test
+  void testFieldReferenceWithNodeContextOverride_WithPredicateFromTheSdk() {
+    // The anchor's path carries a predicate that comes from the SDK rather than from the
+    // expression. It has to survive for the same reason a written one does.
+    testExpressionTranslationWithContext(
+        "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonCode",
+        "BT-00-Text",
+        "ND-PrivacyForRepeatableText::BT-197(BT-00)-Repeatable-Text is present");
+  }
+
+  @Test
   void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-    testExpressionTranslationWithContext("../../PathNode/IntegerField/number()", "BT-00-Text",
+    testExpressionTranslationWithContext("../..[PathNode/IndicatorField = true()]/PathNode/IntegerField/number()", "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::integerField");
   }
 
@@ -3820,19 +3843,21 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldContextOverride_WithPredicateOnContext() {
-    // joinPaths simplifies: ../ChildNode/SubLevelTextField['a'='a']/../../TextField → ../TextField
-    // because navigating UP from a predicated node reaches the parent regardless
+    // The walk to the context is kept: the override says the value is reached by a path that
+    // starts at the context, so where no SubLevelTextField satisfies the predicate there is
+    // nothing to start from and nothing is selected.
     testExpressionTranslationWithContext(
-        "../TextField/normalize-space(text())",
+        "../ChildNode/SubLevelTextField['a' = 'a']/../../TextField/normalize-space(text())",
         "BT-00-Code",
         "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
   }
 
   @Test
   void testFieldContextOverride_WithIndexerOnContext() {
-    // joinPaths simplifies the indexed context path the same way as predicates
+    // An indexed context is kept for the same reason as a predicated one: without a first
+    // SubLevelTextField there is no starting point.
     testExpressionTranslationWithContext(
-        "../TextField/normalize-space(text())",
+        "../ChildNode/SubLevelTextField[1]/../../TextField/normalize-space(text())",
         "BT-00-Code",
         "BT-01-SubLevel-Text[1]::BT-00-Text");
   }
@@ -3840,7 +3865,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../TextField/normalize-space(text())",
+        "'test' = ../ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
         "BT-00-Code",
         "'test' in BT-01-SubLevel-Text::BT-00-Text");
   }
@@ -3855,9 +3880,10 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testStackedOverride_NodeAndField() {
-    // joinPaths simplifies: .../ChildNode/SubLevelTextField/../../TextField → .../TextField
+    // The walk to the context is kept even with nothing written on it, so the override
+    // selects nothing where the context is absent.
     testExpressionTranslationWithContext(
-        "../../PathNode/TextField/normalize-space(text())",
+        "../../PathNode/ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
         "BT-00-Text",
         "ND-Root::BT-01-SubLevel-Text::BT-00-Text");
   }
@@ -3866,7 +3892,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../TextField",
+        "../ChildNode/SubLevelTextField/../../TextField",
         "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Text is present");
   }
@@ -3875,7 +3901,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../CodeField/@listName",
+        "../ChildNode/SubLevelTextField/../../CodeField/@listName",
         "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Code/@listName");
   }
@@ -3884,7 +3910,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithPredicate_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../TextField/normalize-space(text())",
+        "'test' = ../ChildNode/SubLevelTextField['a' = 'a']/../../TextField/normalize-space(text())",
         "BT-00-Code",
         "'test' in BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
   }
@@ -3893,7 +3919,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../TextField",
+        "../ChildNode/SubLevelTextField['a' = 'a']/../../TextField",
         "BT-00-Code",
         "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text is present");
   }
@@ -3902,7 +3928,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithPredicate_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../CodeField/@listName",
+        "../ChildNode/SubLevelTextField['a' = 'a']/../../CodeField/@listName",
         "BT-00-Code",
         "BT-01-SubLevel-Text['a' == 'a']::BT-00-Code/@listName");
   }
@@ -3911,7 +3937,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithIndexer_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../TextField/normalize-space(text())",
+        "'test' = ../ChildNode/SubLevelTextField[1]/../../TextField/normalize-space(text())",
         "BT-00-Code",
         "'test' in BT-01-SubLevel-Text[1]::BT-00-Text");
   }
@@ -3920,7 +3946,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithIndexer_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../TextField",
+        "../ChildNode/SubLevelTextField[1]/../../TextField",
         "BT-00-Code",
         "BT-01-SubLevel-Text[1]::BT-00-Text is present");
   }
@@ -3929,7 +3955,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithIndexer_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../CodeField/@listName",
+        "../ChildNode/SubLevelTextField[1]/../../CodeField/@listName",
         "BT-00-Code",
         "BT-01-SubLevel-Text[1]::BT-00-Code/@listName");
   }
@@ -3956,7 +3982,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../../PathNode/TextField/normalize-space(text())",
+        "'test' = ../..[PathNode/IndicatorField = true()]/PathNode/TextField/normalize-space(text())",
         "BT-00-Text",
         "'test' in ND-Root[BT-00-Indicator == TRUE]::BT-00-Text");
   }
@@ -3965,7 +3991,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../../PathNode/TextField",
+        "../..[PathNode/IndicatorField = true()]/PathNode/TextField",
         "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text is present");
   }
@@ -3974,7 +4000,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../../PathNode/CodeField/@listName",
+        "../..[PathNode/IndicatorField = true()]/PathNode/CodeField/@listName",
         "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Code/@listName");
   }
@@ -4010,7 +4036,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStackedOverride_NodeAndField_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../../PathNode/TextField/normalize-space(text())",
+        "'test' = ../../PathNode/ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
         "BT-00-Text",
         "'test' in ND-Root::BT-01-SubLevel-Text::BT-00-Text");
   }
@@ -4019,7 +4045,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStackedOverride_NodeAndField_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../../PathNode/TextField",
+        "../../PathNode/ChildNode/SubLevelTextField/../../TextField",
         "BT-00-Text",
         "ND-Root::BT-01-SubLevel-Text::BT-00-Text is present");
   }
@@ -4028,7 +4054,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStackedOverride_NodeAndField_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../../PathNode/CodeField/@listName",
+        "../../PathNode/ChildNode/SubLevelTextField/../../CodeField/@listName",
         "BT-00-Text",
         "ND-Root::BT-01-SubLevel-Text::BT-00-Code/@listName");
   }
@@ -4674,4 +4700,113 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   // #endregion: EFX-2 COMPUTE syntax
+
+  // #region: Selectors -------------------------------------------------------
+
+  /**
+   * A selector yields the same path an expression would use, without the value step that an
+   * expression appends. It is relative or absolute according to how the reference was written.
+   */
+  @Test
+  void testSelector_YieldsTheSamePathAsTheEquivalentExpression() {
+    assertEquals(translateExpression("WITH ND-Root COMPUTE BT-00-Text"),
+        translateExpression("WITH ND-Root SELECT BT-00-Text") + "/normalize-space(text())");
+    assertEquals(translateExpression("WITH ND-Root COMPUTE BT-00-Integer"),
+        translateExpression("WITH ND-Root SELECT BT-00-Integer") + "/number()");
+    assertEquals(translateExpression("WITH ND-SubNode COMPUTE BT-00-Text"),
+        translateExpression("WITH ND-SubNode SELECT BT-00-Text") + "/normalize-space(text())");
+  }
+
+  /** Both spellings of the selector must produce the same result. */
+  @Test
+  void testSelector_BothSpellingsAgree() {
+    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text"),
+        translateExpression("{ND-Root} &{/BT-00-Text}"));
+    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']"),
+        translateExpression("{ND-Root} &{/BT-00-Text[BT-00-Code == 'x']}"));
+  }
+
+  @Test
+  void testSelector_FieldReference() {
+    testExpressionTranslation("PathNode/TextField", "WITH ND-Root SELECT BT-00-Text");
+  }
+
+  @Test
+  void testSelector_AbsoluteFieldReference() {
+    testExpressionTranslation("/*/PathNode/TextField", "WITH ND-Root SELECT /BT-00-Text");
+  }
+
+  @Test
+  void testSelector_WithPredicate() {
+    testExpressionTranslation("/*/PathNode/TextField[../CodeField/normalize-space(text()) = 'x']",
+        "WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']");
+  }
+
+  @Test
+  void testSelector_NumericFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/IntegerField", "WITH ND-Root SELECT BT-00-Integer");
+  }
+
+  @Test
+  void testSelector_DurationFieldHasNoValueStep() {
+    testExpressionTranslation("PathNode/DurationField", "WITH ND-Root SELECT BT-00-Duration");
+  }
+
+  @Test
+  void testSelector_NodeReference() {
+    testExpressionTranslation("SubNode", "WITH ND-Root SELECT ND-SubNode");
+    testExpressionTranslation("/*/SubNode", "WITH ND-Root SELECT /ND-SubNode");
+  }
+
+  @Test
+  void testSelector_AttributeReference() {
+    testExpressionTranslation("/*/PathNode/TextField/@Attribute",
+        "WITH ND-Root SELECT /BT-00-Text/@Attribute");
+  }
+
+  @Test
+  void testSelector_IsRelativeToTheDeclaredContext() {
+    testExpressionTranslation("../PathNode/TextField", "WITH ND-SubNode SELECT BT-00-Text");
+    testExpressionTranslation("/*/PathNode/TextField", "WITH ND-SubNode SELECT /BT-00-Text");
+  }
+
+  @Test
+  void testSelector_KeywordIsCaseInsensitive() {
+    assertEquals(translateExpression("WITH ND-Root SELECT BT-00-Text"),
+        translateExpression("with ND-Root select BT-00-Text"));
+  }
+
+  @Test
+  void testSelector_RejectsValueExpression() {
+    assertThrows(ParseCancellationException.class,
+        () -> translateExpression("WITH ND-Root SELECT BT-00-Text == 'x'"));
+  }
+
+
+  /**
+   * A selector's indexer is a node-level indexer, like every other {@code fieldContext} in the
+   * language: it selects the nth occurrence within each parent, not the nth item of the sequence
+   * overall. This is why an indexed selector differs from an indexed expression, where the index
+   * applies to the sequence of values - the one case where a selector is not simply the expression
+   * without its value step.
+   *
+   * <p>Do not "correct" this into a parenthesised form. Indexing at node level is deliberate and is
+   * shared with {@code :rawValue}, context iterators and context overrides; changing it here alone
+   * would make the selector the odd one out, and changing it everywhere would redefine the language.
+   */
+  @Test
+  void testSelector_IndexerAppliesAtNodeLevel() {
+    testExpressionTranslation("PathNode/TextField[1]", "WITH ND-Root SELECT BT-00-Text[1]");
+    testExpressionTranslation("(PathNode/TextField/normalize-space(text()))[1]",
+        "WITH ND-Root COMPUTE BT-00-Text[1]");
+  }
+
+  @Test
+  void testSelector_IndexerAfterPredicate() {
+    testExpressionTranslation(
+        "/*/PathNode/TextField[../CodeField/normalize-space(text()) = 'x'][1]",
+        "WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x'][1]");
+  }
+
+  // #endregion: Selectors ----------------------------------------------------
 }

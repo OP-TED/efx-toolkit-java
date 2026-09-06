@@ -25,7 +25,6 @@ import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
-import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 @SdkComponent(versions = {"1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -48,29 +47,6 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
         return new StringExpression("format-number(" + number.getScript() + ", '" + formatString + "')");
     }
 
-    /***
-     * This method is overridden to workaround a limitation of EFX 1.
-     * 
-     * When a multilingual text field is referenced, then a special XPath expression
-     * is generated to retrieve the value in the "preferred" language.
-     * Preferred language is the first language among the languages listed in the
-     * translator options for which a text value is available in the field.
-     * 
-     * The logic of the workaround is as follows:
-     * if the fieldReference is a multilingual text field and it does not
-     * already come with a predicate that filters by @languageID, then we add a
-     * predicate which, using a for loop, will find the first language for which a
-     * value is available in the field.
-     * 
-     * In EFX 1 therefore the selection of the appropriate (preferred) language is
-     * done implicitly, whereas in EFX 2 it is done explicitly by calling a special
-     * function designed to perform this task.
-     * 
-     * Both EFX-1 and EFX-2 implementations of the feature rely on the existence of a
-     * $PREFERRED_LANGUAGES variable in the XSLT.
-     * This function returns the list of languages used in the visualisation in the
-     * order of preference (visualisation language followed by notice language(s)).
-     */
     /**
      * Preserved V1 behavior: pass EFX string literal through as-is without converting
      * escape sequences to XPath format.
@@ -91,13 +67,31 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
             String.format("fn:matches(normalize-space(%s), %s)", expression.getScript(), pattern));
     }
 
+    /***
+     * Retrieves the value of a multilingual text field in the "preferred" language.
+     * Preferred language is the first language among the languages listed in the
+     * translator options for which a text value is available in the field.
+     *
+     * This is a workaround for a limitation of EFX 1: the language cannot be selected
+     * explicitly by the template author, so template translation applies this
+     * implicitly to every multilingual field it renders. In EFX 2 the selection is
+     * done explicitly, by calling a function designed to perform this task.
+     *
+     * If the reference already comes with a predicate that filters by @languageID,
+     * then the template author has already pinned a language and the value is
+     * retrieved as-is.
+     */
     @Override
-    public PathExpression composeFieldValueReference(PathExpression fieldReference) {
-        XPathInfo xpathInfo = XPathProcessor.parse(fieldReference.getScript());
-        if (fieldReference.is(EfxDataType.MultilingualString.class) && !xpathInfo.hasPredicate("@languageID")) {
-            return Expression.instantiate("efx:preferred-language-text(" + fieldReference.getScript() + ")", fieldReference.getClass());
+    public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference) {
+        final XPathInfo xpathInfo = XPathProcessor.parse(fieldReference.getScript());
+        if (xpathInfo.hasPredicate("@languageID")) {
+            // The value reference is a PathExpression, which is not a StringExpression and cannot
+            // be returned as such. Only the generated script matters here: the caller re-creates
+            // the expression using the type of the field reference it started from.
+            return Expression.from(super.composeFieldValueReference(fieldReference),
+                StringExpression.class);
         }
-        return super.composeFieldValueReference(fieldReference);
+        return super.getTextInPreferredLanguage(fieldReference);
     }
 
     @Override
