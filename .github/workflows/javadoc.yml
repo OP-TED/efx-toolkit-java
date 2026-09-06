@@ -1,0 +1,21 @@
+name: Check the javadoc
+
+on:
+  push:
+
+  # Allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  javadoc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Check javadoc
+        run: mvn --batch-mode clean test-compile javadoc:javadoc javadoc:test-javadoc
