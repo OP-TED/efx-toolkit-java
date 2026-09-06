@@ -328,7 +328,12 @@ public interface ScriptGenerator {
   /**
    * Joins two given path expressions into one by placing the second after the first and using the
    * proper delimiter.
-   * 
+   *
+   * <p>
+   * This is how the path of a context override is built: the second path is relative to the first,
+   * which is the context the override names. What that implies for the joined path is for the
+   * implementation to decide, in the terms of the language it targets.
+   *
    * @param first The part of the path that goes before the delimiter.
    * @param second The part of the path that goes after the delimiter.
    * @return The joined path expression.

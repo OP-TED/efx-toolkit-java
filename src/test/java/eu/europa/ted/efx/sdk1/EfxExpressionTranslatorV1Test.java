@@ -1089,13 +1089,21 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithFieldContextOverride() {
-    testExpressionTranslationWithContext("../TextField/normalize-space(text())", "BT-00-Code",
+    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../TextField/normalize-space(text())", "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Text");
   }
 
   @Test
+  void testFieldReferenceWithFieldContextOverride_WithPredicate() {
+    testExpressionTranslationWithContext(
+        "../ChildNode/SubLevelTextField['a' = 'a']/../../TextField/normalize-space(text())",
+        "BT-00-Code",
+        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
+  }
+
+  @Test
   void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
-    testExpressionTranslationWithContext("../IntegerField/number()", "BT-00-Code",
+    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../IntegerField/number()", "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Integer");
   }
 
@@ -1107,7 +1115,7 @@ class EfxExpressionTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-    testExpressionTranslationWithContext("../../PathNode/IntegerField/number()", "BT-00-Text",
+    testExpressionTranslationWithContext("../..[PathNode/IndicatorField = true()]/PathNode/IntegerField/number()", "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Integer");
   }
 

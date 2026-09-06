@@ -6,13 +6,14 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ## In this release
 
-This is an incremental update over 2.0.0-alpha.7. It adds support for the new EFX selector construct in both versions of the language, corrects the selection of the preferred language outside view templates, and moves to the eForms SDK grammars and eForms Core library released alongside it.
+This is an incremental update over 2.0.0-alpha.7. It adds support for the new EFX selector construct in both versions of the language, corrects the selection of the preferred language outside view templates and the transpilation of context overrides, and moves to the eForms SDK grammars and eForms Core library released alongside it.
 
 ### Changes since 2.0.0-alpha.7
 
 - **Selectors**: an EFX expression can now identify the XML elements a reference points to, instead of the values held in them. Written `&{reference}` in EFX-1, and `&{reference}` or `WITH context SELECT reference` in EFX-2, it transpiles to the path of the elements rather than to their values. Everywhere else in EFX a field reference means the field's value; a selector is the one place where an application needs to be told where a value lives. The first use of it is `privacy.undisclosedFieldSelector`, which has to name the elements a notice viewer must withhold from publication. Implemented in both translators, and covered by the compute dependency extractor.
 - **Preferred language selection**: in EFX-1 the language of a multilingual text field is chosen implicitly, using a variable that the notice viewer's XSL defines. That variable exists only while a view template is being translated, so the selection is now applied there and nowhere else.
-- Upgraded the eForms Core Java dependency to 1.8.0, which preserves predicates when paths are joined or given an axis.
+- **Context overrides**: `context::field` now transpiles to a path that keeps the walk to the context. The override means the value of the field by a path that starts at the context, so where the context is not present in the notice there is no starting point and nothing is selected. Until now that walk was removed as redundant, which made `${field}` and `${context::field}` transpile to the same thing and left the override with no effect. A predicate written on the context, as in `ND-Lot[cbc:ID = 'LOT-0001']::BT-137`, was discarded as well, so the condition the author wrote had no effect either. Expressions using a context override therefore produce a longer path than before, one that yields nothing where the context is absent, and one that applies any predicate written on the context. No SDK content is affected: context overrides are not used in any released SDK.
+- Upgraded the eForms Core Java dependency to 1.9.0, which preserves predicates when paths are joined or given an axis, and lets the caller decide how far a joined path is shortened.
 
 The following sections describe the features of the 2.0.0 line, unchanged since 2.0.0-alpha.7.
 
@@ -80,4 +81,4 @@ This version of the EFX Toolkit has a compile-time dependency on the following e
 - eForms SDK 1.x.x (SDK 1.16.0-beta.2 grammar)
 - eForms SDK 2.0.0-alpha.3
 
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.8.0.
+It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.9.0.

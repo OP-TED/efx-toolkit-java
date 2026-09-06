@@ -13,6 +13,7 @@
  */
 package eu.europa.ted.efx.xpath;
 
+import eu.europa.ted.eforms.xpath.Simplification;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
@@ -39,9 +40,15 @@ public class XPathContextualizer {
     return Expression.instantiate(result, xpath.getClass());
   }
 
-  public static PathExpression join(final PathExpression first, final PathExpression second) {
+  /**
+   * Joins the path of a context to a path that is relative to it, shortening the result as far as
+   * the caller asks for.
+   */
+  public static PathExpression join(final PathExpression first, final PathExpression second,
+      final Simplification simplification) {
 
-    String joinedXPath = XPathProcessor.join(first.getScript(), second.getScript());
+    String joinedXPath =
+        XPathProcessor.join(first.getScript(), second.getScript(), simplification);
 
     return Expression.instantiate(joinedXPath, second.getClass());
   }

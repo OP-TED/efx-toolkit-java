@@ -27,6 +27,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.xpath.Simplification;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -298,7 +299,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
-    return XPathContextualizer.join(first, second);
+    // Every step of both paths is kept. A context override means the value of the field by a path
+    // that starts at the context, so where the context is not present in the notice there is no
+    // starting point and nothing is selected. Shortening the path would remove the walk to the
+    // context and with it that condition, leaving an override indistinguishable from a plain
+    // reference.
+    return XPathContextualizer.join(first, second, Simplification.NONE);
   }
 
   @Override
