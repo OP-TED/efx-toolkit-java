@@ -13,7 +13,7 @@
  */
 package eu.europa.ted.efx.xpath;
 
-import eu.europa.ted.eforms.xpath.Simplification;
+import eu.europa.ted.eforms.xpath.XPathProcessor.Simplification;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;

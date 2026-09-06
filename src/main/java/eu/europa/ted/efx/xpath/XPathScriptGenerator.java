@@ -27,7 +27,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
-import eu.europa.ted.eforms.xpath.Simplification;
+import eu.europa.ted.eforms.xpath.XPathProcessor.Simplification;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
