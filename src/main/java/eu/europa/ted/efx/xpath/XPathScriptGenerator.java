@@ -27,6 +27,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
+import eu.europa.ted.eforms.xpath.XPathProcessor.Simplification;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
@@ -298,7 +299,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public PathExpression joinPaths(final PathExpression first, final PathExpression second) {
-    return XPathContextualizer.join(first, second);
+    // Every step of both paths is kept. A context override means the value of the field by a path
+    // that starts at the context, so where the context is not present in the notice there is no
+    // starting point and nothing is selected. Shortening the path would remove the walk to the
+    // context and with it that condition, leaving an override indistinguishable from a plain
+    // reference.
+    return XPathContextualizer.join(first, second, Simplification.NONE);
   }
 
   @Override
@@ -784,11 +790,27 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new StringLiteral("'" + value + "'");
   }
 
+  /**
+   * Emits a call to {@code efx:preferred-language}, a function of the notice viewer's XSLT runtime
+   * library. It returns the identifier of the first language, among those the visualisation
+   * prefers, for which the field holds a value.
+   *
+   * @see #getTextInPreferredLanguage(PathExpression)
+   */
   @Override
   public StringExpression getPreferredLanguage(PathExpression fieldReference) {
     return new StringExpression("efx:preferred-language(" + fieldReference.getScript() + ")");
   }
 
+  /**
+   * Emits a call to {@code efx:preferred-language-text}, a function of the notice viewer's XSLT
+   * runtime library.
+   *
+   * Both EFX-1 and EFX-2 reach this method, and the function they call relies on a
+   * {@code $PREFERRED_LANGUAGES} variable defined by the XSLT. That variable holds the languages
+   * used in the visualisation, in order of preference: the visualisation language followed by the
+   * notice languages.
+   */
   @Override
   public StringExpression getTextInPreferredLanguage(PathExpression fieldReference) {
     return new StringExpression("efx:preferred-language-text(" + fieldReference.getScript() + ")");

@@ -328,7 +328,12 @@ public interface ScriptGenerator {
   /**
    * Joins two given path expressions into one by placing the second after the first and using the
    * proper delimiter.
-   * 
+   *
+   * <p>
+   * This is how the path of a context override is built: the second path is relative to the first,
+   * which is the context the override names. What that implies for the joined path is for the
+   * implementation to decide, in the terms of the language it targets.
+   *
    * @param first The part of the path that goes before the delimiter.
    * @param second The part of the path that goes after the delimiter.
    * @return The joined path expression.
@@ -799,7 +804,9 @@ public interface ScriptGenerator {
    * Given a reference to a multilingual field, this function should generate the target language script
    * that returns the text value of the field in the preferred language.
    * 
-   * Calling the function in EFX 2
+   * In EFX-2 the template author calls this explicitly, through the
+   * {@code preferred-language-text} function. EFX-1 has no such function, so template
+   * translation applies it implicitly to every multilingual field it renders.
    * 
    * @since SDK 2.0.0
    * @see #getPreferredLanguage(PathExpression)

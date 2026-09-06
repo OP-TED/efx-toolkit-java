@@ -2074,12 +2074,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    */
   @Override
   public void exitContextNodeSpecifier(ContextNodeSpecifierContext ctx) {
-    this.stack.pop(PathExpression.class); // Discard the PathExpression placed in the stack for
-                                          // the context node.
+    final PathExpression contextNodePath = this.stack.pop(PathExpression.class);
     final String contextNodeId = getNodeId(ctx.node);
     this.efxContext
         .push(new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
-            this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
+            contextNodePath));
   }
 
   /**

@@ -48,7 +48,7 @@
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.16.0-SNAPSHOT</version.eforms-sdk-1>
     <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
-    <version.eforms-core>1.8.0-SNAPSHOT</version.eforms-core>
+    <version.eforms-core>1.10.0-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>

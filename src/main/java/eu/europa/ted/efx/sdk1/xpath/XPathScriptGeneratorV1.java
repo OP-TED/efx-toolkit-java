@@ -80,11 +80,6 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      * If the reference already comes with a predicate that filters by @languageID,
      * then the template author has already pinned a language and the value is
      * retrieved as-is.
-     *
-     * Both EFX-1 and EFX-2 implementations of the feature rely on the existence of a
-     * $PREFERRED_LANGUAGES variable in the XSLT.
-     * This function returns the list of languages used in the visualisation in the
-     * order of preference (visualisation language followed by notice language(s)).
      */
     @Override
     public StringExpression getTextInPreferredLanguage(final PathExpression fieldReference) {
