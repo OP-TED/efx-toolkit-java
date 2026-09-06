@@ -804,7 +804,9 @@ public interface ScriptGenerator {
    * Given a reference to a multilingual field, this function should generate the target language script
    * that returns the text value of the field in the preferred language.
    * 
-   * Calling the function in EFX 2
+   * In EFX-2 the template author calls this explicitly, through the
+   * {@code preferred-language-text} function. EFX-1 has no such function, so template
+   * translation applies it implicitly to every multilingual field it renders.
    * 
    * @since SDK 2.0.0
    * @see #getPreferredLanguage(PathExpression)

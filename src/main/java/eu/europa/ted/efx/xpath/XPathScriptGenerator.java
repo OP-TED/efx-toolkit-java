@@ -790,11 +790,27 @@ public class XPathScriptGenerator implements ScriptGenerator {
     return new StringLiteral("'" + value + "'");
   }
 
+  /**
+   * Emits a call to {@code efx:preferred-language}, a function of the notice viewer's XSLT runtime
+   * library. It returns the identifier of the first language, among those the visualisation
+   * prefers, for which the field holds a value.
+   *
+   * @see #getTextInPreferredLanguage(PathExpression)
+   */
   @Override
   public StringExpression getPreferredLanguage(PathExpression fieldReference) {
     return new StringExpression("efx:preferred-language(" + fieldReference.getScript() + ")");
   }
 
+  /**
+   * Emits a call to {@code efx:preferred-language-text}, a function of the notice viewer's XSLT
+   * runtime library.
+   *
+   * Both EFX-1 and EFX-2 reach this method, and the function they call relies on a
+   * {@code $PREFERRED_LANGUAGES} variable defined by the XSLT. That variable holds the languages
+   * used in the visualisation, in order of preference: the visualisation language followed by the
+   * notice languages.
+   */
   @Override
   public StringExpression getTextInPreferredLanguage(PathExpression fieldReference) {
     return new StringExpression("efx:preferred-language-text(" + fieldReference.getScript() + ")");
