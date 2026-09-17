@@ -102,7 +102,6 @@ public class SdkSymbolResolver extends XPathSymbolResolver {
     this.dataTypeById = SdkDataTypeRepository.createDefault();
   }
 
-
   @Override
   protected SdkField fieldById(final String fieldId) {
     return this.fieldById.get(fieldId);

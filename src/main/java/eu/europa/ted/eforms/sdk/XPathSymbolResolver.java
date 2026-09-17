@@ -43,6 +43,20 @@ import eu.europa.ted.efx.xpath.XPathContextualizer;
  * <p>
  * All symbol resolution logic lives here. Obtaining the entities is left entirely to subclasses,
  * which implement the abstract methods of this class.
+ * <p>
+ * Subclasses may supply fields and nodes whose parent identifiers are populated but whose parent
+ * object links have not yet been initialized. Resolution completes these links on demand through
+ * {@link SdkField#setParentNode(SdkNode)} and {@link SdkNode#setParent(SdkNode)}, modifying the
+ * supplied entities. All referenced parents must be available through {@link #nodeById(String)}.
+ * This deferred initialization establishes the ancestry chain before calling
+ * {@link SdkNode#getAncestry()}; subclasses must not expose incompletely linked nodes to ancestry
+ * readers before then. Once initialized, the hierarchy must remain stable because ancestry is
+ * cached on the entities and the root node is cached by this resolver.
+ * <p>
+ * This class does not synchronize parent initialization or cache access and provides no
+ * thread-safety guarantee. Keep the resolver and its lazily initialized entities confined to one
+ * thread, or externally synchronize access to the resolver and shared entities. Separate resolver
+ * instances do not provide isolation if they share the same mutable entities.
  */
 public abstract class XPathSymbolResolver implements SymbolResolver {
 
@@ -75,7 +89,7 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   protected abstract SdkCodelist codelistById(final String codelistId);
 
   /**
-     * Looks up a data type by its identifier, as used by {@link SdkField#getType()}.
+   * Looks up a data type by its identifier, as used by {@link SdkField#getType()}.
    *
    * @param dataTypeId The name of the data type to look for.
    * @return The data type, or null if the name is not a known data type.
@@ -91,7 +105,7 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   protected abstract SdkField fieldByAlias(final String alias);
 
   /**
-     * Looks up a node by its alias.
+   * Looks up a node by its alias.
    *
    * @param alias The alias to look for.
    * @return The node, or null if the alias is not a known node alias.
@@ -99,7 +113,7 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   protected abstract SdkNode nodeByAlias(final String alias);
 
   /**
-     * All nodes known to this resolver, in any order.
+   * All nodes known to this resolver, in any order.
    *
    * @return The complete node collection.
    */
@@ -114,12 +128,13 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
 
   /**
    * The ancestry chain of the given node, from the node itself up to the root.
-   *
-     * @param node The node whose ancestry we want.
-     * @return The identifiers of the node and all of its ancestors.
-     * @implNote Fills in any missing parent link through {@link #nodeById} and then defers to
+   * <p>
+   * Fills in any missing parent link through {@link #nodeById(String)} and then defers to
    * {@link SdkNode#getAncestry()}, which computes the chain once and caches it on the entity.
    * Subclasses therefore do not need to wire the node graph before use.
+   *
+   * @param node The node whose ancestry we want.
+   * @return The identifiers of the node and all of its ancestors.
    */
   protected List<String> ancestryOf(final SdkNode node) {
     if (node == null) {
@@ -138,11 +153,13 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   /**
-     * The parent node of the given field.
+   * The parent node of the given field.
+   * <p>
+   * Resolves a missing parent link on first access through {@link #nodeById(String)}
+   * and stores it on the field using {@link SdkField#setParentNode(SdkNode)}.
    *
    * @param field The field whose parent node we want.
    * @return The parent node, or null if the field has no parent node.
-     * @implNote Resolving and caching the link on first node using the {@link SdkField#setParentNode(SdkNode)}.
    */
   protected SdkNode parentNodeOf(final SdkField field) {
     if (field == null) {
@@ -162,11 +179,13 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
 
   /**
    * Resolves a field identifier, falling back to an alias lookup.
+   * <p>
+   * First calls {@link #fieldById(String)} and falls back to {@link #fieldByAlias(String)}.
+   * Override this method (together with {@link #resolveNode(String)}) to customize
+   * symbol resolution.
    *
    * @param fieldId The identifier or alias of the field to look for.
    * @return The field, or null if the symbol is not a known field.
-     * @apiNote Override this (together with {@link #resolveNode(String)}) to intervene/optimize symbol resolution.
-     * @implNote The implementation first calls {@link #fieldById(String)} and fallbacks to {@link #fieldByAlias(String)}.
    */
   protected SdkField resolveField(final String fieldId) {
     return Optional.ofNullable(this.fieldById(fieldId))
@@ -174,12 +193,14 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   /**
-     * Resolves a node identifier, falling back to an alias lookup.
+   * Resolves a node identifier, falling back to an alias lookup.
+   * <p>
+   * First calls {@link #nodeById(String)} and falls back to {@link #nodeByAlias(String)}.
+   * Override this method (together with {@link #resolveField(String)}) to customize
+   * symbol resolution.
    *
    * @param nodeId The identifier or alias of the node to look for.
    * @return The node, or null if the symbol is not a known node.
-   * @apiNote Override this (together with {@link #resolveField(String)}) to intervene/optimize symbol resolution.
-   * @implNote The implementation first calls {@link #nodeById(String)} and fallbacks to {@link #nodeByAlias(String)}.
    */
   protected SdkNode resolveNode(final String nodeId) {
     return Optional.ofNullable(this.nodeById(nodeId))
@@ -202,9 +223,9 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
 
   /**
    * The root node, being the only node without a parent.
+   * The root node is cached the first time it is resolved.
    *
    * @return The root node.
-   * @implNote The root node is cached the first time it is resolved
    */
   protected SdkNode getRootNode() {
     if (this.cachedRootNode == null) {
