@@ -1,5 +1,6 @@
 package eu.europa.ted.efx.model.templates;
 
+import java.util.List;
 import java.util.Stack;
 
 import eu.europa.ted.efx.model.Context;
@@ -14,13 +15,11 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * @param number         the outline number of the child block.
    * @param context        the context of the child block.
    * @param variables      the variables of the child block.
-   * @param conditionals   the conditionals of the child block.
-   * @param defaultContent the content of the child block.
+   * @param contentTemplates what the child block displays.
    */
   public void pushChild(final int number, final Context context, final Variables variables,
-      final Conditionals conditionals,
-      final Markup defaultContent) {
-    this.push(this.peek().addChild(number, context, variables, conditionals, defaultContent));
+      final List<ContentTemplate> contentTemplates) {
+    this.push(this.peek().addChild(number, context, variables, contentTemplates));
   }
 
   public void pushChild(final int number, final Context context, final Variables variables,
@@ -35,12 +34,11 @@ public class ContentBlockStack extends Stack<ContentBlock> {
    * @param number the outline number of the sibling block.
    * @param context the context of the sibling block.
    * @param variables the variables of the sibling block.
-   * @param conditionals the conditionals of the sibling block.
-   * @param defaultContent the content of the sibling block.
+   * @param contentTemplates what the sibling block displays.
    */
-  public void pushSibling(final int number, Context context, final Variables variables, final Conditionals conditionals,
-      final Markup defaultContent) {
-    this.push(this.pop().addSibling(number, context, variables, conditionals, defaultContent));
+  public void pushSibling(final int number, Context context, final Variables variables,
+      final List<ContentTemplate> contentTemplates) {
+    this.push(this.pop().addSibling(number, context, variables, contentTemplates));
   }
 
   public void pushSibling(final int number, Context context, final Variables variables,

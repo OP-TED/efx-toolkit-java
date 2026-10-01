@@ -20,7 +20,7 @@ public class TemplateInvocation extends ContentBlock {
   public TemplateInvocation(final ContentBlock parent, final TemplateDefinition template, final int number,
       Context context,
       Variables variables) {
-    super(parent, template.id, number, template.conditionals, template.content, context, variables);
+    super(parent, template.id, number, template.contentTemplates, context, variables);
   }
 
   /***

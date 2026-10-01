@@ -2,6 +2,10 @@ package eu.europa.ted.efx.model.templates;
 
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 
+/**
+ * A WHEN alternative as the markup generator receives it: a condition, and the markup displayed when
+ * the condition is true.
+ */
 public class Conditional {
     private final BooleanExpression condition;
     private final Markup markup;
@@ -13,7 +17,7 @@ public class Conditional {
 
 
     public BooleanExpression getCondition() {
-        return condition;
+        return this.condition;
     }
 
     public Markup getMarkup() {
