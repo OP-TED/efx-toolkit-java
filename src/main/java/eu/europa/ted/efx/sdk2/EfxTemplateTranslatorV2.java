@@ -1265,7 +1265,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void exitLinkedTextBlock(LinkedTextBlockContext ctx) {
     var url = this.stack.pop(StringExpression.class);
-    var text = this.markup.renderFreeText(ctx.textBlock().getText(), this.translatorContext);
+    var text = this.markup.renderFreeText(this.markup.escapeSpecialCharacters(ctx.textBlock().getText()), this.translatorContext);
     this.stack.push(this.markup.renderHyperlink(text, url, this.translatorContext));
   }
 

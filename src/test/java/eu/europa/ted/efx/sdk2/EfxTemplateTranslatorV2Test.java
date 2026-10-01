@@ -329,6 +329,17 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLinkedTextBlock_WithSpecialCharacters_IsEscaped() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('see ')hyperlink(text('a&#60;b'), 'http://example.com') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("DISPLAY see a<b@{'http://example.com'};"));
+  }
+
+  @Test
   void testLinkedLabelBlock() {
     assertEquals(
         lines(
