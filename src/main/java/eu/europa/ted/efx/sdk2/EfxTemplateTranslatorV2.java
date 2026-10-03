@@ -519,6 +519,12 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
+
+    // New in EFX-2: Pluralisation of labels based on a supplied quantity.
+    // The quantity is on top of the stack, above the assetId, so it is popped first.
+    NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class)
+        : NumericExpression.empty();
+
     if (!this.stack.empty() && StringSequenceExpression.class.isAssignableFrom(this.stack.peek().getClass()) && ctx.assetId() != null) {
 
       // TODO: Review this in EFX-2
@@ -533,14 +539,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       // The only restriction is that the assetType and labelType must be the same for all labels in the sequence.
 
       StringSequenceExpression assetIdSequence = this.stack.pop(StringSequenceExpression.class);
-      this.exitStandardLabelReference(ctx, assetIdSequence);  // TODO: pluralisation is not addressed here yet
+      this.exitStandardLabelReference(ctx, assetIdSequence, quantity);
     } else {
 
       // Standard implementation as originally intended by EFX 1
-
-      // New in EFX-2: Pluralisation of labels based on a supplied quantity
-      NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class)
-          : NumericExpression.empty();
 
       StringExpression assetId = ctx.assetId() != null ? this.stack.pop(StringExpression.class)
           : this.script.getStringLiteralFromUnquotedString("");
@@ -571,8 +573,11 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
    * 
    * @param ctx             The ParserRuleContext of the standard label reference.
    * @param assetIdSequence The sequence of assetIds for the labels to render.
+   * @param quantity        The quantity used to select the plural form of the labels, or an
+   *                        empty expression if no pluraliser was given.
    */
-  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringSequenceExpression assetIdSequence) {
+  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringSequenceExpression assetIdSequence,
+      NumericExpression quantity) {
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
     StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
@@ -595,7 +600,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
                 new StringExpression(loopVariable.referenceExpression.getScript()))),
             StringSequenceExpression.class),
         StringSequenceExpression.class);
-    this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
+    this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, quantity));
   }
 
 
