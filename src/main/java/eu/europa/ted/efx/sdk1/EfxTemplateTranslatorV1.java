@@ -97,8 +97,9 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     TABS, SPACES, UNDETERMINED
   }
 
-  private Indent indentWith = Indent.UNDETERMINED;
-  private int indentSpaces = -1;
+  // Set by the first indented line of each template.
+  private Indent indentWith;
+  private int indentSpaces;
 
   /**
    * The MarkupGenerator is called to retrieve markup in the target template language when needed.
@@ -106,7 +107,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   MarkupGenerator markup;
 
   // EFX 1 templates have a single section. Its top-level template lines are added to its root block.
-  final ViewTemplateSection section = new ViewTemplateSection(TemplateSection.DEFAULT, "block");
+  ViewTemplateSection section;
 
   /**
    * The block stack is used to keep track of the indentation of template lines and adjust the EFX
@@ -204,10 +205,19 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
     assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+    this.section = new ViewTemplateSection(TemplateSection.DEFAULT, "block");
+    this.indentWith = Indent.UNDETERMINED;
+    this.indentSpaces = -1;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
+    // The end of the file closes the levels still open, as a line back at level 0 would: the block of
+    // each nested level and its stack frame.
+    while (this.blockStack.currentIndentationLevel() > 0) {
+      this.blockStack.pop();
+      this.stack.popStackFrame();
+    }
     this.blockStack.pop();
 
     List<Markup> templates = new ArrayList<>();

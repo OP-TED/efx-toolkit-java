@@ -23,6 +23,9 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTranslator;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.component.EfxTranslatorFactory;
+import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
+import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
@@ -34,6 +37,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Override
   protected String getSdkVersion() {
     return "eforms-sdk-2.0";
+  }
+
+  @Test
+  void testTranslatorReused_WithAnotherIndentation() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("{BT-00-Text} foo", "  {ND-Root} bar") + "\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar")),
+        translator.renderTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar") + "\n", DEFAULT_OPTIONS));
   }
 
   // #region Core Template Structure -------------------------------------------

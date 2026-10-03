@@ -5,8 +5,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.component.EfxTranslatorFactory;
+import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
+import eu.europa.ted.efx.mock.DependencyFactoryMock;
 
 class EfxTemplateTranslatorV1Test extends EfxTestsBase {
+
+  @Test
+  void testTranslatorReused_DoesNotKeepThePreviousTemplate() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate("{BT-00-Text} foo\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate("{BT-00-Text} bar"), translator.renderTemplate("{BT-00-Text} bar\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_WithAnotherIndentation() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("{BT-00-Text} foo", "  {ND-Root} bar") + "\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar")),
+        translator.renderTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar") + "\n", DEFAULT_OPTIONS));
+  }
   @Override
   protected String getSdkVersion() {
     return "eforms-sdk-1.0";

@@ -123,8 +123,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     TABS, SPACES, UNDETERMINED
   }
 
-  private Indent indentWith = Indent.UNDETERMINED;
-  private int indentSpaces = -1;
+  // Set by the first indented line of each template.
+  private Indent indentWith;
+  private int indentSpaces;
 
   /**
    * The MarkupGenerator is called to retrieve markup in the target template language when needed.
@@ -430,12 +431,19 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     assert this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
     this.viewTemplate = new ViewTemplate();
     this.translatorContext = new TranslatorContext();
+    this.indentWith = Indent.UNDETERMINED;
+    this.indentSpaces = -1;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
-    // if there are no template lines the blockStack will be empty, 
-    // otherwise there will be one block left: the one created when exiting the previous line; so we just remove it here.
+    // The end of the file closes the levels still open, as a line back at level 0 would: the block of
+    // each nested level and its stack frame.
+    while (this.blockStack.currentIndentationLevel() > 0) {
+      this.blockStack.pop();
+      this.stack.popStackFrame();
+    }
+    // If there are template lines, the top-level block of the last one is left; so we remove it here.
     if (!this.blockStack.isEmpty()) {
       this.blockStack.pop();
     }
