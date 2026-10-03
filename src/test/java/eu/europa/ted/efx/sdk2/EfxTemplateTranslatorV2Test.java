@@ -1158,6 +1158,28 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLabelBlock_StandardLabelReferenceWithSequenceOfAssetIds() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ('BT-00-Text','BT-00-Number') return concat('field', '|', 'name', '|', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{field|name|${['BT-00-Text', 'BT-00-Number']}}"));
+  }
+
+  @Test
+  void testLabelBlock_StandardLabelReferenceWithSequenceOfAssetIdsAndPluraliser() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ('BT-00-Text','BT-00-Number') return concat('field', '|', 'name', '|', $item)), ../NumberField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{field|name|${['BT-00-Text', 'BT-00-Number']};${BT-00-Number}}"));
+  }
+
+  @Test
   void testStandardLabelReference_UsingLabelTypeAsAssetId() {
     assertEquals(
         lines(
