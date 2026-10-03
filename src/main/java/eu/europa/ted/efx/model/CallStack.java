@@ -57,9 +57,9 @@ public class CallStack {
 
   /**
    * Tracks the current parser rule context for error reporting.
-   * Mirrors the ANTLR parse tree walk via {@link #pushContext} / {@link #popContext}.
+   * Mirrors the ANTLR parse tree walk via {@link #pushParserContext} / {@link #popParserContext}.
    */
-  private final Deque<ParserRuleContext> contextStack = new ArrayDeque<>();
+  private final Deque<ParserRuleContext> parserContextStack = new ArrayDeque<>();
 
   /**
    * Stack frames are means of controlling the scope of variables and parameters.
@@ -107,10 +107,10 @@ public class CallStack {
         if (typeChecker.canConvert(actual, expected)) {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.pop(), expected));
         }
-        throw TypeMismatchException.cannotConvert(currentContext(), expected, actual);
+        throw TypeMismatchException.cannotConvert(CallStack.this.peekParserContext(), expected, actual);
       }
 
-      throw TypeMismatchException.cannotConvert(currentContext(), expectedType, actualType);
+      throw TypeMismatchException.cannotConvert(CallStack.this.peekParserContext(), expectedType, actualType);
     }
 
     synchronized <T extends ParsedEntity> T peek(Class<T> expectedType) {
@@ -126,7 +126,7 @@ public class CallStack {
           return expectedType.cast(TypedExpression.from((TypedExpression) this.peek(), expected));
         }
       }
-      throw TypeMismatchException.cannotConvert(currentContext(), expectedType, actualType);
+      throw TypeMismatchException.cannotConvert(CallStack.this.peekParserContext(), expectedType, actualType);
     }
 
     /**
@@ -169,25 +169,28 @@ public class CallStack {
   }
 
   /**
-   * Pushes a parser rule context onto the context stack.
+   * Pushes a parser rule context onto the parser context stack.
    * Called by the translator's {@code enterEveryRule}.
    */
-  public void pushContext(final ParserRuleContext context) {
-    this.contextStack.push(context);
+  public void pushParserContext(final ParserRuleContext context) {
+    this.parserContextStack.push(context);
   }
 
   /**
-   * Pops the current parser rule context from the context stack.
+   * Pops the current parser rule context from the parser context stack.
    * Called by the translator's {@code exitEveryRule}.
    */
-  public void popContext() {
-    if (!this.contextStack.isEmpty()) {
-      this.contextStack.pop();
+  public void popParserContext() {
+    if (!this.parserContextStack.isEmpty()) {
+      this.parserContextStack.pop();
     }
   }
 
-  private ParserRuleContext currentContext() {
-    return this.contextStack.isEmpty() ? null : this.contextStack.peek();
+  /**
+   * Returns the parser rule context the walk is in, without removing it from the parser context stack.
+   */
+  public ParserRuleContext peekParserContext() {
+    return this.parserContextStack.isEmpty() ? null : this.parserContextStack.peek();
   }
 
   /**
@@ -230,7 +233,7 @@ public class CallStack {
    */
   public void declareIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), identifier.name);
     }
     this.frames.peek().declareIdentifier(identifier);
   }
@@ -242,21 +245,21 @@ public class CallStack {
    */
   public void declareGlobalIdentifier(Identifier identifier) {
     if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), identifier.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), identifier.name);
     }
     this.globalIdentifierRegistry.put(identifier.name, identifier);
   }
 
   public void declareFunction(Function function) {
     if (this.inScope(function.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), function.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), function.name);
     }
     this.globalIdentifierRegistry.put(function.name, function);
   }
 
   public void declareTemplate(Template template) {
     if (this.inScope(template.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.currentContext(), template.name);
+      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), template.name);
     }
     this.globalIdentifierRegistry.put(template.name, template);
   }
@@ -355,7 +358,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
         .filter(Function.class::isInstance)
         .map(Function.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), functionName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), functionName));
   }
 
   /**
@@ -370,7 +373,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(templateName))
         .filter(Template.class::isInstance)
         .map(Template.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), templateName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), templateName));
   }
 
   /**
@@ -385,7 +388,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(dictionaryName))
         .filter(Dictionary.class::isInstance)
         .map(Dictionary.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), dictionaryName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), dictionaryName));
   }
 
   /**
@@ -399,7 +402,7 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
       .filter(Function.class::isInstance)
       .map(identifier -> ((Function) identifier).parameters)
-      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), functionName));
+      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), functionName));
   }
 
   /**
@@ -418,7 +421,7 @@ public class CallStack {
     Optional<Identifier> identifier = this.getIdentifier(identifierName)
         .or(() -> Optional.ofNullable((Identifier) this.getFunction(identifierName)));
     if (!identifier.isPresent()) {
-      throw InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), identifierName);
+      throw InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), identifierName);
     }
     return identifier.get().dataType;
   }
@@ -437,7 +440,7 @@ public class CallStack {
         () -> getVariable(identifierName).ifPresentOrElse(
             variable -> this.push(variable.referenceExpression),
             () -> {
-              throw InvalidIdentifierException.undeclaredIdentifier(this.currentContext(), identifierName);
+              throw InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), identifierName);
             }));
   }
 
@@ -490,7 +493,7 @@ public class CallStack {
     if (item instanceof TypedExpression) {
       return (TypedExpression) item;
     }
-    throw TypeMismatchException.cannotConvert(this.currentContext(), TypedExpression.class, item.getClass());
+    throw TypeMismatchException.cannotConvert(this.peekParserContext(), TypedExpression.class, item.getClass());
   }
 
   /**

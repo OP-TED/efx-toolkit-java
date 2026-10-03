@@ -612,7 +612,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(ctx, fieldId, quantity);
+      this.shorthandIndirectLabelReference(fieldId, quantity);
     } else {
       StringExpression key = this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -627,10 +627,10 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
     // New in EFX-2: Pluralisation of labels based on a supplied quantity
     NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : NumericExpression.empty();
-    this.shorthandIndirectLabelReference(ctx, ctx.FieldId().getText(), quantity);
+    this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
   }
 
-  private void shorthandIndirectLabelReference(ParserRuleContext ctx, final String fieldId, final NumericExpression quantity) {
+  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression quantity) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final PathExpression valueReference = this.symbols.isAttributeField(fieldId)
@@ -685,7 +685,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         break;
       }
       default:
-        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(ctx, fieldId, fieldType);
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(this.stack.peekParserContext(), fieldId, fieldType);
     }
   }
 
@@ -706,7 +706,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol(), quantity);
+        this.shorthandIndirectLabelReference(this.efxContext.symbol(), quantity);
       } else {
         StringExpression key = this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -738,7 +738,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (!this.efxContext.isFieldContext()) {
       throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "#value");
     }
-    this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol(), NumericExpression.empty());
+    this.shorthandIndirectLabelReference(this.efxContext.symbol(), NumericExpression.empty());
   }
 
   @Override
