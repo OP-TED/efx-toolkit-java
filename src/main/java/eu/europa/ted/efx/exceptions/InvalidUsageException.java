@@ -34,7 +34,10 @@ public class InvalidUsageException extends EfxCompilationException {
         EMPTY_RULES_FILE,
         NOT_A_DYNAMIC_FUNCTION,
         DYNAMIC_FUNCTION_OUTSIDE_RULE,
-        INVALID_ENDPOINT_NAME
+        INVALID_ENDPOINT_NAME,
+        INVALID_FORMAT_OPTIONS,
+        UNIT_FOR_LIST,
+        NO_UNIT_NOT_APPLICABLE
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -49,6 +52,9 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String NOT_A_DYNAMIC_FUNCTION = "Function '%s' is not declared as a dynamic function. Only functions declared with CALL API can be used in a dynamic variable initializer.";
     private static final String DYNAMIC_FUNCTION_OUTSIDE_RULE = "Dynamic function '%s' can only be called inline within a rule expression (ASSERT/REPORT). Use 'LET dynamic : $var = ?%s(...)' to declare a dynamic variable at this scope.";
     private static final String INVALID_ENDPOINT_NAME = "Endpoint name '%s' is not valid. Endpoint names must start with a letter and contain only letters, digits, hyphens, and underscores.";
+    private static final String INVALID_FORMAT_OPTIONS = "A number of decimals can only format a number, and short, medium or long only a date or a time.";
+    private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
+    private static final String NO_UNIT_NOT_APPLICABLE = "no-unit can only be used for an amount, a measure or a duration.";
 
     private final ErrorCode errorCode;
 
@@ -112,5 +118,17 @@ public class InvalidUsageException extends EfxCompilationException {
 
     public static InvalidUsageException invalidEndpointName(ParserRuleContext ctx, String endpointName) {
         return new InvalidUsageException(ErrorCode.INVALID_ENDPOINT_NAME, ctx, INVALID_ENDPOINT_NAME, endpointName);
+    }
+
+    public static InvalidUsageException invalidFormatOptions(ParserRuleContext ctx) {
+        return new InvalidUsageException(ErrorCode.INVALID_FORMAT_OPTIONS, ctx, INVALID_FORMAT_OPTIONS);
+    }
+
+    public static InvalidUsageException unitForList(ParserRuleContext ctx) {
+        return new InvalidUsageException(ErrorCode.UNIT_FOR_LIST, ctx, UNIT_FOR_LIST);
+    }
+
+    public static InvalidUsageException noUnitNotApplicable(ParserRuleContext ctx) {
+        return new InvalidUsageException(ErrorCode.NO_UNIT_NOT_APPLICABLE, ctx, NO_UNIT_NOT_APPLICABLE);
     }
 }

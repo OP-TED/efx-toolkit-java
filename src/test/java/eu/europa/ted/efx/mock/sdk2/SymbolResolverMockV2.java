@@ -57,7 +57,7 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
 
     this.noticeTypesById = createMockNoticeTypes();
 
-    this.dataTypeById = SdkDataTypeRepository.createDefault();
+    this.dataTypeById = new SdkDataTypeRepository(SDK_VERSION);
   }
 
   private static Entry<String, SdkCodelist> buildCodelistMock(final String codelistId,
@@ -72,7 +72,10 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
         buildCodelistMock("authority-activity", Optional.of("main-activity")),
         buildCodelistMock("main-activity", Optional.empty()),
         buildCodelistMock("legal-basis-1", Optional.empty()),
-        buildCodelistMock("indicator", Optional.empty())));
+        buildCodelistMock("indicator", Optional.empty()),
+        buildCodelistMock("currency", Optional.empty()),
+        buildCodelistMock("duration-unit", Optional.of("timeperiod")),
+        buildCodelistMock("timeperiod", Optional.empty())));
   }
 
   private Map<String, SdkNoticeSubtype> createMockNoticeTypes() {

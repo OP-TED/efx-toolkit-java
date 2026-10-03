@@ -508,6 +508,19 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   @Override
+  public String getAttributeOfField(final String fieldId, final String attributeName) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+    final SdkField attributeField = sdkField.getAttributeField(attributeName);
+    if (attributeField == null) {
+      throw SymbolResolutionException.noAttributeForField(fieldId, attributeName);
+    }
+    return attributeField.getId();
+  }
+
+  @Override
   public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(final String fieldId) {
     final SdkField sdkField = this.resolveField(fieldId);
     if (sdkField == null) {
@@ -744,11 +757,16 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
 
-    final SdkDataType dataType = this.dataTypeById(sdkField.getType());
+    return this.getDataType(sdkField.getType()).getPrivacyMask();
+  }
+
+  @Override
+  public SdkDataType getDataType(final String dataTypeId) {
+    final SdkDataType dataType = this.dataTypeById(dataTypeId);
     if (dataType == null) {
-      throw SdkInconsistencyException.unknownDataType(sdkField.getType());
+      throw SdkInconsistencyException.unknownDataType(dataTypeId);
     }
-    return dataType.getPrivacyMask();
+    return dataType;
   }
 
   // #endregion Symbol resolution --------------------------------------------

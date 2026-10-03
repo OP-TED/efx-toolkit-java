@@ -25,6 +25,7 @@ public class SymbolResolutionException extends EfxCompilationException {
         UNKNOWN_SYMBOL,
         UNKNOWN_CODELIST,
         NO_CODELIST_FOR_FIELD,
+        NO_ATTRIBUTE_FOR_FIELD,
         ROOT_NODE_NOT_FOUND,
         UNKNOWN_NOTICE_SUBTYPE
     }
@@ -32,6 +33,7 @@ public class SymbolResolutionException extends EfxCompilationException {
     private static final String UNKNOWN_SYMBOL = "Unknown symbol '%s'.";
     private static final String UNKNOWN_CODELIST = "Unknown codelist '%s'.";
     private static final String NO_CODELIST_FOR_FIELD = "Field '%s' is not associated with a codelist.";
+    private static final String NO_ATTRIBUTE_FOR_FIELD = "Field '%s' has no attribute field for the attribute '%s'.";
     private static final String ROOT_NODE_NOT_FOUND = "Could not find the root node. Check that node metadata is loaded correctly.";
     private static final String UNKNOWN_NOTICE_SUBTYPE = "Unknown notice subtype '%s' in range '%s'.";
 
@@ -61,6 +63,10 @@ public class SymbolResolutionException extends EfxCompilationException {
 
     public static SymbolResolutionException noCodelistForField(String fieldId) {
         return new SymbolResolutionException(ErrorCode.NO_CODELIST_FOR_FIELD, NO_CODELIST_FOR_FIELD, fieldId);
+    }
+
+    public static SymbolResolutionException noAttributeForField(String fieldId, String attributeName) {
+        return new SymbolResolutionException(ErrorCode.NO_ATTRIBUTE_FOR_FIELD, NO_ATTRIBUTE_FOR_FIELD, fieldId, attributeName);
     }
 
     public static SymbolResolutionException rootNodeNotFound() {

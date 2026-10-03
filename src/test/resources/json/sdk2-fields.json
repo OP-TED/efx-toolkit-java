@@ -248,7 +248,27 @@
       "type": "duration",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/DurationField",
-      "xpathRelative": "PathNode/DurationField"
+      "xpathRelative": "PathNode/DurationField",
+      "attributes": [
+        "BT-00-Duration-Unit"
+      ]
+    },
+    {
+      "id": "BT-00-Duration-Unit",
+      "alias": "durationUnitField",
+      "type": "code",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/DurationField/@unitCode",
+      "xpathRelative": "PathNode/DurationField/@unitCode",
+      "attributeOf": "BT-00-Duration",
+      "attributeName": "unitCode",
+      "codeList": {
+        "value": {
+          "id": "duration-unit",
+          "type": "flat",
+          "parentId": "timeperiod"
+        }
+      }
     },
     {
       "id": "BT-00-Integer",
@@ -264,7 +284,26 @@
       "type": "amount",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/AmountField",
-      "xpathRelative": "PathNode/AmountField"
+      "xpathRelative": "PathNode/AmountField",
+      "attributes": [
+        "BT-00-Amount-Currency"
+      ]
+    },
+    {
+      "id": "BT-00-Amount-Currency",
+      "alias": "amountCurrencyField",
+      "type": "code",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/AmountField/@currencyID",
+      "xpathRelative": "PathNode/AmountField/@currencyID",
+      "attributeOf": "BT-00-Amount",
+      "attributeName": "currencyID",
+      "codeList": {
+        "value": {
+          "id": "currency",
+          "type": "flat"
+        }
+      }
     },
     {
       "id": "BT-00-Url",
@@ -431,6 +470,29 @@
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableDurationField",
       "xpathRelative": "PathNode/RepeatableDurationField",
+      "repeatable": {
+        "value": true
+      },
+      "attributes": [
+        "BT-00-Repeatable-Duration-Unit"
+      ]
+    },
+    {
+      "id": "BT-00-Repeatable-Duration-Unit",
+      "alias": "repeatableDurationUnitField",
+      "type": "code",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/RepeatableDurationField/@unitCode",
+      "xpathRelative": "PathNode/RepeatableDurationField/@unitCode",
+      "attributeOf": "BT-00-Repeatable-Duration",
+      "attributeName": "unitCode",
+      "codeList": {
+        "value": {
+          "id": "duration-unit",
+          "type": "flat",
+          "parentId": "timeperiod"
+        }
+      },
       "repeatable": {
         "value": true
       }

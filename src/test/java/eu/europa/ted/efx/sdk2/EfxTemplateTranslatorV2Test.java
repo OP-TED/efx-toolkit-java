@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Locale;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
+import eu.europa.ted.efx.exceptions.EfxCompilationException;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.EfxTranslator;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
@@ -138,7 +140,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let complex-template(string:first, decimal:second, boolean:third) -> { text('Values: ')eval($first)text(', ')eval($second)text(', ')eval($third) }",
+            "let complex-template(string:first, decimal:second, boolean:third) -> { text('Values: ')eval($first)text(', ')eval(for $item in $second return format-number($item, '# ##0,#########'))text(', ')eval($third) }",
             "let body01() -> { call(complex-template(string:first='test', decimal:second=42, boolean:third=true())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
@@ -152,7 +154,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
+            "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval(for $item in $num return format-number($item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($item, '# ##0,#########'))eval(for $code in for $item in $dur return (if ((years-from-duration($item) * 12 + months-from-duration($item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $code in for $item in $dur return (if ((years-from-duration($item) * 12 + months-from-duration($item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
             "let body01() -> { call(all-types-template(string:str='text', decimal:num=123, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D'))) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
@@ -239,7 +241,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { eval(./number())text(' + ')eval(./number())text(' = ')eval(./number() + ./number()) }",
+            "let body01() -> { eval(for $item in ./number() return format-number($item, '# ##0,#########'))text(' + ')eval(for $item in ./number() return format-number($item, '# ##0,#########'))text(' = ')eval(for $item in ./number() + ./number() return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*/PathNode/NumberField).call(body01())"),
         translateTemplate("{BT-00-Number} ${BT-00-Number} + ${BT-00-Number} = ${BT-00-Number + BT-00-Number}"));
@@ -495,7 +497,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:", 
             "let dic index /*/PathNode/NumberField by ../TextField/normalize-space(text());",
             "TEMPLATES:",
-            "let body01() -> { eval(key('dic', 'key')) }",
+            "let body01() -> { eval(for $item in key('dic', 'key') return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -529,7 +531,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "string*:items=('a','b','c')",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($items)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($items) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -544,7 +546,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "decimal*:nums=(1,2,3)",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($nums)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($nums) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -559,7 +561,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "boolean*:flags=(true(),false())",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($flags)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($flags) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -574,7 +576,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "date*:dates=(xs:date('2024-01-01Z'),xs:date('2024-12-31Z'))",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($dates)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($dates) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -589,7 +591,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "time*:times=(xs:time('10:00:00Z'),xs:time('18:00:00Z'))",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($times)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($times) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -604,7 +606,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "duration*:durs=(xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M'))",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count($durs)) }",
+            "let body01() -> { text('count: ')eval(for $item in count($durs) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -623,7 +625,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "string*:getItems() -> { ('a','b','c') }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getItems())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getItems()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -638,7 +640,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "decimal*:getNumbers() -> { (1,2,3) }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getNumbers())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getNumbers()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -653,7 +655,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "boolean*:getFlags() -> { (true(),false()) }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getFlags())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getFlags()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -668,7 +670,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "date*:getDates() -> { (xs:date('2024-01-01Z'),xs:date('2024-12-31Z')) }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getDates())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getDates()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -683,7 +685,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "time*:getTimes() -> { (xs:time('10:00:00Z'),xs:time('18:00:00Z')) }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getTimes())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getTimes()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -698,7 +700,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "GLOBALS:",
             "duration*:getDurations() -> { (xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')) }",
             "TEMPLATES:",
-            "let body01() -> { text('count: ')eval(count(udf:getDurations())) }",
+            "let body01() -> { text('count: ')eval(for $item in count(udf:getDurations()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
@@ -1549,6 +1551,482 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   // #endregion Formatting functions ---------------------------------------------
 
+  // #region Formatted expression blocks -------------------------------------------
+
+  // Without options, a value is formatted according to its type.
+
+  @Test
+  void testFormattedExpressionBlock_Number_HasUpToNineDecimals() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() return format-number($item, '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_Date_IsShort() {
+    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartDate)}"),
+        translateTemplate("{/} ${BT-00-StartDate}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_Time_IsShort() {
+    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartTime)}"),
+        translateTemplate("{/} ${BT-00-StartTime}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_Text_IsDisplayedAsItIs() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/TextField/normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Text}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NumericExpression_HasUpToNineDecimals() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() * 2 return format-number($item, '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number * 2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_Duration_DisplaysItsNumberAndUnit() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/DurationField/number() return format-number($item, '# ##0,#########'))eval(for $code in PathNode/DurationField/@unitCode return ' ')label(for $code in PathNode/DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod.', $code), PathNode/DurationField/number()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Duration}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_CalculatedDuration_DisplaysMonthsOrDays() {
+    final String duration = "xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text()))";
+    final String months = "(years-from-duration(" + duration + ") * 12 + months-from-duration(" + duration + "))";
+    final String number = "(if (" + months + " != 0) then " + months + " else days-from-duration(" + duration + "))";
+    final String unitCode = "for $item in " + duration + " return (if ((years-from-duration($item) * 12"
+        + " + months-from-duration($item)) != 0) then 'MONTH' else 'DAY')";
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in " + number + " return format-number($item, '# ##0,#########'))"
+                + "eval(for $code in " + unitCode + " return ' ')"
+                + "label(for $code in " + unitCode + " return concat('code', '|', 'name', '|', 'timeperiod.', $code), "
+                + number + ") }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} ${BT-00-EndDate - BT-00-StartDate}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_ContextFieldValue() {
+    assertEquals(translateTemplate("{BT-00-Number} ${BT-00-Number}"),
+        translateTemplate("{BT-00-Number} $value"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_ContextDurationFieldValue_DisplaysItsNumberAndUnit() {
+    assertEquals(translateTemplate("{BT-00-Duration} ${BT-00-Duration}"),
+        translateTemplate("{BT-00-Duration} $value"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_AttributeField() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/CodeField/@attribute) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-CodeAttribute}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_ContextAttributeFieldValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(../@attribute) }",
+            "MAIN:",
+            "for-each(/*/PathNode/CodeField/@attribute).call(body01())"),
+        translateTemplate("{BT-00-CodeAttribute} $value"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_AttributeField() {
+    assertEquals(translateTemplate("{/} ${BT-00-CodeAttribute}"),
+        translateTemplate("{/} ${BT-00-CodeAttribute|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_ContextFieldValue_WithNodeContext_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{ND-Root} $value"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_WithHyperlink() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { hyperlink(eval(for $item in PathNode/NumberField/number() return format-number($item, '# ##0,#########')), 'http://example.com') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number}@{'http://example.com'}"));
+  }
+
+  // Dates and times: the options give the same result as the format-short/medium/long functions.
+
+  @Test
+  void testFormattedExpressionBlock_DateShort() {
+    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartDate)}"),
+        translateTemplate("{/} ${BT-00-StartDate|short}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DateMedium() {
+    assertEquals(translateTemplate("{/} ${format-medium(BT-00-StartDate)}"),
+        translateTemplate("{/} ${BT-00-StartDate|medium}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DateLong() {
+    assertEquals(translateTemplate("{/} ${format-long(BT-00-StartDate)}"),
+        translateTemplate("{/} ${BT-00-StartDate|long}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_TimeLong() {
+    assertEquals(translateTemplate("{/} ${format-long(BT-00-StartTime)}"),
+        translateTemplate("{/} ${BT-00-StartTime|long}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_WithSurroundingText() {
+    assertEquals(translateTemplate("{/} Date: ${format-medium(BT-00-StartDate)} end"),
+        translateTemplate("{/} Date: ${BT-00-StartDate|medium} end"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_WithOptionsAndHyperlink() {
+    assertEquals(translateTemplate("{/} ${format-medium(BT-00-StartDate)}@{'http://example.com'}"),
+        translateTemplate("{/} ${BT-00-StartDate|medium}@{'http://example.com'}"));
+  }
+
+  // Numbers: the options give the same result as format-number.
+
+  @Test
+  void testFormattedExpressionBlock_NumberWithDecimals() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() return format-number($item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NumberWithoutDecimals() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() return format-number($item, '# ##0')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number|0}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NumberWithNineDecimals() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() return format-number($item, '# ##0,000000000')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number|9}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_MoreThanNineDecimals_IsSyntaxError() {
+    assertThrows(ParseCancellationException.class, () -> translateTemplate("{/} ${BT-00-Number|10}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_WhitespaceAroundThePipe() {
+    assertEquals(translateTemplate("{/} ${BT-00-Number|2}"),
+        translateTemplate("{/} ${BT-00-Number | 2}"));
+  }
+
+  // Units.
+
+  @Test
+  void testFormattedExpressionBlock_Amount_DisplaysItsCurrency() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/AmountField/number() return format-number($item, '# ##0,00'))eval(for $code in PathNode/AmountField/@currencyID return ' ')label(for $code in PathNode/AmountField/@currencyID return concat('code', '|', 'name', '|', 'currency.', $code), PathNode/AmountField/number()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Amount|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_AmountWithoutUnit() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/AmountField/number() return format-number($item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Amount|2 no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DurationWithoutUnit_DisplaysItsNumber() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/DurationField/number() return format-number($item, '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Duration|no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoUnitOnNumber_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Number|2 no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoUnitOnDate_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-StartDate|medium no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoUnitOnText_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Text|no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_UnitOfRepeatableField_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Repeatable-Duration}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_RepeatableFieldWithoutUnit_FormatsEachValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/RepeatableDurationField/number() return format-number($item, '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Duration|no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_CalculatedDurationsWithoutUnit_FormatsEachValue() {
+    final String months = "(years-from-duration($item) * 12 + months-from-duration($item))";
+    final String number = "(if (" + months + " != 0) then " + months + " else days-from-duration($item))";
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in (xs:dayTimeDuration('P1D'),xs:yearMonthDuration('P2M')) return format-number("
+                + number + ", '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${[P1D, P2M]|no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_RepeatableDurationFieldWithPredicateWithoutUnit_FormatsEachValue() {
+    final String durations = "(for $F in PathNode/RepeatableDurationField[true()] return (if ($F/@unitCode='WEEK')"
+        + " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))"
+        + " else if ($F/@unitCode='DAY') then xs:dayTimeDuration(concat('P', $F/number(), 'D'))"
+        + " else if ($F/@unitCode='YEAR') then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))"
+        + " else if ($F/@unitCode='MONTH') then xs:yearMonthDuration(concat('P', $F/number(), 'M')) else ()))";
+    final String months = "(years-from-duration($item) * 12 + months-from-duration($item))";
+    final String number = "(if (" + months + " != 0) then " + months + " else days-from-duration($item))";
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in " + durations + " return format-number(" + number
+                + ", '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Duration[TRUE]|no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_UnitOfCalculatedDurations_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${[P1D, P2M]}"));
+  }
+
+  // No formatting: the value is displayed as it is, without its unit.
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_Number() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/NumberField/text()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_Date() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/StartDateField/text()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-StartDate|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_AmountWithoutItsCurrency() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/AmountField/text()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Amount|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_Duration() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(PathNode/DurationField/text()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Duration|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_CalculatedDuration() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(xs:dayTimeDuration(PathNode/EndDateField/xs:date(text()) - PathNode/StartDateField/xs:date(text()))) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{ND-Root} ${BT-00-EndDate - BT-00-StartDate|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormatting_Text() {
+    assertEquals(translateTemplate("{/} ${BT-00-Text}"),
+        translateTemplate("{/} ${BT-00-Text|no-formatting}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoFormattingWithOtherOptions_IsSyntaxError() {
+    assertThrows(ParseCancellationException.class, () -> translateTemplate("{/} ${BT-00-Number|2 no-formatting}"));
+  }
+
+  // Expressions: formatted according to the type of their result.
+
+  @Test
+  void testFormattedExpressionBlock_NumericExpression() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/NumberField/number() * 2 return format-number($item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number * 2|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DateExpression() {
+    assertEquals(translateTemplate("{/} ${format-medium(date('2026-02-15'))}"),
+        translateTemplate("{/} ${date('2026-02-15')|medium}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_TimeExpression() {
+    assertEquals(translateTemplate("{/} ${format-long(time('14:30:00Z'))}"),
+        translateTemplate("{/} ${time('14:30:00Z')|long}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_ExpressionWithHyperlink() {
+    assertEquals(lines("TEMPLATES:",
+            "let body01() -> { hyperlink(eval(for $item in PathNode/NumberField/number() * 2 return format-number($item, '# ##0,00')), 'http://example.com') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Number * 2|2}@{'http://example.com'}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_TextExpression_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${'abc'|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DateStyleOnNumericExpression_IsError() {
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Number * 2|short}"));
+  }
+
+  // Sequences: each value is formatted.
+
+  @Test
+  void testFormattedExpressionBlock_RepeatableField_FormatsEachValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/RepeatableNumberField/number() return format-number($item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Number|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_RepeatableDate_FormatsEachValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/RepeatableDateField/xs:date(text()) return format-date($item, '[D01] [MNn,3-3] [Y0001]', 'en', (), ())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Date|medium}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_RepeatableTime_FormatsEachValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/RepeatableTimeField/xs:time(text()) return format-time($item, '[H01]:[m01]:[s01] [Z]')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Time|long}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_SequenceExpression_FormatsEachValue() {
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $item in PathNode/RepeatableNumberField[./number() > 1]/number() return format-number($item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-00-Repeatable-Number[BT-00-Repeatable-Number > 1]|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_TextSequence_IsError() {
+    assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("{/} ${BT-00-Repeatable-Text|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DecimalsOnDateField_IsError() {
+    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-StartDate|2}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DateStyleOnNumberField_IsError() {
+    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-Number|short}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_DecimalsOnTextField_IsError() {
+    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-Text|2}"));
+  }
+
+  // Labels: the expressions in a label are not formatted, and take no options.
+
+  @Test
+  void testFormattedExpressionBlock_OptionsInLabel_IsSyntaxError() {
+    assertThrows(ParseCancellationException.class, () -> translateTemplate("{/} #{${'field|name|BT-00-Text'|2}}"));
+  }
+
+  // #endregion Formatted expression blocks ----------------------------------------
+
   // #region Preferred language functions ----------------------------------------
 
   @Test
@@ -1770,7 +2248,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01(string:var1, decimal:var2) -> { text('Variables: ')eval($var1)text(', ')eval($var2) }",
+            "let body01(string:var1, decimal:var2) -> { text('Variables: ')eval($var1)text(', ')eval(for $item in $var2 return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:var1='hello', decimal:var2=42))"),
         translateTemplate("{text:$var1='hello', number:$var2=42, BT-00-Text} Variables: ${$var1}, ${$var2}"));
@@ -1809,7 +2287,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01(decimal:ctx) -> { text('Value plus one: ')eval($ctx + 1) }",
+            "let body01(decimal:ctx) -> { text('Value plus one: ')eval(for $item in $ctx + 1 return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*/SubNode/RepeatableInSubNode/Number).call(body01(decimal:ctx=.))"),
         result);
@@ -1979,7 +2457,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
+            "let body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval(for $item in $num return format-number($item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($item, '# ##0,#########'))eval(for $code in for $item in $dur return (if ((years-from-duration($item) * 12 + months-from-duration($item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $code in for $item in $dur return (if ((years-from-duration($item) * 12 + months-from-duration($item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
             "MAIN:",
             "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(
@@ -2144,7 +2622,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { text('Values: ')eval((1,2,3)) }",
+            "let body01() -> { text('Values: ')eval(for $item in (1,2,3) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate("{ND-Root} Values: ${[1,2,3]}"));
@@ -2155,7 +2633,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { text('Values: ')eval((1,2,PathNode/NumberField/number())) }",
+            "let body01() -> { text('Values: ')eval(for $item in (1,2,PathNode/NumberField/number()) return format-number($item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate("{ND-Root} Values: ${[1,2,BT-00-Number]}"));

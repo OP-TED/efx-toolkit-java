@@ -1889,34 +1889,29 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldId(ctx.fieldReference());
-    PathExpression result;
-    if (this.symbols.isAttributeField(fieldId)) {
-      result = this.script.composeFieldAttributeReference(
-          this.script.contextualizePath(
-              this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeNameFromAttributeField(fieldId),
-          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
-    } else {
-      result = this.script.composeFieldValueReference(path);
-    }
-    this.resolveAndPushFieldReference(result, fieldId);
+    this.resolveAndPushFieldReference(this.composeFieldValueReference(fieldId, path), fieldId);
   }
 
   @Override
   public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldId(ctx.fieldReference());
-    PathExpression result;
-    if (this.symbols.isAttributeField(fieldId)) {
-      result = this.script.composeFieldAttributeReference(
-          this.script.contextualizePath(
-              this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeNameFromAttributeField(fieldId),
-          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
-    } else {
-      result = this.script.composeFieldValueReference(path);
+    this.resolveAndPushFieldReference(this.composeFieldValueReference(fieldId, path), fieldId);
+  }
+
+  /**
+   * Returns the reference to the value of a field, given the path of the field. The value of an attribute
+   * field is its attribute, on the element of the field.
+   */
+  protected PathExpression composeFieldValueReference(final String fieldId, final PathExpression path) {
+    if (!this.symbols.isAttributeField(fieldId)) {
+      return this.script.composeFieldValueReference(path);
     }
-    this.resolveAndPushFieldReference(result, fieldId);
+    return this.script.composeFieldAttributeReference(
+        this.script.contextualizePath(
+            this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
+        this.symbols.getAttributeNameFromAttributeField(fieldId),
+        ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
   }
 
   /**
