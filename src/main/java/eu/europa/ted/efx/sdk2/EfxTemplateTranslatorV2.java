@@ -44,6 +44,7 @@ import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.interfaces.TemplateSection;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
+import eu.europa.ted.efx.model.CallStack;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.util.EfxProfilerReportGenerator;
 import eu.europa.ted.efx.util.TranslatorTimings;
@@ -218,6 +219,9 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     }
 
     final ParseTree tree = parser.templateFile();
+
+    // The declarations of a previous template must not be visible in this one.
+    this.stack = new CallStack();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(this, tree);

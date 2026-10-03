@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTranslator;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
@@ -46,6 +47,25 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     translator.renderTemplate(lines("{BT-00-Text} foo", "  {ND-Root} bar") + "\n", DEFAULT_OPTIONS);
     assertEquals(translateTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar")),
         translator.renderTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar") + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_WithTheSameDeclarations() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    final String template = lines("let text:$t = 'test';", "let template:greeting() display Hello;",
+        "display this is a ${$t};", "invoke greeting();");
+    translator.renderTemplate(template + "\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate(template), translator.renderTemplate(template + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_DoesNotKeepThePreviousDeclarations() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("let template:greeting() display Hello;", "invoke greeting();") + "\n",
+        DEFAULT_OPTIONS);
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate("invoke greeting();\n", DEFAULT_OPTIONS));
   }
 
   // #region Core Template Structure -------------------------------------------
