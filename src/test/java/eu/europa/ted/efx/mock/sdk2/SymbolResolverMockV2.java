@@ -57,7 +57,7 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
 
     this.noticeTypesById = createMockNoticeTypes();
 
-    this.dataTypeById = new SdkDataTypeRepository(SDK_VERSION);
+    this.dataTypeById = new SdkDataTypeRepository();
   }
 
   private static Entry<String, SdkCodelist> buildCodelistMock(final String codelistId,

@@ -99,7 +99,7 @@ public class SdkSymbolResolver extends XPathSymbolResolver {
 
     this.codelistById = new SdkCodelistRepository(sdkVersion, codelistsPath);
     this.noticeTypesById = new SdkNoticeTypeRepository(sdkVersion, noticeTypesPath);
-    this.dataTypeById = new SdkDataTypeRepository(sdkVersion);
+    this.dataTypeById = new SdkDataTypeRepository();
   }
 
   @Override
