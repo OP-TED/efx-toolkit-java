@@ -74,6 +74,7 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
         buildCodelistMock("legal-basis-1", Optional.empty()),
         buildCodelistMock("indicator", Optional.empty()),
         buildCodelistMock("currency", Optional.empty()),
+        buildCodelistMock("measurement-unit", Optional.empty()),
         buildCodelistMock("duration-unit", Optional.of("timeperiod")),
         buildCodelistMock("timeperiod", Optional.empty())));
   }

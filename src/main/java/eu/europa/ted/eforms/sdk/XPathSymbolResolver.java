@@ -521,6 +521,15 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   @Override
+  public String getFieldIdOfAttributeField(final String fieldId) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+    return sdkField.getAttributeOf();
+  }
+
+  @Override
   public PathExpression getAbsolutePathOfFieldWithoutTheAttribute(final String fieldId) {
     final SdkField sdkField = this.resolveField(fieldId);
     if (sdkField == null) {

@@ -178,6 +178,15 @@ public interface SymbolResolver {
   public String getAttributeOfField(final String fieldId, final String attributeName);
 
   /**
+   * Gets the identifier of the field that holds the given attribute field.
+   *
+   * @param fieldId The identifier of the attribute field.
+   * @return The identifier of the field that the attribute belongs to, or null if the given field is
+   *         not an attribute of another field.
+   */
+  public String getFieldIdOfAttributeField(final String fieldId);
+
+  /**
    * Gets the absolute path of the given field, without the attribute part.
    * This method is meant to be used with fields that point to an @attribute.
    * If the given field does not point to an @attribute then this method returns

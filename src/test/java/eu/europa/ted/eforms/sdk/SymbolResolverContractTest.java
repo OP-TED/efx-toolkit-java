@@ -555,6 +555,18 @@ public abstract class SymbolResolverContractTest {
     assertEquals("/*/PathNode/CodeField", path.getScript());
   }
 
+  @Test
+  @DisplayName("getFieldIdOfAttributeField returns the identifier of the field that holds the attribute")
+  protected void getFieldIdOfAttributeField_attributeField_returnsItsFieldId() {
+    assertEquals("BT-00-Duration", resolver.getFieldIdOfAttributeField("BT-00-Duration-Unit"));
+  }
+
+  @Test
+  @DisplayName("getFieldIdOfAttributeField returns null for a field that is not an attribute of another field")
+  protected void getFieldIdOfAttributeField_otherField_returnsNull() {
+    assertNull(resolver.getFieldIdOfAttributeField("BT-00-Duration"));
+  }
+
   // Alias resolution
 
   @Test

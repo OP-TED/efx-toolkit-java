@@ -1002,8 +1002,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
   }
 
-  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression quantity) {
+  /**
+   * Renders the label of the value of a code or indicator field. Without a pluraliser, the label of
+   * the unit of an amount, a measure or a duration is pluralised by the number that it is the unit of.
+   */
+  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression pluraliser) {
     final Context currentContext = this.efxContext.peek();
+    final NumericExpression quantity = pluraliser.isEmpty() ? this.composeQuantityOfUnit(fieldId) : pluraliser;
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final PathExpression valueReference = this.composeFieldValueReference(fieldId,
         this.symbols.getRelativePathOfField(fieldId, currentContext.symbol()));
@@ -1054,6 +1059,32 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       default:
         throw InvalidUsageException.shorthandRequiresCodeOrIndicator(this.stack.peekParserContext(), fieldId, fieldType);
     }
+  }
+
+  /**
+   * Returns the number that the given field is the unit of: the value of the amount, measure or
+   * duration that holds it as its attribute, on the same element. It is empty if the given field is not
+   * such a unit, or if that number repeats, because a label is pluralised by a single quantity.
+   */
+  private NumericExpression composeQuantityOfUnit(final String unitFieldId) {
+    final String fieldId = this.symbols.getFieldIdOfAttributeField(unitFieldId);
+    if (fieldId == null) {
+      return NumericExpression.empty();
+    }
+    switch (FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))) {
+      case DURATION:
+      case MEASURE:
+      case AMOUNT:
+        break;
+      default:
+        return NumericExpression.empty();
+    }
+    final PathExpression field = this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    if (field instanceof SequenceExpression) {
+      return NumericExpression.empty();
+    }
+    return TypedExpression.from(
+        this.script.composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
   }
 
   /**

@@ -1353,6 +1353,61 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceForUnit_IsPluralisedByItsNumber() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod', '.', $item)), ../DurationField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{BT-00-Duration-Unit}"));
+  }
+
+  @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceForCurrency_IsPluralisedByItsAmount() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../AmountField/@currencyID return concat('code', '|', 'name', '|', 'currency', '.', $item)), ../AmountField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{BT-00-Amount-Currency}"));
+  }
+
+  @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceForMeasureUnit_IsPluralisedByItsMeasure() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../MeasureField/@unitCode return concat('code', '|', 'name', '|', 'measurement-unit', '.', $item)), ../MeasureField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{BT-00-Measure-Unit}"));
+  }
+
+  @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceForUnit_WithPluraliser() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod', '.', $item)), ../NumberField/number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{BT-00-Duration-Unit;${BT-00-Number}}"));
+  }
+
+  @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceForUnitOfRepeatableField_IsNotPluralised() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../RepeatableDurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod', '.', $item))) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("{BT-00-Text}  #{BT-00-Repeatable-Duration-Unit}"));
+  }
+
+  @Test
   void testShorthandLabelReferenceFromContext_WithValueLabelTypeAndIndicatorField() {
     assertEquals(
         lines(
@@ -1417,6 +1472,17 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*/PathNode/CodeField).call(body01())"),
         translateTemplate("{BT-00-Code} #value"));
+  }
+
+  @Test
+  void testLabelBlock_ShorthandIndirectLabelReferenceFromContextField_WithUnitContext() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { label(distinct-values(for $item in ../@unitCode return concat('code', '|', 'name', '|', 'timeperiod', '.', $item)), ../number()) }",
+            "MAIN:",
+            "for-each(/*/PathNode/DurationField/@unitCode).call(body01())"),
+        translateTemplate("{BT-00-Duration-Unit} #value"));
   }
 
   @Test
