@@ -73,7 +73,7 @@
       "assert" : [ {
         "ruleId" : "R-C02-003",
         "nodes" : [ "ND-Root" ],
-        "codeLists" : [ "accessibility" ]
+        "codelists" : [ "accessibility" ]
       } ]
     },
     "requiredBy" : {

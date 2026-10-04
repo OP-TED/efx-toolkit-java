@@ -153,12 +153,12 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
 
   @Override
   public void enterEveryRule(final ParserRuleContext ctx) {
-    this.stack.pushContext(ctx);
+    this.stack.pushParserContext(ctx);
   }
 
   @Override
   public void exitEveryRule(final ParserRuleContext ctx) {
-    this.stack.popContext();
+    this.stack.popParserContext();
   }
 
   @Override
@@ -1889,34 +1889,29 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
   public void exitScalarFromFieldReference(ScalarFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldId(ctx.fieldReference());
-    PathExpression result;
-    if (this.symbols.isAttributeField(fieldId)) {
-      result = this.script.composeFieldAttributeReference(
-          this.script.contextualizePath(
-              this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeNameFromAttributeField(fieldId),
-          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
-    } else {
-      result = this.script.composeFieldValueReference(path);
-    }
-    this.resolveAndPushFieldReference(ctx, result, fieldId);
+    this.resolveAndPushFieldReference(this.composeFieldValueReference(fieldId, path), fieldId);
   }
 
   @Override
   public void exitSequenceFromFieldReference(SequenceFromFieldReferenceContext ctx) {
     PathExpression path = this.stack.pop(PathExpression.class);
     String fieldId = getFieldId(ctx.fieldReference());
-    PathExpression result;
-    if (this.symbols.isAttributeField(fieldId)) {
-      result = this.script.composeFieldAttributeReference(
-          this.script.contextualizePath(
-              this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
-          this.symbols.getAttributeNameFromAttributeField(fieldId),
-          ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
-    } else {
-      result = this.script.composeFieldValueReference(path);
+    this.resolveAndPushFieldReference(this.composeFieldValueReference(fieldId, path), fieldId);
+  }
+
+  /**
+   * Returns the reference to the value of a field, given the path of the field. The value of an attribute
+   * field is its attribute, on the element of the field.
+   */
+  protected PathExpression composeFieldValueReference(final String fieldId, final PathExpression path) {
+    if (!this.symbols.isAttributeField(fieldId)) {
+      return this.script.composeFieldValueReference(path);
     }
-    this.resolveAndPushFieldReference(ctx, result, fieldId);
+    return this.script.composeFieldAttributeReference(
+        this.script.contextualizePath(
+            this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId), this.efxContext.peek().absolutePath()),
+        this.symbols.getAttributeNameFromAttributeField(fieldId),
+        ScalarPath.fromFieldType.get(FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))));
   }
 
   /**
@@ -1943,7 +1938,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     PathExpression result = this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
         ctx.attributeReference().attributeName.getText(), StringPath.class);
     String fieldId = getFieldId(ctx.attributeReference().fieldReference());
-    this.resolveAndPushFieldReference(ctx, result, fieldId);
+    this.resolveAndPushFieldReference(result, fieldId);
   }
 
   @Override
@@ -1951,7 +1946,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     PathExpression result = this.script.composeFieldAttributeReference(this.stack.pop(PathExpression.class),
         ctx.attributeReference().attributeName.getText(), StringPath.class);
     String fieldId = getFieldId(ctx.attributeReference().fieldReference());
-    this.resolveAndPushFieldReference(ctx, result, fieldId);
+    this.resolveAndPushFieldReference(result, fieldId);
   }
 
   /**
@@ -1960,18 +1955,17 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    * is pushed as-is. In a late-bound context, the field's repeatability determines whether
    * a scalar or sequence path is pushed, and errors are raised for type mismatches.
    *
-   * @param ctx the parse tree context (for error reporting)
    * @param result the composed field/attribute path expression
    * @param fieldId the field identifier (used to check repeatability)
    */
-  private void resolveAndPushFieldReference(ParserRuleContext ctx, PathExpression result, String fieldId) {
+  private void resolveAndPushFieldReference(PathExpression result, String fieldId) {
     switch (this.currentCardinalityResolutionContext()) {
       case RESOLVED:
         this.stack.push(result);
         break;
       case RESOLVE_SCALAR:
         if (this.fieldMayReturnMultipleValues(fieldId)) {
-          throw this.fieldMayReturnMultipleValuesException(ctx, fieldId);
+          throw this.fieldMayReturnMultipleValuesException(fieldId);
         }
         this.stack.push(result);
         break;
@@ -2010,11 +2004,11 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
    * as a scalar. Returns {@link TypeMismatchException#fieldIsMultilingual} for multilingual fields,
    * or {@link TypeMismatchException#fieldMayRepeat} for structurally repeatable fields.
    */
-  private TypeMismatchException fieldMayReturnMultipleValuesException(ParserRuleContext ctx, String fieldId) {
+  private TypeMismatchException fieldMayReturnMultipleValuesException(String fieldId) {
     if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(this.symbols.getTypeOfField(fieldId))) {
-      return TypeMismatchException.fieldIsMultilingual(ctx, fieldId);
+      return TypeMismatchException.fieldIsMultilingual(this.stack.peekParserContext(), fieldId);
     }
-    return TypeMismatchException.fieldMayRepeat(ctx, fieldId, this.efxContext.symbol());
+    return TypeMismatchException.fieldMayRepeat(this.stack.peekParserContext(), fieldId, this.efxContext.symbol());
   }
 
   /**
@@ -2622,7 +2616,7 @@ public class EfxExpressionTranslatorV2 extends EfxBaseListener
     if (top instanceof SequenceExpression
         && this.currentCardinalityResolutionContext() == CardinalityResolutionContext.RESOLVE_SCALAR) {
       final String fieldId = getFieldId(ctx.fieldContext());
-      throw this.fieldMayReturnMultipleValuesException(ctx, fieldId);
+      throw this.fieldMayReturnMultipleValuesException(fieldId);
     }
     final PathExpression fieldPath = (PathExpression) this.stack.pop(top.getClass());
     this.stack.push(this.script.composeFieldRawValueReference(fieldPath));

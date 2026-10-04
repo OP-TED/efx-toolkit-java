@@ -19,6 +19,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -33,6 +34,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
@@ -57,21 +59,30 @@ import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericPath;
 import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
-import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
 import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.NumericSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
+import eu.europa.ted.efx.model.expressions.sequence.StringSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.templates.ContentTemplate;
 import eu.europa.ted.efx.model.templates.ContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.DisplayContentTemplate;
-import eu.europa.ted.efx.model.templates.ExpressionContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.FormatContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.FormatOptions;
+import eu.europa.ted.efx.model.templates.FormatOptions.DateTimeFormatOptions;
+import eu.europa.ted.efx.model.templates.FormatOptions.DateTimeStyle;
+import eu.europa.ted.efx.model.templates.FormatOptions.DefaultFormatOptions;
+import eu.europa.ted.efx.model.templates.FormatOptions.NoFormattingOptions;
+import eu.europa.ted.efx.model.templates.FormatOptions.NumberFormatOptions;
 import eu.europa.ted.efx.model.templates.HyperlinkContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.InvokeContentTemplate;
 import eu.europa.ted.efx.model.templates.LabelFromExpressionContentTemplateFragment;
@@ -83,6 +94,7 @@ import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.TemplateInvocation;
 import eu.europa.ted.efx.model.templates.ViewTemplate;
 import eu.europa.ted.efx.model.types.EfxDataType;
+import eu.europa.ted.efx.model.types.FieldTypes;
 import eu.europa.ted.efx.model.variables.Dictionary;
 import eu.europa.ted.efx.model.variables.Function;
 import eu.europa.ted.efx.model.variables.StrictArguments;
@@ -490,21 +502,364 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.stack.push(template);
   }
 
+  // #region New in EFX-2: Formatted expression blocks -------------------------
+
   @Override
   public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.stack.pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    Expression expression = this.stack.pop(Expression.class);
-    template.prepend(new ExpressionContentTemplateFragment(expression));
+    template.prepend(this.stack.pop(FormatContentTemplateFragment.class));
     this.stack.push(template);
   }
 
   @Override
   public void exitLinkedExpressionTemplate(LinkedExpressionTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.stack.pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    ContentTemplateFragment link = this.stack.pop(ContentTemplateFragment.class);
-    template.prepend(link);
+    template.prepend(this.stack.pop(HyperlinkContentTemplateFragment.class));
     this.stack.push(template);
   }
+
+  /**
+   * Formats the value of an expression: ${BT-00-Number * 2}, or with options, ${BT-00-Number * 2|2}. A
+   * calculated duration is the only value of an expression that has a unit, and it is formatted as a
+   * number.
+   */
+  @Override
+  public void exitComputedExpressionBlock(ComputedExpressionBlockContext ctx) {
+    FormatOptions options = ctx.formatOptions() != null ? this.stack.pop(FormatOptions.class) : new DefaultFormatOptions(false);
+    TypedExpression value = this.stack.pop(TypedExpression.class);
+    Optional<NumberFormatOptions> numberOptions = options.forNumbers();
+    if (value.is(EfxDataType.DurationScalar.class) && numberOptions.isPresent()) {
+      this.stack.push(this.createFormattedExpressionBlockFragment(TypedExpression.from(value, DurationExpression.class),
+          numberOptions.get()));
+    } else if (value.is(EfxDataType.DurationSequence.class) && numberOptions.isPresent()) {
+      this.stack.push(this.createFormattedExpressionBlockFragment(TypedExpression.from(value, DurationSequenceExpression.class),
+          numberOptions.get()));
+    } else {
+      this.stack.push(this.createFormattedExpressionBlockFragment(value, options));
+    }
+  }
+
+  /**
+   * Formats the value of a field: ${BT-00-Number}, or with options, ${BT-00-Number|2}.
+   */
+  @Override
+  public void exitFieldExpressionBlock(FieldExpressionBlockContext ctx) {
+    FormatOptions options = ctx.formatOptions() != null ? this.stack.pop(FormatOptions.class) : new DefaultFormatOptions(false);
+    this.stack.push(this.createFormattedExpressionBlockFragment(ctx.FieldId().getText(), options));
+  }
+
+  /**
+   * Formats the value of the context field: $value. It has no options.
+   */
+  @Override
+  public void exitContextFieldExpressionBlock(ContextFieldExpressionBlockContext ctx) {
+    if (!this.efxContext.isFieldContext()) {
+      throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "$value");
+    }
+    this.stack.push(this.createFormattedExpressionBlockFragment(this.efxContext.symbol(), new DefaultFormatOptions(false)));
+  }
+
+  /**
+   * Reads the format options once, for the expression block that uses them.
+   */
+  @Override
+  public void exitFormatOptions(FormatOptionsContext ctx) {
+    boolean noUnit = ctx.FormatNoUnit() != null;
+    FormatSpecifierContext specifier = ctx.formatSpecifier();
+    if (ctx.FormatNoFormatting() != null) {
+      this.stack.push(new NoFormattingOptions());
+    } else if (specifier == null) {
+      this.stack.push(new DefaultFormatOptions(noUnit));
+    } else if (specifier.FormatDecimals() != null) {
+      this.stack.push(new NumberFormatOptions(Integer.parseInt(specifier.FormatDecimals().getText()), noUnit));
+    } else if (specifier.FormatShort() != null) {
+      this.stack.push(new DateTimeFormatOptions(DateTimeStyle.SHORT, noUnit));
+    } else if (specifier.FormatMedium() != null) {
+      this.stack.push(new DateTimeFormatOptions(DateTimeStyle.MEDIUM, noUnit));
+    } else if (specifier.FormatLong() != null) {
+      this.stack.push(new DateTimeFormatOptions(DateTimeStyle.LONG, noUnit));
+    }
+  }
+
+  @Override
+  public void exitLinkedExpressionBlock(LinkedExpressionBlockContext ctx) {
+    var url = this.stack.pop(StringExpression.class);
+    var value = this.stack.pop(FormatContentTemplateFragment.class);
+    this.stack.push(new HyperlinkContentTemplateFragment(value, url));
+  }
+
+  /**
+   * Creates the fragment of an expression block that displays the value of a field. Only the type of the field
+   * tells whether its value has a unit: amounts, measures and durations do. The value of any other field
+   * is formatted like the value of an expression. No-formatting displays the value of the field as entered:
+   * the text of a number, a date, a time or a duration, and the value of a text, which is its text.
+   */
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(String fieldId, FormatOptions options) {
+    PathExpression field = this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    if (!options.formatsValue()) {
+      return new FormatContentTemplateFragment(field.is(EfxDataType.String.class)
+          ? this.composeFieldValueReference(fieldId, field)
+          : this.script.composeFieldRawValueReference(field));
+    }
+    String fieldType = this.symbols.getTypeOfField(fieldId);
+    switch (FieldTypes.fromString(fieldType)) {
+      case DURATION:
+      case MEASURE:
+      case AMOUNT:
+        return this.createFormattedExpressionBlockFragment(field,
+            this.symbols.getAttributeOfField(fieldId, this.symbols.getDataType(fieldType).getAttributeName()), options);
+      default:
+        return this.createFormattedExpressionBlockFragment(this.composeFieldValueReference(fieldId, field), options);
+    }
+  }
+
+  /**
+   * Creates the fragment of an expression block for a field with a unit: the number entered, followed by its
+   * unit unless no-unit is given. The number is also the quantity that selects the plural form of the unit.
+   * A unit can only be displayed with a single value, so the numbers of a repeatable field are displayed
+   * without it, and only if no-unit is given.
+   *
+   * @param unitFieldId The attribute field that holds the unit, from its code list.
+   */
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(PathExpression field, String unitFieldId,
+      FormatOptions options) {
+    if (field instanceof SequenceExpression) {
+      if (!options.hideUnit()) {
+        throw InvalidUsageException.unitForList(this.stack.peekParserContext());
+      }
+      PathExpression numbers = this.script.composeFieldValueReference(new NumericSequencePath(field.getScript()));
+      return new FormatContentTemplateFragment(this.composeFormattedExpression(numbers, options));
+    }
+    NumericExpression number = TypedExpression.from(
+        this.script.composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
+    SequenceExpression unitCode =
+        this.composeGetUnitCode(field, this.symbols.getAttributeNameFromAttributeField(unitFieldId));
+    return new FormatContentTemplateFragment(this.composeFormattedExpression(number, options),
+        this.composeUnitSeparator(unitCode),
+        this.composeCodeLabelKey(this.symbols.getRootCodelistOfField(unitFieldId), unitCode),
+        number, options.hideUnit());
+  }
+
+  /**
+   * Creates the fragment of an expression block for a calculated duration. It has no unit entered with it, so
+   * it is displayed as a number of months or days, in the unit it is calculated in. That number also
+   * selects the plural form of the unit. It has no field either, so the code list of its unit is the one
+   * of the data type of the attribute of durations.
+   */
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(DurationExpression duration, NumberFormatOptions options) {
+    NumericExpression number = this.composeGetNumberFromDuration(duration);
+    SdkDataType unitType =
+        this.symbols.getDataType(this.symbols.getDataType(FieldTypes.DURATION.getName()).getAttributeType());
+    SequenceExpression unitCode = this.composeGetUnitCode(duration);
+    return new FormatContentTemplateFragment(this.composeFormattedScalar(number, options),
+        this.composeUnitSeparator(unitCode), this.composeCodeLabelKey(unitType.getListName(), unitCode),
+        number, options.hideUnit());
+  }
+
+  /**
+   * Creates the fragment of an expression block for a sequence of calculated durations. A unit can only be
+   * displayed with a single value, so each duration is displayed as its number of months or days, and
+   * only if no-unit is given.
+   */
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(DurationSequenceExpression durations,
+      NumberFormatOptions options) {
+    if (!options.hideUnit()) {
+      throw InvalidUsageException.unitForList(this.stack.peekParserContext());
+    }
+    return new FormatContentTemplateFragment(this.composeFormattedSequence(durations, options));
+  }
+
+  /**
+   * Creates the fragment of an expression block for a value that has no unit, so no-unit is not applicable.
+   * No-formatting displays the value as it is.
+   */
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(TypedExpression value, FormatOptions options) {
+    if (!options.formatsValue()) {
+      return new FormatContentTemplateFragment(value);
+    }
+    if (options.hideUnit()) {
+      throw InvalidUsageException.noUnitNotApplicable(this.stack.peekParserContext());
+    }
+    return new FormatContentTemplateFragment(this.composeFormattedExpression(value, options));
+  }
+
+  /**
+   * Formats a value, or each value of a sequence, according to its type. Format options are a shorthand
+   * for the formatting functions: ${BT-00-Number|2} displays the same as
+   * ${format-number(BT-00-Number, '#,##0.00')}, and ${BT-00-Date|medium} the same as
+   * ${format-medium(BT-00-Date)}. A number is formatted with options for numbers, and a date or a time
+   * with options for dates and times. Any other value is displayed as it is, unless the options give a
+   * number of decimals or a style, which it cannot be formatted with.
+   */
+  private Expression composeFormattedExpression(TypedExpression value, FormatOptions options) {
+    Optional<NumberFormatOptions> numberOptions = options.forNumbers();
+    Optional<DateTimeFormatOptions> dateTimeOptions = options.forDatesAndTimes();
+    if (value.is(EfxDataType.NumberScalar.class) && numberOptions.isPresent()) {
+      return this.composeFormattedScalar(TypedExpression.from(value, NumericExpression.class), numberOptions.get());
+    } else if (value.is(EfxDataType.NumberSequence.class) && numberOptions.isPresent()) {
+      return this.composeFormattedSequence(TypedExpression.from(value, NumericSequenceExpression.class),
+          numberOptions.get());
+    } else if (value.is(EfxDataType.DateScalar.class) && dateTimeOptions.isPresent()) {
+      return this.composeFormattedScalar(TypedExpression.from(value, DateExpression.class), dateTimeOptions.get());
+    } else if (value.is(EfxDataType.DateSequence.class) && dateTimeOptions.isPresent()) {
+      return this.composeFormattedSequence(TypedExpression.from(value, DateSequenceExpression.class),
+          dateTimeOptions.get());
+    } else if (value.is(EfxDataType.TimeScalar.class) && dateTimeOptions.isPresent()) {
+      return this.composeFormattedScalar(TypedExpression.from(value, TimeExpression.class), dateTimeOptions.get());
+    } else if (value.is(EfxDataType.TimeSequence.class) && dateTimeOptions.isPresent()) {
+      return this.composeFormattedSequence(TypedExpression.from(value, TimeSequenceExpression.class),
+          dateTimeOptions.get());
+    }
+    if (options.hasSpecifier()) {
+      throw InvalidUsageException.invalidFormatOptions(this.stack.peekParserContext());
+    }
+    return value;
+  }
+
+  /**
+   * Formats a number like a sequence of at most one number: format-number would display an absent number as
+   * NaN, whereas an absent number is not displayed at all.
+   */
+  private StringSequenceExpression composeFormattedScalar(NumericExpression number, NumberFormatOptions options) {
+    return this.composeFormattedSequence(new NumericSequenceExpression(number.getScript()), options);
+  }
+
+  private StringSequenceExpression composeFormattedSequence(NumericSequenceExpression numbers, NumberFormatOptions options) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("item", NumericExpression.class), numbers)));
+    return this.script.composeForExpression(iterators,
+        this.composeFormattedNumber(this.script.composeVariableReference("item", NumericExpression.class), options),
+        StringSequenceExpression.class);
+  }
+
+  private StringSequenceExpression composeFormattedSequence(DurationSequenceExpression durations,
+      NumberFormatOptions options) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("item", DurationExpression.class), durations)));
+    return this.script.composeForExpression(iterators,
+        this.composeFormattedNumber(
+            this.composeGetNumberFromDuration(this.script.composeVariableReference("item", DurationExpression.class)),
+            options),
+        StringSequenceExpression.class);
+  }
+
+  /**
+   * Formats a number that exists.
+   */
+  private StringExpression composeFormattedNumber(NumericExpression number, NumberFormatOptions options) {
+    return this.script.composeNumberFormatting(number,
+        this.script.getStringLiteralFromUnquotedString(options.getNumberPattern()));
+  }
+
+  private StringExpression composeFormattedScalar(DateExpression date, DateTimeFormatOptions options) {
+    switch (options.getStyle()) {
+      case MEDIUM:
+        return this.script.composeFormatDateMedium(date);
+      case LONG:
+        return this.script.composeFormatDateLong(date);
+      default:
+        return this.script.composeFormatDateShort(date);
+    }
+  }
+
+  private StringSequenceExpression composeFormattedSequence(DateSequenceExpression dates, DateTimeFormatOptions options) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("item", DateExpression.class), dates)));
+    return this.script.composeForExpression(iterators,
+        this.composeFormattedScalar(this.script.composeVariableReference("item", DateExpression.class), options),
+        StringSequenceExpression.class);
+  }
+
+  private StringExpression composeFormattedScalar(TimeExpression time, DateTimeFormatOptions options) {
+    switch (options.getStyle()) {
+      case MEDIUM:
+        return this.script.composeFormatTimeMedium(time);
+      case LONG:
+        return this.script.composeFormatTimeLong(time);
+      default:
+        return this.script.composeFormatTimeShort(time);
+    }
+  }
+
+  private StringSequenceExpression composeFormattedSequence(TimeSequenceExpression times, DateTimeFormatOptions options) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("item", TimeExpression.class), times)));
+    return this.script.composeForExpression(iterators,
+        this.composeFormattedScalar(this.script.composeVariableReference("item", TimeExpression.class), options),
+        StringSequenceExpression.class);
+  }
+
+  /**
+   * Returns the number of a calculated duration: its months if it is calculated in years and months,
+   * otherwise its whole days, as days() does.
+   */
+  private NumericExpression composeGetNumberFromDuration(DurationExpression duration) {
+    return this.script.composeConditionalExpression(this.composeIsYearMonthDuration(duration),
+        this.script.composeMonthsFromDurationFunction(duration),
+        this.script.composeDaysFromDurationFunction(duration), NumericExpression.class);
+  }
+
+  /**
+   * Tests whether a duration is a year-month duration. EFX calculates a duration either in years and
+   * months or in days, never in both, so a year-month duration is one that has months. The script
+   * generator has no test for the kind of a duration, so a duration of zero counts as a day duration.
+   */
+  private BooleanExpression composeIsYearMonthDuration(DurationExpression duration) {
+    return this.script.composeComparisonOperation(this.script.composeMonthsFromDurationFunction(duration), "!=",
+        this.script.getNumericLiteralEquivalent("0"));
+  }
+
+  /**
+   * Returns the unit code entered with the value of a field, from the given attribute. An absent value has
+   * none.
+   */
+  private SequenceExpression composeGetUnitCode(PathExpression field, String attribute) {
+    return this.script.composeFieldAttributeReference(field, attribute, StringSequencePath.class);
+  }
+
+  /**
+   * Returns the unit code of a calculated duration, in the duration-unit code list: MONTH or DAY. An absent
+   * duration has none.
+   */
+  private StringSequenceExpression composeGetUnitCode(DurationExpression duration) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("item", DurationExpression.class),
+        new DurationSequenceExpression(duration.getScript()))));
+    return this.script.composeForExpression(iterators,
+        this.script.composeConditionalExpression(
+            this.composeIsYearMonthDuration(this.script.composeVariableReference("item", DurationExpression.class)),
+            this.script.getStringLiteralFromUnquotedString("MONTH"),
+            this.script.getStringLiteralFromUnquotedString("DAY"), StringExpression.class),
+        StringSequenceExpression.class);
+  }
+
+  /**
+   * Returns the space that separates a unit from its value, for each unit code: none when there is no code.
+   */
+  private StringSequenceExpression composeUnitSeparator(SequenceExpression code) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("code", StringExpression.class), code)));
+    return this.script.composeForExpression(iterators, this.script.getStringLiteralFromUnquotedString(" "),
+        StringSequenceExpression.class);
+  }
+
+  /**
+   * Returns the label key of each code: code|name|codelist.code. There is none when there is no code.
+   */
+  private StringSequenceExpression composeCodeLabelKey(String codelist, SequenceExpression code) {
+    IteratorListExpression iterators = this.script.composeIteratorList(List.of(this.script.composeIteratorExpression(
+        this.script.composeVariableDeclaration("code", StringExpression.class), code)));
+    return this.script.composeForExpression(iterators, this.script.composeStringConcatenation(List.of(
+        this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
+        this.script.getStringLiteralFromUnquotedString("|"),
+        this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
+        this.script.getStringLiteralFromUnquotedString("|"),
+        this.script.getStringLiteralFromUnquotedString(codelist + "."),
+        this.script.composeVariableReference("code", StringExpression.class))),
+        StringSequenceExpression.class);
+  }
+
+  // #endregion New in EFX-2: Formatted expression blocks ----------------------
 
   // #region New in EFX-2: Secondary templates --------------------------------
 
@@ -629,7 +984,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         : this.script.getStringLiteralFromUnquotedString("");
 
     if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(ctx, fieldId, quantity);
+      this.shorthandIndirectLabelReference(fieldId, quantity);
     } else {
       StringExpression key = this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -644,18 +999,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
     // New in EFX-2: Pluralisation of labels based on a supplied quantity
     NumericExpression quantity = ctx.pluraliser() != null ? this.stack.pop(NumericExpression.class) : NumericExpression.empty();
-    this.shorthandIndirectLabelReference(ctx, ctx.FieldId().getText(), quantity);
+    this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
   }
 
-  private void shorthandIndirectLabelReference(ParserRuleContext ctx, final String fieldId, final NumericExpression quantity) {
+  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression quantity) {
     final Context currentContext = this.efxContext.peek();
     final String fieldType = this.symbols.getTypeOfField(fieldId);
-    final PathExpression valueReference = this.symbols.isAttributeField(fieldId)
-        ? this.script.composeFieldAttributeReference(
-            this.script.contextualizePath(this.symbols.getAbsolutePathOfFieldWithoutTheAttribute(fieldId),
-                currentContext.absolutePath()),
-            this.symbols.getAttributeNameFromAttributeField(fieldId), StringPath.class)
-        : this.script.composeFieldValueReference(
+    final PathExpression valueReference = this.composeFieldValueReference(fieldId,
         this.symbols.getRelativePathOfField(fieldId, currentContext.symbol()));
     Variable loopVariable = new Variable("item",
         this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
@@ -702,7 +1052,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
         break;
       }
       default:
-        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(ctx, fieldId, fieldType);
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(this.stack.peekParserContext(), fieldId, fieldType);
     }
   }
 
@@ -723,7 +1073,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     final String labelType = ctx.LabelType().getText();
     if (this.efxContext.isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol(), quantity);
+        this.shorthandIndirectLabelReference(this.efxContext.symbol(), quantity);
       } else {
         StringExpression key = this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -755,7 +1105,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     if (!this.efxContext.isFieldContext()) {
       throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "#value");
     }
-    this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol(), NumericExpression.empty());
+    this.shorthandIndirectLabelReference(this.efxContext.symbol(), NumericExpression.empty());
   }
 
   @Override
@@ -816,49 +1166,6 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   // #endregion Label Blocks #{...} -------------------------------------------
   
   // #region Expression Blocks ${...} -----------------------------------------
-
-  /**
-   * Handles a standard expression block in a template line. Most of the work is done by the base
-   * class EfxExpressionTranslator. After the expression is translated, the result is passed through
-   * the renderer.
-   */
-  @Override
-  public void exitStandardExpressionBlock(StandardExpressionBlockContext ctx) {
-    var expression = this.stack.pop(Expression.class);
-
-    // Implicit formatting: date and time expressions in template blocks are automatically
-    // formatted using format-short for display.
-    // Users can override by using explicit format-short/format-medium/format-long in the expression.
-    if (TypedExpression.class.isAssignableFrom(expression.getClass())) {
-      if (EfxDataType.Date.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
-
-        var loopVariable = new Variable("item",
-            this.script.composeVariableDeclaration("item", DateExpression.class), DateExpression.empty(),
-            this.script.composeVariableReference("item", DateExpression.class));
-
-        expression = this.script.composeForExpression(
-            this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new DateSequenceExpression(expression.getScript())))),
-            this.script.composeFormatDateShort(new DateExpression(loopVariable.referenceExpression.getScript())),
-            StringSequenceExpression.class);
-      } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
-
-        var loopVariable = new Variable("item",
-            this.script.composeVariableDeclaration("item", TimeExpression.class), TimeExpression.empty(),
-            this.script.composeVariableReference("item", TimeExpression.class));
-
-        expression = this.script.composeForExpression(
-            this.script.composeIteratorList(
-                List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new TimeSequenceExpression(expression.getScript())))),
-            this.script.composeFormatTimeShort(new TimeExpression(loopVariable.referenceExpression.getScript())),
-            StringSequenceExpression.class);
-      }
-    }
-
-    this.stack.push(expression);
-  }
 
   // #region Formatting functions (template-only) --------------------------------
 
@@ -1252,13 +1559,6 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     var url = this.stack.pop(StringExpression.class);
     var label = this.stack.pop(ContentTemplateFragment.class);
     this.stack.push(new HyperlinkContentTemplateFragment(label, url));
-  }
-
-  @Override
-  public void exitLinkedExpressionBlock(LinkedExpressionBlockContext ctx) {
-    var url = this.stack.pop(StringExpression.class);
-    var expression = this.stack.pop(Expression.class);
-    this.stack.push(new HyperlinkContentTemplateFragment(new ExpressionContentTemplateFragment(expression), url));
   }
 
   // #endregion Hyperlinks ----------------------------------------------------

@@ -15,6 +15,7 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
+import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.PathExpression;
@@ -168,6 +169,15 @@ public interface SymbolResolver {
   public String getAttributeNameFromAttributeField(final String fieldId);
 
   /**
+   * Gets the attribute field of the given field that holds the given attribute.
+   *
+   * @param fieldId The identifier of the field to look for.
+   * @param attributeName The name of the attribute, without the @ prefix.
+   * @return The identifier of the attribute field.
+   */
+  public String getAttributeOfField(final String fieldId, final String attributeName);
+
+  /**
    * Gets the absolute path of the given field, without the attribute part.
    * This method is meant to be used with fields that point to an @attribute.
    * If the given field does not point to an @attribute then this method returns
@@ -291,4 +301,15 @@ public interface SymbolResolver {
    * @return The masking value as a string.
    */
   public String getPrivacyMask(final String fieldId);
+
+  /**
+   * Gets the given data type, with its metadata: its privacy masking value, and the attribute that
+   * the fields of the type carry, if any (e.g. the currency of an amount).
+   *
+   * This information is typically retrieved directly from the eForms SDK.
+   *
+   * @param dataTypeId The name of the data type, as returned by {@link #getTypeOfField}.
+   * @return The data type.
+   */
+  public SdkDataType getDataType(final String dataTypeId);
 }
