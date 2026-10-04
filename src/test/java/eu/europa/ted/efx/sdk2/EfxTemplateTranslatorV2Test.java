@@ -23,6 +23,10 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTranslator;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.component.EfxTranslatorFactory;
+import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
+import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
@@ -36,6 +40,34 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     return "eforms-sdk-2.0";
   }
 
+  @Test
+  void testTranslatorReused_WithAnotherIndentation() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("{BT-00-Text} foo", "  {ND-Root} bar") + "\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar")),
+        translator.renderTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar") + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_WithTheSameDeclarations() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    final String template = lines("let text:$t = 'test';", "let template:greeting() display Hello;",
+        "display this is a ${$t};", "invoke greeting();");
+    translator.renderTemplate(template + "\n", DEFAULT_OPTIONS);
+    assertEquals(translateTemplate(template), translator.renderTemplate(template + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_DoesNotKeepThePreviousDeclarations() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("let template:greeting() display Hello;", "invoke greeting();") + "\n",
+        DEFAULT_OPTIONS);
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate("invoke greeting();\n", DEFAULT_OPTIONS));
+  }
+
   // #region Core Template Structure -------------------------------------------
 
   // #region templateDefinition ------------------------------------------------
@@ -46,9 +78,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let some-template(string:content) -> { text('Content: ')eval($content) }",
-            "let body02() -> { call(some-template(string:content='test')) }",
+            "let body01() -> { call(some-template(string:content='test')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:some-template(text:$content) display Content: ${$content};",
             "invoke some-template('test');")));
@@ -61,9 +93,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "TEMPLATES:",
             "let other-template(string:value) -> { text('Value: ')eval($value) }",
             "let invoke-template(string:param) -> { call(other-template(string:value=$param)) }",
-            "let body03() -> { call(invoke-template(string:param='test')) }",
+            "let body01() -> { call(invoke-template(string:param='test')) }",
             "MAIN:",
-            "for-each(/*).call(body03())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:other-template(text:$value) display Value: ${$value};",
             "let template:invoke-template(text:$param) invoke other-template($param);",
@@ -76,9 +108,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let conditional-template(boolean:condition, string:value) -> { choose { when $condition: text('Condition met: ')eval($value), when $condition = false(): text('Condition not met'), otherwise: text('Unknown condition: ')eval($condition) } }",
-            "let body02() -> { call(conditional-template(boolean:condition=true(), string:value='test')) }",
+            "let body01() -> { call(conditional-template(boolean:condition=true(), string:value='test')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:conditional-template(indicator:$condition, text:$value)",
             "when $condition display Condition met: ${$value}",
@@ -93,9 +125,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let param-validation-template(string:param1, decimal:param2) -> { text('Valid parameters') }",
-            "let body02() -> { call(param-validation-template(string:param1='test', decimal:param2=42)) }",
+            "let body01() -> { call(param-validation-template(string:param1='test', decimal:param2=42)) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:param-validation-template(text:$param1, number:$param2) display Valid parameters;",
             "invoke param-validation-template('test', 42);")));
@@ -111,9 +143,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let simple-template() -> { text('Hello World') }",
-            "let body02() -> { call(simple-template()) }",
+            "let body01() -> { call(simple-template()) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:simple-template() display Hello World;",
             "invoke simple-template();")));
@@ -125,9 +157,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:", 
             "let greeting-template(string:name) -> { text('Hello ')eval($name) }",
-            "let body02() -> { call(greeting-template(string:name='World')) }",
+            "let body01() -> { call(greeting-template(string:name='World')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:greeting-template(text:$name) display Hello ${$name};",
             "invoke greeting-template('World');")));
@@ -139,9 +171,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let complex-template(string:first, decimal:second, boolean:third) -> { text('Values: ')eval($first)text(', ')eval($second)text(', ')eval($third) }",
-            "let body02() -> { call(complex-template(string:first='test', decimal:second=42, boolean:third=true())) }",
+            "let body01() -> { call(complex-template(string:first='test', decimal:second=42, boolean:third=true())) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:complex-template(text:$first, number:$second, indicator:$third) display Values: ${$first}, ${$second}, ${$third};",
             "invoke complex-template('test', 42, TRUE);")));
@@ -153,9 +185,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval($num)text(', ')eval($bool)text(', ')eval(for $item in $dt return format-date($item, '[D01]/[M01]/[Y0001]'))text(', ')eval(for $item in $tm return format-time($item, '[H01]:[m01] [Z]'))text(', ')eval($dur) }",
-            "let body02() -> { call(all-types-template(string:str='text', decimal:num=123, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D'))) }",
+            "let body01() -> { call(all-types-template(string:str='text', decimal:num=123, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D'))) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:all-types-template(text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur) display Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
             "invoke all-types-template('text', 123, TRUE, date('2023-01-01'), time('12:00:00'), day-time-duration('P1D'));")));
@@ -167,9 +199,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let template-with-dashes(string:param) -> { text('Template: ')eval($param) }",
-            "let body02() -> { call(template-with-dashes(string:param='test')) }",
+            "let body01() -> { call(template-with-dashes(string:param='test')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:template-with-dashes(text:$param) display Template: ${$param};",
             "invoke template-with-dashes('test');")));
@@ -329,6 +361,17 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLinkedTextBlock_WithSpecialCharacters_IsEscaped() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('see ')hyperlink(text('a&#60;b'), 'http://example.com') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("DISPLAY see a<b@{'http://example.com'};"));
+  }
+
+  @Test
   void testLinkedLabelBlock() {
     assertEquals(
         lines(
@@ -360,9 +403,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:", 
             "let complex-template(string:field) -> { text('name ')eval($field)text(' label ')label(concat('field', '|', 'name', '|', $field)) }",
-            "let body02() -> { call(complex-template(string:field='BT-00-Text')) }",
+            "let body01() -> { call(complex-template(string:field='BT-00-Text')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:complex-template(text:$field) display name ${$field} label #{field|name|${$field}};",
             "invoke complex-template('BT-00-Text');")));
@@ -414,15 +457,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let some-template(string:text1, string:text2) -> { eval(/*/PathNode/TextField/normalize-space(text()))text(' dokimi&#59; ')eval($text2)text(' &#59;')",
             "for-each(/*/PathNode/NumberField).call(some-template01(string:text1=$text1, string:text2=$text2)) }",
             "let some-template01(string:text1, string:text2) -> { eval(../TextField/normalize-space(text())) }",
-            "let body02(string:ctx2) -> { #2: eval(./normalize-space(text()))text(' lala')",
-            "for-each(../NumberField).call(body0201(string:ctx2=$ctx2, decimal:ctx3=.))",
-            "for-each(.).call(body0202(string:ctx2=$ctx2, string:ctx=., string:t2=udf:test($t3, 99)))",
-            "for-each(.).call(body0203(string:ctx2=$ctx2, string:ctx4=., string:t5=udf:test($t3, 99))) }",
-            "let body0201(string:ctx2, decimal:ctx3) -> { eval(../TextField/normalize-space(text())) }",
-            "let body0202(string:ctx2, string:ctx, string:t2) -> { call(some-template(string:text1=$ctx, string:text2=$t2)) }",
-            "let body0203(string:ctx2, string:ctx4, string:t5) -> { eval(./normalize-space(text())) }",
+            "let body01(string:ctx2) -> { #2: eval(./normalize-space(text()))text(' lala')",
+            "for-each(../NumberField).call(body0101(string:ctx2=$ctx2, decimal:ctx3=.))",
+            "for-each(.).call(body0102(string:ctx2=$ctx2, string:ctx=., string:t2=udf:test($t3, 99)))",
+            "for-each(.).call(body0103(string:ctx2=$ctx2, string:ctx4=., string:t5=udf:test($t3, 99))) }",
+            "let body0101(string:ctx2, decimal:ctx3) -> { eval(../TextField/normalize-space(text())) }",
+            "let body0102(string:ctx2, string:ctx, string:t2) -> { call(some-template(string:text1=$ctx, string:text2=$t2)) }",
+            "let body0103(string:ctx2, string:ctx4, string:t5) -> { eval(./normalize-space(text())) }",
             "MAIN:",
-            "for-each(/*/PathNode/TextField).call(body02(string:ctx2=.))"),
+            "for-each(/*/PathNode/TextField).call(body01(string:ctx2=.))"),
         translateTemplate(lines(
             "// comment", //
             "let text:$t3='a';// comment",
@@ -445,11 +488,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let some-template(string:t) -> { text('--')eval($t)text('--') }",
-            "let body02(string:ctx1, string:tx) -> { #1: call(some-template(string:t=$tx))",
-            "for-each(../StartDateField).call(body0201(string:ctx1=$ctx1, string:tx=$tx)) }",
-            "let body0201(string:ctx1, string:tx) -> { text('Nested content allowed') }",
+            "let body01(string:ctx1, string:tx) -> { #1: call(some-template(string:t=$tx))",
+            "for-each(../StartDateField).call(body0101(string:ctx1=$ctx1, string:tx=$tx)) }",
+            "let body0101(string:ctx1, string:tx) -> { text('Nested content allowed') }",
             "MAIN:",
-            "for-each(/*/PathNode/TextField).call(body02(string:ctx1=., string:tx='++'))"), //
+            "for-each(/*/PathNode/TextField).call(body01(string:ctx1=., string:tx='++'))"), //
         translateTemplate(lines(
             "let template:some-template(text:$t) display --${$t}--;",
             "with context:$ctx1 = BT-00-Text, text:$tx='++' invoke some-template($tx);",
@@ -1878,9 +1921,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let multi-when-template(string:status) -> { choose { when $status = 'active': text('Status: Active'), when $status = 'inactive': text('Status: Inactive'), when $status = 'pending': text('Status: Pending'), otherwise: text('Status: Unknown') } }",
-            "let body02() -> { call(multi-when-template(string:status='active')) }",
+            "let body01() -> { call(multi-when-template(string:status='active')) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:multi-when-template(text:$status)",
             "when $status == 'active' display Status: Active",
@@ -1896,9 +1939,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let complex-when-template(decimal:value) -> { choose { when $value > 0 and $value < 100: text('In range'), when $value <= 0: text('Too low'), otherwise: text('Too high') } }",
-            "let body02() -> { call(complex-when-template(decimal:value=50)) }",
+            "let body01() -> { call(complex-when-template(decimal:value=50)) }",
             "MAIN:",
-            "for-each(/*).call(body02())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:complex-when-template(number:$value)",
             "when $value > 0 and $value < 100 display In range",
@@ -1914,9 +1957,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "TEMPLATES:",
             "let fallback-template(string:reason) -> { text('Fallback: ')eval($reason) }",
             "let otherwise-invoke-template(boolean:condition, string:reason) -> { choose { when $condition: text('Condition met'), otherwise: call(fallback-template(string:reason=$reason)) } }",
-            "let body03() -> { call(otherwise-invoke-template(boolean:condition=false(), string:reason='default')) }",
+            "let body01() -> { call(otherwise-invoke-template(boolean:condition=false(), string:reason='default')) }",
             "MAIN:",
-            "for-each(/*).call(body03())"),
+            "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "let template:fallback-template(text:$reason) display Fallback: ${$reason};",
             "let template:otherwise-invoke-template(indicator:$condition, text:$reason)",
@@ -1931,11 +1974,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines(
             "TEMPLATES:",
             "let some-template(string:txt) -> { text('&#62;')eval($txt)text('&#60;') }",
-            "let body02(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: call(some-template(string:txt='1')), otherwise: text('foo-bar') } }",
-            "let body03(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: text('foo-bar'), otherwise: call(some-template(string:txt='2')) } }",
+            "let body01(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: call(some-template(string:txt='1')), otherwise: text('foo-bar') } }",
+            "let body02(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: text('foo-bar'), otherwise: call(some-template(string:txt='2')) } }",
             "MAIN:",
-            "for-each(/*/PathNode/TextField).call(body02(string:t='test'))",
-            "for-each(/*/PathNode/TextField).call(body03(string:t='test'))"),
+            "for-each(/*/PathNode/TextField).call(body01(string:t='test'))",
+            "for-each(/*/PathNode/TextField).call(body02(string:t='test'))"),
         translateTemplate(lines(
             "// test",
             "let template:some-template(text:$txt) display >${$txt}<;",

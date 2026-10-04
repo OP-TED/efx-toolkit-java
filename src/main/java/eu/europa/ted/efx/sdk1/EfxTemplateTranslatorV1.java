@@ -36,6 +36,7 @@ import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
+import eu.europa.ted.efx.interfaces.TemplateSection;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.Context;
@@ -45,6 +46,7 @@ import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
+import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
@@ -52,8 +54,14 @@ import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
 import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
 import eu.europa.ted.efx.model.templates.Markup;
-import eu.europa.ted.efx.model.templates.Conditionals;
-import eu.europa.ted.efx.model.templates.ContentBlock;
+import eu.europa.ted.efx.model.templates.ContentTemplate;
+import eu.europa.ted.efx.model.templates.ContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.DisplayContentTemplate;
+import eu.europa.ted.efx.model.templates.ExpressionContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.LabelFromExpressionContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.LabelFromKeyContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.TextContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.ViewTemplateSection;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.variables.Variable;
 import eu.europa.ted.efx.model.variables.Variables;
@@ -89,15 +97,17 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     TABS, SPACES, UNDETERMINED
   }
 
-  private Indent indentWith = Indent.UNDETERMINED;
-  private int indentSpaces = -1;
+  // Set by the first indented line of each template.
+  private Indent indentWith;
+  private int indentSpaces;
 
   /**
    * The MarkupGenerator is called to retrieve markup in the target template language when needed.
    */
   MarkupGenerator markup;
 
-  final ContentBlock rootBlock = ContentBlock.newRootBlock("block");
+  // EFX 1 templates have a single section. Its top-level template lines are added to its root block.
+  ViewTemplateSection section;
 
   /**
    * The block stack is used to keep track of the indentation of template lines and adjust the EFX
@@ -195,18 +205,23 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
     assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+    this.section = new ViewTemplateSection(TemplateSection.DEFAULT, "block");
+    this.indentWith = Indent.UNDETERMINED;
+    this.indentSpaces = -1;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
+    // The end of the file closes the levels still open, as a line back at level 0 would: the block of
+    // each nested level and its stack frame.
+    while (this.blockStack.currentIndentationLevel() > 0) {
+      this.blockStack.pop();
+      this.stack.popStackFrame();
+    }
     this.blockStack.pop();
 
-    List<Markup> templateCalls = new ArrayList<>();
     List<Markup> templates = new ArrayList<>();
-    for (ContentBlock block : this.rootBlock.getChildren()) {
-      templateCalls.add(block.renderInvocation(markup, TranslatorContext.DEFAULT));
-      templates.addAll(block.renderDefinition(markup, TranslatorContext.DEFAULT));
-    }
+    List<Markup> templateCalls = this.section.render(this.markup, new TranslatorContext(), templates);
     Markup file = this.markup.composeOutputFile(templateCalls, templates);
     this.stack.push(file);
   }
@@ -217,26 +232,30 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
 
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    DisplayContentTemplate template =
+        ctx.templateFragment() != null ? this.stack.pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
     String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    this.stack.push(this.markup.renderFreeText(this.markup.escapeSpecialCharacters(text), TranslatorContext.DEFAULT).join(template));
+    template.prepend(new TextContentTemplateFragment(text));
+    this.stack.push(template);
   }
 
   @Override
   public void exitLabelTemplate(LabelTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
-    Markup label = ctx.labelBlock() != null ? this.stack.pop(Markup.class) : Markup.empty();
-    this.stack.push(label.join(template));
+    DisplayContentTemplate template =
+        ctx.templateFragment() != null ? this.stack.pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
+    if (ctx.labelBlock() != null) {
+      template.prepend(this.stack.pop(ContentTemplateFragment.class));
+    }
+    this.stack.push(template);
   }
 
   @Override
   public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
-    Markup template =
-        ctx.templateFragment() != null ? this.stack.pop(Markup.class) : Markup.empty();
+    DisplayContentTemplate template =
+        ctx.templateFragment() != null ? this.stack.pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
     Expression expression = this.stack.pop(Expression.class);
-    this.stack.push(this.markup.renderVariableExpression(expression, TranslatorContext.DEFAULT).join(template));
+    template.prepend(new ExpressionContentTemplateFragment(expression));
+    this.stack.push(template);
   }
 
 
@@ -281,9 +300,10 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     StringExpression assetType = ctx.assetType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
 
-    this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+    StringExpression key = this.script.composeStringConcatenation(
         List.of(assetType, this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId)), TranslatorContext.DEFAULT));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId));
+    this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
   /**
@@ -302,20 +322,20 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
         this.script.composeVariableReference("item", StringExpression.class));
 
-    this.stack.push(this.markup.renderLabelFromExpression(
-        this.script.composeDistinctValuesFunction(
-            this.script.composeForExpression(
-                this.script.composeIteratorList(
-                    List.of(
-                        this.script.composeIteratorExpression(loopVariable.declarationExpression, assetIdSequence))),
-                this.script.composeStringConcatenation(List.of(
-                    assetType,
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    labelType,
-                    this.script.getStringLiteralFromUnquotedString("|"),
-                    new StringExpression(loopVariable.referenceExpression.getScript()))),
-                StringSequenceExpression.class),
-            StringSequenceExpression.class), TranslatorContext.DEFAULT));
+    StringSequenceExpression keys = this.script.composeDistinctValuesFunction(
+        this.script.composeForExpression(
+            this.script.composeIteratorList(
+                List.of(
+                    this.script.composeIteratorExpression(loopVariable.declarationExpression, assetIdSequence))),
+            this.script.composeStringConcatenation(List.of(
+                assetType,
+                this.script.getStringLiteralFromUnquotedString("|"),
+                labelType,
+                this.script.getStringLiteralFromUnquotedString("|"),
+                new StringExpression(loopVariable.referenceExpression.getScript()))),
+            StringSequenceExpression.class),
+        StringSequenceExpression.class);
+    this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
   }
 
 
@@ -324,10 +344,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     StringExpression assetId = this.script.getStringLiteralFromUnquotedString(ctx.BtId().getText());
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
-    this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+    StringExpression key = this.script.composeStringConcatenation(
         List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
             this.script.getStringLiteralFromUnquotedString("|"), labelType,
-            this.script.getStringLiteralFromUnquotedString("|"), assetId)), TranslatorContext.DEFAULT));
+            this.script.getStringLiteralFromUnquotedString("|"), assetId));
+    this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
   @Override
@@ -339,11 +360,12 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     if (labelType.getScript().equals("value")) {
       this.shorthandIndirectLabelReference(ctx, fieldId);
     } else {
-      this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+      StringExpression key = this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
               this.script.getStringLiteralFromUnquotedString("|"), labelType,
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId))), TranslatorContext.DEFAULT));
+              this.script.getStringLiteralFromUnquotedString(fieldId)));
+      this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
     }
   }
 
@@ -365,44 +387,46 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         this.script.composeVariableDeclaration("item", StringExpression.class), StringExpression.empty(),
         this.script.composeVariableReference("item", StringExpression.class));
     switch (fieldType) {
-      case "indicator":
-        this.stack.push(this.markup.renderLabelFromExpression(
-            this.script.composeDistinctValuesFunction(
-                this.script.composeForExpression(
-                    this.script.composeIteratorList(
-                        List.of(
-                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
-                    this.script.composeStringConcatenation(
-                        List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
-                            this.script.getStringLiteralFromUnquotedString("|"),
-                            this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
-                            this.script.getStringLiteralFromUnquotedString("-"),
-                            new StringExpression(loopVariable.referenceExpression.getScript()),
-                            this.script.getStringLiteralFromUnquotedString("|"),
-                            this.script.getStringLiteralFromUnquotedString(fieldId))),
-                    StringSequenceExpression.class),
-                StringSequenceExpression.class), TranslatorContext.DEFAULT));
+      case "indicator": {
+        StringSequenceExpression keys = this.script.composeDistinctValuesFunction(
+            this.script.composeForExpression(
+                this.script.composeIteratorList(
+                    List.of(
+                        this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
+                this.script.composeStringConcatenation(
+                    List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_INDICATOR),
+                        this.script.getStringLiteralFromUnquotedString("|"),
+                        this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
+                        this.script.getStringLiteralFromUnquotedString("-"),
+                        new StringExpression(loopVariable.referenceExpression.getScript()),
+                        this.script.getStringLiteralFromUnquotedString("|"),
+                        this.script.getStringLiteralFromUnquotedString(fieldId))),
+                StringSequenceExpression.class),
+            StringSequenceExpression.class);
+        this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
         break;
+      }
       case "code":
-      case "internal-code":
-        this.stack.push(this.markup.renderLabelFromExpression(
-            this.script.composeDistinctValuesFunction(
-                this.script.composeForExpression(
-                    this.script.composeIteratorList(
-                        List.of(
-                            this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
-                    this.script.composeStringConcatenation(List.of(
-                        this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
-                        this.script.getStringLiteralFromUnquotedString("|"),
-                        this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
-                        this.script.getStringLiteralFromUnquotedString("|"),
-                        this.script.getStringLiteralFromUnquotedString(
-                            this.symbols.getRootCodelistOfField(fieldId)),
-                        this.script.getStringLiteralFromUnquotedString("."),
-                        new StringExpression(loopVariable.referenceExpression.getScript()))),
-                    StringSequenceExpression.class),
-                StringSequenceExpression.class), TranslatorContext.DEFAULT));
+      case "internal-code": {
+        StringSequenceExpression keys = this.script.composeDistinctValuesFunction(
+            this.script.composeForExpression(
+                this.script.composeIteratorList(
+                    List.of(
+                        this.script.composeIteratorExpression(loopVariable.declarationExpression, valueReference.asSequence()))),
+                this.script.composeStringConcatenation(List.of(
+                    this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
+                    this.script.getStringLiteralFromUnquotedString("|"),
+                    this.script.getStringLiteralFromUnquotedString(
+                        this.symbols.getRootCodelistOfField(fieldId)),
+                    this.script.getStringLiteralFromUnquotedString("."),
+                    new StringExpression(loopVariable.referenceExpression.getScript()))),
+                StringSequenceExpression.class),
+            StringSequenceExpression.class);
+        this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
         break;
+      }
       default:
         throw InvalidUsageException.shorthandRequiresCodeOrIndicator(ctx, fieldId, fieldType);
     }
@@ -423,20 +447,22 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
         this.shorthandIndirectLabelReference(ctx, this.efxContext.symbol());
       } else {
-        this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+        StringExpression key = this.script.composeStringConcatenation(
             List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
                 this.script.getStringLiteralFromUnquotedString("|"),
                 this.script.getStringLiteralFromUnquotedString(labelType),
                 this.script.getStringLiteralFromUnquotedString("|"),
-                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), TranslatorContext.DEFAULT));
+                this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())));
+        this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
       }
     } else if (this.efxContext.isNodeContext()) {
-      this.stack.push(this.markup.renderLabelFromKey(this.script.composeStringConcatenation(
+      StringExpression key = this.script.composeStringConcatenation(
           List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_NODE),
               this.script.getStringLiteralFromUnquotedString("|"),
               this.script.getStringLiteralFromUnquotedString(labelType),
               this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol()))), TranslatorContext.DEFAULT));
+              this.script.getStringLiteralFromUnquotedString(this.efxContext.symbol())));
+      this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
     }
   }
 
@@ -647,7 +673,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final Context lineContext = this.efxContext.pop();
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    final Markup content = ctx.template() != null ? this.stack.pop(Markup.class) : new Markup("");
+    final List<ContentTemplate> contentTemplates =
+        ctx.template() != null ? List.of(this.stack.pop(ContentTemplate.class)) : List.of();
     final Variables variables = new Variables(); // template variables not supported in EFX-1
     final Integer outlineNumber =
         ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
@@ -661,19 +688,19 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
           throw InvalidIndentationException.startIndentAtZero(ctx);
       }
       this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
-          new Conditionals(), content);
+          contentTemplates);
     } else if (indentChange < 0) {
       this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
-          new Conditionals(), content);
+          contentTemplates);
     } else if (indentChange == 0) {
 
       if (blockStack.isEmpty()) {
         assert indentLevel == 0 : UNEXPECTED_INDENTATION;
-        this.blockStack.push(this.rootBlock.addChild(outlineNumber, this.relativizeContext(lineContext, this.rootBlock.getContext()), variables,
-            new Conditionals(), content));
+        this.blockStack.push(this.section.getRoot().addChild(outlineNumber, this.relativizeContext(lineContext, this.section.getRoot().getContext()), variables,
+            contentTemplates));
       } else {
         this.blockStack.pushSibling(outlineNumber, this.relativizeContext(lineContext, this.blockStack.parentContext()), variables,
-            new Conditionals(), content);
+            contentTemplates);
       }
     }
   }

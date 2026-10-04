@@ -26,8 +26,11 @@ public class ContentBlock {
   protected final ContentBlock parent;
   protected final String id;
   protected final Integer indentationLevel;
-  protected final Conditionals conditionals;
-  protected final Markup content;
+
+  // What the block displays, in order: one content template for each WHEN alternative, then the one
+  // displayed otherwise. A block without WHEN alternatives has a single content template.
+  protected final List<ContentTemplate> contentTemplates;
+
   protected final Context context;
   protected final Queue<ContentBlock> children = new LinkedList<>();
   protected final ParsedParameters parameters;
@@ -37,8 +40,7 @@ public class ContentBlock {
     this.parent = null;
     this.id = id;
     this.indentationLevel = -1;
-    this.conditionals = new Conditionals();
-    this.content = new Markup("");
+    this.contentTemplates = List.of();
     this.context = null;
     this.number = 0;
     this.parameters = new ParsedParameters();
@@ -46,13 +48,12 @@ public class ContentBlock {
   }
 
   public ContentBlock(final ContentBlock parent, final String id, final int number,
-      final Conditionals conditionals, final Markup content, Context contextPath, ParsedParameters parameters,
+      final List<ContentTemplate> contentTemplates, Context contextPath, ParsedParameters parameters,
       ParsedArguments arguments) {
     this.parent = parent;
     this.id = id;
     this.indentationLevel = parent.indentationLevel + 1;
-    this.conditionals = conditionals;
-    this.content = content;
+    this.contentTemplates = contentTemplates;
     this.context = contextPath;
     this.number = number;
     this.parameters = parameters;
@@ -60,8 +61,8 @@ public class ContentBlock {
   }
 
   public ContentBlock(final ContentBlock parent, final String id, final int number,
-      final Conditionals conditionals, final Markup content, Context contextPath, Variables variables) {
-    this(parent, id, number, conditionals, content, contextPath, new ParsedParameters(variables),
+      final List<ContentTemplate> contentTemplates, Context contextPath, Variables variables) {
+    this(parent, id, number, contentTemplates, contextPath, new ParsedParameters(variables),
         new ParsedArguments(variables));
   }
 
@@ -71,27 +72,25 @@ public class ContentBlock {
 
   // #region Add Children
 
-  public TemplateDefinition addChild(final String blockId, final Conditionals conditionals,
-      final Markup defaultContent, final ParsedParameters parameters) {
-    TemplateDefinition newBlock = new TemplateDefinition(this, blockId, conditionals, defaultContent, parameters);
+  public TemplateDefinition addChild(final String blockId, final List<ContentTemplate> contentTemplates,
+      final ParsedParameters parameters) {
+    TemplateDefinition newBlock = new TemplateDefinition(this, blockId, contentTemplates, parameters);
     this.children.add(newBlock);
     return newBlock;
   }
 
   public ContentBlock addChild(final String blockId, final int number, final Context context,
-      final Variables variables, final Conditionals conditionals,
-      final Markup defaultContent) {
+      final Variables variables, final List<ContentTemplate> contentTemplates) {
     // number < 0 means "autogenerate", number == 0 means "no number", number > 0
     // means "use this number"
     final int actualNumber = number >= 0 ? number
-        : children.stream()
+        : this.children.stream()
             .filter(ContentBlock.class::isInstance)
             .map(ContentBlock::getNumber)
             .max(Comparator.naturalOrder())
             .orElse(0) + 1;
 
-    ContentBlock newBlock = new ContentBlock(this, blockId, actualNumber, conditionals, defaultContent, context,
-        variables);
+    ContentBlock newBlock = new ContentBlock(this, blockId, actualNumber, contentTemplates, context, variables);
     this.children.add(newBlock);
     return newBlock;
   }
@@ -101,7 +100,7 @@ public class ContentBlock {
     // number < 0 means "autogenerate", number == 0 means "no number", number > 0
     // means "use this number"
     final int actualNumber = number >= 0 ? number
-        : children.stream()
+        : this.children.stream()
             .filter(ContentBlock.class::isInstance)
             .map(ContentBlock::getNumber)
             .max(Comparator.naturalOrder())
@@ -113,10 +112,9 @@ public class ContentBlock {
   }
 
   public ContentBlock addChild(final int number, final Context context, final Variables variables,
-      final Conditionals conditionals,
-      final Markup defaultContent) {
+      final List<ContentTemplate> contentTemplates) {
     String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
-    return this.addChild(newBlockId, number, context, variables, conditionals, defaultContent);
+    return this.addChild(newBlockId, number, context, variables, contentTemplates);
   }
 
   // #endregion Add Children
@@ -124,9 +122,8 @@ public class ContentBlock {
   // #region Add Siblings
 
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
-      final Conditionals conditionals,
-      final Markup defaultContent) {
-    return this.parent.addChild(number, context, variables, conditionals, defaultContent);
+      final List<ContentTemplate> contentTemplates) {
+    return this.parent.addChild(number, context, variables, contentTemplates);
   }
 
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
@@ -209,7 +206,7 @@ public class ContentBlock {
       return new LinkedHashSet<>(this.getOwnArguments());
     }
     final Set<ParsedParameter> merged = new LinkedHashSet<>();
-    merged.addAll(parent.getAllArguments());
+    merged.addAll(this.parent.getAllArguments());
     merged.addAll(this.getOwnArguments());
     return merged;
   }
@@ -219,7 +216,7 @@ public class ContentBlock {
       return new LinkedHashSet<>(this.getOwnArguments());
     }
     final Set<ParsedArgument> merged = new LinkedHashSet<>();
-    merged.addAll(parent.getAllArguments());
+    merged.addAll(this.parent.getAllArguments());
     merged.addAll(this.getOwnArguments());
     return merged;
   }
@@ -234,14 +231,27 @@ public class ContentBlock {
     return new Markup(stringBuilder.toString());
   }
 
+  /**
+   * Renders the definition of this block, then those of its children. The markup generator receives
+   * the WHEN alternatives as conditionals, and the content displayed otherwise on its own.
+   */
   public List<Markup> renderDefinition(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Parameter> params = this.getAllParameters().stream()
         .map(param -> new Parameter.Impl(param.name, markupGenerator.getEfxDataTypeEquivalent(param.dataType)))
         .collect(Collectors.toCollection(LinkedHashSet::new));
+    Set<Conditional> conditionals = new LinkedHashSet<>();
+    Markup content = Markup.empty();
+    for (ContentTemplate contentTemplate : this.contentTemplates) {
+      if (contentTemplate.getCondition().isEmpty()) {
+        content = contentTemplate.render(markupGenerator, translatorContext);
+      } else {
+        conditionals.add(new Conditional(contentTemplate.getCondition(),
+            contentTemplate.render(markupGenerator, translatorContext)));
+      }
+    }
     List<Markup> templates = new ArrayList<>();
-    templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(),
-        this.conditionals.stream().collect(Collectors.toCollection(LinkedHashSet::new)),
-        this.content, this.renderChildren(markupGenerator, translatorContext), params, translatorContext));
+    templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(), conditionals, content,
+        this.renderChildren(markupGenerator, translatorContext), params, translatorContext));
     for (ContentBlock child : this.children) {
       templates.addAll(child.renderDefinition(markupGenerator, translatorContext));
     }
@@ -251,7 +261,7 @@ public class ContentBlock {
   public Markup renderInvocation(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Argument> args = new LinkedHashSet<>();
     if (this.parent != null) {
-      args.addAll(parent.getAllArguments().stream()
+      args.addAll(this.parent.getAllArguments().stream()
           .map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.referenceExpression))
           .collect(Collectors.toCollection(LinkedHashSet::new)));
     }

@@ -1,5 +1,7 @@
 package eu.europa.ted.efx.model.templates;
 
+import java.util.List;
+
 import eu.europa.ted.efx.model.variables.ParsedArguments;
 import eu.europa.ted.efx.model.variables.ParsedParameters;
 
@@ -22,13 +24,12 @@ public class TemplateDefinition extends ContentBlock {
    *
    * @param parent       The parent ContentBlock to which this template is attached.
    * @param name         The name with which we will call the template.
-   * @param conditionals The conditionals that determine when this template should be used.
-   * @param content      The content to display for this template line.
+   * @param contentTemplates What the template displays.
    * @param parameters   The parameters that this template expects to be passed when invoked.
    */
   public TemplateDefinition(final ContentBlock parent, final String name,
-      final Conditionals conditionals, final Markup content, ParsedParameters parameters) {
-    super(parent, name, 0, conditionals, content, null, parameters, new ParsedArguments(parameters));
+      final List<ContentTemplate> contentTemplates, ParsedParameters parameters) {
+    super(parent, name, 0, contentTemplates, null, parameters, new ParsedArguments(parameters));
   }
   
 
