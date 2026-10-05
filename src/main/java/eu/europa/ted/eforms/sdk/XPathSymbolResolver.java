@@ -508,16 +508,26 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   @Override
-  public String getAttributeOfField(final String fieldId, final String attributeName) {
+  public String getAttributeFieldIdOfField(final String fieldId) {
     final SdkField sdkField = this.resolveField(fieldId);
     if (sdkField == null) {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
-    final SdkField attributeField = sdkField.getAttributeField(attributeName);
+    final String attributeName = this.resolveDataType(sdkField.getType()).getAttributeName();
+    final SdkField attributeField = attributeName == null ? null : sdkField.getAttributeField(attributeName);
     if (attributeField == null) {
-      throw SymbolResolutionException.noAttributeForField(fieldId, attributeName);
+      throw SymbolResolutionException.noAttributeForField(fieldId);
     }
     return attributeField.getId();
+  }
+
+  @Override
+  public String getFieldIdOfAttributeField(final String fieldId) {
+    final SdkField sdkField = this.resolveField(fieldId);
+    if (sdkField == null) {
+      throw SymbolResolutionException.unknownSymbol(fieldId);
+    }
+    return sdkField.getAttributeOf();
   }
 
   @Override
@@ -757,11 +767,16 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
       throw SymbolResolutionException.unknownSymbol(fieldId);
     }
 
-    return this.getDataType(sdkField.getType()).getPrivacyMask();
+    return this.resolveDataType(sdkField.getType()).getPrivacyMask();
   }
 
   @Override
-  public SdkDataType getDataType(final String dataTypeId) {
+  public String getAttributeFieldCodelistIdFromDataType(final String dataTypeId) {
+    final String attributeType = this.resolveDataType(dataTypeId).getAttributeType();
+    return attributeType == null ? null : this.resolveDataType(attributeType).getListName();
+  }
+
+  private SdkDataType resolveDataType(final String dataTypeId) {
     final SdkDataType dataType = this.dataTypeById(dataTypeId);
     if (dataType == null) {
       throw SdkInconsistencyException.unknownDataType(dataTypeId);

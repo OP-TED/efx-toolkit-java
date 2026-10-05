@@ -34,7 +34,6 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
@@ -607,7 +606,7 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       case MEASURE:
       case AMOUNT:
         return this.createFormattedExpressionBlockFragment(field,
-            this.symbols.getAttributeOfField(fieldId, this.symbols.getDataType(fieldType).getAttributeName()), options);
+            this.symbols.getAttributeFieldIdOfField(fieldId), options);
       default:
         return this.createFormattedExpressionBlockFragment(this.composeFieldValueReference(fieldId, field), options);
     }
@@ -643,16 +642,15 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
   /**
    * Creates the fragment of an expression block for a calculated duration. It has no unit entered with it, so
    * it is displayed as a number of months or days, in the unit it is calculated in. That number also
-   * selects the plural form of the unit. It has no field either, so the code list of its unit is the one
-   * of the data type of the attribute of durations.
+   * selects the plural form of the unit. It has no field either, so the code list of its unit is the one that
+   * the duration data type defines for its supplementary component.
    */
   private FormatContentTemplateFragment createFormattedExpressionBlockFragment(DurationExpression duration, NumberFormatOptions options) {
     NumericExpression number = this.composeGetNumberFromDuration(duration);
-    SdkDataType unitType =
-        this.symbols.getDataType(this.symbols.getDataType(FieldTypes.DURATION.getName()).getAttributeType());
+    String unitCodelistId = this.symbols.getAttributeFieldCodelistIdFromDataType(FieldTypes.DURATION.getName());
     SequenceExpression unitCode = this.composeGetUnitCode(duration);
     return new FormatContentTemplateFragment(this.composeFormattedScalar(number, options),
-        this.composeUnitSeparator(unitCode), this.composeCodeLabelKey(unitType.getListName(), unitCode),
+        this.composeUnitSeparator(unitCode), this.composeCodeLabelKey(unitCodelistId, unitCode),
         number, options.hideUnit());
   }
 
@@ -1002,8 +1000,13 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
     this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
   }
 
-  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression quantity) {
+  /**
+   * Renders the label of the value of a code or indicator field. Without a pluraliser, the label of
+   * the unit of an amount, a measure or a duration is pluralised by the number that it is the unit of.
+   */
+  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression pluraliser) {
     final Context currentContext = this.efxContext.peek();
+    final NumericExpression quantity = pluraliser.isEmpty() ? this.composeQuantityOfUnit(fieldId) : pluraliser;
     final String fieldType = this.symbols.getTypeOfField(fieldId);
     final PathExpression valueReference = this.composeFieldValueReference(fieldId,
         this.symbols.getRelativePathOfField(fieldId, currentContext.symbol()));
@@ -1054,6 +1057,32 @@ public class EfxTemplateTranslatorV2 extends EfxExpressionTranslatorV2
       default:
         throw InvalidUsageException.shorthandRequiresCodeOrIndicator(this.stack.peekParserContext(), fieldId, fieldType);
     }
+  }
+
+  /**
+   * Returns the number that the given field is the unit of: the value of the amount, measure or
+   * duration that holds it as its attribute, on the same element. It is empty if the given field is not
+   * such a unit, or if that number repeats, because a label is pluralised by a single quantity.
+   */
+  private NumericExpression composeQuantityOfUnit(final String unitFieldId) {
+    final String fieldId = this.symbols.getFieldIdOfAttributeField(unitFieldId);
+    if (fieldId == null) {
+      return NumericExpression.empty();
+    }
+    switch (FieldTypes.fromString(this.symbols.getTypeOfField(fieldId))) {
+      case DURATION:
+      case MEASURE:
+      case AMOUNT:
+        break;
+      default:
+        return NumericExpression.empty();
+    }
+    final PathExpression field = this.symbols.getRelativePathOfField(fieldId, this.efxContext.symbol());
+    if (field instanceof SequenceExpression) {
+      return NumericExpression.empty();
+    }
+    return TypedExpression.from(
+        this.script.composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
   }
 
   /**

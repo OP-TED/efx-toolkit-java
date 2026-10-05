@@ -157,6 +157,9 @@
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/CodeField",
       "xpathRelative": "PathNode/CodeField",
+      "attributes": [
+        "BT-00-CodeAttribute"
+      ],
       "codeList": {
         "value": {
           "id": "authority-activity",
@@ -187,6 +190,8 @@
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/CodeField/@attribute",
       "xpathRelative": "PathNode/CodeField/@attribute",
+      "attributeOf": "BT-00-Code",
+      "attributeName": "attribute",
       "codeList": {
         "value": {
           "id": "authority-activity",
@@ -301,6 +306,33 @@
       "codeList": {
         "value": {
           "id": "currency",
+          "type": "flat"
+        }
+      }
+    },
+    {
+      "id": "BT-00-Measure",
+      "alias": "measureField",
+      "type": "measure",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/MeasureField",
+      "xpathRelative": "PathNode/MeasureField",
+      "attributes": [
+        "BT-00-Measure-Unit"
+      ]
+    },
+    {
+      "id": "BT-00-Measure-Unit",
+      "alias": "measureUnitField",
+      "type": "code",
+      "parentNodeId": "ND-Root",
+      "xpathAbsolute": "/*/PathNode/MeasureField/@unitCode",
+      "xpathRelative": "PathNode/MeasureField/@unitCode",
+      "attributeOf": "BT-00-Measure",
+      "attributeName": "unitCode",
+      "codeList": {
+        "value": {
+          "id": "measurement-unit",
           "type": "flat"
         }
       }

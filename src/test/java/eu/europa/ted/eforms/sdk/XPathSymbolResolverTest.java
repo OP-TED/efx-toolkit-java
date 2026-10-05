@@ -54,7 +54,7 @@ class XPathSymbolResolverTest extends SymbolResolverContractTest {
     private final Map<String, SdkField> fieldAliases = new LinkedHashMap<>();
     private final Map<String, SdkNode> nodeAliases = new LinkedHashMap<>();
     private final List<SdkNoticeSubtype> noticeSubtypes = new ArrayList<>();
-    private final SdkDataTypeRepository dataTypes = SdkDataTypeRepository.createDefault();
+    private final SdkDataTypeRepository dataTypes = new SdkDataTypeRepository();
 
     void addNode(String id, String parentId, String xpathAbsolute, boolean repeatable) {
       this.nodes.put(id, new SdkNodeV1(id, parentId, xpathAbsolute, xpathAbsolute, repeatable));
@@ -99,6 +99,15 @@ class XPathSymbolResolverTest extends SymbolResolverContractTest {
               this.fieldAliases.putIfAbsent(field.getAlias(), field);
             }
           });
+
+      // Link each field to its attribute fields, as the SDK field repository does.
+      for (SdkField field : this.fields.values()) {
+        List<SdkField> attributeFields = new ArrayList<>();
+        for (String attributeFieldId : field.getAttributes()) {
+          attributeFields.add(this.fields.get(attributeFieldId));
+        }
+        field.setAttributeFields(attributeFields);
+      }
     }
 
     @Override

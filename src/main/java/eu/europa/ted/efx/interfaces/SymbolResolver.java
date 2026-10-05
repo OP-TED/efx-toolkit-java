@@ -15,7 +15,6 @@ package eu.europa.ted.efx.interfaces;
 
 import java.util.List;
 
-import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
 import eu.europa.ted.efx.model.PrivacySetting;
 import eu.europa.ted.efx.model.expressions.PathExpression;
@@ -169,13 +168,24 @@ public interface SymbolResolver {
   public String getAttributeNameFromAttributeField(final String fieldId);
 
   /**
-   * Gets the attribute field of the given field that holds the given attribute.
+   * Gets the identifier of the attribute field of the given field: the field that holds the
+   * supplementary component of its value, as the data type of the field defines it. The
+   * supplementary component is the attribute that completes the value, such as the currency of an
+   * amount.
    *
    * @param fieldId The identifier of the field to look for.
-   * @param attributeName The name of the attribute, without the @ prefix.
    * @return The identifier of the attribute field.
    */
-  public String getAttributeOfField(final String fieldId, final String attributeName);
+  public String getAttributeFieldIdOfField(final String fieldId);
+
+  /**
+   * Gets the identifier of the field that holds the given attribute field.
+   *
+   * @param fieldId The identifier of the attribute field.
+   * @return The identifier of the field that the attribute belongs to, or null if the given field is
+   *         not an attribute of another field.
+   */
+  public String getFieldIdOfAttributeField(final String fieldId);
 
   /**
    * Gets the absolute path of the given field, without the attribute part.
@@ -303,13 +313,15 @@ public interface SymbolResolver {
   public String getPrivacyMask(final String fieldId);
 
   /**
-   * Gets the given data type, with its metadata: its privacy masking value, and the attribute that
-   * the fields of the type carry, if any (e.g. the currency of an amount).
+   * Gets the identifier of the root code list of the supplementary component that the given data
+   * type defines, such as "timeperiod" for "duration". The attribute field of a field of that data
+   * type takes its codes from this code list, or from a code list tailored from it.
    *
    * This information is typically retrieved directly from the eForms SDK.
    *
    * @param dataTypeId The name of the data type, as returned by {@link #getTypeOfField}.
-   * @return The data type.
+   * @return The identifier of the code list, or null if the data type defines no supplementary
+   *         component or if its supplementary component does not hold codes.
    */
-  public SdkDataType getDataType(final String dataTypeId);
+  public String getAttributeFieldCodelistIdFromDataType(final String dataTypeId);
 }
