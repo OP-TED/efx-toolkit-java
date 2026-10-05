@@ -556,6 +556,37 @@ public abstract class SymbolResolverContractTest {
   }
 
   @Test
+  @DisplayName("getAttributeFieldIdOfField returns the attribute field of the supplementary component")
+  protected void getAttributeFieldIdOfField_amountField_returnsItsCurrencyField() {
+    assertEquals("BT-00-Amount-Currency", resolver.getAttributeFieldIdOfField("BT-00-Amount"));
+  }
+
+  @Test
+  @DisplayName("getAttributeFieldIdOfField throws for a field without an attribute field")
+  protected void getAttributeFieldIdOfField_fieldWithoutAttributeField_throws() {
+    assertThrows(SymbolResolutionException.class,
+        () -> resolver.getAttributeFieldIdOfField("BT-00-Text"));
+  }
+
+  @Test
+  @DisplayName("getAttributeFieldCodelistIdFromDataType returns the root codelist of the supplementary component")
+  protected void getAttributeFieldCodelistIdFromDataType_duration_returnsTimeperiod() {
+    assertEquals("timeperiod", resolver.getAttributeFieldCodelistIdFromDataType("duration"));
+  }
+
+  @Test
+  @DisplayName("getAttributeFieldCodelistIdFromDataType returns null for a data type without supplementary component")
+  protected void getAttributeFieldCodelistIdFromDataType_text_returnsNull() {
+    assertNull(resolver.getAttributeFieldCodelistIdFromDataType("text"));
+  }
+
+  @Test
+  @DisplayName("getAttributeFieldCodelistIdFromDataType returns null for a supplementary component without codes")
+  protected void getAttributeFieldCodelistIdFromDataType_code_returnsNull() {
+    assertNull(resolver.getAttributeFieldCodelistIdFromDataType("code"));
+  }
+
+  @Test
   @DisplayName("getFieldIdOfAttributeField returns the identifier of the field that holds the attribute")
   protected void getFieldIdOfAttributeField_attributeField_returnsItsFieldId() {
     assertEquals("BT-00-Duration", resolver.getFieldIdOfAttributeField("BT-00-Duration-Unit"));
