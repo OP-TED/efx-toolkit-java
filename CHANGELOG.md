@@ -10,6 +10,7 @@ This is an incremental update over 2.0.0-alpha.8.
 
 ### Changes since 2.0.0-alpha.8
 
+- **Java 21 required**: the toolkit now targets Java 21. Applications using it must build and run on Java 21 or later.
 - **Symbol resolution**: applications can now use their own metadata-loading mechanism while reusing the toolkit’s XPath symbol-resolution logic. This logic has been extracted into the abstract `XPathSymbolResolver` class. The existing `SdkSymbolResolver` extends it and continues to load metadata from SDK files using the eForms Core Library.
 
 The following sections describe the features of the 2.0.0 line. For the changes introduced in the preceding release, see the [2.0.0-alpha.8 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.8).
