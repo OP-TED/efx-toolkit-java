@@ -10,7 +10,7 @@ The documentation is available at: https://docs.ted.europa.eu/eforms/latest/efx-
 
 ## Using the EFX toolkit[^1]
 
-The EFX toolkit requires Java 11 or later.
+The EFX toolkit requires Java 21 or later.
 
 It is available as a Maven package on Maven Central and can be used by adding the following to the project's `pom.xml`.
 
