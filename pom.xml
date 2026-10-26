@@ -40,15 +40,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.outputTimestamp>2026-09-17T10:29:14Z</project.build.outputTimestamp>
 
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
 
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.16.0-SNAPSHOT</version.eforms-sdk-1>
     <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
-    <version.eforms-core>1.10.0-SNAPSHOT</version.eforms-core>
+    <version.eforms-core>2.0.0-SNAPSHOT</version.eforms-core>
 
     <!-- Versions - Third-party libraries -->
     <version.antlr4>4.13.1</version.antlr4>
@@ -63,6 +62,7 @@
 
     <!-- Versions - Plugins -->
     <version.build-helper.plugin>3.3.0</version.build-helper.plugin>
+    <version.compiler.plugin>3.13.0</version.compiler.plugin>
     <version.dependency.plugin>3.3.0</version.dependency.plugin>
     <version.install.plugin>2.5.2</version.install.plugin>
     <version.jacoco.plugin>0.8.12</version.jacoco.plugin>
@@ -207,6 +207,10 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${version.compiler.plugin}</version>
+        </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${version.surefire.plugin}</version>
