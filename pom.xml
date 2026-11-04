@@ -69,7 +69,7 @@
     <version.jar.plugin>3.2.0</version.jar.plugin>
     <version.javadoc.plugin>3.4.0</version.javadoc.plugin>
     <version.pgp.plugin>1.5</version.pgp.plugin>
-    <version.central-publishing.plugin>0.8.0</version.central-publishing.plugin>
+    <version.central-publishing.plugin>0.12.0</version.central-publishing.plugin>
     <version.source.plugin>3.2.1</version.source.plugin>
     <version.surefire.plugin>3.2.5</version.surefire.plugin>
   </properties>
