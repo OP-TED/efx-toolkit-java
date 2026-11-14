@@ -312,6 +312,22 @@ class EfxRegexValidatorTest {
         }
 
         @Test
+        void testUnsupportedEscapeSequence_QuotesWholeCharacter() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\\uD83D\uDE00'"));
+            assertEquals("Invalid regex pattern '\\\uD83D\uDE00' at position 1: "
+                    + "escape sequence '\\\uD83D\uDE00' is not allowed in EFX regex", ex.getMessage());
+        }
+
+        @Test
+        void testExtendedGroupSyntax_QuotesWholeCharacter() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'(?\uD83D\uDE00)'"));
+            assertEquals("Invalid regex pattern '(?\uD83D\uDE00)' at position 1: "
+                    + "extended group syntax '(?\uD83D\uDE00...)' is not allowed in EFX regex", ex.getMessage());
+        }
+
+        @Test
         void testUnclosedCharacterClass() {
             InvalidUsageException ex = assertThrows(InvalidUsageException.class,
                     () -> EfxRegexValidator.validate("'[abc'"));

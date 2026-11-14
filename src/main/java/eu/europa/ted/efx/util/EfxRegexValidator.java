@@ -152,7 +152,7 @@ public final class EfxRegexValidator {
         }
 
         throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
-                "escape sequence '\\" + next + "' is not allowed in EFX regex");
+                "escape sequence '\\" + characterAt(content, pos + 1) + "' is not allowed in EFX regex");
     }
 
     private static int validateCharacterClass(String rawPattern, String content, int startPos) {
@@ -212,7 +212,7 @@ public final class EfxRegexValidator {
                 } else if (modifier == ':') {
                     message = "non-capturing group '(?:...)' is not allowed in EFX regex — use plain '(...)' instead";
                 } else {
-                    message = "extended group syntax '(?" + modifier + "...)' is not allowed in EFX regex";
+                    message = "extended group syntax '(?" + characterAt(content, pos + 2) + "...)' is not allowed in EFX regex";
                 }
             } else {
                 message = "extended group syntax '(?...)' is not allowed in EFX regex";
@@ -270,5 +270,18 @@ public final class EfxRegexValidator {
      */
     private static int positionOf(String content, int index) {
         return content.codePointCount(0, index + 1);
+    }
+
+    /**
+     * Gives the character that starts at an index of the pattern, as an error message quotes it:
+     * whole, so that a character outside the Basic Multilingual Plane, such as an emoji, is not cut
+     * in half.
+     *
+     * @param content the pattern without its delimiters
+     * @param index the index where the character starts in the content
+     * @return the character
+     */
+    private static String characterAt(String content, int index) {
+        return content.substring(index, content.offsetByCodePoints(index, 1));
     }
 }
