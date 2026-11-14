@@ -134,11 +134,12 @@ public class IncludeProcessor {
   /**
    * @param text a text
    * @param index a place in the text
-   * @return the column of the place: how many characters precede it on its line, which starts after
-   *         a line end ('\n')
+   * @return the column of the place, as the lexer counts it: how many Unicode characters (code
+   *         points, where a Java string counts some as two) precede it on its line, which starts
+   *         after a line end ('\n')
    */
   private static int columnOf(final String text, final int index) {
-    return index - (text.lastIndexOf('\n', index - 1) + 1);
+    return text.codePointCount(text.lastIndexOf('\n', index - 1) + 1, index);
   }
 
   /**

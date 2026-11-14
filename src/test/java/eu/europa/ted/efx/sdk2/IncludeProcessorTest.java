@@ -281,13 +281,25 @@ class IncludeProcessorTest {
   }
 
   @Test
+  void testLineMap_DirectiveEndingInAnEmoji_CountsItAsOneColumn() throws IOException {
+    Map<String, String> files = new HashMap<>();
+    files.put("part.efx", "// part 1");
+
+    String input = "#include \"part.efx\" // \uD83D\uDE00";
+    CombinedText combined =
+        new IncludeProcessor(mapResolver(files)).resolve(CharStreams.fromString(input));
+
+    assertEquals("line 1:24", combined.getLineMap().positionOf(2, 0));
+  }
+
+  @Test
   void testLineMap_WritesAsciiDigitsWhateverTheDefaultLocale() {
-    Locale defaultLocale = Locale.getDefault();
+    Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
     try {
-      Locale.setDefault(new Locale("ar", "EG"));
+      Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
       assertEquals("line 12:16", new LineMap().positionOf(12, 16));
     } finally {
-      Locale.setDefault(defaultLocale);
+      Locale.setDefault(Locale.Category.FORMAT, formatLocale);
     }
   }
 }
