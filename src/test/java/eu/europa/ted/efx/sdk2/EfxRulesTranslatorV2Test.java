@@ -840,6 +840,21 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testEndOfInputAfterLastInclude_IsPlacedAtTheEndOfTheDirective() {
+    String rules = "#include \"extra.efx\"";
+    String extra = lines(
+        "---- STAGE 1b ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT TRUE",
+        "    AS ERROR R-X3F-N8W",
+        "    FOR BT-00-Text IN");
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
+    assertTrue(exception.getMessage().startsWith("line 1:20 "), exception::getMessage);
+  }
+
+  @Test
   void testUnknownFieldInNestedInclude_IsPlacedInTheInnermostFile() {
     String rules = lines(
         "#include \"outer.efx\"");

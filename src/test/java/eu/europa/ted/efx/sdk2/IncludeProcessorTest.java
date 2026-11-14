@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -31,18 +32,25 @@ class IncludeProcessorTest {
     };
   }
 
+  /**
+   * @return the combined text of the input
+   */
+  private static String combined(IncludeProcessor processor, String input) throws IOException {
+    return processor.resolve(CharStreams.fromString(input)).toString();
+  }
+
   @Test
   void testNoIncludes_PassesThrough() throws IOException {
     String input = "---- STAGE 1a ----\nWITH ND-Root\n";
     IncludeProcessor processor = new IncludeProcessor(null);
-    assertEquals(input, processor.process(input));
+    assertEquals(input, combined(processor, input));
   }
 
   @Test
   void testNoResolver_WithInclude_ThrowsError() {
     String input = "#include \"extra-rules.efx\"\n---- STAGE 1a ----\n";
     IncludeProcessor processor = new IncludeProcessor(null);
-    assertThrows(TranslatorConfigurationException.class, () -> processor.process(input));
+    assertThrows(TranslatorConfigurationException.class, () -> combined(processor, input));
   }
 
   @Test
@@ -52,7 +60,7 @@ class IncludeProcessorTest {
 
     String input = "---- STAGE 1a ----\n#include \"extra.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("---- STAGE 1a ----\n---- STAGE 2a ----\n\n", result);
   }
@@ -65,7 +73,7 @@ class IncludeProcessorTest {
 
     String input = "#include \"a.efx\"\n#include \"b.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("// content A\n\n// content B\n\n", result);
   }
@@ -78,7 +86,7 @@ class IncludeProcessorTest {
 
     String input = "#include \"a.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("// from B\n\n// from A\n\n", result);
   }
@@ -92,7 +100,7 @@ class IncludeProcessorTest {
     String input = "#include \"a.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
     InvalidUsageException exception =
-        assertThrows(InvalidUsageException.class, () -> processor.process(input));
+        assertThrows(InvalidUsageException.class, () -> combined(processor, input));
     assertEquals("Circular #include: 'a.efx' includes 'b.efx', which includes 'a.efx'.",
         exception.getMessage());
   }
@@ -108,7 +116,7 @@ class IncludeProcessorTest {
     String input = "#include \"main.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
     InvalidUsageException exception =
-        assertThrows(InvalidUsageException.class, () -> processor.process(input));
+        assertThrows(InvalidUsageException.class, () -> combined(processor, input));
     assertEquals("Circular #include: 'a.efx' includes 'b.efx', which includes 'c.efx',"
         + " which includes 'a.efx'.", exception.getMessage());
   }
@@ -121,7 +129,7 @@ class IncludeProcessorTest {
     String input = "#include \"self.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
     InvalidUsageException exception =
-        assertThrows(InvalidUsageException.class, () -> processor.process(input));
+        assertThrows(InvalidUsageException.class, () -> combined(processor, input));
     assertEquals("Circular #include: 'self.efx' includes 'self.efx'.", exception.getMessage());
   }
 
@@ -132,7 +140,7 @@ class IncludeProcessorTest {
 
     String input = "#include \"extra.efx\" // hand-written rules\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("// included\n\n", result);
   }
@@ -144,7 +152,7 @@ class IncludeProcessorTest {
 
     String input = "  #include \"extra.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("// included\n\n", result);
   }
@@ -156,7 +164,7 @@ class IncludeProcessorTest {
 
     String input = "// before\n#include \"middle.efx\"\n// after\n";
     IncludeProcessor processor = new IncludeProcessor(mapResolver(files));
-    String result = processor.process(input);
+    String result = combined(processor, input);
 
     assertEquals("// before\n// middle\n\n// after\n", result);
   }
@@ -169,7 +177,7 @@ class IncludeProcessorTest {
 
     String input = "#include \"missing.efx\"\n";
     IncludeProcessor processor = new IncludeProcessor(resolver);
-    assertThrows(IOException.class, () -> processor.process(input));
+    assertThrows(IOException.class, () -> combined(processor, input));
   }
 
   @Test
@@ -186,7 +194,7 @@ class IncludeProcessorTest {
     assertEquals("line 1:3", lineMap.positionOf(1, 3));
     assertEquals("line 1:3 in 'extra.efx'", lineMap.positionOf(2, 3));
     assertEquals("line 2:3 in 'extra.efx'", lineMap.positionOf(3, 3));
-    assertEquals("line 2:0", lineMap.positionOf(4, 0));
+    assertEquals("line 2:20", lineMap.positionOf(4, 0));
     assertEquals("line 3:3", lineMap.positionOf(5, 3));
   }
 
@@ -204,9 +212,9 @@ class IncludeProcessorTest {
     assertEquals("// a 1\n// b 1\n\n// a 3\n\n// main 2\n", combined.toString());
     assertEquals("line 1:3 in 'a.efx'", lineMap.positionOf(1, 3));
     assertEquals("line 1:3 in 'b.efx'", lineMap.positionOf(2, 3));
-    assertEquals("line 2:0 in 'a.efx'", lineMap.positionOf(3, 0));
+    assertEquals("line 2:16 in 'a.efx'", lineMap.positionOf(3, 0));
     assertEquals("line 3:3 in 'a.efx'", lineMap.positionOf(4, 3));
-    assertEquals("line 1:0", lineMap.positionOf(5, 0));
+    assertEquals("line 1:16", lineMap.positionOf(5, 0));
     assertEquals("line 2:3", lineMap.positionOf(6, 3));
   }
 
@@ -222,7 +230,7 @@ class IncludeProcessorTest {
 
     assertEquals("// extra 1\n// extra 2\n\n// main 2\n", combined.toString());
     assertEquals("line 2:3 in 'extra.efx'", lineMap.positionOf(2, 3));
-    assertEquals("line 1:0", lineMap.positionOf(3, 0));
+    assertEquals("line 1:20", lineMap.positionOf(3, 0));
     assertEquals("line 2:3", lineMap.positionOf(4, 3));
   }
 
@@ -237,7 +245,49 @@ class IncludeProcessorTest {
     LineMap lineMap = combined.getLineMap();
 
     assertEquals("// main 1\n\n// main 3\n", combined.toString());
-    assertEquals("line 2:0", lineMap.positionOf(2, 0));
+    assertEquals("line 2:20", lineMap.positionOf(2, 0));
     assertEquals("line 3:3", lineMap.positionOf(3, 3));
+  }
+
+  @Test
+  void testLineMap_EndOfInputAfterTheLastDirective_IsAtTheEndOfTheDirective() throws IOException {
+    Map<String, String> files = new HashMap<>();
+    files.put("part.efx", "// part 1");
+
+    String input = "// main 1\n  #include \"part.efx\"";
+    CombinedText combined =
+        new IncludeProcessor(mapResolver(files)).resolve(CharStreams.fromString(input));
+    LineMap lineMap = combined.getLineMap();
+
+    assertEquals("// main 1\n// part 1\n", combined.toString());
+    assertEquals("line 1:9 in 'part.efx'", lineMap.positionOf(2, 9));
+    assertEquals("line 2:21", lineMap.positionOf(3, 0));
+  }
+
+  @Test
+  void testLineMap_PathWithALineEnd_KeepsTheLinesAfterIt() throws IOException {
+    Map<String, String> files = new HashMap<>();
+    files.put("a\nb", "// a b 1\n");
+
+    String input = "#include \"a\nb\"\n// main 3\n";
+    CombinedText combined =
+        new IncludeProcessor(mapResolver(files)).resolve(CharStreams.fromString(input));
+    LineMap lineMap = combined.getLineMap();
+
+    assertEquals("// a b 1\n\n// main 3\n", combined.toString());
+    assertEquals("line 1:3 in 'a\nb'", lineMap.positionOf(1, 3));
+    assertEquals("line 2:2", lineMap.positionOf(2, 0));
+    assertEquals("line 3:3", lineMap.positionOf(3, 3));
+  }
+
+  @Test
+  void testLineMap_WritesAsciiDigitsWhateverTheDefaultLocale() {
+    Locale defaultLocale = Locale.getDefault();
+    try {
+      Locale.setDefault(new Locale("ar", "EG"));
+      assertEquals("line 12:16", new LineMap().positionOf(12, 16));
+    } finally {
+      Locale.setDefault(defaultLocale);
+    }
   }
 }

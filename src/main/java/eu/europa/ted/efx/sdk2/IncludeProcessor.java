@@ -57,17 +57,6 @@ public class IncludeProcessor {
   }
 
   /**
-   * Resolves all {@code #include} directives in the given text.
-   *
-   * @param text The EFX rules text potentially containing include directives.
-   * @return The text with all includes substituted recursively.
-   * @throws IOException If an included file cannot be resolved.
-   */
-  public String process(String text) throws IOException {
-    return this.process(text, new LineMap());
-  }
-
-  /**
    * Resolves all {@code #include} directives in the given text, and adds an insert to its line map
    * for each.
    *
@@ -89,10 +78,13 @@ public class IncludeProcessor {
     int lastEnd = 0;
     // the line of the result that the text appended next starts on
     int line = 1;
+    // the line of the text that the directive found ends on
+    int endLine = 1;
 
     while (matcher.find()) {
       result.append(text, lastEnd, matcher.start());
       line += lineEndsIn(text, lastEnd, matcher.start());
+      endLine += lineEndsIn(text, lastEnd, matcher.end());
 
       String path = matcher.group(1);
 
@@ -108,7 +100,8 @@ public class IncludeProcessor {
             processed.isEmpty() || processed.endsWith("\n") ? processed : processed + "\n";
         result.append(inserted);
         int lineCount = lineEndsIn(inserted, 0, inserted.length());
-        lineMap.addInsert(line, path, lineCount, includedLineMap);
+        lineMap.addInsert(line, path, lineCount, includedLineMap, endLine,
+            columnOf(text, matcher.end()));
         line += lineCount;
       } finally {
         this.resolving.remove(path);
@@ -136,6 +129,16 @@ public class IncludeProcessor {
       }
     }
     return count;
+  }
+
+  /**
+   * @param text a text
+   * @param index a place in the text
+   * @return the column of the place: how many characters precede it on its line, which starts after
+   *         a line end ('\n')
+   */
+  private static int columnOf(final String text, final int index) {
+    return index - (text.lastIndexOf('\n', index - 1) + 1);
   }
 
   /**
