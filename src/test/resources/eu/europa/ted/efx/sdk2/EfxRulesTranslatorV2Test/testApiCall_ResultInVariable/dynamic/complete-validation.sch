@@ -44,7 +44,7 @@
         <xsl:value-of select="if ($response castable as xs:integer) then xs:integer($response) else -1"/>
     </xsl:function>
 
-    <let name="globalOk" value="efx:call-api('default', 'check-global', (/*/PathNode/CodeField/normalize-space(text())))"/>
+    <let name="globalOk" value="number(efx:call-api('default', 'check-global', (/*/PathNode/CodeField/normalize-space(text()))))"/>
 
     <phase id="eforms-1">
         <active pattern="EFORMS-validation-stage-1a-1" />
