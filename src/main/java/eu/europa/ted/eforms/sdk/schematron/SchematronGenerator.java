@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,6 +77,8 @@ public class SchematronGenerator implements ValidatorGenerator {
     this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
     this.freemarkerConfig.setTemplateLoader(this.resolveTemplateLoader(options));
     this.freemarkerConfig.setDefaultEncoding("UTF-8");
+    // The root locale, so that what a template writes does not depend on the default locale
+    this.freemarkerConfig.setLocale(Locale.ROOT);
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.freemarkerConfig.setLogTemplateExceptions(false);
   }

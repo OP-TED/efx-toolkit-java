@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -39,6 +40,8 @@ import org.xml.sax.InputSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.EfxTranslatorOptions;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
@@ -75,8 +78,13 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
   private static EfxRulesTranslatorV2 translatorWith(final BaseErrorListener errorListener)
       throws InstantiationException {
+    return translatorWith(new SchematronGenerator(), errorListener);
+  }
+
+  private static EfxRulesTranslatorV2 translatorWith(final SchematronGenerator generator,
+      final BaseErrorListener errorListener) throws InstantiationException {
     return new EfxRulesTranslatorV2(
-        new SchematronGenerator(),
+        generator,
         DependencyFactoryMock.INSTANCE.createSymbolResolver(SDK_VERSION, ""),
         DependencyFactoryMock.INSTANCE.createScriptGenerator(SDK_VERSION, "",
             new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT)),
@@ -716,6 +724,45 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion Context variable type tests
+
+  //#region Custom template tests
+
+  @Test
+  @ResourceLock(Resources.LOCALE)
+  void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheDefaultLocale(
+      @TempDir Path templatesRoot) throws IOException, InstantiationException {
+    Files.writeString(templatesRoot.resolve("pattern.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
+    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT) {
+      @Override
+      public Path getTemplatesRoot() {
+        return templatesRoot;
+      }
+    };
+    String rules =
+        "---- STAGE 1a ----\n\n"
+        + "WITH BT-00-Text\n"
+        + "    ASSERT BT-00-Text is present\n"
+        + "    AS ERROR R-X3F-N8W\n"
+        + "    FOR BT-00-Text IN 1\n";
+
+    // The template engine reads the default locale, not the one for formatting
+    Locale defaultLocale = Locale.getDefault();
+    Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
+    Locale displayLocale = Locale.getDefault(Locale.Category.DISPLAY);
+    try {
+      Locale.setDefault(new Locale("ar", "EG"));
+      Map<String, String> outputFiles =
+          translatorWith(new SchematronGenerator(options), ThrowingErrorListener.INSTANCE)
+              .translateRules(rules);
+      assertEquals("<pattern id=\"rules-1\"/>", outputFiles.get("static/validation-stage-1a-1.sch"));
+    } finally {
+      Locale.setDefault(defaultLocale);
+      Locale.setDefault(Locale.Category.FORMAT, formatLocale);
+      Locale.setDefault(Locale.Category.DISPLAY, displayLocale);
+    }
+  }
+
+  //#endregion Custom template tests
 
   //#region Include directive tests
 
