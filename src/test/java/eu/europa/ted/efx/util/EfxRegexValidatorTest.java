@@ -342,6 +342,22 @@ class EfxRegexValidatorTest {
     class Positions {
 
         @Test
+        void testPosition_CountsUnicodeCharacters() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\uD83D\uDE00)'"));
+            assertEquals("Invalid regex pattern '\uD83D\uDE00)' at position 2: unmatched closing parenthesis",
+                    ex.getMessage());
+        }
+
+        @Test
+        void testPosition_OfUnclosedGroup_CountsUnicodeCharacters() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'(\uD83D\uDE00'"));
+            assertEquals("Invalid regex pattern '(\uD83D\uDE00' at position 2: unclosed group — missing ')'",
+                    ex.getMessage());
+        }
+
+        @Test
         void testPosition_WrittenInAsciiDigitsWhateverTheDefaultLocale() {
             Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
             try {

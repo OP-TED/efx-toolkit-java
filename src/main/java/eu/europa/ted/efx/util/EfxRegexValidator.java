@@ -81,7 +81,7 @@ public final class EfxRegexValidator {
                 groupDepth++;
             } else if (c == ')') {
                 if (groupDepth <= 0) {
-                    throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, i + 1, "unmatched closing parenthesis");
+                    throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, i), "unmatched closing parenthesis");
                 }
                 groupDepth--;
             } else if (c == '{') {
@@ -91,13 +91,13 @@ public final class EfxRegexValidator {
         }
 
         if (groupDepth > 0) {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, content.length(), "unclosed group — missing ')'");
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, content.length() - 1), "unclosed group — missing ')'");
         }
     }
 
     private static int validateEscape(String rawPattern, String content, int pos) {
         if (pos + 1 >= content.length()) {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1, "trailing backslash");
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos), "trailing backslash");
         }
 
         char next = content.charAt(pos + 1);
@@ -117,41 +117,41 @@ public final class EfxRegexValidator {
         }
 
         if (SHORTHAND_CLASSES.contains(next)) {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                     "shorthand class '\\" + next + "' is not allowed in EFX regex — its semantics differ across target languages. "
                     + "Use an explicit character class instead (e.g. [0-9], [a-zA-Z0-9_], [ \\t\\r\\n])");
         }
 
         if (next == 'b' || next == 'B') {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                     "word boundary '\\" + next + "' is not allowed in EFX regex — use '^' and '$' anchors instead");
         }
 
         if (next >= '1' && next <= '9') {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                     "backreference '\\" + next + "' is not allowed in EFX regex");
         }
 
         if (next == 'p' || next == 'P') {
             // Unicode property escape \p{Category} or \P{Category} — allowed
             if (pos + 2 >= content.length() || content.charAt(pos + 2) != '{') {
-                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                         "Unicode property escape '\\" + next + "' must be followed by '{Category}' (e.g. \\p{L})");
             }
             int closeIdx = content.indexOf('}', pos + 3);
             if (closeIdx < 0) {
-                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                         "Unicode property escape '\\" + next + "{...}' is missing closing '}'");
             }
             return closeIdx;
         }
 
         if (next == '0' || next == 'x' || next == 'u') {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                     "numeric character escape '\\" + next + "' is not allowed in EFX regex — use the literal character instead");
         }
 
-        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1,
+        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos),
                 "escape sequence '\\" + next + "' is not allowed in EFX regex");
     }
 
@@ -177,7 +177,7 @@ public final class EfxRegexValidator {
 
             if (c == '\\') {
                 if (i + 1 >= content.length()) {
-                    throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, i + 1, "trailing backslash in character class");
+                    throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, i), "trailing backslash in character class");
                 }
                 char next = content.charAt(i + 1);
                 if (ESCAPABLE_METACHARACTERS.contains(next)
@@ -195,7 +195,7 @@ public final class EfxRegexValidator {
             i++;
         }
 
-        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, startPos + 1, "unclosed character class — missing ']'");
+        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, startPos), "unclosed character class — missing ']'");
     }
 
     private static int validateGroupOpen(String rawPattern, String content, int pos) {
@@ -217,7 +217,7 @@ public final class EfxRegexValidator {
             } else {
                 message = "extended group syntax '(?...)' is not allowed in EFX regex";
             }
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, pos + 1, message);
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, pos), message);
         }
         return pos;
     }
@@ -237,7 +237,7 @@ public final class EfxRegexValidator {
         }
 
         if (i >= content.length()) {
-            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, startPos + 1, "unclosed repetition quantifier — missing '}'");
+            throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, startPos), "unclosed repetition quantifier — missing '}'");
         }
 
         if (content.charAt(i) == '}') {
@@ -251,11 +251,24 @@ public final class EfxRegexValidator {
                 i++;
             }
             if (i >= content.length() || content.charAt(i) != '}') {
-                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, startPos + 1, "unclosed repetition quantifier — missing '}'");
+                throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, startPos), "unclosed repetition quantifier — missing '}'");
             }
             return i;
         }
 
-        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, startPos + 1, "invalid repetition quantifier");
+        throw InvalidUsageException.unsupportedRegexConstruct(rawPattern, positionOf(content, startPos), "invalid repetition quantifier");
+    }
+
+    /**
+     * Gives the position of a character of the pattern as an error message gives it: counted from 1,
+     * in Unicode characters, so that a character outside the Basic Multilingual Plane, such as an
+     * emoji, counts once.
+     *
+     * @param content the pattern without its delimiters
+     * @param index the index of the character in the content, at either half of a surrogate pair
+     * @return the position of the character
+     */
+    private static int positionOf(String content, int index) {
+        return content.codePointCount(0, index + 1);
     }
 }
