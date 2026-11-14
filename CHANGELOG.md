@@ -4,6 +4,13 @@ _The EFX Toolkit for Java developers is a library that enables the transpilation
 
 ---
 
+## Unreleased
+
+### Changes since 2.0.0-alpha.9
+
+- **Schematron output uses XSLT 3.0**: generated Schematron now declares `queryBinding="xslt3"` and requires an XSLT 3.0 processor. Applications that need XSLT 2.0 can supply their own `complete-validation.ftl` through the templates folder (`TranslatorOptions.getTemplatesRoot()`).
+- **One API request per dynamic call**: the generated `efx:call-api` reads the endpoint once, inside `xsl:try`, and each call is wrapped in `number()` so that ph-schematron knows its type in advance. Each dynamic function call now reaches the API once instead of twice (TEDEFO-5314, TEDEFO-5315).
+
 ## In this release
 
 This is an incremental update over 2.0.0-alpha.8.
