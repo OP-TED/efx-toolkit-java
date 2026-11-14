@@ -2,8 +2,8 @@ package eu.europa.ted.efx.mock;
 
 import static java.util.Map.entry;
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.mock.sdk1.SymbolResolverMockV1;
 import eu.europa.ted.efx.mock.sdk2.SymbolResolverMockV2;
@@ -14,7 +14,8 @@ public class SymbolResolverMockFactory {
           entry("eforms-sdk-1.0", SymbolResolverMockV1.class),
           entry("eforms-sdk-2.0", SymbolResolverMockV2.class));
 
-  private static final Map<String, SymbolResolver> instances = new HashMap<>();
+  // Concurrent, as tests that run in parallel ask for the same instance at once
+  private static final Map<String, SymbolResolver> instances = new ConcurrentHashMap<>();
 
   public static SymbolResolver getInstance(final String sdkVersion) {
     return instances.computeIfAbsent(sdkVersion, k -> {
