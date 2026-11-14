@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Locale;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.EfxCompilationException;
@@ -575,6 +576,19 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         "boolean(for $__T in (current-date()) return ($__T + xs:dayTimeDuration('P21D') > $__T + xs:dayTimeDuration('P7D')))",
         "BT-00-Text", "P3W > P7D");
+  }
+
+  @Test
+  void testDurationComparison_UsingDayTimeDurationLiterals_AsciiDigitsWhateverTheDefaultLocale() {
+    Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
+    try {
+      Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
+      testExpressionTranslationWithContext(
+          "boolean(for $__T in (current-date()) return ($__T + xs:dayTimeDuration('P21D') > $__T + xs:dayTimeDuration('P7D')))",
+          "BT-00-Text", "P3W > P7D");
+    } finally {
+      Locale.setDefault(Locale.Category.FORMAT, formatLocale);
+    }
   }
 
   @Test

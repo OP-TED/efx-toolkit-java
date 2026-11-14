@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -96,7 +97,7 @@ public class ContentBlock {
 
   public ContentBlock addChild(final int number, final Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
-    String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
+    String newBlockId = String.format(Locale.ROOT, "%s%02d", this.id, this.children.size() + 1);
     return this.addChild(newBlockId, number, context, variables, contentTemplates);
   }
 
@@ -145,15 +146,15 @@ public class ContentBlock {
     }
 
     if (this.parent == null || (this.parent.number == 0)) {
-      return String.format("%d", this.number);
+      return String.format(Locale.ROOT, "%d", this.number);
     }
 
     final String parentNumber = this.parent.getOutlineNumber();
     if (parentNumber.isEmpty()) {
-      return String.format("%d", this.number);
+      return String.format(Locale.ROOT, "%d", this.number);
     }
 
-    return String.format("%s.%d", parentNumber, this.number);
+    return String.format(Locale.ROOT, "%s.%d", parentNumber, this.number);
   }
 
   public Integer getIndentationLevel() {

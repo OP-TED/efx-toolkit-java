@@ -17,6 +17,7 @@ import static java.util.Map.entry;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
@@ -222,7 +223,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     if (literal.contains("W")) {
       final int weeks = this.getWeeksFromDurationLiteral(literal);
       return new DurationLiteral(
-          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
+          "xs:dayTimeDuration(" + quoted(String.format(Locale.ROOT, "P%dD", weeks * 7)) + ")");
     }
     return new DurationLiteral("xs:dayTimeDuration(" + quoted(literal) + ")");
   }
