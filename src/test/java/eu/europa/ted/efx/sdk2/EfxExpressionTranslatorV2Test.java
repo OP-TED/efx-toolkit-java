@@ -21,6 +21,8 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Locale;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.exceptions.EfxCompilationException;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
@@ -579,6 +581,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  @ResourceLock(Resources.LOCALE)
   void testDurationComparison_UsingDayTimeDurationLiterals_AsciiDigitsWhateverTheDefaultLocale() {
     Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
     try {

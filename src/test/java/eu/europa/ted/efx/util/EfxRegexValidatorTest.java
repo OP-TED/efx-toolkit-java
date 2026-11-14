@@ -22,6 +22,8 @@ import java.util.Locale;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
 
@@ -358,6 +360,7 @@ class EfxRegexValidatorTest {
         }
 
         @Test
+        @ResourceLock(Resources.LOCALE)
         void testPosition_WrittenInAsciiDigitsWhateverTheDefaultLocale() {
             Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
             try {

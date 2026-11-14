@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
@@ -293,6 +295,7 @@ class IncludeProcessorTest {
   }
 
   @Test
+  @ResourceLock(Resources.LOCALE)
   void testLineMap_WritesAsciiDigitsWhateverTheDefaultLocale() {
     Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
     try {
