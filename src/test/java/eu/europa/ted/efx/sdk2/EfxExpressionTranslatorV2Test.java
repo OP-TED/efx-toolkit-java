@@ -1895,6 +1895,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testStringLengthFunction_MultilingualFieldInItsOwnContext() {
+    testExpressionTranslationWithContext("string-length(./normalize-space(text()))",
+        "BT-00-Text-Multilingual",
+        "string-length(BT-00-Text-Multilingual)");
+  }
+
+  @Test
   void testYearFromDateFunction() {
     testExpressionTranslationWithContext("year-from-date(xs:date('2024-03-15Z'))", "ND-Root",
         "year(date('2024-03-15Z'))");
