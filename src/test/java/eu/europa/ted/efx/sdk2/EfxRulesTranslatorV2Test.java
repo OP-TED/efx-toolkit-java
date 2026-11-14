@@ -727,39 +727,68 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
   //#region Custom template tests
 
-  @Test
-  @ResourceLock(Resources.LOCALE)
-  void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheDefaultLocale(
-      @TempDir Path templatesRoot) throws IOException, InstantiationException {
-    Files.writeString(templatesRoot.resolve("pattern.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
-    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT) {
+  private static final String ONE_RULE =
+      "---- STAGE 1a ----\n\n"
+      + "WITH BT-00-Text\n"
+      + "    ASSERT BT-00-Text is present\n"
+      + "    AS ERROR R-X3F-N8W\n"
+      + "    FOR BT-00-Text IN 1\n";
+
+  /**
+   * @return the pattern of {@link #ONE_RULE}, written with the templates of the given folder and
+   *         chosen for the given language, under the given default locale
+   */
+  private static String patternOfOneRule(final Path templatesRoot, final Locale language,
+      final Locale defaultLocale) throws InstantiationException {
+    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT, language) {
       @Override
       public Path getTemplatesRoot() {
         return templatesRoot;
       }
     };
-    String rules =
-        "---- STAGE 1a ----\n\n"
-        + "WITH BT-00-Text\n"
-        + "    ASSERT BT-00-Text is present\n"
-        + "    AS ERROR R-X3F-N8W\n"
-        + "    FOR BT-00-Text IN 1\n";
-
     // The template engine reads the default locale, not the one for formatting
-    Locale defaultLocale = Locale.getDefault();
-    Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
-    Locale displayLocale = Locale.getDefault(Locale.Category.DISPLAY);
+    Locale savedDefault = Locale.getDefault();
+    Locale savedFormat = Locale.getDefault(Locale.Category.FORMAT);
+    Locale savedDisplay = Locale.getDefault(Locale.Category.DISPLAY);
     try {
-      Locale.setDefault(new Locale("ar", "EG"));
-      Map<String, String> outputFiles =
-          translatorWith(new SchematronGenerator(options), ThrowingErrorListener.INSTANCE)
-              .translateRules(rules);
-      assertEquals("<pattern id=\"rules-1\"/>", outputFiles.get("static/validation-stage-1a-1.sch"));
-    } finally {
       Locale.setDefault(defaultLocale);
-      Locale.setDefault(Locale.Category.FORMAT, formatLocale);
-      Locale.setDefault(Locale.Category.DISPLAY, displayLocale);
+      return translatorWith(new SchematronGenerator(options), ThrowingErrorListener.INSTANCE)
+          .translateRules(ONE_RULE).get("static/validation-stage-1a-1.sch");
+    } finally {
+      Locale.setDefault(savedDefault);
+      Locale.setDefault(Locale.Category.FORMAT, savedFormat);
+      Locale.setDefault(Locale.Category.DISPLAY, savedDisplay);
     }
+  }
+
+  @Test
+  @ResourceLock(Resources.LOCALE)
+  void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheDefaultLocale(
+      @TempDir Path templatesRoot) throws IOException, InstantiationException {
+    Files.writeString(templatesRoot.resolve("pattern.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
+    assertEquals("<pattern id=\"rules-1\"/>",
+        patternOfOneRule(templatesRoot, Locale.ENGLISH, new Locale("ar", "EG")));
+  }
+
+  @Test
+  @ResourceLock(Resources.LOCALE)
+  void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheLanguage(
+      @TempDir Path templatesRoot) throws IOException, InstantiationException {
+    Files.writeString(templatesRoot.resolve("pattern_ar.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
+    assertEquals("<pattern id=\"rules-1\"/>",
+        patternOfOneRule(templatesRoot, new Locale("ar"), Locale.US));
+  }
+
+  @Test
+  @ResourceLock(Resources.LOCALE)
+  void testCustomTemplate_ChosenForTheLanguageWhateverTheDefaultLocale(
+      @TempDir Path templatesRoot) throws IOException, InstantiationException {
+    Files.writeString(templatesRoot.resolve("pattern_en.ftl"), "<pattern id=\"english\"/>");
+    Files.writeString(templatesRoot.resolve("pattern_fr.ftl"), "<pattern id=\"french\"/>");
+    assertEquals("<pattern id=\"english\"/>",
+        patternOfOneRule(templatesRoot, Locale.ENGLISH, Locale.FRANCE));
+    assertEquals("<pattern id=\"french\"/>",
+        patternOfOneRule(templatesRoot, Locale.FRENCH, Locale.US));
   }
 
   //#endregion Custom template tests
