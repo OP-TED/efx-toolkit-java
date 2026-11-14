@@ -989,10 +989,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeDynamicFunction(String endpointName, String apiName,
       List<? extends TypedExpression> arguments) {
-    StringBuilder sb = new StringBuilder("efx:call-api('");
+    // Wrapped in number() so that the type is known before evaluation. Without it,
+    // ph-schematron evaluates the call twice (first as a node set, then as a number).
+    StringBuilder sb = new StringBuilder("number(efx:call-api('");
     sb.append(endpointName).append("', '").append(apiName).append("', (");
     sb.append(arguments.stream().map(TypedExpression::getScript).collect(Collectors.joining(", ")));
-    sb.append("))");
+    sb.append(")))");
     return new NumericExpression(sb.toString());
   }
 
