@@ -3397,6 +3397,24 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testTemplateDefinition_InvalidNoArguments_AsciiDigitsWhateverTheDefaultLocale() {
+    var template = lines(
+        "let template:greeting(text:$name) display Hello ${$name};",
+        "invoke greeting();");
+    Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
+    try {
+      Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
+      InvalidArgumentException ex =
+          assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
+      assertEquals(
+          "line 2:0 Argument number mismatch. Template 'greeting' takes 1 argument but got 0.",
+          ex.getMessage());
+    } finally {
+      Locale.setDefault(Locale.Category.FORMAT, formatLocale);
+    }
+  }
+
+  @Test
   void testFunctionDeclaration_InvalidNoArguments() {
     var template = lines(
         "let text:?greeting(text:$name) = concat('Hello ', $name);",

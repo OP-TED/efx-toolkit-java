@@ -13,6 +13,8 @@
  */
 package eu.europa.ted.efx.exceptions;
 
+import java.util.Locale;
+
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -30,6 +32,8 @@ import eu.europa.ted.efx.model.LineMap;
  * about, or when it is placed there afterwards with {@link #at}. Its message starts with that
  * position, as "line X:Y ", or as "line X:Y in 'file' " when the error is in a file included with
  * {@code #include}.
+ *
+ * <p>A message writes its numbers in ASCII digits whatever the default locale.
  */
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public abstract class EfxCompilationException extends ParseCancellationException {
@@ -41,11 +45,11 @@ public abstract class EfxCompilationException extends ParseCancellationException
     private String position;
 
     protected EfxCompilationException(String template, Object... args) {
-        super(args.length > 0 ? String.format(template, args) : template);
+        super(args.length > 0 ? String.format(Locale.ROOT, template, args) : template);
     }
 
     protected EfxCompilationException(ParserRuleContext ctx, String template, Object... args) {
-        super(String.format(template, args));
+        super(String.format(Locale.ROOT, template, args));
         this.position = positionOf(ctx);
     }
 

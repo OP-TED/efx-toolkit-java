@@ -14,8 +14,11 @@
 package eu.europa.ted.efx.util;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Locale;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -332,6 +335,24 @@ class EfxRegexValidatorTest {
             InvalidUsageException ex = assertThrows(InvalidUsageException.class,
                     () -> EfxRegexValidator.validate("'abc\\'"));
             assertTrue(ex.getMessage().contains("trailing backslash"));
+        }
+    }
+
+    @Nested
+    class Positions {
+
+        @Test
+        void testPosition_WrittenInAsciiDigitsWhateverTheDefaultLocale() {
+            Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
+            try {
+                Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
+                InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                        () -> EfxRegexValidator.validate("'abc)'"));
+                assertEquals("Invalid regex pattern 'abc)' at position 4: unmatched closing parenthesis",
+                        ex.getMessage());
+            } finally {
+                Locale.setDefault(Locale.Category.FORMAT, formatLocale);
+            }
         }
     }
 }
