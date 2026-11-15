@@ -17,6 +17,9 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import eu.europa.ted.efx.model.identifiers.DynamicFunction;
+import eu.europa.ted.efx.model.templates.FormatOptions.FormatStyle;
+import eu.europa.ted.efx.model.types.EfxDataType;
+import eu.europa.ted.efx.model.types.EfxTypeTokenLookup;
 
 /**
  * Exception thrown when an EFX construct is used incorrectly, such as referencing
@@ -37,7 +40,8 @@ public class InvalidUsageException extends EfxCompilationException {
         EMPTY_RULES_FILE,
         DYNAMIC_FUNCTION_OUTSIDE_RULE,
         INVALID_ENDPOINT_NAME,
-        INVALID_FORMAT_OPTIONS,
+        DECIMALS_NOT_APPLICABLE,
+        STYLE_NOT_APPLICABLE,
         UNIT_FOR_LIST,
         NO_UNIT_NOT_APPLICABLE
     }
@@ -53,9 +57,10 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String EMPTY_RULES_FILE = "Rules file must contain at least one validation stage.";
     private static final String DYNAMIC_FUNCTION_OUTSIDE_RULE = "%s can only be called inline within a rule expression (ASSERT/REPORT). Use 'LET dynamic : $var = ?%s(...)' to declare a dynamic variable at this scope.";
     private static final String INVALID_ENDPOINT_NAME = "Endpoint name '%s' is not valid. Endpoint names must start with a letter and contain only letters, digits, hyphens, and underscores.";
-    private static final String INVALID_FORMAT_OPTIONS = "A number of decimals can only format a number, and short, medium or long only a date or a time.";
+    private static final String DECIMALS_NOT_APPLICABLE = "Format option '%d' cannot format a value of type '%s': it is for a number or a duration.";
+    private static final String STYLE_NOT_APPLICABLE = "Format option '%s' cannot format a value of type '%s': it is for a date or a time.";
     private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
-    private static final String NO_UNIT_NOT_APPLICABLE = "no-unit can only be used for an amount, a measure or a duration.";
+    private static final String NO_UNIT_NOT_APPLICABLE = "Format option 'no-unit' cannot format a value of type '%s': it is for an amount, a measure or a duration.";
 
     private final ErrorCode errorCode;
 
@@ -144,15 +149,47 @@ public class InvalidUsageException extends EfxCompilationException {
         return new InvalidUsageException(ErrorCode.INVALID_ENDPOINT_NAME, ctx, INVALID_ENDPOINT_NAME, endpointName);
     }
 
-    public static InvalidUsageException invalidFormatOptions(ParserRuleContext ctx) {
-        return new InvalidUsageException(ErrorCode.INVALID_FORMAT_OPTIONS, ctx, INVALID_FORMAT_OPTIONS);
+    /**
+     * A number of decimals given to a value that is neither a number nor a duration.
+     *
+     * @param ctx the expression block
+     * @param decimals the number of decimals given
+     * @param type the type of the value
+     * @return the exception
+     */
+    public static InvalidUsageException decimalsNotApplicable(ParserRuleContext ctx, int decimals,
+            Class<? extends EfxDataType> type) {
+        return new InvalidUsageException(ErrorCode.DECIMALS_NOT_APPLICABLE, ctx, DECIMALS_NOT_APPLICABLE, decimals,
+                EfxTypeTokenLookup.nameOf(type));
+    }
+
+    /**
+     * A style given to a value that is neither a date nor a time.
+     *
+     * @param ctx the expression block
+     * @param style the style given
+     * @param type the type of the value
+     * @return the exception
+     */
+    public static InvalidUsageException styleNotApplicable(ParserRuleContext ctx, FormatStyle style,
+            Class<? extends EfxDataType> type) {
+        return new InvalidUsageException(ErrorCode.STYLE_NOT_APPLICABLE, ctx, STYLE_NOT_APPLICABLE, style.getName(),
+                EfxTypeTokenLookup.nameOf(type));
     }
 
     public static InvalidUsageException unitForList(ParserRuleContext ctx) {
         return new InvalidUsageException(ErrorCode.UNIT_FOR_LIST, ctx, UNIT_FOR_LIST);
     }
 
-    public static InvalidUsageException noUnitNotApplicable(ParserRuleContext ctx) {
-        return new InvalidUsageException(ErrorCode.NO_UNIT_NOT_APPLICABLE, ctx, NO_UNIT_NOT_APPLICABLE);
+    /**
+     * No-unit given to a value that has no unit.
+     *
+     * @param ctx the expression block
+     * @param type the type of the value
+     * @return the exception
+     */
+    public static InvalidUsageException noUnitNotApplicable(ParserRuleContext ctx, Class<? extends EfxDataType> type) {
+        return new InvalidUsageException(ErrorCode.NO_UNIT_NOT_APPLICABLE, ctx, NO_UNIT_NOT_APPLICABLE,
+                EfxTypeTokenLookup.nameOf(type));
     }
 }

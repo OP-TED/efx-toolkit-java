@@ -2151,12 +2151,35 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFormattedExpressionBlock_NoUnitOnNumber_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Number|2 no-unit}"));
+    assertInvalidUsage(InvalidUsageException.ErrorCode.NO_UNIT_NOT_APPLICABLE,
+        "line 1:4 Format option 'no-unit' cannot format a value of type 'number': it is for an amount, a measure or a duration.",
+        "{/} ${BT-00-Number|2 no-unit}");
   }
 
   @Test
   void testFormattedExpressionBlock_NoUnitOnDate_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-StartDate|medium no-unit}"));
+    assertInvalidUsage(InvalidUsageException.ErrorCode.NO_UNIT_NOT_APPLICABLE,
+        "line 1:4 Format option 'no-unit' cannot format a value of type 'date': it is for an amount, a measure or a duration.",
+        "{/} ${BT-00-StartDate|no-unit}");
+  }
+
+  @Test
+  void testFormattedExpressionBlock_NoUnitAfterStyle_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate("{/} ${BT-00-StartDate|medium no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_StyleOnDurationField_IsError() {
+    assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
+        "line 1:4 Format option 'short' cannot format a value of type 'duration': it is for a date or a time.",
+        "{/} ${BT-00-Duration|short}");
+  }
+
+  @Test
+  void testFormattedExpressionBlock_StyleOnRepeatableDurationField_IsErrorOfTheStyle() {
+    assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
+        "line 1:4 Format option 'short' cannot format a value of type 'duration*': it is for a date or a time.",
+        "{/} ${BT-00-Repeatable-Duration|short}");
   }
 
   @Test
@@ -2312,12 +2335,16 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFormattedExpressionBlock_TextExpression_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${'abc'|2}"));
+    assertInvalidUsage(InvalidUsageException.ErrorCode.DECIMALS_NOT_APPLICABLE,
+        "line 1:4 Format option '2' cannot format a value of type 'text': it is for a number or a duration.",
+        "{/} ${'abc'|2}");
   }
 
   @Test
   void testFormattedExpressionBlock_DateStyleOnNumericExpression_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Number * 2|short}"));
+    assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
+        "line 1:4 Format option 'short' cannot format a value of type 'number': it is for a date or a time.",
+        "{/} ${BT-00-Number * 2|short}");
   }
 
   // Sequences: each value is formatted.
@@ -2370,7 +2397,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFormattedExpressionBlock_DecimalsOnDateField_IsError() {
-    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-StartDate|2}"));
+    assertInvalidUsage(InvalidUsageException.ErrorCode.DECIMALS_NOT_APPLICABLE,
+        "line 1:4 Format option '2' cannot format a value of type 'date': it is for a number or a duration.",
+        "{/} ${BT-00-StartDate|2}");
   }
 
   @Test
@@ -3295,6 +3324,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   private void assertTypeError(final TypeMismatchException.ErrorCode code, final String message,
       final String template) {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateTemplate(template));
+    assertEquals(code, ex.getErrorCode());
+    assertEquals(message, ex.getMessage());
+  }
+
+  private void assertInvalidUsage(final InvalidUsageException.ErrorCode code, final String message,
+      final String template) {
+    InvalidUsageException ex = assertThrows(InvalidUsageException.class,
         () -> translateTemplate(template));
     assertEquals(code, ex.getErrorCode());
     assertEquals(message, ex.getMessage());

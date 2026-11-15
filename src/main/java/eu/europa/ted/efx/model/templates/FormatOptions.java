@@ -21,13 +21,30 @@ import eu.europa.ted.efx.model.ParsedEntity;
 /**
  * The format options of an expression block, as described by the formatOptions rule of the grammar. A
  * number of decimals gives options for numbers, a style gives options for dates and times, and an
- * expression block that gives neither uses the default options of the type of its value. Any of them can leave the
- * unit out. No-formatting leaves the value as it is, without its unit.
+ * expression block that gives neither uses the default options of the type of its value. No-unit,
+ * after a number of decimals or alone, leaves the unit out; a style is never followed by it, since a
+ * date or a time has no unit. No-formatting leaves the value as it is, without its unit.
  */
 public abstract class FormatOptions implements ParsedEntity {
 
-  public enum DateTimeStyle {
-    SHORT, MEDIUM, LONG
+  /**
+   * The style of a date or a time, as the formatStyle rule of the grammar gives it.
+   */
+  public enum FormatStyle {
+    SHORT("short"), MEDIUM("medium"), LONG("long");
+
+    private final String name;
+
+    FormatStyle(final String name) {
+      this.name = name;
+    }
+
+    /**
+     * Returns the keyword that a template writes for this style.
+     */
+    public String getName() {
+      return this.name;
+    }
   }
 
   private final boolean noUnit;
@@ -82,6 +99,13 @@ public abstract class FormatOptions implements ParsedEntity {
     }
 
     /**
+     * Returns the number of decimals given, or nothing if none is given and up to 9 are displayed.
+     */
+    public OptionalInt getDecimals() {
+      return this.decimals;
+    }
+
+    /**
      * Returns the format-number pattern for the number of decimals, or for up to 9 decimals by
      * default.
      */
@@ -110,18 +134,18 @@ public abstract class FormatOptions implements ParsedEntity {
   }
 
   /**
-   * Options for dates and times: a style.
+   * Options for dates and times: a style. A date or a time has no unit to leave out.
    */
   public static class DateTimeFormatOptions extends FormatOptions {
 
-    private final DateTimeStyle style;
+    private final FormatStyle style;
 
-    public DateTimeFormatOptions(final DateTimeStyle style, final boolean noUnit) {
-      super(noUnit);
+    public DateTimeFormatOptions(final FormatStyle style) {
+      super(false);
       this.style = style;
     }
 
-    public DateTimeStyle getStyle() {
+    public FormatStyle getStyle() {
       return this.style;
     }
 
@@ -163,7 +187,7 @@ public abstract class FormatOptions implements ParsedEntity {
 
     @Override
     public Optional<DateTimeFormatOptions> forDatesAndTimes() {
-      return Optional.of(new DateTimeFormatOptions(DateTimeStyle.SHORT, this.hideUnit()));
+      return Optional.of(new DateTimeFormatOptions(FormatStyle.SHORT));
     }
   }
 

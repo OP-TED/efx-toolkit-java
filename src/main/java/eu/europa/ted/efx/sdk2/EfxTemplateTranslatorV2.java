@@ -80,8 +80,8 @@ import eu.europa.ted.efx.model.templates.DisplayContentTemplate;
 import eu.europa.ted.efx.model.templates.FormatContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.FormatOptions;
 import eu.europa.ted.efx.model.templates.FormatOptions.DateTimeFormatOptions;
-import eu.europa.ted.efx.model.templates.FormatOptions.DateTimeStyle;
 import eu.europa.ted.efx.model.templates.FormatOptions.DefaultFormatOptions;
+import eu.europa.ted.efx.model.templates.FormatOptions.FormatStyle;
 import eu.europa.ted.efx.model.templates.FormatOptions.NoFormattingOptions;
 import eu.europa.ted.efx.model.templates.FormatOptions.NumberFormatOptions;
 import eu.europa.ted.efx.model.templates.HyperlinkContentTemplateFragment;
@@ -494,19 +494,19 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   @Override
   public void exitFormatOptions(FormatOptionsContext ctx) {
     boolean noUnit = ctx.FormatNoUnit() != null;
-    FormatSpecifierContext specifier = ctx.formatSpecifier();
+    FormatStyleContext style = ctx.formatStyle();
     if (ctx.FormatNoFormatting() != null) {
       this.translation.stack().push(new NoFormattingOptions());
-    } else if (specifier == null) {
+    } else if (ctx.FormatDecimals() != null) {
+      this.translation.stack().push(new NumberFormatOptions(Integer.parseInt(ctx.FormatDecimals().getText()), noUnit));
+    } else if (style == null) {
       this.translation.stack().push(new DefaultFormatOptions(noUnit));
-    } else if (specifier.FormatDecimals() != null) {
-      this.translation.stack().push(new NumberFormatOptions(Integer.parseInt(specifier.FormatDecimals().getText()), noUnit));
-    } else if (specifier.FormatShort() != null) {
-      this.translation.stack().push(new DateTimeFormatOptions(DateTimeStyle.SHORT, noUnit));
-    } else if (specifier.FormatMedium() != null) {
-      this.translation.stack().push(new DateTimeFormatOptions(DateTimeStyle.MEDIUM, noUnit));
-    } else if (specifier.FormatLong() != null) {
-      this.translation.stack().push(new DateTimeFormatOptions(DateTimeStyle.LONG, noUnit));
+    } else if (style.FormatShort() != null) {
+      this.translation.stack().push(new DateTimeFormatOptions(FormatStyle.SHORT));
+    } else if (style.FormatMedium() != null) {
+      this.translation.stack().push(new DateTimeFormatOptions(FormatStyle.MEDIUM));
+    } else if (style.FormatLong() != null) {
+      this.translation.stack().push(new DateTimeFormatOptions(FormatStyle.LONG));
     }
   }
 
@@ -520,9 +520,10 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   /**
    * Creates the fragment of an expression block that displays the value of a field. Only the type of the field
-   * tells whether its value has a unit: amounts, measures and durations do. The value of any other field
-   * is formatted like the value of an expression. No-formatting displays the value of the field as entered:
-   * the text of a number, a date, a time or a duration, and the value of a text, which is its text.
+   * tells whether its value has a unit: amounts, measures and durations do, and they are formatted as a number.
+   * The value of any other field, and a field with a unit given a style, is formatted like the value of an
+   * expression. No-formatting displays the value of the field as entered: the text of a number, a date, a time
+   * or a duration, and the value of a text, which is its text.
    */
   private FormatContentTemplateFragment createFormattedExpressionBlockFragment(String fieldId, FormatOptions options) {
     PathExpression field = this.translation.symbols().getRelativePathOfField(fieldId,
@@ -533,15 +534,20 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
           : this.translation.script().composeFieldRawValueReference(field));
     }
     String fieldType = this.translation.symbols().getTypeOfField(fieldId);
+    Optional<NumberFormatOptions> numberOptions = options.forNumbers();
     switch (FieldTypes.fromString(fieldType)) {
       case DURATION:
       case MEASURE:
       case AMOUNT:
-        return this.createFormattedExpressionBlockFragment(field,
-            this.translation.symbols().getAttributeFieldIdOfField(fieldId), options);
+        if (numberOptions.isPresent()) {
+          return this.createFormattedExpressionBlockFragment(field,
+              this.translation.symbols().getAttributeFieldIdOfField(fieldId), numberOptions.get());
+        }
+        break;
       default:
-        return this.createFormattedExpressionBlockFragment(this.expressions.fieldValueOf(fieldId, field), options);
+        break;
     }
+    return this.createFormattedExpressionBlockFragment(this.expressions.fieldValueOf(fieldId, field), options);
   }
 
   /**
@@ -553,7 +559,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * @param unitFieldId The attribute field that holds the unit, from its code list.
    */
   private FormatContentTemplateFragment createFormattedExpressionBlockFragment(PathExpression field, String unitFieldId,
-      FormatOptions options) {
+      NumberFormatOptions options) {
     if (field instanceof SequenceExpression) {
       if (!options.hideUnit()) {
         throw InvalidUsageException.unitForList(this.translation.stack().peekParserContext());
@@ -609,7 +615,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       return new FormatContentTemplateFragment(value);
     }
     if (options.hideUnit()) {
-      throw InvalidUsageException.noUnitNotApplicable(this.translation.stack().peekParserContext());
+      throw InvalidUsageException.noUnitNotApplicable(this.translation.stack().peekParserContext(),
+          value.getDataType());
     }
     return new FormatContentTemplateFragment(this.composeFormattedExpression(value, options));
   }
@@ -620,7 +627,9 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * ${format-number(BT-00-Number, '#,##0.00')}, and ${BT-00-Date|medium} the same as
    * ${format-medium(BT-00-Date)}. A number is formatted with options for numbers, and a date or a time
    * with options for dates and times. Any other value is displayed as it is, unless the options give a
-   * number of decimals or a style, which it cannot be formatted with.
+   * number of decimals or a style, which it cannot be formatted with: the error names the option and the
+   * type of the value. Options that give a number of decimals are for numbers only, and options that give
+   * a style for dates and times only.
    */
   private Expression composeFormattedExpression(TypedExpression value, FormatOptions options) {
     Optional<NumberFormatOptions> numberOptions = options.forNumbers();
@@ -641,11 +650,15 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       return this.composeFormattedSequence(TypedExpression.from(value, TimeSequenceExpression.class),
           dateTimeOptions.get());
     }
-    if (options.hasSpecifier()) {
-      throw InvalidUsageException.invalidFormatOptions(
-          this.translation.stack().peekParserContext());
+    if (!options.hasSpecifier()) {
+      return value;
     }
-    return value;
+    if (numberOptions.isPresent()) {
+      throw InvalidUsageException.decimalsNotApplicable(this.translation.stack().peekParserContext(),
+          numberOptions.get().getDecimals().getAsInt(), value.getDataType());
+    }
+    throw InvalidUsageException.styleNotApplicable(this.translation.stack().peekParserContext(),
+        dateTimeOptions.get().getStyle(), value.getDataType());
   }
 
   /**
