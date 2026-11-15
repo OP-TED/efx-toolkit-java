@@ -32,7 +32,10 @@ public abstract class SchematronTest {
         : new SchematronDiagnostic(rule.getSubject(), ruleContext);
   }
 
-  /** Used by pattern.ftl — let element to render right before this test, or null. */
+  /**
+   * Used by pattern.ftl — let element this test needs, or null. It is rendered with the rule's
+   * other let elements, before the rule's first assert or report.
+   */
   public SchematronLet getLetElement() {
     return null;
   }
