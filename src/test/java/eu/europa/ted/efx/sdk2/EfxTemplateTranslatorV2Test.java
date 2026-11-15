@@ -188,7 +188,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval(for $__item in $num return format-number($__item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $__item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($__item, '# ##0,#########'))eval(for $code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
+            "let all-types-template(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('Params: ')eval($str)text(', ')eval(for $__item in $num return format-number($__item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $__item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($__item, '# ##0,#########'))eval(for $__code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $__code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $__code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
             "let body01() -> { call(all-types-template(string:str='text', decimal:num=123, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D'))) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
@@ -1964,7 +1964,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testFormattedExpressionBlock_Duration_DisplaysItsNumberAndUnit() {
     assertEquals(
         lines("TEMPLATES:",
-            "let body01() -> { eval(for $__item in PathNode/DurationField/number() return format-number($__item, '# ##0,#########'))eval(for $code in PathNode/DurationField/@unitCode return ' ')label(for $code in PathNode/DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod.', $code), PathNode/DurationField/number()) }",
+            "let body01() -> { eval(for $__item in PathNode/DurationField/number() return format-number($__item, '# ##0,#########'))eval(for $__code in PathNode/DurationField/@unitCode return ' ')label(for $__code in PathNode/DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod.', $__code), PathNode/DurationField/number()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate("{/} ${BT-00-Duration}"));
@@ -1980,8 +1980,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines("TEMPLATES:",
             "let body01() -> { eval(for $__item in " + number + " return format-number($__item, '# ##0,#########'))"
-                + "eval(for $code in " + unitCode + " return ' ')"
-                + "label(for $code in " + unitCode + " return concat('code', '|', 'name', '|', 'timeperiod.', $code), "
+                + "eval(for $__code in " + unitCode + " return ' ')"
+                + "label(for $__code in " + unitCode + " return concat('code', '|', 'name', '|', 'timeperiod.', $__code), "
                 + number + ") }",
             "MAIN:",
             "for-each(/*).call(body01())"),
@@ -2124,7 +2124,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testFormattedExpressionBlock_Amount_DisplaysItsCurrency() {
     assertEquals(
         lines("TEMPLATES:",
-            "let body01() -> { eval(for $__item in PathNode/AmountField/number() return format-number($__item, '# ##0,00'))eval(for $code in PathNode/AmountField/@currencyID return ' ')label(for $code in PathNode/AmountField/@currencyID return concat('code', '|', 'name', '|', 'currency.', $code), PathNode/AmountField/number()) }",
+            "let body01() -> { eval(for $__item in PathNode/AmountField/number() return format-number($__item, '# ##0,00'))eval(for $__code in PathNode/AmountField/@currencyID return ' ')label(for $__code in PathNode/AmountField/@currencyID return concat('code', '|', 'name', '|', 'currency.', $__code), PathNode/AmountField/number()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate("{/} ${BT-00-Amount|2}"));
@@ -2891,7 +2891,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval(for $__item in $num return format-number($__item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $__item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($__item, '# ##0,#########'))eval(for $code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
+            "let body01(string:str, decimal:num, boolean:bool, date:dt, time:tm, duration:dur) -> { text('All types: ')eval($str)text(', ')eval(for $__item in $num return format-number($__item, '# ##0,#########'))text(', ')eval($bool)text(', ')eval(format-date($dt, '[D01]/[M01]/[Y0001]'))text(', ')eval(format-time($tm, '[H01]:[m01] [Z]'))text(', ')eval(for $__item in (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur)) return format-number($__item, '# ##0,#########'))eval(for $__code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return ' ')label(for $__code in for $__item in $dur return (if ((years-from-duration($__item) * 12 + months-from-duration($__item)) != 0) then 'MONTH' else 'DAY') return concat('code', '|', 'name', '|', 'timeperiod.', $__code), (if ((years-from-duration($dur) * 12 + months-from-duration($dur)) != 0) then (years-from-duration($dur) * 12 + months-from-duration($dur)) else days-from-duration($dur))) }",
             "MAIN:",
             "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(

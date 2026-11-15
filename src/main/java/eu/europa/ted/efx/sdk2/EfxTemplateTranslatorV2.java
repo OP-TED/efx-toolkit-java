@@ -125,6 +125,13 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    */
   private static final String ITEM_VARIABLE = Translation.RESERVED_PREFIX + "item";
 
+  /**
+   * The variable that the translator's own loops bind each unit code to, for the space before a
+   * unit and the label of the unit. It starts with the prefix that no declaration may give, as every
+   * variable that the translator generates does.
+   */
+  private static final String CODE_VARIABLE = Translation.RESERVED_PREFIX + "code";
+
   /** The condition of a conditional template block, as a type error names it. */
   private static final Clause WHEN = Clause.of(Clause.describe("when"),
       parameter("condition", INDICATOR));
@@ -813,7 +820,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    */
   private StringSequenceExpression composeUnitSeparator(SequenceExpression code) {
     IteratorListExpression iterators = this.translation.script().composeIteratorList(List.of(this.translation.script().composeIteratorExpression(
-        this.translation.script().composeVariableDeclaration("code", StringExpression.class),
+        this.translation.script().composeVariableDeclaration(CODE_VARIABLE, StringExpression.class),
         code)));
     return this.translation.script().composeForExpression(iterators, this.translation.script().getStringLiteralFromUnquotedString(" "),
         StringSequenceExpression.class);
@@ -824,7 +831,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    */
   private StringSequenceExpression composeCodeLabelKey(String codelist, SequenceExpression code) {
     IteratorListExpression iterators = this.translation.script().composeIteratorList(List.of(this.translation.script().composeIteratorExpression(
-        this.translation.script().composeVariableDeclaration("code", StringExpression.class),
+        this.translation.script().composeVariableDeclaration(CODE_VARIABLE, StringExpression.class),
         code)));
     return this.translation.script().composeForExpression(iterators, this.translation.script().composeStringConcatenation(List.of(
         this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_CODE),
@@ -832,7 +839,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
         this.translation.script().getStringLiteralFromUnquotedString(LABEL_TYPE_NAME),
         this.translation.script().getStringLiteralFromUnquotedString("|"),
         this.translation.script().getStringLiteralFromUnquotedString(codelist + "."),
-        this.translation.script().composeVariableReference("code", StringExpression.class))),
+        this.translation.script().composeVariableReference(CODE_VARIABLE, StringExpression.class))),
         StringSequenceExpression.class);
   }
 
