@@ -694,8 +694,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final List<ContentTemplate> contentTemplates =
         ctx.template() != null ? List.of(this.stack.pop(ContentTemplate.class)) : List.of();
     final Variables variables = new Variables(); // template variables not supported in EFX-1
-    final Integer outlineNumber =
-        ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
+    final int outlineNumber = this.outlineNumberOf(ctx);
     assert this.stack.empty() : "Stack should be empty at this point.";
     this.stack.clear(); // Variable scope boundary. Clear declared variables
 
@@ -746,6 +745,22 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   // #endregion Template lines  -----------------------------------------------
   
   // #region Helpers ----------------------------------------------------------
+
+  /**
+   * @return the outline number written at the start of the line, or -1 when there is none
+   * @throws InvalidUsageException if the number is larger than the largest {@code int}
+   */
+  private int outlineNumberOf(TemplateLineContext ctx) {
+    if (ctx.OutlineNumber() == null) {
+      return -1;
+    }
+    final String number = ctx.OutlineNumber().getText().trim();
+    try {
+      return Integer.parseInt(number);
+    } catch (NumberFormatException e) {
+      throw InvalidUsageException.outlineNumberTooLarge(ctx, number);
+    }
+  }
 
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {

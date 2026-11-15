@@ -1517,8 +1517,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       contentTemplates.addFirst(this.translation.stack().pop(ContentTemplate.class));
     }
     final Variables variables = this.translation.stack().pop(Variables.class);
-    final Integer outlineNumber =
-        ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
+    final int outlineNumber = this.outlineNumberOf(ctx);
     assert this.translation.stack().empty() : "Stack should be empty at this point.";
 
     if (indentChange > 1) {
@@ -1618,6 +1617,22 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   private static String getLexerSymbol(int tokenType) {
     return EfxLexer.VOCABULARY.getLiteralName(tokenType).replaceAll("^'|'$", "");
+  }
+
+  /**
+   * @return the outline number written at the start of the line, or -1 when there is none
+   * @throws InvalidUsageException if the number is larger than the largest {@code int}
+   */
+  private int outlineNumberOf(TemplateLineContext ctx) {
+    if (ctx.OutlineNumber() == null) {
+      return -1;
+    }
+    final String number = ctx.OutlineNumber().getText().trim();
+    try {
+      return Integer.parseInt(number);
+    } catch (NumberFormatException e) {
+      throw InvalidUsageException.outlineNumberTooLarge(ctx, number);
+    }
   }
 
     private int getIndentLevel(IndentationContext ctx) {

@@ -17,6 +17,7 @@ import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -264,6 +265,15 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
         "MAIN:",
         "for-each(/*/PathNode/TextField).call(block01())"), //
         translateTemplate(lines("0{BT-00-Text} foo", "\t{ND-Root} bar", "\t\t{BT-00-Number} foo")));
+  }
+
+  @Test
+  void testTemplateLineOutline_TooLarge() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("2147483648 {BT-00-Text} foo"));
+    assertEquals(InvalidUsageException.ErrorCode.OUTLINE_NUMBER_TOO_LARGE, exception.getErrorCode());
+    assertEquals("line 1:0 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
   }
 
   @Test

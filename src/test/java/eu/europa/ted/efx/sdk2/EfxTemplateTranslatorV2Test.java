@@ -1186,6 +1186,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testTemplateLine_OutlineNumberTooLarge() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("2147483648 {BT-00-Text} foo"));
+    assertEquals(InvalidUsageException.ErrorCode.OUTLINE_NUMBER_TOO_LARGE, exception.getErrorCode());
+    assertEquals("line 1:0 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
+  }
+
+  @Test
   void testTemplateLine_IndentationWithTabs() {
     assertEquals(
         lines("TEMPLATES:", //
