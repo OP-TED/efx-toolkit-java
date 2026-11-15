@@ -10,7 +10,7 @@
     diagnostics     - List<SchematronDiagnostic> for subject path information
     includes        - List<String> of pattern file paths to include
 -->
-<schema xmlns="http://purl.oclc.org/dsdl/schematron"<#if params?has_content> xmlns:efx="http://eforms.ted.europa.eu/efx" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema"</#if> queryBinding="xslt2">
+<schema xmlns="http://purl.oclc.org/dsdl/schematron"<#if params?has_content> xmlns:efx="http://eforms.ted.europa.eu/efx" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema"</#if> queryBinding="xslt3">
 
     <title>${title}</title>
 
@@ -55,10 +55,11 @@
             return concat('arg', $i, '=', encode-for-uri(string($args[$i]))),
             '&amp;')"/>
         <xsl:variable name="url" select="if ($query-params != '') then concat($base-url, '?', $query-params) else $base-url"/>
-        <xsl:variable name="response" select="
-            if ($endpoint-url = '' or not(unparsed-text-available($url)))
-            then '-1'
-            else unparsed-text($url)"/>
+        <xsl:variable name="response" as="xs:string">
+            <xsl:try select="if ($endpoint-url = '') then '-1' else unparsed-text($url)">
+                <xsl:catch select="'-1'"/>
+            </xsl:try>
+        </xsl:variable>
         <xsl:value-of select="if ($response castable as xs:integer) then xs:integer($response) else -1"/>
     </xsl:function>
 </#if>

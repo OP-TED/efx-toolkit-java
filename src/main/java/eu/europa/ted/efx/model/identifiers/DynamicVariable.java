@@ -21,7 +21,7 @@ import eu.europa.ted.efx.model.rules.RuleSeverity;
 /**
  * A variable whose value is computed by a dynamic function call.
  *
- * The initialization expression is the raw dynamic function call (e.g., {@code efx:call-api(...)}).
+ * The initialization expression is the dynamic function call (e.g., {@code number(efx:call-api(...))}).
  * The reference expression compares the result to 1 (e.g., {@code $varName = 1}),
  * since the dynamic function returns a tri-state integer: 1 = true, 0 = false, -1 = error.
  *
