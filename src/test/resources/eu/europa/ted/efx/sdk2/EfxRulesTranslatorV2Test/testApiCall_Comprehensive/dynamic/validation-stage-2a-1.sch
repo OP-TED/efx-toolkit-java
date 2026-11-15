@@ -14,7 +14,7 @@
         <report id="R-S2A-003" role="INFO" test="not($__apiResult10 = -1) and not($__apiResult11 = -1) and (not($__apiResult10 = 1) and not($__apiResult11 = 1))">rule|text|R-S2A-003</report>
     </rule>
     <rule context="/*/SubNode">
-        <let name="__apiResult12" value="if (../PathNode/IndicatorField) then number(efx:call-api('staging', 'validate-ref', (../PathNode/IdField/normalize-space(text())))) else 0"/>
+        <let name="__apiResult12" value="number(if (../PathNode/IndicatorField) then number(efx:call-api('staging', 'validate-ref', (../PathNode/IdField/normalize-space(text())))) else 0)"/>
         <report id="R-S2A-004" role="WARNING" diagnostics="ND-SubNode_BT-01-SubLevel-Text" test="../PathNode/ChildNode/SubLevelTextField/normalize-space(text()) = ''">rule|text|R-S2A-004</report>
         <assert id="R-S2A-005-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S2A-005-api-error-1" role="ERROR" test="not($__apiResult12 = -1)">auxiliary|text|ref-check-failed</assert>

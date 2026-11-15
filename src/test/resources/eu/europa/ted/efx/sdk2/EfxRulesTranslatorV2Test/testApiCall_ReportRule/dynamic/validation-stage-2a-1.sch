@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pattern id="EFORMS-validation-stage-2a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult3" value="if (../IndicatorField) then number(efx:call-api('default', 'check', (../IdField/normalize-space(text())))) else 0"/>
+        <let name="__apiResult3" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check', (../IdField/normalize-space(text())))) else 0)"/>
         <assert id="R-S2A-001" role="ERROR" test=".">rule|text|R-S2A-001</assert>
         <assert id="R-S2A-002-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">rule|text|api-error</assert>
         <report id="R-S2A-002" role="WARNING" test="not($__apiResult3 = -1) and ((../IndicatorField) and (not($__apiResult3 = 1)))">rule|text|R-S2A-002</report>

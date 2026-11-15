@@ -7,7 +7,7 @@
         <assert id="R-S1A-002" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1)">rule|text|R-S1A-002</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult2" value="if (../IndicatorField) then number(efx:call-api('default', 'check', (../IdField/normalize-space(text())))) else 0"/>
+        <let name="__apiResult2" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check', (../IdField/normalize-space(text())))) else 0)"/>
         <report id="R-S1A-003" role="WARNING" test="./normalize-space(text()) = ''">rule|text|R-S1A-003</report>
         <assert id="R-S1A-004-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-004" role="ERROR" test="($__apiResult2 = -1) or ($__apiResult2 = 1) or (not(../IndicatorField))">rule|text|R-S1A-004</assert>
