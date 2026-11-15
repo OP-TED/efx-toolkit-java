@@ -1180,6 +1180,15 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testApiCall_InlineAfterOtherAssert() throws IOException {
+    String testName = "testApiCall_InlineAfterOtherAssert";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertEquals(5, outputFiles.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
   void testApiCall_TypeMismatch_InArithmeticExpression() throws IOException {
     String rules = readInput("testApiCall_TypeMismatch_InArithmeticExpression");
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,

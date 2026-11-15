@@ -20,11 +20,14 @@
         <let name="${letElement.name}" value="${letElement.value?xml?replace("&apos;", "'")}"/>
     </#if>
     </#list>
+    <#-- Schematron allows let elements only before the first assert or report of a rule. -->
     <#list rule.tests as test>
-    <#if tags?seq_contains(test.tag)>
-    <#if test.letElement?? && tags?seq_contains(test.letElement.tag)>
+    <#if tags?seq_contains(test.tag) && test.letElement?? && tags?seq_contains(test.letElement.tag)>
         <let name="${test.letElement.name}" value="${test.letElement.value?xml?replace("&apos;", "'")}"/>
     </#if>
+    </#list>
+    <#list rule.tests as test>
+    <#if tags?seq_contains(test.tag)>
         <${test.elementName} id="${test.id}" role="${test.role}"<#if test.flag??> flag="${test.flag}"</#if><#if test.diagnostic??> diagnostics="${test.diagnostic.id}"</#if> test="${test.test?xml?replace("&apos;", "'")}">${test.message}</${test.elementName}>
     </#if>
     </#list>
