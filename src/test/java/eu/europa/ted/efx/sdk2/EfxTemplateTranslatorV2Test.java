@@ -2150,6 +2150,30 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testFormattedExpressionBlock_DurationWithoutUnit_NeedsNoUnitField() {
+    // BT-11-Duration has no attribute field for its unit: without the unit, none is looked up.
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $__item in SubNode/SubSubNode/Duration/number() return format-number($__item, '# ##0,00')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${BT-11-Duration|2 no-unit}"));
+  }
+
+  @Test
+  void testFormattedExpressionBlock_CalculatedDurationWithoutUnit_DisplaysItsNumber() {
+    final String duration = "xs:dayTimeDuration('P1D')";
+    final String months = "(years-from-duration(" + duration + ") * 12 + months-from-duration(" + duration + "))";
+    final String number = "(if (" + months + " != 0) then " + months + " else days-from-duration(" + duration + "))";
+    assertEquals(
+        lines("TEMPLATES:",
+            "let body01() -> { eval(for $__item in " + number + " return format-number($__item, '# ##0,#########')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate("{/} ${P1D|no-unit}"));
+  }
+
+  @Test
   void testFormattedExpressionBlock_NoUnitOnNumber_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.NO_UNIT_NOT_APPLICABLE,
         "line 1:4 Format option 'no-unit' cannot format a value of type 'number': it is for an amount, a measure or a duration.",

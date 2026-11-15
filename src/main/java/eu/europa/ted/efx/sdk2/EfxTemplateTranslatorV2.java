@@ -540,8 +540,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       case MEASURE:
       case AMOUNT:
         if (numberOptions.isPresent()) {
-          return this.createFormattedExpressionBlockFragment(field,
-              this.translation.symbols().getAttributeFieldIdOfField(fieldId), numberOptions.get());
+          return this.createFormattedExpressionBlockFragment(field, fieldId, numberOptions.get());
         }
         break;
       default:
@@ -554,11 +553,13 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * Creates the fragment of an expression block for a field with a unit: the number entered, followed by its
    * unit unless no-unit is given. The number is also the quantity that selects the plural form of the unit.
    * A unit can only be displayed with a single value, so the numbers of a repeatable field are displayed
-   * without it, and only if no-unit is given.
+   * without it, and only if no-unit is given. The attribute field that holds the unit, and its code list, are
+   * only looked up when the unit is displayed.
    *
-   * @param unitFieldId The attribute field that holds the unit, from its code list.
+   * @param field The path of the field.
+   * @param fieldId The field.
    */
-  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(PathExpression field, String unitFieldId,
+  private FormatContentTemplateFragment createFormattedExpressionBlockFragment(PathExpression field, String fieldId,
       NumberFormatOptions options) {
     if (field instanceof SequenceExpression) {
       if (!options.hideUnit()) {
@@ -569,28 +570,35 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     }
     NumericExpression number = TypedExpression.from(
         this.translation.script().composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
+    if (options.hideUnit()) {
+      return new FormatContentTemplateFragment(this.composeFormattedExpression(number, options));
+    }
+    String unitFieldId = this.translation.symbols().getAttributeFieldIdOfField(fieldId);
     SequenceExpression unitCode =
         this.composeGetUnitCode(field, this.translation.symbols().getAttributeNameFromAttributeField(unitFieldId));
     return new FormatContentTemplateFragment(this.composeFormattedExpression(number, options),
         this.composeUnitSeparator(unitCode),
         this.composeCodeLabelKey(this.translation.symbols().getRootCodelistOfField(unitFieldId),
             unitCode),
-        number, options.hideUnit());
+        number);
   }
 
   /**
    * Creates the fragment of an expression block for a calculated duration. It has no unit entered with it, so
    * it is displayed as a number of months or days, in the unit it is calculated in. That number also
    * selects the plural form of the unit. It has no field either, so the code list of its unit is the one that
-   * the duration data type defines for its supplementary component.
+   * the duration data type defines for its supplementary component, looked up only when the unit is displayed.
    */
   private FormatContentTemplateFragment createFormattedExpressionBlockFragment(DurationExpression duration, NumberFormatOptions options) {
     NumericExpression number = this.composeGetNumberFromDuration(duration);
+    if (options.hideUnit()) {
+      return new FormatContentTemplateFragment(this.composeFormattedScalar(number, options));
+    }
     String unitCodelistId = this.translation.symbols().getAttributeFieldCodelistIdFromDataType(FieldTypes.DURATION.getName());
     SequenceExpression unitCode = this.composeGetUnitCode(duration);
     return new FormatContentTemplateFragment(this.composeFormattedScalar(number, options),
         this.composeUnitSeparator(unitCode), this.composeCodeLabelKey(unitCodelistId, unitCode),
-        number, options.hideUnit());
+        number);
   }
 
   /**

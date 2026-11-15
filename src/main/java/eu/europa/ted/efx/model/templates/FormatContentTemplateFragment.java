@@ -35,15 +35,15 @@ public class FormatContentTemplateFragment extends ContentTemplateFragment {
   private final NumericExpression quantity;
 
   public FormatContentTemplateFragment(final Expression value) {
-    this(value, StringSequenceExpression.empty(), StringSequenceExpression.empty(), NumericExpression.empty(), true);
+    this(value, StringSequenceExpression.empty(), StringSequenceExpression.empty(), NumericExpression.empty());
   }
 
   public FormatContentTemplateFragment(final Expression value, final StringSequenceExpression unitSeparator,
-      final StringSequenceExpression unitKey, final NumericExpression quantity, final boolean hideUnit) {
+      final StringSequenceExpression unitKey, final NumericExpression quantity) {
     this.value = value;
-    this.unitSeparator = hideUnit ? StringSequenceExpression.empty() : unitSeparator;
-    this.unitKey = hideUnit ? StringSequenceExpression.empty() : unitKey;
-    this.quantity = hideUnit ? NumericExpression.empty() : quantity;
+    this.unitSeparator = unitSeparator;
+    this.unitKey = unitKey;
+    this.quantity = quantity;
   }
 
   @Override
