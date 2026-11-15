@@ -81,11 +81,12 @@ class SdkCorpus {
   }
 
   /**
-   * @return The validation rules files, sorted by name.
-   * @throws IOException If the validation folder cannot be listed.
+   * @return The validation rules file, {@code validation/rules.efx}. It includes the other files of
+   *         the validation folder, which are parts of it and are not translated alone.
    */
-  List<Path> getRulesFiles() throws IOException {
-    return this.listEfxFiles(SdkResource.VALIDATION);
+  Path getRulesFile() {
+    return SdkResourceLoader.getResourceAsPath(this.sdkVersion, SdkResource.VALIDATION_RULES_EFX,
+        this.sdkRoot);
   }
 
   private List<Path> listEfxFiles(final SdkResource folder) throws IOException {

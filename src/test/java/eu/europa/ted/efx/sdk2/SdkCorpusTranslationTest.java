@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import eu.europa.ted.eforms.sdk.SdkSymbolResolver;
@@ -37,8 +38,8 @@ import eu.europa.ted.efx.model.DecimalFormat;
 /**
  * Translates the EFX corpus of the eForms SDK, its view templates and its validation rules, and
  * writes every output under {@code target/corpus/output}, so that the outputs of two builds can
- * be compared file by file. Each corpus file is a test of its own, so a failure names the file and
- * the surefire report times each translation separately.
+ * be compared file by file. Each view template is a test of its own, and so is the rules file, so a
+ * failure names the file and the surefire report times each translation separately.
  * <p>
  * The test is opt-in: surefire excludes the tag {@code corpus} by default. Run it with
  * {@code mvn test -Dgroups=corpus -DexcludedGroups=}.
@@ -74,22 +75,9 @@ class SdkCorpusTranslationTest {
             () -> translateViewTemplate(template)));
   }
 
-  @TestFactory
-  Stream<DynamicTest> translateRules() throws IOException {
-    return corpus.getRulesFiles().stream()
-        .map(rules -> DynamicTest.dynamicTest(rules.getFileName().toString(),
-            () -> translateRulesFile(rules)));
-  }
-
-  private static void translateViewTemplate(final Path template)
-      throws IOException, InstantiationException {
-    final String output = EfxTranslator.translateTemplate(dependencies, SDK_VERSION, template, OPTIONS);
-    writeOutput(OUTPUT_DIRECTORY.resolve("view-templates").resolve(template.getFileName() + ".txt"),
-        output);
-  }
-
-  private static void translateRulesFile(final Path rules)
-      throws IOException, InstantiationException {
+  @Test
+  void translateRules() throws IOException, InstantiationException {
+    final Path rules = corpus.getRulesFile();
     final Map<String, String> outputs =
         EfxTranslator.translateRules(dependencies, SDK_VERSION, rules, OPTIONS);
     final Path rulesOutputDirectory =
@@ -97,6 +85,13 @@ class SdkCorpusTranslationTest {
     for (Map.Entry<String, String> output : outputs.entrySet()) {
       writeOutput(rulesOutputDirectory.resolve(output.getKey()), output.getValue());
     }
+  }
+
+  private static void translateViewTemplate(final Path template)
+      throws IOException, InstantiationException {
+    final String output = EfxTranslator.translateTemplate(dependencies, SDK_VERSION, template, OPTIONS);
+    writeOutput(OUTPUT_DIRECTORY.resolve("view-templates").resolve(template.getFileName() + ".txt"),
+        output);
   }
 
   private static void deleteOutputsOfPreviousRun() throws IOException {
