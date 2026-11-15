@@ -45,7 +45,6 @@ import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.FileTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.TemplateLoader;
-import freemarker.core.Environment;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -70,13 +69,6 @@ public class SchematronGenerator implements ValidatorGenerator {
 
   private final Configuration freemarkerConfig;
 
-  /**
-   * The language a template is chosen for: the primary language of the translator options, so that
-   * {@code pattern_en.ftl} is chosen before {@code pattern.ftl} for English; the root locale, which
-   * chooses {@code pattern.ftl}, when no options are given.
-   */
-  private final Locale templateLanguage;
-
   public SchematronGenerator() {
     this(null);
   }
@@ -85,11 +77,12 @@ public class SchematronGenerator implements ValidatorGenerator {
     this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
     this.freemarkerConfig.setTemplateLoader(this.resolveTemplateLoader(options));
     this.freemarkerConfig.setDefaultEncoding("UTF-8");
+    // A template is read by its name only, never in place of it a file named for a language
+    this.freemarkerConfig.setLocalizedLookup(false);
+    // The root locale, so that what a template writes does not depend on the default locale
+    this.freemarkerConfig.setLocale(Locale.ROOT);
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.freemarkerConfig.setLogTemplateExceptions(false);
-    this.templateLanguage = options == null
-        ? Locale.ROOT
-        : Locale.forLanguageTag(options.getPrimaryLanguage2LetterCode());
   }
 
   private TemplateLoader resolveTemplateLoader(final TranslatorOptions options) {
@@ -190,7 +183,10 @@ public class SchematronGenerator implements ValidatorGenerator {
    */
   public String generateCompleteValidation(SchematronSchema schema)
       throws IOException, TemplateException {
-    return this.write("complete-validation.ftl", schema);
+    Template template = freemarkerConfig.getTemplate("complete-validation.ftl");
+    StringWriter writer = new StringWriter();
+    template.process(schema, writer);
+    return writer.toString();
   }
 
   /**
@@ -204,6 +200,9 @@ public class SchematronGenerator implements ValidatorGenerator {
    */
   public String generatePattern(SchematronPattern pattern, SchematronOutputConfig config)
       throws IOException, TemplateException {
+    Template template = freemarkerConfig.getTemplate("pattern.ftl");
+    StringWriter writer = new StringWriter();
+
     Map<String, Object> model = new HashMap<>();
     model.put("id", pattern.getId());
     List<String> tags = config.ruleNatures().stream()
@@ -214,27 +213,7 @@ public class SchematronGenerator implements ValidatorGenerator {
     model.put("rules", pattern.getRules());
     model.put("tags", tags);
 
-    return this.write("pattern.ftl", model);
-  }
-
-  /**
-   * Writes a template with its model. The template is the one chosen for the language of the
-   * translator options; it writes in the root locale, so that a language with digits of its own,
-   * such as Arabic, does not change the digits it writes.
-   *
-   * @param templateName the name of the template, without a language
-   * @param model the model the template reads
-   * @return what the template writes
-   * @throws IOException If template loading fails.
-   * @throws TemplateException If template processing fails.
-   */
-  private String write(final String templateName, final Object model)
-      throws IOException, TemplateException {
-    final Template template = this.freemarkerConfig.getTemplate(templateName, this.templateLanguage);
-    final StringWriter writer = new StringWriter();
-    final Environment environment = template.createProcessingEnvironment(model, writer);
-    environment.setLocale(Locale.ROOT);
-    environment.process();
+    template.process(model, writer);
     return writer.toString();
   }
 

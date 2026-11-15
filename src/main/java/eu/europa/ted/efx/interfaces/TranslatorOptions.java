@@ -33,10 +33,7 @@ public interface TranslatorOptions {
 
     /**
      * Returns the root directory for Freemarker templates. When set, templates are loaded
-     * from this directory first, falling back to the classpath-bundled defaults. A template
-     * written for a language, such as {@code pattern_en.ftl}, is chosen before the one of the
-     * same name for no language, {@code pattern.ftl}, when that language is the primary language
-     * of these options.
+     * from this directory first, falling back to the classpath-bundled defaults.
      *
      * @return The templates root directory, or null to use classpath defaults only.
      */

@@ -735,12 +735,12 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
       + "    FOR BT-00-Text IN 1\n";
 
   /**
-   * @return the pattern of {@link #ONE_RULE}, written with the templates of the given folder and
-   *         chosen for the given language, under the given default locale
+   * @return the pattern of {@link #ONE_RULE}, written with the templates of the given folder,
+   *         under the given default locale
    */
-  private static String patternOfOneRule(final Path templatesRoot, final Locale language,
-      final Locale defaultLocale) throws InstantiationException {
-    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT, language) {
+  private static String patternOfOneRule(final Path templatesRoot, final Locale defaultLocale)
+      throws InstantiationException {
+    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT) {
       @Override
       public Path getTemplatesRoot() {
         return templatesRoot;
@@ -766,29 +766,18 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheDefaultLocale(
       @TempDir Path templatesRoot) throws IOException, InstantiationException {
     Files.writeString(templatesRoot.resolve("pattern.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
-    assertEquals("<pattern id=\"rules-1\"/>",
-        patternOfOneRule(templatesRoot, Locale.ENGLISH, new Locale("ar", "EG")));
+    assertEquals("<pattern id=\"rules-1\"/>", patternOfOneRule(templatesRoot, new Locale("ar", "EG")));
   }
 
   @Test
   @ResourceLock(Resources.LOCALE)
-  void testCustomTemplate_WritesNumbersInAsciiDigitsWhateverTheLanguage(
-      @TempDir Path templatesRoot) throws IOException, InstantiationException {
-    Files.writeString(templatesRoot.resolve("pattern_ar.ftl"), "<pattern id=\"rules-${rules?size}\"/>");
-    assertEquals("<pattern id=\"rules-1\"/>",
-        patternOfOneRule(templatesRoot, new Locale("ar"), Locale.US));
-  }
-
-  @Test
-  @ResourceLock(Resources.LOCALE)
-  void testCustomTemplate_ChosenForTheLanguageWhateverTheDefaultLocale(
-      @TempDir Path templatesRoot) throws IOException, InstantiationException {
-    Files.writeString(templatesRoot.resolve("pattern_en.ftl"), "<pattern id=\"english\"/>");
-    Files.writeString(templatesRoot.resolve("pattern_fr.ftl"), "<pattern id=\"french\"/>");
-    assertEquals("<pattern id=\"english\"/>",
-        patternOfOneRule(templatesRoot, Locale.ENGLISH, Locale.FRANCE));
-    assertEquals("<pattern id=\"french\"/>",
-        patternOfOneRule(templatesRoot, Locale.FRENCH, Locale.US));
+  void testCustomTemplate_ReadByItsNameOnly(@TempDir Path templatesRoot)
+      throws IOException, InstantiationException {
+    Files.writeString(templatesRoot.resolve("pattern.ftl"), "<#include \"rule.ftl\">");
+    Files.writeString(templatesRoot.resolve("pattern_en.ftl"), "<pattern id=\"pattern_en\"/>");
+    Files.writeString(templatesRoot.resolve("rule.ftl"), "<pattern id=\"rule\"/>");
+    Files.writeString(templatesRoot.resolve("rule_en.ftl"), "<pattern id=\"rule_en\"/>");
+    assertEquals("<pattern id=\"rule\"/>", patternOfOneRule(templatesRoot, Locale.US));
   }
 
   //#endregion Custom template tests
