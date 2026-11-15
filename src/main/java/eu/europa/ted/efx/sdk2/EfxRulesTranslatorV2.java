@@ -419,9 +419,8 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
     switch (shortcut) {
       case ".":
-        throw new UnsupportedOperationException("Same context (.) is not supported in EFX Rules.");
       case "..":
-        throw new UnsupportedOperationException("Parent context (..) is not supported in EFX Rules.");
+        throw InvalidUsageException.templateOnlyContext(ctx, shortcut);
       case "/":
         this.exitRootContextDeclaration();
         break;

@@ -215,6 +215,31 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertAllOutputs(testName, outputFiles);
   }
 
+  @Test
+  void testWithClause_SameContext_IsTemplateOnly() {
+    assertTemplateOnlyContext(".");
+  }
+
+  @Test
+  void testWithClause_ParentContext_IsTemplateOnly() {
+    assertTemplateOnlyContext("..");
+  }
+
+  private void assertTemplateOnlyContext(final String context) {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH " + context,
+        "    ASSERT TRUE",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN *");
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_CONTEXT, exception.getErrorCode());
+    assertEquals("line 3:5 Context '" + context
+        + "' can only be used in templates, not in validation rules.", exception.getMessage());
+  }
+
   //#endregion WITH clause tests
 
   //#region ASSERT and REPORT tests

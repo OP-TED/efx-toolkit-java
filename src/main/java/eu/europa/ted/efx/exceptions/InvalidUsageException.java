@@ -35,6 +35,7 @@ public class InvalidUsageException extends EfxCompilationException {
         INVALID_NOTICE_SUBTYPE_TOKEN,
         FIELD_NOT_WITHHOLDABLE,
         TEMPLATE_ONLY_FUNCTION,
+        TEMPLATE_ONLY_CONTEXT,
         UNSUPPORTED_REGEX_CONSTRUCT,
         CIRCULAR_INCLUDE,
         EMPTY_RULES_FILE,
@@ -52,6 +53,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
     private static final String TEMPLATE_ONLY_FUNCTION = "%s can only be used in templates, not in expressions or validation rules.";
+    private static final String TEMPLATE_ONLY_CONTEXT = "Context '%s' can only be used in templates, not in validation rules.";
     private static final String UNSUPPORTED_REGEX_CONSTRUCT = "Invalid regex pattern %s at position %d: %s";
     private static final String CIRCULAR_INCLUDE = "Circular #include: %s.";
     private static final String EMPTY_RULES_FILE = "Rules file must contain at least one validation stage.";
@@ -108,6 +110,18 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException templateOnlyFunction(ParserRuleContext ctx, String call) {
         return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, ctx, TEMPLATE_ONLY_FUNCTION, call);
+    }
+
+    /**
+     * A context written {@code .} or {@code ..} in a validation rule. Both are relative to the
+     * context of the line above in a template; a rule set stands on its own, with no such context.
+     *
+     * @param ctx the context declaration
+     * @param shortcut the context as written: "." or ".."
+     * @return the exception
+     */
+    public static InvalidUsageException templateOnlyContext(ParserRuleContext ctx, String shortcut) {
+        return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_CONTEXT, ctx, TEMPLATE_ONLY_CONTEXT, shortcut);
     }
 
     public static InvalidUsageException unsupportedRegexConstruct(String pattern, int position, String reason) {
