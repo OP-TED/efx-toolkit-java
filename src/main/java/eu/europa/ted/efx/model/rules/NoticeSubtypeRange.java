@@ -36,7 +36,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
 
         rangeString = (rangeString == null) ? "" : rangeString.trim();
 
-        if (rangeString == "*" || rangeString.equalsIgnoreCase("ANY")) {
+        if (rangeString.equals("*") || rangeString.equalsIgnoreCase("ANY")) {
             this.noticeSubtypes.addAll(validNoticeSubtypesInAscendingOrder);
             this.universal = true;
             return;
