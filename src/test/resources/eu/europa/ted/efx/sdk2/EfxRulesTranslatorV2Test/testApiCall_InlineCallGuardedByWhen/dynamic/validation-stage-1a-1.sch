@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pattern id="EFORMS-validation-stage-1a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
+    <rule context="/*/PathNode/TextField">
+        <let name="__apiResult1" value="if (../IndicatorField) then number(efx:call-api('default', 'check', (../IdField/normalize-space(text())))) else 0"/>
+        <let name="__apiResult2" value="number(efx:call-api('default', 'check', (../CodeField/normalize-space(text()))))"/>
+        <assert id="R-S1A-001-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
+        <assert id="R-S1A-001" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1) or (not(../IndicatorField))">rule|text|R-S1A-001</assert>
+        <assert id="R-S1A-002-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">rule|text|api-error</assert>
+        <assert id="R-S1A-002" role="ERROR" test="($__apiResult2 = -1) or (.) or (not($__apiResult2 = 1))">rule|text|R-S1A-002</assert>
+    </rule>
+</pattern>

@@ -1,0 +1,20 @@
+// Test: an inline API call in a rule with a WHEN condition.
+// The call in the ASSERT is made only when the WHEN condition holds: its let is guarded by the
+// condition, and is 0 otherwise. A call in the WHEN condition itself is not guarded.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    WHEN BT-00-Indicator is present
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1
+
+    WHEN ?check(BT-00-Code)
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1

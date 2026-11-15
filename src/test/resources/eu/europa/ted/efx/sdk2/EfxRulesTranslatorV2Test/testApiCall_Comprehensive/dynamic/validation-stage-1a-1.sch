@@ -22,7 +22,7 @@
         <assert id="R-S1A-006" role="ERROR" test="($buyerOk = -1) or ($__apiResult5 = -1) or ($buyerOk = 1 and $__apiResult5 = 1)">rule|text|R-S1A-006</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult6" value="number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text()))))"/>
+        <let name="__apiResult6" value="if (../IndicatorField) then number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text())))) else 0"/>
         <let name="__apiResult7" value="number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text()))))"/>
         <assert id="R-S1A-007-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-007-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
