@@ -81,6 +81,9 @@ public class SchematronGenerator implements ValidatorGenerator {
     this.freemarkerConfig.setLocalizedLookup(false);
     // The root locale, so that what a template writes does not depend on the default locale
     this.freemarkerConfig.setLocale(Locale.ROOT);
+    // A template is read as its folder holds it when the generator writes, not as it held it up to
+    // five seconds before
+    this.freemarkerConfig.setTemplateUpdateDelayMilliseconds(0);
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.freemarkerConfig.setLogTemplateExceptions(false);
   }
@@ -99,9 +102,12 @@ public class SchematronGenerator implements ValidatorGenerator {
     }
 
     try {
-      return new MultiTemplateLoader(new TemplateLoader[] {
+      final MultiTemplateLoader loader = new MultiTemplateLoader(new TemplateLoader[] {
               new FileTemplateLoader(templatesRoot.toFile()), classpathLoader
       });
+      // The folder before the classpath every time, not first the place a template was found in before
+      loader.setSticky(false);
+      return loader;
     } catch (final IOException e) {
       logger.warn("Failed to load templates from {}, using classpath defaults", templatesRoot);
       return classpathLoader;

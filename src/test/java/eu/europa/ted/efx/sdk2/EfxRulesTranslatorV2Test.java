@@ -740,25 +740,39 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
    */
   private static String patternOfOneRule(final Path templatesRoot, final Locale defaultLocale)
       throws InstantiationException {
-    TranslatorOptions options = new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT) {
-      @Override
-      public Path getTemplatesRoot() {
-        return templatesRoot;
-      }
-    };
     // The template engine reads the default locale, not the one for formatting
     Locale savedDefault = Locale.getDefault();
     Locale savedFormat = Locale.getDefault(Locale.Category.FORMAT);
     Locale savedDisplay = Locale.getDefault(Locale.Category.DISPLAY);
     try {
       Locale.setDefault(defaultLocale);
-      return translatorWith(new SchematronGenerator(options), ThrowingErrorListener.INSTANCE)
-          .translateRules(ONE_RULE).get("static/validation-stage-1a-1.sch");
+      return patternOfOneRule(generatorWith(templatesRoot));
     } finally {
       Locale.setDefault(savedDefault);
       Locale.setDefault(Locale.Category.FORMAT, savedFormat);
       Locale.setDefault(Locale.Category.DISPLAY, savedDisplay);
     }
+  }
+
+  /**
+   * @return a Schematron generator that reads the templates of the given folder first
+   */
+  private static SchematronGenerator generatorWith(final Path templatesRoot) {
+    return new SchematronGenerator(new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT) {
+      @Override
+      public Path getTemplatesRoot() {
+        return templatesRoot;
+      }
+    });
+  }
+
+  /**
+   * @return the pattern of {@link #ONE_RULE}, written by the given generator
+   */
+  private static String patternOfOneRule(final SchematronGenerator generator)
+      throws InstantiationException {
+    return translatorWith(generator, ThrowingErrorListener.INSTANCE).translateRules(ONE_RULE)
+        .get("static/validation-stage-1a-1.sch");
   }
 
   @Test
@@ -778,6 +792,15 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     Files.writeString(templatesRoot.resolve("rule.ftl"), "<pattern id=\"rule\"/>");
     Files.writeString(templatesRoot.resolve("rule_en.ftl"), "<pattern id=\"rule_en\"/>");
     assertEquals("<pattern id=\"rule\"/>", patternOfOneRule(templatesRoot, Locale.US));
+  }
+
+  @Test
+  void testCustomTemplate_AddedToTheFolderLater_IsRead(@TempDir Path templatesRoot)
+      throws IOException, InstantiationException {
+    SchematronGenerator generator = generatorWith(templatesRoot);
+    assertTrue(patternOfOneRule(generator).contains("<rule context="));
+    Files.writeString(templatesRoot.resolve("pattern.ftl"), "<pattern id=\"folder\"/>");
+    assertEquals("<pattern id=\"folder\"/>", patternOfOneRule(generator));
   }
 
   //#endregion Custom template tests
