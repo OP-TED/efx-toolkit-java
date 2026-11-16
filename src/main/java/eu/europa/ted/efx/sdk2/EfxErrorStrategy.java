@@ -379,9 +379,9 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     /**
      * @param alone whether the character starts no token, so that the message calls it a
      *        character
-     * @return the character in quotes, as in "'¤'"; the end of the input or of the line; or the
-     *         code point of a character that cannot be seen, or that looks like a space but is not
-     *         one, as in "character U+200B"
+     * @return the character in quotes, as in "'¤'"; the end of the input or of the line; or, for
+     *         a character that cannot be shown between quotes, its code point, as in "character
+     *         U+200B"
      */
     private static String nameOfCharacter(final int character, final boolean alone) {
         if (character == IntStream.EOF) {
@@ -390,13 +390,21 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         if (character == '\n' || character == '\r') {
             return "end of line";
         }
-        if (character != ' ' && character != '\t' && isInvisible(character)) {
+        if (cannotBeShownInQuotes(character)) {
             return String.format(Locale.ROOT, "character U+%04X", character);
         }
         return (alone ? "character " : "") + quoted(new String(Character.toChars(character)));
     }
 
-    private static boolean isInvisible(final int character) {
+    /**
+     * @return whether the character, written between quotes, shows nothing, looks like a space
+     *         although it is not the space ' ', or joins the quote before it, as a combining mark
+     *         does; not for the space itself, or for the tab, which a message writes as '\t'
+     */
+    private static boolean cannotBeShownInQuotes(final int character) {
+        if (character == ' ' || character == '\t') {
+            return false;
+        }
         switch (Character.getType(character)) {
             case Character.SPACE_SEPARATOR:
             case Character.LINE_SEPARATOR:
@@ -406,6 +414,9 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             case Character.PRIVATE_USE:
             case Character.SURROGATE:
             case Character.UNASSIGNED:
+            case Character.NON_SPACING_MARK:
+            case Character.COMBINING_SPACING_MARK:
+            case Character.ENCLOSING_MARK:
                 return true;
             default:
                 return false;

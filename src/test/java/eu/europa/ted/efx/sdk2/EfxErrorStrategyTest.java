@@ -134,6 +134,16 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testExpression_CombiningMark_IsNamedByItsCodePoint() {
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+FE0F.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \uFE0F"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+0903.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \u0903"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+20DD.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \u20DD"));
+  }
+
+  @Test
   void testExpression_SpaceOfAnotherKind_IsNamedByItsCodePoint() {
     assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected character U+00A0.",
         () -> translateExpression("WITH ND-Root COMPUTE 1\u00A02"));
