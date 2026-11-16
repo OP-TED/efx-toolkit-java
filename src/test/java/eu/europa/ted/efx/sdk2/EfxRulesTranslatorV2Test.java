@@ -25,7 +25,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,6 +34,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.xml.sax.InputSource;
 
@@ -54,7 +56,6 @@ import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
-import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.eforms.sdk.schematron.SchematronGenerator;
 
 /**
@@ -460,28 +461,109 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertEquals("line 7:8 Unknown symbol 'ND-NONEXISTENT'.", exception.getMessage());
   }
 
-  private void assertUnknownNoticeSubtype(final String message, final String range) {
-    String rules = lines(
+  @Test
+  void testInClause_Any_IsAnUnknownSubtype() {
+    // Only *, ANY and any name every notice subtype
+    assertUnknownNoticeSubtype("line 6:22 Unknown notice subtype 'Any'.", "Any");
+  }
+
+  @Test
+  void testInClause_AnyInList_IsAnUnknownSubtype() {
+    assertUnknownNoticeSubtype("line 6:25 Unknown notice subtype 'Any'.", "1, Any");
+  }
+
+  @Test
+  void testInClause_AnyInCapitalsOrSmallLetters_NamesEveryNoticeSubtype() {
+    assertEquals(translateIn("*"), translateIn("ANY"));
+    assertEquals(translateIn("*"), translateIn("any"));
+  }
+
+  @Test
+  void testInClause_RangeWrittenWithoutSpaces_IsARange() {
+    // The lexer reads E1-E2 as a single name
+    assertEquals(translateIn("E1, E2"), translateIn("E1-E2"));
+    assertEquals(translateIn("E1, E2"), translateIn("E1 - E2"));
+  }
+
+  @Test
+  void testInClause_NameWithTwoDashes_ThrowsInvalidToken() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateIn("1, E1-E2-X01"));
+    assertEquals(InvalidUsageException.ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN,
+        exception.getErrorCode());
+    assertEquals("line 6:25 Invalid notice subtype token 'E1-E2-X01'. Expected format: 'X' or 'X-Y'.",
+        exception.getMessage());
+  }
+
+  // Behind a listener that does not throw, the parser recovers from a syntax error in an IN list.
+  // The translator reads only the names that the parser matched, and a range that lacks one of its
+  // names adds no notice subtype.
+
+  @Test
+  void testInClause_TokenSkippedBeforeTheList_IsNotRead() throws InstantiationException {
+    assertEquals(translateIn("1"), translateInAfterOneSyntaxError(") 1"));
+  }
+
+  @Test
+  void testInClause_TokenSkippedInARange_IsNotRead() throws InstantiationException {
+    assertEquals(translateIn("1, 2"), translateInAfterOneSyntaxError("1, ) 2"));
+  }
+
+  @Test
+  void testInClause_UnknownSubtypeAfterASkippedToken_IsPlacedAtTheSubtype() {
+    SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
+        () -> translateInAfterOneSyntaxError("1, ) 99"));
+    assertEquals("line 6:27 Unknown notice subtype '99'.", exception.getMessage());
+  }
+
+  @Test
+  void testInClause_RangeWithoutItsEnd_AddsNoSubtype() throws InstantiationException {
+    assertEquals(translateIn("1"), translateInAfterOneSyntaxError("1, 2-"));
+  }
+
+  @Test
+  void testInClause_ListThatIsNotRead_AddsNoSubtype() throws InstantiationException {
+    assertEquals(translateInAfterOneSyntaxError("1-"), translateInAfterOneSyntaxError(")"));
+  }
+
+  private String ruleIn(final String list) {
+    return lines(
         "---- STAGE 1a ----",
         "",
         "WITH BT-00-Text",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN " + range);
+        "    FOR BT-00-Text IN " + list);
+  }
+
+  private Map<String, String> translateIn(final String list) {
+    return translator.translateRules(ruleIn(list));
+  }
+
+  private Map<String, String> translateInAfterOneSyntaxError(final String list)
+      throws InstantiationException {
+    final List<String> syntaxErrors = new ArrayList<>();
+    final EfxRulesTranslatorV2 lenient = translatorWith(new BaseErrorListener() {
+      @Override
+      public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
+          final int line, final int column, final String message,
+          final RecognitionException exception) {
+        syntaxErrors.add(message);
+      }
+    });
+    try {
+      return lenient.translateRules(ruleIn(list));
+    } finally {
+      assertEquals(1, syntaxErrors.size(), syntaxErrors.toString());
+    }
+  }
+
+  private void assertUnknownNoticeSubtype(final String message, final String range) {
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
-        () -> translator.translateRules(rules));
+        () -> translateIn(range));
     assertEquals(SymbolResolutionException.ErrorCode.UNKNOWN_NOTICE_SUBTYPE,
         exception.getErrorCode());
     assertEquals(message, exception.getMessage());
-  }
-
-  @Test
-  void testInClause_MalformedToken_ThrowsInvalidToken() {
-    List<String> subtypes = Arrays.asList("1", "2", "3");
-    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
-        () -> new NoticeSubtypeRange("1-2-3", subtypes));
-    assertEquals(InvalidUsageException.ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN,
-        exception.getErrorCode());
   }
 
   //#endregion IN clause tests

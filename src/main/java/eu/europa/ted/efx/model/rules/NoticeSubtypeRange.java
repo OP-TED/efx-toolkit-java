@@ -21,67 +21,28 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.model.ParsedEntity;
 
+/**
+ * The notice subtypes that the {@code IN} clause of a validation rule names, in the order it names
+ * them, and whether they are every notice subtype.
+ */
 public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
 
     private final List<String> noticeSubtypes;
     private final boolean universal;
 
-    public NoticeSubtypeRange(String rangeString, List<String> validNoticeSubtypesInAscendingOrder) {
+    private NoticeSubtypeRange(List<String> noticeSubtypes, boolean universal) {
+        this.noticeSubtypes = List.copyOf(noticeSubtypes);
+        this.universal = universal;
+    }
 
-        this.noticeSubtypes = new ArrayList<>();
-
-        if (validNoticeSubtypesInAscendingOrder == null) {
-            validNoticeSubtypesInAscendingOrder = List.of();
-        }
-
-        rangeString = (rangeString == null) ? "" : rangeString.trim();
-
-        if (rangeString.equals("*") || rangeString.equalsIgnoreCase("ANY")) {
-            this.noticeSubtypes.addAll(validNoticeSubtypesInAscendingOrder);
-            this.universal = true;
-            return;
-        }
-
-        for (String item : rangeString.trim().split("\\s*,\\s*")) {
-            if (item.isEmpty()) {
-                continue;
-            }
-
-            String[] parts = item.split("\\s*-\\s*", -1);
-            switch (parts.length) {
-                case 1: {
-                    int idx = validNoticeSubtypesInAscendingOrder.indexOf(parts[0]);
-                    if (idx < 0) {
-                        throw SymbolResolutionException.unknownNoticeSubtype(parts[0]);
-                    }
-                    this.noticeSubtypes.add(validNoticeSubtypesInAscendingOrder.get(idx));
-                    break;
-                }
-                case 2: {
-                    int startIdx = validNoticeSubtypesInAscendingOrder.indexOf(parts[0]);
-                    if (startIdx < 0) {
-                        throw SymbolResolutionException.unknownNoticeSubtype(parts[0], parts[0] + "-" + parts[1]);
-                    }
-                    int endIdx = validNoticeSubtypesInAscendingOrder.indexOf(parts[1]);
-                    if (endIdx < 0) {
-                        throw SymbolResolutionException.unknownNoticeSubtype(parts[1], parts[0] + "-" + parts[1]);
-                    }
-                    if (startIdx > endIdx) {
-                        throw InvalidUsageException.invalidNoticeSubtypeRangeOrder(parts[0], parts[1]);
-                    }
-
-                    for (int i = startIdx; i <= endIdx; i++) {
-                        this.noticeSubtypes.add(validNoticeSubtypesInAscendingOrder.get(i));
-                    }
-                    break;
-                }
-                default:
-                    throw InvalidUsageException.invalidNoticeSubtypeToken(item);
-            }
-        }
-
-        this.universal = !validNoticeSubtypesInAscendingOrder.isEmpty()
-            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
+    /**
+     * Every notice subtype, as {@code IN *} and {@code IN ANY} name them.
+     *
+     * @param knownNoticeSubtypes the notice subtypes of the SDK, in ascending order
+     * @return the notice subtypes, universal
+     */
+    public static NoticeSubtypeRange all(List<String> knownNoticeSubtypes) {
+        return new NoticeSubtypeRange(knownNoticeSubtypes, true);
     }
 
     public boolean isUniversal() {
@@ -89,7 +50,7 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
     }
 
     public List<String> asList() {
-        return List.copyOf(this.noticeSubtypes);
+        return this.noticeSubtypes;
     }
 
     public int size() {
@@ -99,5 +60,71 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
     @Override
     public java.util.Iterator<String> iterator() {
         return this.noticeSubtypes.iterator();
+    }
+
+    /**
+     * Collects the notice subtypes of an {@code IN} list, one item of the list at a time: a notice
+     * subtype, as in {@code 1}, or a range of them, as in {@code 1-3}.
+     */
+    public static final class Builder {
+
+        private final List<String> knownNoticeSubtypes;
+        private final List<String> noticeSubtypes = new ArrayList<>();
+
+        /**
+         * @param knownNoticeSubtypes the notice subtypes of the SDK, in ascending order
+         */
+        public Builder(List<String> knownNoticeSubtypes) {
+            this.knownNoticeSubtypes = knownNoticeSubtypes;
+        }
+
+        /**
+         * Adds a notice subtype.
+         *
+         * @param noticeSubtype the notice subtype, as written
+         * @return this builder
+         * @throws SymbolResolutionException if the SDK has no such notice subtype
+         */
+        public Builder add(String noticeSubtype) {
+            if (!this.knownNoticeSubtypes.contains(noticeSubtype)) {
+                throw SymbolResolutionException.unknownNoticeSubtype(noticeSubtype);
+            }
+            this.noticeSubtypes.add(noticeSubtype);
+            return this;
+        }
+
+        /**
+         * Adds the notice subtypes from one notice subtype to another, in ascending order.
+         *
+         * @param start the first notice subtype, as written
+         * @param end the last notice subtype, as written
+         * @return this builder
+         * @throws SymbolResolutionException if the SDK has no such notice subtype as one of the two
+         * @throws InvalidUsageException if the first notice subtype comes after the last
+         */
+        public Builder add(String start, String end) {
+            int startIndex = this.knownNoticeSubtypes.indexOf(start);
+            if (startIndex < 0) {
+                throw SymbolResolutionException.unknownNoticeSubtype(start, start + "-" + end);
+            }
+            int endIndex = this.knownNoticeSubtypes.indexOf(end);
+            if (endIndex < 0) {
+                throw SymbolResolutionException.unknownNoticeSubtype(end, start + "-" + end);
+            }
+            if (startIndex > endIndex) {
+                throw InvalidUsageException.invalidNoticeSubtypeRangeOrder(start, end);
+            }
+            this.noticeSubtypes.addAll(this.knownNoticeSubtypes.subList(startIndex, endIndex + 1));
+            return this;
+        }
+
+        /**
+         * @return the notice subtypes added, universal if they include every notice subtype of the
+         *         SDK
+         */
+        public NoticeSubtypeRange build() {
+            return new NoticeSubtypeRange(this.noticeSubtypes, !this.knownNoticeSubtypes.isEmpty()
+                && new HashSet<>(this.noticeSubtypes).containsAll(this.knownNoticeSubtypes));
+        }
     }
 }

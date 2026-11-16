@@ -14,6 +14,7 @@
 package eu.europa.ted.efx.model.rules;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -25,15 +26,38 @@ class NoticeSubtypeRangeTest {
   private static final List<String> SUBTYPES = List.of("1", "2", "3");
 
   @Test
-  void testStar_ReadByItsText() {
-    // Trimming " * " gives a string other than the constant "*", with the same text
-    NoticeSubtypeRange range = new NoticeSubtypeRange(" * ", SUBTYPES);
+  void testAll_IsUniversal() {
+    NoticeSubtypeRange range = NoticeSubtypeRange.all(SUBTYPES);
     assertEquals(SUBTYPES, range.asList());
     assertTrue(range.isUniversal());
   }
 
   @Test
-  void testNullRangeString_GivesNoSubtype() {
-    assertEquals(List.of(), new NoticeSubtypeRange(null, SUBTYPES).asList());
+  void testBuilder_EveryNoticeSubtype_IsUniversal() {
+    NoticeSubtypeRange range = new NoticeSubtypeRange.Builder(SUBTYPES).add("1").add("2", "3").build();
+    assertEquals(SUBTYPES, range.asList());
+    assertTrue(range.isUniversal());
+  }
+
+  @Test
+  void testBuilder_KeepsTheOrderWritten() {
+    NoticeSubtypeRange range =
+        new NoticeSubtypeRange.Builder(SUBTYPES).add("3").add("1", "2").add("3").build();
+    assertEquals(List.of("3", "1", "2", "3"), range.asList());
+    assertTrue(range.isUniversal());
+  }
+
+  @Test
+  void testBuilder_SomeNoticeSubtypes_IsNotUniversal() {
+    NoticeSubtypeRange range = new NoticeSubtypeRange.Builder(SUBTYPES).add("2").build();
+    assertEquals(List.of("2"), range.asList());
+    assertFalse(range.isUniversal());
+  }
+
+  @Test
+  void testBuilder_NoNoticeSubtype_IsNotUniversal() {
+    NoticeSubtypeRange range = new NoticeSubtypeRange.Builder(SUBTYPES).build();
+    assertEquals(List.of(), range.asList());
+    assertFalse(range.isUniversal());
   }
 }

@@ -29,7 +29,10 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -525,9 +528,10 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * Reads the notice subtypes of an IN clause. Each range of a list is first read on its own, only
-   * so that an error in a range, such as an unknown subtype, is placed at it; then the whole list is
-   * read.
+   * Reads the notice subtypes of an IN clause from the names that the parser matched in it. After a
+   * syntax error, the parser can keep in a range a token that it skipped, which is not read, or
+   * leave a range without one of its names; such a range adds no notice subtype, and the syntax
+   * error says what is missing.
    */
   private NoticeSubtypeRange noticeSubtypesOf(NoticeTypeListContext list) {
     if (this.cachedSortedNoticeSubtypeIds == null) {
@@ -537,16 +541,66 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
           .collect(Collectors.toUnmodifiableList());
     }
     if (list instanceof AnyNoticeTypesContext) {
-      return new NoticeSubtypeRange("*", this.cachedSortedNoticeSubtypeIds);
+      return NoticeSubtypeRange.all(this.cachedSortedNoticeSubtypeIds);
     }
-    for (final NoticeTypeRangeContext range : ((ExplicitNoticeTypesContext) list).noticeTypeRange()) {
-      try {
-        new NoticeSubtypeRange(range.getText(), this.cachedSortedNoticeSubtypeIds);
-      } catch (final EfxCompilationException e) {
-        throw e.at(range);
+    final NoticeSubtypeRange.Builder noticeSubtypes =
+        new NoticeSubtypeRange.Builder(this.cachedSortedNoticeSubtypeIds);
+    // After a syntax error the list can be neither of its two alternatives
+    if (list instanceof ExplicitNoticeTypesContext) {
+      for (final NoticeTypeRangeContext range : ((ExplicitNoticeTypesContext) list).noticeTypeRange()) {
+        addNoticeSubtypes(range, noticeSubtypes);
       }
     }
-    return new NoticeSubtypeRange(list.getText(), this.cachedSortedNoticeSubtypeIds);
+    return noticeSubtypes.build();
+  }
+
+  /**
+   * Adds the notice subtypes of a range of an IN list, as in {@code 1}, {@code 1-3} or
+   * {@code E3 - E6}. The lexer reads {@code E3-E6}, written without spaces, as a single name, since a
+   * name can hold dashes; the dashes in a name therefore separate the ends of a range, as a minus
+   * does.
+   */
+  private static void addNoticeSubtypes(final NoticeTypeRangeContext range,
+      final NoticeSubtypeRange.Builder noticeSubtypes) {
+    final List<Token> names = new ArrayList<>();
+    for (final NoticeTypeContext noticeType : range.noticeType()) {
+      final Token name = matchedName(noticeType);
+      if (name == null) {
+        return;
+      }
+      names.add(name);
+    }
+    // One notice subtype, or the first and the last of the range
+    final List<String> ends = new ArrayList<>();
+    for (final Token name : names) {
+      ends.addAll(List.of(name.getText().split("-")));
+    }
+    if (ends.size() > 2) {
+      throw InvalidUsageException.invalidNoticeSubtypeToken(String.join("-", ends)).at(names.get(0));
+    }
+    try {
+      if (ends.size() == 1) {
+        noticeSubtypes.add(ends.get(0));
+      } else {
+        noticeSubtypes.add(ends.get(0), ends.get(1));
+      }
+    } catch (final EfxCompilationException e) {
+      throw e.at(names.get(0));
+    }
+  }
+
+  /**
+   * @return the integer or identifier that the parser matched as the given notice subtype, or null
+   *         if a syntax error left it without one; a token that the parser skipped is not a match
+   */
+  private static Token matchedName(final NoticeTypeContext noticeType) {
+    for (int i = 0; i < noticeType.getChildCount(); i++) {
+      final ParseTree child = noticeType.getChild(i);
+      if (child instanceof TerminalNode && !(child instanceof ErrorNode)) {
+        return ((TerminalNode) child).getSymbol();
+      }
+    }
+    return null;
   }
 
   @Override
