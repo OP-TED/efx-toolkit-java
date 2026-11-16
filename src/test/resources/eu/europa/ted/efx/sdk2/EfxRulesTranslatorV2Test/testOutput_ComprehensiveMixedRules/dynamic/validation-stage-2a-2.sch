@@ -3,7 +3,7 @@
     <rule context="/*/PathNode/IndicatorField">
         <report id="R-M3C-U8N" role="INFO" test=".">rule|text|R-M3C-U8N</report>
         <assert id="R-S9L-R5K" role="ERROR" diagnostics="BT-00-Indicator_BT-00-Text" test="not(../TextField/normalize-space(text()) = '')">rule|text|R-S9L-R5K</assert>
-        <assert id="R-N6P-I2F" role="WARNING" diagnostics="BT-00-Indicator_BT-00-Number" test="(../NumberField/number() &gt; 0) or (not(. = true()))">rule|text|R-N6P-I2F</assert>
+        <assert id="R-N6P-I2F" role="WARNING" diagnostics="BT-00-Indicator_BT-00-Number" test="(../NumberField/number() &gt; 0) or (not(./(normalize-space(text()) = ('true', '1')) = true()))">rule|text|R-N6P-I2F</assert>
     </rule>
     <rule context="/*">
         <report id="R-V4T-O7J" role="INFO" diagnostics="ND-Root_BT-00-Number" test="(PathNode/TextField) and (PathNode/NumberField)">rule|text|R-V4T-O7J</report>

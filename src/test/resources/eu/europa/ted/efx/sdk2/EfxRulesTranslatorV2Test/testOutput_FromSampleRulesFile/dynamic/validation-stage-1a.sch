@@ -7,7 +7,7 @@
         <assert id="R-X3F-N8W" role="ERROR" diagnostics="ND-SubNode_BT-00-Text" test="(../PathNode/TextField) or (not(../PathNode/IndicatorField))">rule|text|R-X3F-N8W</assert>
     </rule>
     <rule context="/*/SubNode">
-        <assert id="R-H9T-V5L" role="ERROR" diagnostics="ND-SubNode_BT-00-Text" test="(../PathNode/TextField) or (not(../PathNode/IndicatorField))">rule|text|R-H9T-V5L</assert>
-        <assert id="R-B6J-C4R" role="WARNING" diagnostics="ND-SubNode_BT-00-Text" test="(not(../PathNode/TextField)) or (not(not(../PathNode/IndicatorField)))">rule|text|R-B6J-C4R</assert>
+        <assert id="R-H9T-V5L" role="ERROR" diagnostics="ND-SubNode_BT-00-Text" test="(../PathNode/TextField) or (not(../PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))))">rule|text|R-H9T-V5L</assert>
+        <assert id="R-B6J-C4R" role="WARNING" diagnostics="ND-SubNode_BT-00-Text" test="(not(../PathNode/TextField)) or (not(not(../PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')))))">rule|text|R-B6J-C4R</assert>
     </rule>
 </pattern>

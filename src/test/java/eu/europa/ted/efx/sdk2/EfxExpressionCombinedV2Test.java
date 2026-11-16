@@ -39,7 +39,7 @@ class EfxExpressionCombinedV2Test extends EfxTestsBase {
   @Test
   void testCountWithAbsoluteFieldReferenceAndPredicate() {
     testExpressionTranslationWithContext(
-        "count(/*/PathNode/CodeField[../IndicatorField = true()]/normalize-space(text())) = 1", "BT-00-Text",
+        "count(/*/PathNode/CodeField[../IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/normalize-space(text())) = 1", "BT-00-Text",
         "count(/BT-00-Code[BT-00-Indicator == TRUE]) == 1");
   }
 }
