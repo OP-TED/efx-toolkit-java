@@ -2808,7 +2808,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(SubTextField).call(body0101()) }",
             "let body0101() -> { text('line2') }",
             "MAIN:",
-            "for-each(/*/SubNode[SubTextField]).call(body01())"),
+            "for-each(/*/SubNode[exists(SubTextField)]).call(body01())"),
         translateTemplate(lines(
             "{ND-SubNode[BT-01-SubNode-Text is present]} line1",
             "  {BT-01-SubNode-Text} line2")));

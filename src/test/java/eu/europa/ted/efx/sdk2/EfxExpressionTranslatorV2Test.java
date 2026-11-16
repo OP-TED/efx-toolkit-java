@@ -56,35 +56,35 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testPresenceCondition() {
-    testExpressionTranslationWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
+    testExpressionTranslationWithContext("exists(PathNode/TextField)", "ND-Root", "BT-00-Text is present");
   }
 
   @Test
   void testPresenceCondition_WithNot() {
-    testExpressionTranslationWithContext("not(PathNode/TextField)", "ND-Root",
+    testExpressionTranslationWithContext("not(exists(PathNode/TextField))", "ND-Root",
         "BT-00-Text is not present");
   }
 
   @Test
   void testPresenceCondition_WithNodeReference() {
-    testExpressionTranslationWithContext("SubNode", "ND-Root", "ND-SubNode is present");
+    testExpressionTranslationWithContext("exists(SubNode)", "ND-Root", "ND-SubNode is present");
   }
 
   @Test
   void testPresenceCondition_WithNodeReference_WithNot() {
-    testExpressionTranslationWithContext("not(SubNode)", "ND-Root",
+    testExpressionTranslationWithContext("not(exists(SubNode))", "ND-Root",
         "ND-SubNode is not present");
   }
 
   @Test
   void testPresenceCondition_WithAbsoluteNodeReference() {
-    testExpressionTranslationWithContext("/*/SubNode", "BT-00-Text",
+    testExpressionTranslationWithContext("exists(/*/SubNode)", "BT-00-Text",
         "/ND-SubNode is present");
   }
 
   @Test
   void testPresenceCondition_WithNodeReferenceWithPredicate() {
-    testExpressionTranslationWithContext("SubNode['a' = 'a']", "ND-Root",
+    testExpressionTranslationWithContext("exists(SubNode['a' = 'a'])", "ND-Root",
         "ND-SubNode['a' == 'a'] is present");
   }
 
@@ -651,7 +651,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringsSequenceFromIteration_UsingObjectVariable() {
     testExpressionTranslationWithContext(
-        "for $n in PathNode/TextField[../NumberField], $d in $n/../StartDateField/xs:date(text()) return 'text'",
+        "for $n in PathNode/TextField[exists(../NumberField)], $d in $n/../StartDateField/xs:date(text()) return 'text'",
         "ND-Root",
         "for context:$n in BT-00-Text[BT-00-Number is present], date:$d in $n::BT-00-StartDate return 'text'");
   }
@@ -1296,14 +1296,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithNodeContextOverride_AbsoluteAnchor() {
-    testExpressionTranslationWithContext("/*/PathNode/TextField", "BT-00-Text",
+    testExpressionTranslationWithContext("exists(/*/PathNode/TextField)", "BT-00-Text",
         "/ND-Root::BT-00-Text is present");
   }
 
   @Test
   void testFieldReferenceWithFieldContextOverride_AbsoluteAnchor() {
     testExpressionTranslationWithContext(
-        "/*/PathNode/ChildNode/SubLevelTextField/../../TextField", "BT-00-Code",
+        "exists(/*/PathNode/ChildNode/SubLevelTextField/../../TextField)", "BT-00-Code",
         "/BT-01-SubLevel-Text::BT-00-Text is present");
   }
 
@@ -1312,7 +1312,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // The anchor's path carries a predicate that comes from the SDK rather than from the
     // expression. It has to survive for the same reason a written one does.
     testExpressionTranslationWithContext(
-        "../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonCode",
+        "exists(../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonCode)",
         "BT-00-Text",
         "ND-PrivacyForRepeatableText::BT-197(BT-00)-Repeatable-Text is present");
   }
@@ -1426,7 +1426,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testLinkedFieldProperty_publicationDate() {
     final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
     testExpressionTranslationWithContext(
-        privacyPath + "/PublicationDate",
+        "exists(" + privacyPath + "/PublicationDate)",
         "BT-00-Text-In-Repeatable-Node",
         "BT-00-Text-In-Repeatable-Node:publicationDate is present");
   }
@@ -1435,7 +1435,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testLinkedFieldProperty_justificationCode() {
     final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
     testExpressionTranslationWithContext(
-        privacyPath + "/ReasonCode",
+        "exists(" + privacyPath + "/ReasonCode)",
         "BT-00-Text-In-Repeatable-Node",
         "BT-00-Text-In-Repeatable-Node:justificationCode is present");
   }
@@ -1444,7 +1444,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testLinkedFieldProperty_justificationDescription() {
     final String privacyPath = "../FieldsPrivacy[FieldIdentifierCode/text()='test-priv']";
     testExpressionTranslationWithContext(
-        privacyPath + "/ReasonDescription",
+        "exists(" + privacyPath + "/ReasonDescription)",
         "BT-00-Text-In-Repeatable-Node",
         "BT-00-Text-In-Repeatable-Node:justificationDescription is present");
   }
@@ -1490,7 +1490,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
-            + "(not(" + privacyPath + "/PublicationDate)"
+            + "(not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
         "BT-00-Text-In-Repeatable-Node",
@@ -1527,7 +1527,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
             + "not("
-                + "(not(" + privacyPath + "/PublicationDate)"
+                + "(not(exists(" + privacyPath + "/PublicationDate))"
                 + " or "
                 + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
@@ -1600,7 +1600,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
             + " and "
-            + "(not(" + privacyPath + "/PublicationDate)"
+            + "(not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
         "BT-00-Repeatable-Text",
@@ -1614,7 +1614,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
             + " and "
             + "not("
-                + "(not(" + privacyPath + "/PublicationDate)"
+                + "(not(exists(" + privacyPath + "/PublicationDate))"
                 + " or "
                 + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
@@ -1642,7 +1642,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'num-priv'"
             + " and "
             + "not("
-                + "(not(" + privacyPath + "/PublicationDate)"
+                + "(not(exists(" + privacyPath + "/PublicationDate))"
                 + " or "
                 + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
@@ -1670,7 +1670,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
             + "not("
-                + "(not(" + privacyPath + "/PublicationDate)"
+                + "(not(exists(" + privacyPath + "/PublicationDate))"
                 + " or "
                 + privacyPath + "/PublicationDate/xs:date(text()) > current-date())"
             + ")"
@@ -3764,7 +3764,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testAbsoluteFieldReference_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "/*/PathNode/TextField",
+        "exists(/*/PathNode/TextField)",
         "BT-00-Text",
         "/BT-00-Text is present");
   }
@@ -3788,7 +3788,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldReferenceWithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "PathNode/TextField['a' = 'a']",
+        "exists(PathNode/TextField['a' = 'a'])",
         "ND-Root",
         "BT-00-Text['a' == 'a'] is present");
   }
@@ -3912,7 +3912,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField/../../TextField",
+        "exists(../ChildNode/SubLevelTextField/../../TextField)",
         "BT-00-Code",
         "BT-01-SubLevel-Text::BT-00-Text is present");
   }
@@ -3939,7 +3939,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField['a' = 'a']/../../TextField",
+        "exists(../ChildNode/SubLevelTextField['a' = 'a']/../../TextField)",
         "BT-00-Code",
         "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text is present");
   }
@@ -3966,7 +3966,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldContextOverride_WithIndexer_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField[1]/../../TextField",
+        "exists(../ChildNode/SubLevelTextField[1]/../../TextField)",
         "BT-00-Code",
         "BT-01-SubLevel-Text[1]::BT-00-Text is present");
   }
@@ -3984,7 +3984,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../../PathNode/TextField",
+        "exists(../../PathNode/TextField)",
         "BT-00-Text",
         "ND-Root::BT-00-Text is present");
   }
@@ -4011,7 +4011,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField",
+        "exists(../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField)",
         "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text is present");
   }
@@ -4038,7 +4038,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testVariableContextOverride_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "for $n in SubNode return $n/SubTextField",
+        "for $n in SubNode return exists($n/SubTextField)",
         "ND-Root",
         "for context:$n in ND-SubNode return $n::BT-01-SubNode-Text is present");
   }
@@ -4065,7 +4065,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStackedOverride_NodeAndField_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../../PathNode/ChildNode/SubLevelTextField/../../TextField",
+        "exists(../../PathNode/ChildNode/SubLevelTextField/../../TextField)",
         "BT-00-Text",
         "ND-Root::BT-01-SubLevel-Text::BT-00-Text is present");
   }
@@ -4101,7 +4101,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testVariableAndNodeContextOverride_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "for $n in SubNode return $n/../PathNode/TextField",
+        "for $n in SubNode return exists($n/../PathNode/TextField)",
         "ND-Root",
         "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Text is present");
   }
@@ -4429,7 +4429,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
-            + "(not(" + privacyPath + "/PublicationDate)"
+            + "(not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
         "ND-Root",
@@ -4442,7 +4442,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'test-priv'"
             + " and "
-            + "not((not(" + privacyPath + "/PublicationDate)"
+            + "not((not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
             + " and "
@@ -4496,7 +4496,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
             + " and "
-            + "not((not(" + privacyPath + "/PublicationDate)"
+            + "not((not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
             + " and "
@@ -4512,7 +4512,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'rep-text-priv'"
             + " and "
-            + "not((not(" + privacyPath + "/PublicationDate)"
+            + "not((not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
             + " and "
@@ -4558,7 +4558,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'"
             + " and "
-            + "(not(" + privacyPath + "/PublicationDate)"
+            + "(not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date())",
         "ND-Root",
@@ -4572,7 +4572,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext(
         privacyPath + "/FieldIdentifierCode/normalize-space(text()) = 'ml-text-priv'"
             + " and "
-            + "not((not(" + privacyPath + "/PublicationDate)"
+            + "not((not(exists(" + privacyPath + "/PublicationDate))"
             + " or "
             + privacyPath + "/PublicationDate/xs:date(text()) > current-date()))"
             + " and "
@@ -4661,7 +4661,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testCompute_PresenceCondition() {
-    testComputeExpressionWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
+    testComputeExpressionWithContext("exists(PathNode/TextField)", "ND-Root", "BT-00-Text is present");
   }
 
   @Test
@@ -4682,7 +4682,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testCompute_WithNodeContext() {
-    testComputeExpressionWithContext("PathNode/TextField", "ND-Root", "BT-00-Text is present");
+    testComputeExpressionWithContext("exists(PathNode/TextField)", "ND-Root", "BT-00-Text is present");
   }
 
   @Test

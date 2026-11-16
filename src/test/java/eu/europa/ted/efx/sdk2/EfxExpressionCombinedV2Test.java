@@ -20,7 +20,7 @@ class EfxExpressionCombinedV2Test extends EfxTestsBase {
 
   @Test
   void testNotPresentAndNotPresent() {
-    testExpressionTranslationWithContext("not(PathNode/TextField) and not(PathNode/IntegerField)",
+    testExpressionTranslationWithContext("not(exists(PathNode/TextField)) and not(exists(PathNode/IntegerField))",
         "ND-Root", "BT-00-Text is not present and BT-00-Integer is not present");
   }
 

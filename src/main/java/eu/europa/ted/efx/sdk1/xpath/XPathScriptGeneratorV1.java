@@ -47,6 +47,15 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
         return super.composeFieldValueReference(fieldReference);
     }
 
+    /**
+     * SDK 1 keeps translating a presence condition as the path alone, so that its generated output
+     * does not change.
+     */
+    @Override
+    public BooleanExpression composeExistsCondition(final PathExpression reference) {
+        return new BooleanExpression(reference.getScript());
+    }
+
     @Override
     public PathExpression composeFieldReferenceWithAxis(final PathExpression fieldReference,
         final String axis) {

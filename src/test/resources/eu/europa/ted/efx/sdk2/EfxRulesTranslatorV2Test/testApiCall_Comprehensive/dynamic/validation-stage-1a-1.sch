@@ -8,7 +8,7 @@
         <let name="__apiResult3" value="number(efx:call-api('ext-db', 'verify-code', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((../CodeField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <let name="__apiResult4" value="number(efx:call-api('default', 'confirm-status', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <let name="__apiResult5" value="number(efx:call-api('ext-db', 'verify-code', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((../CodeField/normalize-space(text())), '')[1]))), '&amp;')))"/>
-        <assert id="R-S1A-001" role="ERROR" test=".">rule|text|R-S1A-001</assert>
+        <assert id="R-S1A-001" role="ERROR" test="exists(.)">rule|text|R-S1A-001</assert>
         <report id="R-S1A-002" role="WARNING" test="./normalize-space(text()) = ''">rule|text|R-S1A-002</report>
         <assert id="R-S1A-003-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-003" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1)">rule|text|R-S1A-003</assert>
@@ -22,7 +22,7 @@
         <assert id="R-S1A-006" role="ERROR" test="($buyerOk = -1) or ($__apiResult5 = -1) or ($buyerOk = 1 and $__apiResult5 = 1)">rule|text|R-S1A-006</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult6" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;'))) else 0)"/>
+        <let name="__apiResult6" value="number(if (exists(../IndicatorField)) then number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;'))) else 0)"/>
         <let name="__apiResult7" value="number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <assert id="R-S1A-007-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-007-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
@@ -32,11 +32,11 @@
         <report id="R-S1A-008" role="WARNING" test="not($globalCheck = -1) and not($stageStatus = -1) and (not($stageStatus = 1) and not($globalCheck = 1))">rule|text|R-S1A-008</report>
         <assert id="R-S1A-009-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
         <assert id="R-S1A-009-api-error-1" role="ERROR" test="not($__apiResult6 = -1)">rule|text|api-error</assert>
-        <assert id="R-S1A-009" role="ERROR" test="($stageStatus = -1) or ($__apiResult6 = -1) or ($stageStatus = 1 and $__apiResult6 = 1) or (not(../IndicatorField))">rule|text|R-S1A-009</assert>
+        <assert id="R-S1A-009" role="ERROR" test="($stageStatus = -1) or ($__apiResult6 = -1) or ($stageStatus = 1 and $__apiResult6 = 1) or (not(exists(../IndicatorField)))">rule|text|R-S1A-009</assert>
         <assert id="R-S1A-010-api-error-1" role="ERROR" test="not($__apiResult7 = -1)">rule|text|api-error</assert>
-        <assert id="R-S1A-010" role="ERROR" test="($__apiResult7 = -1) or (.) or (not($__apiResult7 = 1))">rule|text|R-S1A-010</assert>
+        <assert id="R-S1A-010" role="ERROR" test="($__apiResult7 = -1) or (exists(.)) or (not($__apiResult7 = 1))">rule|text|R-S1A-010</assert>
         <assert id="R-S1A-011-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
-        <assert id="R-S1A-011" role="ERROR" test="($stageStatus = -1) or (.) or (not($stageStatus = 1))">rule|text|R-S1A-011</assert>
+        <assert id="R-S1A-011" role="ERROR" test="($stageStatus = -1) or (exists(.)) or (not($stageStatus = 1))">rule|text|R-S1A-011</assert>
         <assert id="R-S1A-012-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-012" role="ERROR" test="($globalCheck = -1) or ($globalCheck = 1)">rule|text|R-S1A-012</assert>
     </rule>
