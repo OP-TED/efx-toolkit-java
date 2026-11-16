@@ -241,6 +241,28 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.Comparison, "a comparison operator"));
 
     /**
+     * The characters that are drawn as nothing, or as a blank, although their category, a letter, a
+     * combining mark or a symbol, says they are seen: the default ignorable code points of Unicode
+     * (Default_Ignorable_Code_Point in DerivedCoreProperties.txt) that are neither format
+     * characters nor unassigned, and the blank Braille pattern.
+     */
+    private static final IntervalSet DRAWN_BLANK = new IntervalSet();
+
+    static {
+        DRAWN_BLANK.add(0x034F); // combining grapheme joiner
+        DRAWN_BLANK.add(0x115F, 0x1160); // Hangul choseong and jungseong fillers
+        DRAWN_BLANK.add(0x17B4, 0x17B5); // Khmer inherent vowels
+        DRAWN_BLANK.add(0x180B, 0x180D); // Mongolian free variation selectors
+        DRAWN_BLANK.add(0x180F); // Mongolian free variation selector four
+        DRAWN_BLANK.add(0x2800); // blank Braille pattern
+        DRAWN_BLANK.add(0x3164); // Hangul filler
+        DRAWN_BLANK.add(0xFE00, 0xFE0F); // variation selectors
+        DRAWN_BLANK.add(0xFFA0); // halfwidth Hangul filler
+        DRAWN_BLANK.add(0xE0100, 0xE01EF); // variation selectors supplement
+        DRAWN_BLANK.setReadonly(true);
+    }
+
+    /**
      * Reports text that starts none of the constructs the parser can read there. The message names
      * the whole text the parser read before it gave up, at the position where that text starts.
      */
@@ -335,12 +357,38 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         if (token.getType() == Token.EOF) {
             return END_OF_INPUT;
         }
-        return token.getType() == EfxLexer.StringLiteral ? token.getText()
+        return token.getType() == EfxLexer.StringLiteral ? visible(token.getText())
                 : quoted(token.getText());
     }
 
     private static String quoted(final String text) {
-        return "'" + text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + "'";
+        return "'" + visible(text) + "'";
+    }
+
+    /**
+     * Writes the text so that each of its characters can be seen: the line breaks and the tab as
+     * {@code \n}, {@code \r} and {@code \t}, and a character that cannot be seen as an escape of
+     * its code point, as <code>&#92;u200B</code>, or <code>&#92;u{E0001}</code> outside the Basic
+     * Multilingual Plane. Every other character is written as it is.
+     */
+    private static String visible(final String text) {
+        final StringBuilder visible = new StringBuilder();
+        text.codePoints().forEach(character -> {
+            if (character == '\n') {
+                visible.append("\\n");
+            } else if (character == '\r') {
+                visible.append("\\r");
+            } else if (character == '\t') {
+                visible.append("\\t");
+            } else if (!cannotBeSeen(character)) {
+                visible.appendCodePoint(character);
+            } else if (Character.isBmpCodePoint(character)) {
+                visible.append(String.format(Locale.ROOT, "\\u%04X", character));
+            } else {
+                visible.append(String.format(Locale.ROOT, "\\u{%X}", character));
+            }
+        });
+        return visible.toString();
     }
 
     /**
@@ -397,13 +445,36 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     }
 
     /**
-     * @return whether the character, written between quotes, shows nothing, looks like a space
-     *         although it is not the space ' ', or joins the quote before it, as a combining mark
-     *         does; not for the space itself, or for the tab, which a message writes as '\t'
+     * @return whether the character cannot be shown alone between quotes: it cannot be seen, or it
+     *         is a combining mark, which joins the quote before it; not the tab, which a message
+     *         writes as '\t'
      */
     private static boolean cannotBeShownInQuotes(final int character) {
-        if (character == ' ' || character == '\t') {
+        if (character == '\t') {
             return false;
+        }
+        switch (Character.getType(character)) {
+            case Character.NON_SPACING_MARK:
+            case Character.COMBINING_SPACING_MARK:
+            case Character.ENCLOSING_MARK:
+                return true;
+            default:
+                return cannotBeSeen(character);
+        }
+    }
+
+    /**
+     * @return whether the character is drawn as nothing, or as a blank other than the space ' ':
+     *         a space of another kind, a line or paragraph separator, a control, a format
+     *         character, a private-use, surrogate or unassigned code point, or one of
+     *         {@link #DRAWN_BLANK}
+     */
+    private static boolean cannotBeSeen(final int character) {
+        if (character == ' ') {
+            return false;
+        }
+        if (DRAWN_BLANK.contains(character)) {
+            return true;
         }
         switch (Character.getType(character)) {
             case Character.SPACE_SEPARATOR:
@@ -414,9 +485,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             case Character.PRIVATE_USE:
             case Character.SURROGATE:
             case Character.UNASSIGNED:
-            case Character.NON_SPACING_MARK:
-            case Character.COMBINING_SPACING_MARK:
-            case Character.ENCLOSING_MARK:
                 return true;
             default:
                 return false;

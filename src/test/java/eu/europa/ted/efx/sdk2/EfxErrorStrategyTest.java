@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.IntervalSet;
@@ -147,6 +148,55 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   void testExpression_SpaceOfAnotherKind_IsNamedByItsCodePoint() {
     assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected character U+00A0.",
         () -> translateExpression("WITH ND-Root COMPUTE 1\u00A02"));
+  }
+
+  @Test
+  void testExpression_CharacterDrawnBlank_IsNamedByItsCodePoint() {
+    // A symbol and a letter by their category, both drawn as a blank
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+2800.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \u2800"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+3164.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \u3164"));
+  }
+
+  @Test
+  void testExpression_CharacterThatCannotBeSeenInATextLiteral_IsWrittenAsAnEscape() {
+    // Written as it is, the zero-width space would show the literal as empty: ''
+    assertSyntaxErrorMessage(
+        "line 1:23 Syntax error: unexpected '\\u200B' in expression; expected end of input.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 '\u200B'"));
+    assertSyntaxErrorMessage(
+        "line 1:23 Syntax error: unexpected '\\u{E0001}' in expression; expected end of input.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 '\uDB40\uDC01'"));
+  }
+
+  @Test
+  void testExpression_CharacterThatCannotBeSeenInTextNotRead_IsWrittenAsAnEscape() {
+    assertSyntaxErrorMessage(
+        "line 1:0 Syntax error: unexpected 'WITH ND-Root, text:$x '\\u200B'' in expression.",
+        () -> translateExpression("WITH ND-Root, text:$x '\u200B'"));
+  }
+
+  @Test
+  void testExpression_TextLiteralThatCanBeSeen_IsQuotedAsItIsWritten() {
+    assertSyntaxErrorMessage(
+        "line 1:23 Syntax error: unexpected 'Ημερομηνία' in expression; expected end of input.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 'Ημερομηνία'"));
+    // A combining mark after a letter shows as an accent on it
+    assertSyntaxErrorMessage(
+        "line 1:23 Syntax error: unexpected 'e\u0301' in expression; expected end of input.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 'e\u0301'"));
+  }
+
+  @Test
+  void testLexer_CharacterThatCannotBeSeenInTheTextRead_IsWrittenAsAnEscape() {
+    final EfxErrorReportingLexer lexer =
+        new EfxErrorReportingLexer(CharStreams.fromString("//\u200B"));
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
+    assertSyntaxErrorMessage(
+        "line 1:0 Syntax error: unexpected end of input after '//\\u200B'.",
+        lexer::getAllTokens);
   }
 
   // #endregion Expressions ----------------------------------------------------
