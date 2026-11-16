@@ -1279,7 +1279,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { label(distinct-values(for $item in ../IndicatorField return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator'))) }",
+            "let body01() -> { label(distinct-values(for $item in ../IndicatorField/(normalize-space(text()) = ('true', '1')) return concat('indicator', '|', 'when', '-', $item, '|', 'BT-00-Indicator'))) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-Indicator}"));

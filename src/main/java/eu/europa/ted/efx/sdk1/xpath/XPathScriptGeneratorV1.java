@@ -25,6 +25,7 @@ import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
+import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 @SdkComponent(versions = {"1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -32,6 +33,18 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
 
     public XPathScriptGeneratorV1(TranslatorOptions translatorOptions) {
         super(translatorOptions);
+    }
+
+    /**
+     * SDK 1 keeps using an indicator field's element as its value, as before TEDEFO-5328, so that
+     * its generated output does not change.
+     */
+    @Override
+    public PathExpression composeFieldValueReference(final PathExpression fieldReference) {
+        if (fieldReference.is(EfxDataType.Boolean.class)) {
+            return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
+        }
+        return super.composeFieldValueReference(fieldReference);
     }
 
     @Override

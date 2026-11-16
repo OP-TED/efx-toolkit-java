@@ -235,7 +235,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldValueComparison_UsingIndicatorFields() {
-    testExpressionTranslationWithContext("PathNode/IndicatorField != PathNode/IndicatorField",
+    testExpressionTranslationWithContext("PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) != PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))",
         "ND-Root", "BT-00-Indicator != BT-00-Indicator");
   }
 
@@ -299,9 +299,22 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext("false() != true()", "BT-00-Text", "NEVER != ALWAYS");
   }
 
+  /**
+   * An indicator field used on its own reads its value, not its presence: a field holding
+   * "false" must not count as true (TEDEFO-5328).
+   */
+  @Test
+  void testIndicatorField_OnItsOwn_ReadsItsValue() {
+    testExpressionTranslationWithContext("../IndicatorField/(normalize-space(text()) = ('true', '1'))",
+        "BT-00-Text", "BT-00-Indicator");
+    testExpressionTranslationWithContext(
+        "not(../IndicatorField/(normalize-space(text()) = ('true', '1')))", "BT-00-Text",
+        "not(BT-00-Indicator)");
+  }
+
   @Test
   void testBooleanComparison_UsingFieldReference() {
-    testExpressionTranslationWithContext("../IndicatorField != true()", "BT-00-Text",
+    testExpressionTranslationWithContext("../IndicatorField/(normalize-space(text()) = ('true', '1')) != true()", "BT-00-Text",
         "BT-00-Indicator != ALWAYS");
   }
 
@@ -463,7 +476,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testBooleanQuantifiedExpression_UsingFieldReference() {
-    testExpressionTranslationWithContext("every $x in PathNode/IndicatorField satisfies $x",
+    testExpressionTranslationWithContext("every $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) satisfies $x",
         "ND-Root", "every indicator:$x in BT-00-Indicator satisfies $x");
   }
 
@@ -583,7 +596,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testConditionalBooleanExpression() {
-    testExpressionTranslationWithContext("(if (PathNode/IndicatorField) then true() else false())",
+    testExpressionTranslationWithContext("(if (PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))) then true() else false())",
         "ND-Root", "if BT-00-Indicator then TRUE else FALSE");
   }
 
@@ -630,7 +643,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringsSequenceFromIteration_UsingMultipleIterators() {
     testExpressionTranslationWithContext(
-        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField return concat($x, string($y), 'text'))",
+        "'a' = (for $x in ('a','b','c'), $y in (1,2), $z in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return concat($x, string($y), 'text'))",
         "ND-Root",
         "'a' in (for text:$x in ['a', 'b', 'c'], number:$y in [1, 2], indicator:$z in BT-00-Indicator return concat($x, string($y), 'text'))");
   }
@@ -675,7 +688,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testStringsFromBooleanIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext("'a' = (for $x in PathNode/IndicatorField return 'y')",
+    testExpressionTranslationWithContext("'a' = (for $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return 'y')",
         "ND-Root", "'a' in (for indicator:$x in BT-00-Indicator return 'y')");
   }
 
@@ -755,7 +768,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testNumbersFromBooleanIteration_UsingFieldReference() {
-    testExpressionTranslationWithContext("123 = (for $x in PathNode/IndicatorField return 0)",
+    testExpressionTranslationWithContext("123 = (for $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return 0)",
         "ND-Root", "123 in (for indicator:$x in BT-00-Indicator return 0)");
   }
 
@@ -839,7 +852,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testDatesFromBooleanIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:date('2022-01-01Z') = (for $x in PathNode/IndicatorField return xs:date('2022-01-01Z'))",
+        "xs:date('2022-01-01Z') = (for $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return xs:date('2022-01-01Z'))",
         "ND-Root", "2022-01-01Z in (for indicator:$x in BT-00-Indicator return 2022-01-01Z)");
   }
 
@@ -930,7 +943,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTimesFromBooleanIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:time('12:00:00Z') = (for $x in PathNode/IndicatorField return xs:time('12:00:00Z'))",
+        "xs:time('12:00:00Z') = (for $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return xs:time('12:00:00Z'))",
         "ND-Root", "12:00:00Z in (for indicator:$x in BT-00-Indicator return 12:00:00Z)");
   }
 
@@ -1021,7 +1034,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testDurationsFromBooleanIteration_UsingFieldReference() {
     testExpressionTranslationWithContext(
-        "xs:dayTimeDuration('P1D') = (for $x in PathNode/IndicatorField return xs:dayTimeDuration('P1D'))",
+        "xs:dayTimeDuration('P1D') = (for $x in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return xs:dayTimeDuration('P1D'))",
         "ND-Root", "P1D in (for indicator:$x in BT-00-Indicator return P1D)");
   }
 
@@ -1170,7 +1183,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testBooleanList() {
-    testExpressionTranslationWithContext("false() = (true(),PathNode/IndicatorField,true())",
+    testExpressionTranslationWithContext("false() = (true(),PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')),true())",
         "ND-Root", "NEVER in [TRUE, BT-00-Indicator, ALWAYS]");
   }
 
@@ -1251,14 +1264,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithPredicate() {
-    testExpressionTranslationWithContext("PathNode/IndicatorField['a' = 'a']", "ND-Root",
+    testExpressionTranslationWithContext("PathNode/IndicatorField['a' = 'a']/(normalize-space(text()) = ('true', '1'))", "ND-Root",
         "BT-00-Indicator['a' == 'a']");
   }
 
   @Test
   void testFieldReferenceWithPredicate_WithFieldReferenceInPredicate() {
     testExpressionTranslationWithContext(
-        "PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']", "ND-Root",
+        "PathNode/IndicatorField[../CodeField/normalize-space(text()) = 'a']/(normalize-space(text()) = ('true', '1'))", "ND-Root",
         "BT-00-Indicator[BT-00-Code == 'a']");
   }
 
@@ -1306,19 +1319,19 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-    testExpressionTranslationWithContext("../..[PathNode/IndicatorField = true()]/PathNode/IntegerField/number()", "BT-00-Text",
+    testExpressionTranslationWithContext("../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/IntegerField/number()", "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::integerField");
   }
 
   @Test
   void testAbsoluteFieldReference() {
-    testExpressionTranslationWithContext("/*/PathNode/IndicatorField", "BT-00-Text",
+    testExpressionTranslationWithContext("/*/PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))", "BT-00-Text",
         "/BT-00-Indicator");
   }
 
   @Test
   void testSimpleFieldReference() {
-    testExpressionTranslationWithContext("../IndicatorField", "BT-00-Text", "BT-00-Indicator");
+    testExpressionTranslationWithContext("../IndicatorField/(normalize-space(text()) = ('true', '1'))", "BT-00-Text", "BT-00-Indicator");
   }
 
   @Test
@@ -1823,7 +1836,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testNumberFromBooleanFunction_WithFieldReference() {
-    testExpressionTranslationWithContext("number(PathNode/IndicatorField)", "ND-Root",
+    testExpressionTranslationWithContext("number(PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')))", "ND-Root",
         "number(BT-00-Indicator)");
   }
 
@@ -2404,7 +2417,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testBooleanToStringFunction_WithFieldReference() {
-    testExpressionTranslationWithContext("string(PathNode/IndicatorField)", "ND-Root",
+    testExpressionTranslationWithContext("string(PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')))", "ND-Root",
         "string(BT-00-Indicator)");
   }
 
@@ -2870,7 +2883,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testExceptFunction_WithBooleanFieldReferences() {
-    testExpressionTranslationWithContext("distinct-values(for $L1 in PathNode/IndicatorField return if (every $L2 in PathNode/IndicatorField satisfies $L1 != $L2) then $L1 else ())",
+    testExpressionTranslationWithContext("distinct-values(for $L1 in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) return if (every $L2 in PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) satisfies $L1 != $L2) then $L1 else ())",
         "ND-Root", "value-except(BT-00-Indicator, BT-00-Indicator)");
   }
 
@@ -3759,7 +3772,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testAbsoluteFieldReference_WithPredicate() {
     testExpressionTranslationWithContext(
-        "/*/PathNode/IndicatorField['a' = 'a']",
+        "/*/PathNode/IndicatorField['a' = 'a']/(normalize-space(text()) = ('true', '1'))",
         "BT-00-Text",
         "/BT-00-Indicator['a' == 'a']");
   }
@@ -3989,7 +4002,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InSequenceContext() {
     testExpressionTranslationWithContext(
-        "'test' = ../..[PathNode/IndicatorField = true()]/PathNode/TextField/normalize-space(text())",
+        "'test' = ../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField/normalize-space(text())",
         "BT-00-Text",
         "'test' in ND-Root[BT-00-Indicator == TRUE]::BT-00-Text");
   }
@@ -3998,7 +4011,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InPresenceCondition() {
     testExpressionTranslationWithContext(
-        "../..[PathNode/IndicatorField = true()]/PathNode/TextField",
+        "../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField",
         "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text is present");
   }
@@ -4007,7 +4020,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNodeContextOverride_WithPredicate_InAttributeContext() {
     testExpressionTranslationWithContext(
-        "../..[PathNode/IndicatorField = true()]/PathNode/CodeField/@listName",
+        "../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/CodeField/@listName",
         "BT-00-Text",
         "ND-Root[BT-00-Indicator == TRUE]::BT-00-Code/@listName");
   }

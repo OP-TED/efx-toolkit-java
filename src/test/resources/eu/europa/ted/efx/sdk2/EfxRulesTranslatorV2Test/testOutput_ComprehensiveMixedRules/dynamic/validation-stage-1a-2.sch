@@ -8,7 +8,7 @@
     </rule>
     <rule context="/*/SubNode">
         <assert id="R-Y2N-G7S" role="ERROR" diagnostics="ND-SubNode_BT-00-Number" test="(../PathNode/NumberField) or (not(../PathNode/TextField/normalize-space(text()) = 'pending'))">rule|text|R-Y2N-G7S</assert>
-        <assert id="R-D4K-P9M" role="WARNING" diagnostics="ND-SubNode_BT-00-Indicator" test="(../PathNode/IndicatorField = true()) or (not(../PathNode/TextField/normalize-space(text()) = 'active'))">rule|text|R-D4K-P9M</assert>
+        <assert id="R-D4K-P9M" role="WARNING" diagnostics="ND-SubNode_BT-00-Indicator" test="(../PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()) or (not(../PathNode/TextField/normalize-space(text()) = 'active'))">rule|text|R-D4K-P9M</assert>
         <report id="R-Z8H-A3X" role="INFO" diagnostics="ND-SubNode_BT-00-Text" test="(not(../PathNode/TextField/normalize-space(text()) = 'pending') and not(../PathNode/TextField/normalize-space(text()) = 'active')) and (true())">rule|text|R-Z8H-A3X</report>
     </rule>
     <rule context="/*/PathNode/NumberField">
