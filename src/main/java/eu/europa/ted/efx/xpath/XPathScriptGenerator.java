@@ -1053,14 +1053,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
           + " else '')";
     }
     if (argument.is(EfxDataType.Boolean.class)) {
-      if (argument instanceof PathExpression) {
-        // The value of an indicator field, already read as a boolean (TEDEFO-5328).
-        return "(for $__value in " + script + " return string($__value))";
-      }
-      if (argument instanceof SequenceExpression) {
-        return "(for $__value in " + script + " return string(boolean($__value)))";
-      }
-      return "(if " + script + " then 'true' else 'false')";
+      // boolean() for each value: ph-schematron holds a boolean variable as the number 0 or 1.
+      // An absent indicator stays empty.
+      return "(for $__value in " + script + " return string(boolean($__value)))";
     }
     if (argument.is(EfxDataType.String.class)) {
       return script;
