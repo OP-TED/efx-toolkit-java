@@ -1654,7 +1654,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
         }
 
         if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-          throw InvalidIndentationException.inconsistentSpaces(ctx, this.indentSpaces);
+          throw InvalidIndentationException.inconsistentSpaces(ctx, ctx.Spaces().getText().length(),
+              this.indentSpaces);
         }
         return ctx.Spaces().getText().length() / this.indentSpaces;
       } else if (ctx.Tabs() != null) {

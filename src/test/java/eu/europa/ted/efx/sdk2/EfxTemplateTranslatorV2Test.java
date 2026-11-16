@@ -2957,7 +2957,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testTemplateLine_InvalidIndentation_FirstIndentation() {
-    assertThrows(InvalidIndentationException.class, () -> translateTemplate("  {BT-00-Text} foo"));
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate("  {BT-00-Text} foo"));
+    assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
+        exception.getErrorCode());
+    assertEquals(
+        "line 1:0 This line cannot be indented: there is no line above it to nest under.",
+        exception.getMessage());
   }
 
   @Test
@@ -2965,7 +2971,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     InvalidIndentationException ex = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate("{BT-00-Text} foo\n\t  {BT-00-Text} bar"));
     assertEquals(InvalidIndentationException.ErrorCode.MIXED_INDENTATION, ex.getErrorCode());
-    assertTrue(ex.getMessage().startsWith("line "), "Error message should include source position");
+    assertEquals(
+        "line 2:0 Indentation mixes tabs and spaces: a template is indented with tabs only or with spaces only.",
+        ex.getMessage());
   }
 
   @Test
@@ -2976,8 +2984,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testTemplateLine_InvalidIndentation_SkippedIndentation() {
-    assertThrows(InvalidIndentationException.class,
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate("{BT-00-Text} foo\n\t\t{BT-00-Text} bar"));
+    assertEquals(InvalidIndentationException.ErrorCode.INDENTATION_LEVEL_SKIPPED,
+        exception.getErrorCode());
+    assertEquals(
+        "line 2:0 This line is indented more than one level deeper than the line above it.",
+        exception.getMessage());
   }
 
   @Test
@@ -2986,16 +2999,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "let template:tem-plate1(text:$t) display --${$t}--;",
         "  let template:tem-plate2(text:$t) display --${$t}--;",
         "with context:$ctx1 = BT-00-Text, text:$t='++' invoke tem-plate2($t);");
-    assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
-  }
-
-  @Test
-  void testTemplateLine_InvalidIndentation_InconsistentSpacing() {
-    var template = lines(
-        "{BT-00-Text} Level 1",
-        "\t\t{BT-00-Text} Level 2 with 2 spaces",
-        "\t\t\t{BT-00-Text} Level 3 with 4 spaces");
-    assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
+    InvalidIndentationException exception =
+        assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
+    assertEquals(InvalidIndentationException.ErrorCode.NO_INDENT_ON_TEMPLATE_DECLARATIONS,
+        exception.getErrorCode());
+    assertEquals("line 2:0 A template declaration cannot be indented.", exception.getMessage());
   }
 
   @Test
@@ -3014,7 +3022,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             lines("{BT-00-Text} foo", "  {BT-00-Text} bar", "   {BT-00-Text} baz")));
     assertEquals(InvalidIndentationException.ErrorCode.INCONSISTENT_INDENTATION_SPACES,
         exception.getErrorCode());
-    assertEquals("line 3:0 Inconsistent indentation. Expected a multiple of 2 spaces.",
+    assertEquals(
+        "line 3:0 This line is indented with 3 spaces, not a multiple of 2, the indentation of the first indented line.",
         exception.getMessage());
   }
 
