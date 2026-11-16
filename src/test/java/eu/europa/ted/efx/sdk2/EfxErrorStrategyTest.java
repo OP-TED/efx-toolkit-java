@@ -13,9 +13,15 @@
  */
 package eu.europa.ted.efx.sdk2;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
+import org.antlr.v4.runtime.atn.ATNState;
+import org.antlr.v4.runtime.atn.Transition;
+import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -115,6 +121,24 @@ class EfxErrorStrategyTest extends EfxTestsBase {
         () -> translateExpression("WITH ND-Root COMPUTE 1 ¤ 2"));
   }
 
+  @Test
+  void testExpression_SpaceThatStartsNoToken() {
+    assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected character ' '.",
+        () -> translateExpression("WITH ND-Root COMPUTE $ x"));
+  }
+
+  @Test
+  void testExpression_CharacterThatCannotBeSeen_IsNamedByItsCodePoint() {
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected character U+200B.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 \u200B"));
+  }
+
+  @Test
+  void testExpression_SpaceOfAnotherKind_IsNamedByItsCodePoint() {
+    assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected character U+00A0.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1\u00A02"));
+  }
+
   // #endregion Expressions ----------------------------------------------------
 
   // #region Templates ---------------------------------------------------------
@@ -180,6 +204,33 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testEndpoint_WithoutName() {
+    assertSyntaxErrorMessage("line 1:8 Syntax error: unexpected end of input"
+        + " in API endpoint declaration; expected a text literal.",
+        () -> translateRules("ENDPOINT"));
+  }
+
+  @Test
+  void testInclude_EmptyPath() {
+    assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '\"' in #include directive.",
+        () -> translateRules("#include \"\"\n"));
+  }
+
+  @Test
+  void testInclude_PathNotClosedOnItsLine() {
+    assertSyntaxErrorMessage(
+        "line 1:9 Syntax error: unexpected end of line in #include directive.",
+        () -> translateRules("#include \"a\n"));
+  }
+
+  @Test
+  void testInclude_PathNotQuoted() {
+    assertSyntaxErrorMessage(
+        "line 1:9 Syntax error: unexpected character 'a' in #include directive.",
+        () -> translateRules("#include a.efx\n"));
+  }
+
+  @Test
   void testRule_IdentifierOfAnotherForm() {
     assertSyntaxErrorMessage(
         "line 5:13 Syntax error: unexpected 'R-000-0001' in rule identifier;"
@@ -189,6 +240,29 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   // #endregion Rules ----------------------------------------------------------
+
+  /**
+   * Every token that a rule of the parser reads has a name, so that a message can give it as
+   * expected: the tokens are the labels of the transitions of the parser's ATN.
+   */
+  @Test
+  void testEveryTokenThatTheParserReads_HasAName() {
+    final IntervalSet read = new IntervalSet();
+    for (final ATNState state : EfxParser._ATN.states) {
+      if (state != null) {
+        for (final Transition transition : state.getTransitions()) {
+          if (transition.label() != null) {
+            read.addAll(transition.label());
+          }
+        }
+      }
+    }
+    final List<String> unnamed = read.toList().stream()
+        .filter(type -> EfxErrorStrategy.nameOf(type) == null)
+        .map(EfxParser.VOCABULARY::getSymbolicName)
+        .collect(toList());
+    assertEquals(List.of(), unnamed);
+  }
 
   private static void assertSyntaxErrorMessage(final String expected,
       final Executable translation) {

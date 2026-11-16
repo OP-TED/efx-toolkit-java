@@ -34,6 +34,6 @@ public class EfxErrorReportingLexer extends EfxLexer {
                 .getText(Interval.of(this._tokenStartCharIndex, this._input.index() - 1));
         this.getErrorListenerDispatch().syntaxError(this, null, this._tokenStartLine,
                 this._tokenStartCharPositionInLine,
-                EfxErrorStrategy.unreadable(read, this._input.LA(1)), e);
+                EfxErrorStrategy.unreadable(read, this._input.LA(1), this._mode), e);
     }
 }

@@ -15,9 +15,10 @@ package eu.europa.ted.efx.sdk2;
 
 import static eu.europa.ted.efx.sdk2.EfxParser.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.InputMismatchException;
@@ -26,20 +27,19 @@ import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.misc.IntervalSet;
 
 /**
  * Words every syntax error of EFX-2 in one style, as in "Syntax error: unexpected '1' in function
  * call; expected ','." The message names what was found, as written, or the end of the input; the
  * place it was found in, which is the nearest enclosing rule that has a name in
- * {@link #RULE_NAMES}; and, when the rule being read needs one of at most {@value #MOST_EXPECTED}
- * tokens next, those tokens. {@link EfxErrorReportingLexer} words the error of the lexer in the
- * same style.
+ * {@link #RULE_NAMES}; and, when the rule being read needs a token next and the tokens it can
+ * take have at most {@value #MOST_EXPECTED} names, those names. {@link EfxErrorReportingLexer}
+ * words the error of the lexer in the same style.
  */
 public class EfxErrorStrategy extends DefaultErrorStrategy {
 
-    /** The most tokens a message names as expected. */
+    /** The most names of tokens a message gives as expected. */
     private static final int MOST_EXPECTED = 3;
 
     private static final String END_OF_INPUT = "end of input";
@@ -151,16 +151,94 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     );
 
     /**
-     * How a message names the tokens that have no literal name. A message names no token that has
-     * neither.
+     * How a message names each token that the parser reads and that has no literal name: a keyword
+     * by its first spelling in the lexer grammar, as in "'WITH'" for {@code WITH} or {@code with},
+     * and any other token by what it is. EfxErrorStrategyTest checks that no such token is missing.
      */
-    private static final Map<Integer, String> TOKEN_NAMES = Map.of(
-            Token.EOF, END_OF_INPUT,
-            EfxLexer.As, "'AS'",
-            EfxLexer.RuleIdentifier, "a rule identifier, such as 'R-K7P-M2Q'",
-            EfxLexer.EndBlock, "'}'",
-            EfxLexer.IncludeDirective, "'#include'",
-            EfxLexer.StageHeaderStart, "a stage header");
+    private static final Map<Integer, String> TOKEN_NAMES = Map.ofEntries(
+            Map.entry(Token.EOF, END_OF_INPUT),
+
+            // Lines and indentation
+            Map.entry(EfxLexer.CRLF, "end of line"),
+            Map.entry(EfxLexer.Tabs, "tabs"),
+            Map.entry(EfxLexer.Spaces, "spaces"),
+            Map.entry(EfxLexer.MixedIndent, "tabs and spaces"),
+            Map.entry(EfxLexer.OutlineNumber, "an outline number"),
+
+            // Headers and directives
+            Map.entry(EfxLexer.SummarySectionHeader, "a summary section header"),
+            Map.entry(EfxLexer.NavigationSectionHeader, "a navigation section header"),
+            Map.entry(EfxLexer.StageHeaderStart, "a stage header"),
+            Map.entry(EfxLexer.StageIdentifier, "a stage identifier"),
+            Map.entry(EfxLexer.StageHeaderEnd, "'---'"),
+            Map.entry(EfxLexer.IncludeDirective, "'#include'"),
+            Map.entry(EfxLexer.IncludePath, "a path in double quotes"),
+
+            // Keywords
+            Map.entry(EfxLexer.Let, "'LET'"),
+            Map.entry(EfxLexer.Endpoint, "'ENDPOINT'"),
+            Map.entry(EfxLexer.With, "'WITH'"),
+            Map.entry(EfxLexer.When, "'WHEN'"),
+            Map.entry(EfxLexer.Otherwise, "'OTHERWISE'"),
+            Map.entry(EfxLexer.Display, "'DISPLAY'"),
+            Map.entry(EfxLexer.Invoke, "'INVOKE'"),
+            Map.entry(EfxLexer.Template, "'template'"),
+            Map.entry(EfxLexer.Index, "'INDEX'"),
+            Map.entry(EfxLexer.By, "'BY'"),
+            Map.entry(EfxLexer.Assert, "'ASSERT'"),
+            Map.entry(EfxLexer.Report, "'REPORT'"),
+            Map.entry(EfxLexer.OtherwiseAssert, "'OTHERWISE ASSERT'"),
+            Map.entry(EfxLexer.OtherwiseReport, "'OTHERWISE REPORT'"),
+            Map.entry(EfxLexer.Compute, "'COMPUTE'"),
+            Map.entry(EfxLexer.Select, "'SELECT'"),
+            Map.entry(EfxLexer.As, "'AS'"),
+            Map.entry(EfxLexer.Any, "'ANY'"),
+            Map.entry(EfxLexer.Call, "'CALL'"),
+            Map.entry(EfxLexer.Api, "'API'"),
+            Map.entry(EfxLexer.At, "'AT'"),
+            Map.entry(EfxLexer.On, "'ON'"),
+            Map.entry(EfxLexer.Warn, "'WARN'"),
+            Map.entry(EfxLexer.Reject, "'REJECT'"),
+
+            // Template text and blocks
+            Map.entry(EfxLexer.FreeText, "text"),
+            Map.entry(EfxLexer.Whitespace, "whitespace"),
+            Map.entry(EfxLexer.NewLine, "'\\n'"),
+            Map.entry(EfxLexer.OtherEscapeSequence, "an escape sequence"),
+            Map.entry(EfxLexer.CharacterReference, "a character reference, such as '&amp;'"),
+            Map.entry(EfxLexer.Semicolon, "';'"),
+            Map.entry(EfxLexer.StartExpressionBlock, "'${'"),
+            Map.entry(EfxLexer.StartSelectorBlock, "'&{'"),
+            Map.entry(EfxLexer.StartLabelBlock, "'#{'"),
+            Map.entry(EfxLexer.StartHyperlinkBlock, "'@{'"),
+            Map.entry(EfxLexer.EndBlock, "'}'"),
+            Map.entry(EfxLexer.ShorthandFieldValueReferenceFromContextField, "'$value'"),
+            Map.entry(EfxLexer.ShorthandIndirectLabelReferenceFromContextField, "'#value'"),
+            Map.entry(EfxLexer.FormatDecimals, "a number of decimals"),
+            Map.entry(EfxLexer.AssetType, "an asset type, such as 'field'"),
+            Map.entry(EfxLexer.LabelType, "a label type, such as 'name'"),
+            Map.entry(EfxLexer.OtherAssetId, "an asset identifier"),
+
+            // Identifiers and prefixes
+            Map.entry(EfxLexer.FieldId, "a field identifier"),
+            Map.entry(EfxLexer.NodeId, "a node identifier"),
+            Map.entry(EfxLexer.BtId, "a business term identifier"),
+            Map.entry(EfxLexer.RuleIdentifier, "a rule identifier, such as 'R-K7P-M2Q'"),
+            Map.entry(EfxLexer.Identifier, "an identifier"),
+            Map.entry(EfxLexer.VariablePrefix, "'$'"),
+            Map.entry(EfxLexer.AtPrefix, "'@'"),
+            Map.entry(EfxLexer.HashPrefix, "'#'"),
+
+            // Literals and operators
+            Map.entry(EfxLexer.StringLiteral, "a text literal"),
+            Map.entry(EfxLexer.IntegerLiteral, "an integer"),
+            Map.entry(EfxLexer.DecimalLiteral, "a decimal number"),
+            Map.entry(EfxLexer.DateLiteral, "a date"),
+            Map.entry(EfxLexer.TimeLiteral, "a time"),
+            Map.entry(EfxLexer.DayTimeDurationLiteral, "a duration"),
+            Map.entry(EfxLexer.YearMonthDurationLiteral, "a duration"),
+            Map.entry(EfxLexer.UuidV4Literal, "a UUID"),
+            Map.entry(EfxLexer.Comparison, "a comparison operator"));
 
     /**
      * Reports text that starts none of the constructs the parser can read there. The message names
@@ -224,27 +302,29 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
 
     /**
      * @return the tokens the rule being read needs next, as in "; expected ')' or ','"; nothing
-     *         when the rule may end there, when it can take more than {@value #MOST_EXPECTED}
-     *         tokens, or when one of them has no name a message can use
+     *         when the rule may end there, or when the tokens it can take have more than
+     *         {@value #MOST_EXPECTED} names
      */
     private static String expected(final Parser recognizer) {
         final IntervalSet tokens = recognizer.getExpectedTokensWithinCurrentRule();
-        if (tokens.contains(Token.EPSILON) || tokens.size() > MOST_EXPECTED) {
+        if (tokens.contains(Token.EPSILON)) {
             return "";
         }
-        final List<String> names = new ArrayList<>();
+        final Set<String> names = new LinkedHashSet<>();
         for (final int type : tokens.toList()) {
-            final String name = nameOf(type, recognizer.getVocabulary());
-            if (name == null) {
-                return "";
-            }
-            names.add(name);
+            names.add(nameOf(type));
         }
-        return names.isEmpty() ? "" : "; expected " + String.join(" or ", names);
+        return names.isEmpty() || names.size() > MOST_EXPECTED ? ""
+                : "; expected " + String.join(" or ", names);
     }
 
-    private static String nameOf(final int type, final Vocabulary vocabulary) {
-        final String literal = vocabulary.getLiteralName(type);
+    /**
+     * @param type the type of a token that the parser reads
+     * @return the name of the token in a message: its literal name, or its name in
+     *         {@link #TOKEN_NAMES}
+     */
+    static String nameOf(final int type) {
+        final String literal = EfxParser.VOCABULARY.getLiteralName(type);
         return literal != null ? literal : TOKEN_NAMES.get(type);
     }
 
@@ -272,15 +352,37 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      *        stopped at; empty when that character starts no token
      * @param stop the character the lexer stopped at, or {@link IntStream#EOF} at the end of the
      *        input
+     * @param mode the mode of the lexer, as {@link EfxLexer#INCLUDE_PATH}
      * @return the message of the lexer's error
      */
-    static String unreadable(final String read, final int stop) {
-        final String place = read.isEmpty() ? ""
-                : read.startsWith("'") || read.startsWith("\"") ? " in text literal"
-                        : " after " + quoted(read);
-        return "Syntax error: unexpected " + nameOfCharacter(stop, read.isEmpty()) + place + ".";
+    static String unreadable(final String read, final int stop, final int mode) {
+        return "Syntax error: unexpected " + nameOfCharacter(stop, read.isEmpty())
+                + placeOf(read, mode) + ".";
     }
 
+    /**
+     * @return where the lexer stopped: in an #include directive, whose path is all the lexer reads
+     *         in mode {@link EfxLexer#INCLUDE_PATH}; in a text literal; after the text it read of
+     *         another token; or nothing, when the character it stopped at starts no token
+     */
+    private static String placeOf(final String read, final int mode) {
+        if (mode == EfxLexer.INCLUDE_PATH) {
+            return " in #include directive";
+        }
+        if (read.isEmpty()) {
+            return "";
+        }
+        return read.startsWith("'") || read.startsWith("\"") ? " in text literal"
+                : " after " + quoted(read);
+    }
+
+    /**
+     * @param alone whether the character starts no token, so that the message calls it a
+     *        character
+     * @return the character in quotes, as in "'¤'"; the end of the input or of the line; or the
+     *         code point of a character that cannot be seen, or that looks like a space but is not
+     *         one, as in "character U+200B"
+     */
     private static String nameOfCharacter(final int character, final boolean alone) {
         if (character == IntStream.EOF) {
             return END_OF_INPUT;
@@ -288,6 +390,25 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         if (character == '\n' || character == '\r') {
             return "end of line";
         }
+        if (character != ' ' && character != '\t' && isInvisible(character)) {
+            return String.format(Locale.ROOT, "character U+%04X", character);
+        }
         return (alone ? "character " : "") + quoted(new String(Character.toChars(character)));
+    }
+
+    private static boolean isInvisible(final int character) {
+        switch (Character.getType(character)) {
+            case Character.SPACE_SEPARATOR:
+            case Character.LINE_SEPARATOR:
+            case Character.PARAGRAPH_SEPARATOR:
+            case Character.CONTROL:
+            case Character.FORMAT:
+            case Character.PRIVATE_USE:
+            case Character.SURROGATE:
+            case Character.UNASSIGNED:
+                return true;
+            default:
+                return false;
+        }
     }
 }
