@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pattern id="EFORMS-validation-stage-1a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
     <rule context="/*/PathNode/TextField">
-        <assert id="R-S1A-001" role="ERROR" test=".">rule|text|R-S1A-001</assert>
+        <assert id="R-S1A-001" role="ERROR" test="exists(.)">rule|text|R-S1A-001</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
         <let name="__apiResult1" value="number(efx:call-api('staging', 'check', (../IdField/normalize-space(text()))))"/>

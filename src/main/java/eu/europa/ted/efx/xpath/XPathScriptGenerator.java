@@ -355,7 +355,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public BooleanExpression composeExistsCondition(PathExpression reference) {
-    return new BooleanExpression(reference.getScript());
+    // exists() gives a real boolean. The path alone is true only where its effective boolean
+    // value is taken; stored in a variable or passed on, an absent element would be empty, not
+    // false.
+    return new BooleanExpression("exists(" + reference.getScript() + ")");
   }
 
   @Override
