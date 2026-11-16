@@ -9,7 +9,7 @@
         <report id="R-S2A-003" role="INFO" test="not($__apiResult10 = -1) and not($__apiResult11 = -1) and (not($__apiResult10 = 1) and not($__apiResult11 = 1))">rule|text|R-S2A-003</report>
     </rule>
     <rule context="/*/SubNode">
-        <let name="__apiResult12" value="number(efx:call-api('staging', 'validate-ref', (../PathNode/IdField/normalize-space(text()))))"/>
+        <let name="__apiResult12" value="number(if (../PathNode/IndicatorField) then number(efx:call-api('staging', 'validate-ref', (../PathNode/IdField/normalize-space(text())))) else 0)"/>
         <assert id="R-S2A-005-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S2A-005-api-error-1" role="ERROR" test="not($__apiResult12 = -1)">auxiliary|text|ref-check-failed</assert>
         <assert id="R-S2A-005" role="ERROR" diagnostics="ND-SubNode_BT-01-SubLevel-Text" test="($globalCheck = -1) or ($__apiResult12 = -1) or ($__apiResult12 = 1 and $globalCheck = 1) or (not(../PathNode/IndicatorField))">rule|text|R-S2A-005</assert>

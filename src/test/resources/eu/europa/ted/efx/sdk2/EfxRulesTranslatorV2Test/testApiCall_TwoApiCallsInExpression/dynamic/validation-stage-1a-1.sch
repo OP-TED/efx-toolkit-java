@@ -9,8 +9,8 @@
         <assert id="R-S1A-002" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult2 = -1) or ($__apiResult1 = 1 and $__apiResult2 = 1)">rule|text|R-S1A-002</assert>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult3" value="number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text()))))"/>
-        <let name="__apiResult4" value="number(efx:call-api('default', 'check-code', (../CodeField/normalize-space(text()))))"/>
+        <let name="__apiResult3" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text())))) else 0)"/>
+        <let name="__apiResult4" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check-code', (../CodeField/normalize-space(text())))) else 0)"/>
         <report id="R-S1A-003" role="WARNING" test="./normalize-space(text()) = ''">rule|text|R-S1A-003</report>
         <assert id="R-S1A-004-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-004-api-error-2" role="WARNING" test="not($__apiResult4 = -1)">rule|text|api-warning</assert>
