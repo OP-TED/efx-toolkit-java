@@ -48,8 +48,8 @@ public class InvalidUsageException extends EfxCompilationException {
         OUTLINE_NUMBER_TOO_LARGE
     }
 
-    private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
-    private static final String SHORTHAND_REQUIRES_FIELD_CONTEXT = "The %s shorthand syntax can only be used when a field is declared as context.";
+    private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
+    private static final String SHORTHAND_REQUIRES_FIELD_CONTEXT = "'%s' can only be used when the context is a field.";
     private static final String INVALID_NOTICE_SUBTYPE_RANGE_ORDER = "Notice subtype range '%s-%s' is not in ascending order.";
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";

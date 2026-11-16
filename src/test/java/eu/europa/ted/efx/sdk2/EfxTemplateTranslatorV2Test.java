@@ -1576,6 +1576,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         () -> translateTemplate("{BT-00-Text}  #{BT-00-Text}"));
     assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_CODE_OR_INDICATOR,
         exception.getErrorCode());
+    assertEquals(
+        "line 1:14 '#{BT-00-Text}' needs a field of type 'code' or 'indicator', but 'BT-00-Text' is of type 'text'.",
+        exception.getMessage());
   }
 
   @Test
@@ -1723,6 +1726,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         () -> translateTemplate("{ND-Root} #value"));
     assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT,
         exception.getErrorCode());
+    assertEquals("line 1:10 '#value' can only be used when the context is a field.",
+        exception.getMessage());
   }
 
   @Test
@@ -1818,6 +1823,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         () -> translateTemplate("{ND-Root} $value"));
     assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT,
         exception.getErrorCode());
+    assertEquals("line 1:10 '$value' can only be used when the context is a field.",
+        exception.getMessage());
   }
 
   // #endregion Expression block -----------------------------------------------
