@@ -15,6 +15,7 @@ package eu.europa.ted.efx.exceptions;
 
 import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 
 import eu.europa.ted.efx.model.identifiers.DynamicFunction;
 import eu.europa.ted.efx.model.templates.FormatOptions.FormatStyle;
@@ -75,6 +76,11 @@ public class InvalidUsageException extends EfxCompilationException {
 
     private InvalidUsageException(ErrorCode errorCode, ParserRuleContext ctx, String template, Object... args) {
         super(ctx, template, args);
+        this.errorCode = errorCode;
+    }
+
+    private InvalidUsageException(ErrorCode errorCode, Token token, String template, Object... args) {
+        super(token, template, args);
         this.errorCode = errorCode;
     }
 
@@ -212,11 +218,11 @@ public class InvalidUsageException extends EfxCompilationException {
     /**
      * An outline number, at the start of a template line, larger than the largest {@code int}.
      *
-     * @param ctx the template line
+     * @param outlineNumber the token of the outline number, where the error is placed
      * @param number the outline number as written
      * @return the exception
      */
-    public static InvalidUsageException outlineNumberTooLarge(ParserRuleContext ctx, String number) {
-        return new InvalidUsageException(ErrorCode.OUTLINE_NUMBER_TOO_LARGE, ctx, OUTLINE_NUMBER_TOO_LARGE, number, Integer.MAX_VALUE);
+    public static InvalidUsageException outlineNumberTooLarge(Token outlineNumber, String number) {
+        return new InvalidUsageException(ErrorCode.OUTLINE_NUMBER_TOO_LARGE, outlineNumber, OUTLINE_NUMBER_TOO_LARGE, number, Integer.MAX_VALUE);
     }
 }

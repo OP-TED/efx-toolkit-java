@@ -661,12 +661,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void enterTemplateLine(TemplateLineContext ctx) {
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
       for (int i = indentChange; i < 0; i++) {
@@ -698,12 +697,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     assert this.stack.empty() : "Stack should be empty at this point.";
     this.stack.clear(); // Variable scope boundary. Clear declared variables
 
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
           contentTemplates);
     } else if (indentChange < 0) {
@@ -758,7 +756,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     try {
       return Integer.parseInt(number);
     } catch (NumberFormatException e) {
-      throw InvalidUsageException.outlineNumberTooLarge(ctx, number);
+      throw InvalidUsageException.outlineNumberTooLarge(ctx.OutlineNumber().getSymbol(), number);
     }
   }
 

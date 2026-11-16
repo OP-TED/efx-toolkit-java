@@ -278,9 +278,28 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testTemplateLineOutline_TooLarge_OnIndentedLine() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines("{ND-Root} foo", "\t2147483648 {BT-00-Text} bar")));
+    assertEquals("line 2:1 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
+  }
+
+  @Test
   void testTemplateLineFirstIndented() {
     InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate("  {BT-00-Text} foo"));
+    assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
+        exception.getErrorCode());
+    assertEquals(
+        "line 1:0 This line cannot be indented: there is no line above it to nest under.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineFirstIndented_TwoLevels() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate("\t\t{BT-00-Text} foo"));
     assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
         exception.getErrorCode());
     assertEquals(

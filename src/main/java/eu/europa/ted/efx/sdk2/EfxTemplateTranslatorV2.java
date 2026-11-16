@@ -1488,12 +1488,11 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   private void enterTemplateLine(ParserRuleContext ctx, final int indentLevel) {
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.translation.stack().pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
       for (int i = indentChange; i < 0; i++) {
@@ -1537,12 +1536,11 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     final int outlineNumber = this.outlineNumberOf(ctx);
     assert this.translation.stack().empty() : "Stack should be empty at this point.";
 
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.blockStack.pushChild(outlineNumber, lineContext, variables, contentTemplates);
     } else if (indentLevel == 0) {
       // A top-level line is a new block of the current section, also when it follows a declared
@@ -1648,7 +1646,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     try {
       return Integer.parseInt(number);
     } catch (NumberFormatException e) {
-      throw InvalidUsageException.outlineNumberTooLarge(ctx, number);
+      throw InvalidUsageException.outlineNumberTooLarge(ctx.OutlineNumber().getSymbol(), number);
     }
   }
 

@@ -51,8 +51,12 @@ public abstract class EfxCompilationException extends ParseCancellationException
     }
 
     protected EfxCompilationException(ParserRuleContext ctx, String template, Object... args) {
+        this(ctx.getStart(), template, args);
+    }
+
+    protected EfxCompilationException(Token token, String template, Object... args) {
         super(String.format(Locale.ROOT, template, args));
-        this.position = positionOf(ctx.getStart());
+        this.position = positionOf(token);
     }
 
     /**
