@@ -989,13 +989,73 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeDynamicFunction(String endpointName, String apiName,
       List<? extends TypedExpression> arguments) {
+    // The query string is built here, once, for every engine: each argument is converted to the
+    // text form of its type, keeps its position (arg1, arg2...), and a sequence is sent as the same
+    // argument repeated once per item. efx:call-api only appends it to the URL.
+    StringJoiner parts = new StringJoiner(", ");
+    for (int i = 0; i < arguments.size(); i++) {
+      parts.add(composeDynamicFunctionArgument("arg" + (i + 1), arguments.get(i)));
+    }
+    String query = arguments.isEmpty() ? "''" : "string-join((" + parts + "), '&')";
+
     // Wrapped in number() so that the type is known before evaluation. Without it,
     // ph-schematron evaluates the call twice (first as a node set, then as a number).
-    StringBuilder sb = new StringBuilder("number(efx:call-api('");
-    sb.append(endpointName).append("', '").append(apiName).append("', (");
-    sb.append(arguments.stream().map(TypedExpression::getScript).collect(Collectors.joining(", ")));
-    sb.append(")))");
-    return new NumericExpression(sb.toString());
+    return new NumericExpression(
+        "number(efx:call-api('" + endpointName + "', '" + apiName + "', " + query + "))");
+  }
+
+  /**
+   * The query string part of one argument of a dynamic function call, such as
+   * {@code arg2=29&arg2=33}. An absent value is sent empty ({@code arg2=}).
+   */
+  private static String composeDynamicFunctionArgument(String name, TypedExpression argument) {
+    String values = composeDynamicFunctionArgumentValues(argument);
+    if (argument instanceof SequenceExpression) {
+      return "(if (exists(" + values + ")) then string-join(for $__value in " + values
+          + " return concat('" + name + "=', encode-for-uri($__value)), '&') else '" + name + "=')";
+    }
+    return "concat('" + name + "=', encode-for-uri((" + values + ", '')[1]))";
+  }
+
+  /**
+   * The text form of each value of an argument, as fixed by the dynamic rules API: text as is,
+   * true or false, canonical decimal numbers, and dates, times and durations as their ISO 8601
+   * representation. A value that cannot be converted is sent empty.
+   */
+  private static String composeDynamicFunctionArgumentValues(TypedExpression argument) {
+    String script = "(" + argument.getScript() + ")";
+    if (argument.is(EfxDataType.Number.class)) {
+      // Numbers read from a notice are doubles. Casting one straight to xs:decimal would expose its
+      // binary value (9999999.99 becomes 9999999.99000000022351741790771484375), so the shortest
+      // form that identifies the double is taken instead (its string, such as "9.99999999E6"),
+      // and its exponent applied in decimal arithmetic, which is exact. NaN and INF are sent empty.
+      String powerOfTen = "(if ($__exponent >= 0)"
+          + " then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', '')))"
+          + " else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1')))";
+      return "(for $__value in " + script + " return"
+          + " if ($__value = $__value and abs($__value) != xs:double('INF'))"
+          + " then (for $__text in string($__value) return"
+          + " if (contains($__text, 'E'))"
+          + " then (for $__exponent in xs:integer(substring-after($__text, 'E')) return"
+          + " string(xs:decimal(substring-before($__text, 'E')) * " + powerOfTen + "))"
+          + " else string(xs:decimal($__text)))"
+          + " else '')";
+    }
+    if (argument.is(EfxDataType.Boolean.class)) {
+      if (argument instanceof PathExpression) {
+        // An indicator field: its text, read as a boolean.
+        return "(for $__value in " + script + " return if (normalize-space($__value) castable as"
+            + " xs:boolean) then string(xs:boolean(normalize-space($__value))) else '')";
+      }
+      if (argument instanceof SequenceExpression) {
+        return "(for $__value in " + script + " return string(boolean($__value)))";
+      }
+      return "(if " + script + " then 'true' else 'false')";
+    }
+    if (argument.is(EfxDataType.String.class)) {
+      return script;
+    }
+    return "(for $__value in " + script + " return string($__value))";
   }
 
   //#region Helpers -----------------------------------------------------------
