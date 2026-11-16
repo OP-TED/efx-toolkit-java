@@ -6,7 +6,7 @@
         <assert id="R-S2A-002" role="ERROR" test="($globalOk = -1) or ($globalOk = 1)">rule|text|R-S2A-002</assert>
     </rule>
     <rule context="/*/SubNode">
-        <let name="__apiResult2" value="number(efx:call-api('default', 'check-buyer', (../PathNode/IdField/normalize-space(text()))))"/>
+        <let name="__apiResult2" value="number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../PathNode/IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <report id="R-S2A-003" role="WARNING" diagnostics="ND-SubNode_BT-01-SubLevel-Text" test="../PathNode/ChildNode/SubLevelTextField/normalize-space(text()) = ''">rule|text|R-S2A-003</report>
         <assert id="R-S2A-004-api-error-globalOk" role="ERROR" test="not($globalOk = -1)">rule|text|api-error</assert>
         <assert id="R-S2A-004-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">rule|text|api-error</assert>

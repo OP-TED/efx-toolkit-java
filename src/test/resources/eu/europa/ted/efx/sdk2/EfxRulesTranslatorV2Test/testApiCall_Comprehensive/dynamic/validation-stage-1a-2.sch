@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <pattern id="EFORMS-validation-stage-1a-2" xmlns="http://purl.oclc.org/dsdl/schematron">
-    <let name="stageStatus" value="number(efx:call-api('default', 'confirm-status', (/*/PathNode/CodeField/normalize-space(text()))))"/>
-    <let name="buyerOk" value="number(efx:call-api('default', 'check-buyer', (/*/PathNode/IdField/normalize-space(text()))))"/>
+    <let name="stageStatus" value="number(efx:call-api('default', 'confirm-status', string-join((concat('arg1=', encode-for-uri(((/*/PathNode/CodeField/normalize-space(text())), '')[1]))), '&amp;')))"/>
+    <let name="buyerOk" value="number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((/*/PathNode/IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult2" value="number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text()))))"/>
-        <let name="__apiResult3" value="number(efx:call-api('ext-db', 'verify-code', (../IdField/normalize-space(text()), ../CodeField/normalize-space(text()))))"/>
-        <let name="__apiResult4" value="number(efx:call-api('default', 'confirm-status', (../IdField/normalize-space(text()))))"/>
+        <let name="__apiResult2" value="number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
+        <let name="__apiResult3" value="number(efx:call-api('ext-db', 'verify-code', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((../CodeField/normalize-space(text())), '')[1]))), '&amp;')))"/>
+        <let name="__apiResult4" value="number(efx:call-api('default', 'confirm-status', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <report id="R-S1A-002" role="WARNING" test="./normalize-space(text()) = ''">rule|text|R-S1A-002</report>
         <assert id="R-S1A-004-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-004-api-error-2" role="WARNING" test="not($__apiResult3 = -1)">rule|text|api-warning</assert>
@@ -14,7 +14,7 @@
         <report id="R-S1A-005" role="WARNING" test="not($__apiResult4 = -1) and (not($__apiResult4 = 1))">rule|text|R-S1A-005</report>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult6" value="number(if (exists(../IndicatorField)) then number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text())))) else 0)"/>
+        <let name="__apiResult6" value="number(if (exists(../IndicatorField)) then number(efx:call-api('default', 'check-buyer', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;'))) else 0)"/>
         <assert id="R-S1A-008-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-008-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
         <report id="R-S1A-008" role="WARNING" test="not($globalCheck = -1) and not($stageStatus = -1) and (not($stageStatus = 1) and not($globalCheck = 1))">rule|text|R-S1A-008</report>

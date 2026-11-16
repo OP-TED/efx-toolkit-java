@@ -739,6 +739,14 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testApiCall_ArgumentTypes() throws IOException {
+    String testName = "testApiCall_ArgumentTypes";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
   void testApiCall_TypeMismatch_InArithmeticExpression() throws IOException {
     String rules = readInput("testApiCall_TypeMismatch_InArithmeticExpression");
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
