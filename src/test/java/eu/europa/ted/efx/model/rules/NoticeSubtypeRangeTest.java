@@ -34,8 +34,8 @@ class NoticeSubtypeRangeTest {
   }
 
   @Test
-  void testRanges_GiveTheSubtypesOfTheirList() {
-    NoticeSubtypeRange ranges = new NoticeSubtypeRange(
+  void testUnion_GivesTheSubtypesOfTheList() {
+    NoticeSubtypeRange ranges = NoticeSubtypeRange.union(
         List.of(new NoticeSubtypeRange("3", SUBTYPES), new NoticeSubtypeRange("1-2", SUBTYPES)),
         SUBTYPES);
     assertEquals(new NoticeSubtypeRange("3, 1-2", SUBTYPES).asList(), ranges.asList());
@@ -44,11 +44,23 @@ class NoticeSubtypeRangeTest {
   }
 
   @Test
-  void testRanges_ThatMissASubtype_AreNotUniversal() {
-    NoticeSubtypeRange ranges = new NoticeSubtypeRange(
+  void testUnion_ThatMissesASubtype_IsNotUniversal() {
+    NoticeSubtypeRange ranges = NoticeSubtypeRange.union(
         List.of(new NoticeSubtypeRange("1", SUBTYPES), new NoticeSubtypeRange("3", SUBTYPES)),
         SUBTYPES);
     assertEquals(List.of("1", "3"), ranges.asList());
     assertFalse(ranges.isUniversal());
+  }
+
+  @Test
+  void testUnion_OfAUniversalRange_IsUniversal() {
+    // With no notice subtypes known, "*" is universal although it holds no subtype
+    NoticeSubtypeRange all = new NoticeSubtypeRange("*", List.of());
+    assertTrue(NoticeSubtypeRange.union(List.of(all), List.of()).isUniversal());
+  }
+
+  @Test
+  void testNullRangeString_GivesNoSubtype() {
+    assertEquals(List.of(), new NoticeSubtypeRange(null, SUBTYPES).asList());
   }
 }

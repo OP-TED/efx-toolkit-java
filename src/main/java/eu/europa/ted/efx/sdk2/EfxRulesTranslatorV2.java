@@ -546,7 +546,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
         throw e.at(range);
       }
     }
-    return new NoticeSubtypeRange(ranges, this.cachedSortedNoticeSubtypeIds);
+    return NoticeSubtypeRange.union(ranges, this.cachedSortedNoticeSubtypeIds);
   }
 
   @Override
