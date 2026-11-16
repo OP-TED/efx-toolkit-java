@@ -1023,7 +1023,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "    FOR BT-00-Text IN 1");
     ParseCancellationException exception = assertThrows(ParseCancellationException.class,
         () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
-    assertEquals("line 4:16 in 'extra.efx' token recognition error at: '¤'",
+    assertEquals("line 4:16 in 'extra.efx' Syntax error: unexpected character '¤'.",
         exception.getMessage());
   }
 

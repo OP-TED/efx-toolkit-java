@@ -84,7 +84,7 @@ abstract class TranslatorListener extends EfxBaseListener {
    *         error listener
    */
   EfxParser parserOf(final CharStream input) {
-    final EfxLexer lexer = new EfxLexer(input);
+    final EfxLexer lexer = new EfxErrorReportingLexer(input);
     final EfxParser parser = new EfxParser(new CommonTokenStream(lexer));
     parser.setErrorHandler(new EfxErrorStrategy());
 

@@ -15,20 +15,34 @@ package eu.europa.ted.efx.sdk2;
 
 import static eu.europa.ted.efx.sdk2.EfxParser.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.InputMismatchException;
+import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.misc.IntervalSet;
 
 /**
- * Custom ANTLR error strategy that produces human-readable syntax error messages for EFX code.
- * Replaces cryptic ANTLR-generated messages like "no viable alternative at input '...'" with
- * clearer descriptions of what went wrong.
+ * Words every syntax error of EFX-2 in one style, as in "Syntax error: unexpected '1' in function
+ * call; expected ','." The message names what was found, as written, or the end of the input; the
+ * place it was found in, which is the nearest enclosing rule that has a name in
+ * {@link #RULE_NAMES}; and, when the rule being read needs one of at most {@value #MOST_EXPECTED}
+ * tokens next, those tokens. {@link EfxErrorReportingLexer} words the error of the lexer in the
+ * same style.
  */
 public class EfxErrorStrategy extends DefaultErrorStrategy {
+
+    /** The most tokens a message names as expected. */
+    private static final int MOST_EXPECTED = 3;
+
+    private static final String END_OF_INPUT = "end of input";
 
     private static final Map<Integer, String> RULE_NAMES = Map.ofEntries(
             // Expression entry points
@@ -136,57 +150,144 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_onErrorClause, "ON ERROR clause")
     );
 
+    /**
+     * How a message names the tokens that have no literal name. A message names no token that has
+     * neither.
+     */
+    private static final Map<Integer, String> TOKEN_NAMES = Map.of(
+            Token.EOF, END_OF_INPUT,
+            EfxLexer.As, "'AS'",
+            EfxLexer.RuleIdentifier, "a rule identifier, such as 'R-K7P-M2Q'",
+            EfxLexer.EndBlock, "'}'",
+            EfxLexer.IncludeDirective, "'#include'",
+            EfxLexer.StageHeaderStart, "a stage header");
+
+    /**
+     * Reports text that starts none of the constructs the parser can read there. The message names
+     * the whole text the parser read before it gave up.
+     */
     @Override
     protected void reportNoViableAlternative(Parser recognizer, NoViableAltException e) {
-        String ruleName = getHumanReadableRuleName(recognizer);
-        String msg;
-        if (e.getStartToken().getType() == Token.EOF) {
-            msg = "Syntax error: unexpected end of " + ruleName;
-        } else {
-            String input = getInputText(e.getStartToken(), e.getOffendingToken(), recognizer);
-            msg = "Syntax error at " + input + " in " + ruleName;
-        }
-        recognizer.notifyErrorListeners(e.getOffendingToken(), msg, e);
+        final Token start = e.getStartToken();
+        final String found = start.getType() == Token.EOF ? END_OF_INPUT
+                : quoted(recognizer.getTokenStream().getText(start, e.getOffendingToken()));
+        recognizer.notifyErrorListeners(e.getOffendingToken(), message(found, recognizer, ""), e);
     }
 
     @Override
     protected void reportInputMismatch(Parser recognizer, InputMismatchException e) {
-        String expected = e.getExpectedTokens().toString(recognizer.getVocabulary());
-        String found = getTokenErrorDisplay(e.getOffendingToken());
-        String msg = "Syntax error: expected " + expected + " but found " + found;
-        recognizer.notifyErrorListeners(e.getOffendingToken(), msg, e);
+        this.reportUnexpected(recognizer, e.getOffendingToken(), e);
     }
 
     @Override
-    protected String getTokenErrorDisplay(Token t) {
-        if (t == null) {
-            return "''";
+    protected void reportUnwantedToken(Parser recognizer) {
+        if (this.inErrorRecoveryMode(recognizer)) {
+            return;
         }
-        if (t.getType() == Token.EOF) {
-            return "end of input";
-        }
-        return super.getTokenErrorDisplay(t);
+        this.beginErrorCondition(recognizer);
+        this.reportUnexpected(recognizer, recognizer.getCurrentToken(), null);
     }
 
-    private String getHumanReadableRuleName(Parser recognizer) {
-        int ruleIndex = recognizer.getContext().getRuleIndex();
-        String name = RULE_NAMES.get(ruleIndex);
-        if (name != null) {
-            return name;
+    @Override
+    protected void reportMissingToken(Parser recognizer) {
+        if (this.inErrorRecoveryMode(recognizer)) {
+            return;
         }
-        String[] ruleNames = recognizer.getRuleNames();
-        if (ruleIndex >= 0 && ruleIndex < ruleNames.length) {
-            return ruleNames[ruleIndex];
-        }
-        return "unknown";
+        this.beginErrorCondition(recognizer);
+        this.reportUnexpected(recognizer, recognizer.getCurrentToken(), null);
     }
 
-    private String getInputText(Token startToken, Token offendingToken, Parser recognizer) {
-        if (startToken.getType() == Token.EOF) {
-            return "end of input";
+    private void reportUnexpected(final Parser recognizer, final Token found,
+            final InputMismatchException e) {
+        recognizer.notifyErrorListeners(found,
+                message(nameOf(found), recognizer, expected(recognizer)), e);
+    }
+
+    private static String message(final String found, final Parser recognizer,
+            final String expected) {
+        return "Syntax error: unexpected " + found + " in " + placeOf(recognizer) + expected + ".";
+    }
+
+    /**
+     * @return the name of the nearest rule being read that has one in {@link #RULE_NAMES}
+     */
+    private static String placeOf(final Parser recognizer) {
+        for (RuleContext context = recognizer.getContext(); context != null;
+                context = context.parent) {
+            final String name = RULE_NAMES.get(context.getRuleIndex());
+            if (name != null) {
+                return name;
+            }
         }
-        String text = recognizer.getTokenStream()
-                .getText(startToken, offendingToken);
-        return escapeWSAndQuote(text);
+        return "input";
+    }
+
+    /**
+     * @return the tokens the rule being read needs next, as in "; expected ')' or ','"; nothing
+     *         when the rule may end there, when it can take more than {@value #MOST_EXPECTED}
+     *         tokens, or when one of them has no name a message can use
+     */
+    private static String expected(final Parser recognizer) {
+        final IntervalSet tokens = recognizer.getExpectedTokensWithinCurrentRule();
+        if (tokens.contains(Token.EPSILON) || tokens.size() > MOST_EXPECTED) {
+            return "";
+        }
+        final List<String> names = new ArrayList<>();
+        for (final int type : tokens.toList()) {
+            final String name = nameOf(type, recognizer.getVocabulary());
+            if (name == null) {
+                return "";
+            }
+            names.add(name);
+        }
+        return names.isEmpty() ? "" : "; expected " + String.join(" or ", names);
+    }
+
+    private static String nameOf(final int type, final Vocabulary vocabulary) {
+        final String literal = vocabulary.getLiteralName(type);
+        return literal != null ? literal : TOKEN_NAMES.get(type);
+    }
+
+    /**
+     * @return the token as it is written, or "end of input"; a text literal keeps its own quotes
+     */
+    private static String nameOf(final Token token) {
+        if (token.getType() == Token.EOF) {
+            return END_OF_INPUT;
+        }
+        return token.getType() == EfxLexer.StringLiteral ? token.getText()
+                : quoted(token.getText());
+    }
+
+    private static String quoted(final String text) {
+        return "'" + text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + "'";
+    }
+
+    /**
+     * Words the error of the lexer: a character that starts no token, as in "Syntax error:
+     * unexpected character '¤'.", or a token that the lexer cannot finish, as in "Syntax error:
+     * unexpected end of input in text literal." and "Syntax error: unexpected 'q' after '\'."
+     *
+     * @param read the text the lexer read of the token it could not finish, up to the character it
+     *        stopped at; empty when that character starts no token
+     * @param stop the character the lexer stopped at, or {@link IntStream#EOF} at the end of the
+     *        input
+     * @return the message of the lexer's error
+     */
+    static String unreadable(final String read, final int stop) {
+        final String place = read.isEmpty() ? ""
+                : read.startsWith("'") || read.startsWith("\"") ? " in text literal"
+                        : " after " + quoted(read);
+        return "Syntax error: unexpected " + nameOfCharacter(stop, read.isEmpty()) + place + ".";
+    }
+
+    private static String nameOfCharacter(final int character, final boolean alone) {
+        if (character == IntStream.EOF) {
+            return END_OF_INPUT;
+        }
+        if (character == '\n' || character == '\r') {
+            return "end of line";
+        }
+        return (alone ? "character " : "") + quoted(new String(Character.toChars(character)));
     }
 }

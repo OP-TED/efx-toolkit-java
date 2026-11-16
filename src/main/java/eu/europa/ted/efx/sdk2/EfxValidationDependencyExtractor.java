@@ -70,7 +70,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
     this.stack.clear();
     this.stack.push(new DependencySet());
 
-    final EfxLexer lexer = new EfxLexer(input);
+    final EfxLexer lexer = new EfxErrorReportingLexer(input);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
     parser.setErrorHandler(new EfxErrorStrategy());
