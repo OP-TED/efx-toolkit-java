@@ -105,6 +105,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
     if (fieldReference.is(EfxDataType.Number.class)) {
       return Expression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getClass());
     }
+    if (fieldReference.is(EfxDataType.Boolean.class)) {
+      // The value of an indicator field is its text read as a boolean ('true' and '1' are the
+      // true values of xs:boolean). The element alone would only tell whether the field is
+      // present: a field holding false would count as true. One value per element, so that
+      // count() still counts the fields.
+      return Expression.instantiate(fieldReference.getScript()
+          + "/(normalize-space(text()) = ('true', '1'))", fieldReference.getClass());
+    }
     if (fieldReference.is(EfxDataType.Date.class)) {
       return Expression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getClass());
     }
@@ -347,7 +355,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public BooleanExpression composeExistsCondition(PathExpression reference) {
-    return new BooleanExpression(reference.getScript());
+    // exists() gives a real boolean. The path alone is true only where its effective boolean
+    // value is taken; stored in a variable or passed on, an absent element would be empty, not
+    // false.
+    return new BooleanExpression("exists(" + reference.getScript() + ")");
   }
 
   @Override

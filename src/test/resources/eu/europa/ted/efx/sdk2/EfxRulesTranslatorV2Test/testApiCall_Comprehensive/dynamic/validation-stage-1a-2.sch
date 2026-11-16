@@ -14,14 +14,14 @@
         <report id="R-S1A-005" role="WARNING" test="not($__apiResult4 = -1) and (not($__apiResult4 = 1))">rule|text|R-S1A-005</report>
     </rule>
     <rule context="/*/PathNode/TextField">
-        <let name="__apiResult6" value="number(if (../IndicatorField) then number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text())))) else 0)"/>
+        <let name="__apiResult6" value="number(if (exists(../IndicatorField)) then number(efx:call-api('default', 'check-buyer', (../IdField/normalize-space(text())))) else 0)"/>
         <assert id="R-S1A-008-api-error-globalCheck" role="ERROR" test="not($globalCheck = -1)">rule|text|api-error</assert>
         <assert id="R-S1A-008-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
         <report id="R-S1A-008" role="WARNING" test="not($globalCheck = -1) and not($stageStatus = -1) and (not($stageStatus = 1) and not($globalCheck = 1))">rule|text|R-S1A-008</report>
         <assert id="R-S1A-009-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
         <assert id="R-S1A-009-api-error-1" role="ERROR" test="not($__apiResult6 = -1)">rule|text|api-error</assert>
-        <assert id="R-S1A-009" role="ERROR" test="($stageStatus = -1) or ($__apiResult6 = -1) or ($stageStatus = 1 and $__apiResult6 = 1) or (not(../IndicatorField))">rule|text|R-S1A-009</assert>
+        <assert id="R-S1A-009" role="ERROR" test="($stageStatus = -1) or ($__apiResult6 = -1) or ($stageStatus = 1 and $__apiResult6 = 1) or (not(exists(../IndicatorField)))">rule|text|R-S1A-009</assert>
         <assert id="R-S1A-011-api-error-stageStatus" role="WARNING" test="not($stageStatus = -1)">auxiliary|text|status-unavailable</assert>
-        <assert id="R-S1A-011" role="ERROR" test="($stageStatus = -1) or (.) or (not($stageStatus = 1))">rule|text|R-S1A-011</assert>
+        <assert id="R-S1A-011" role="ERROR" test="($stageStatus = -1) or (exists(.)) or (not($stageStatus = 1))">rule|text|R-S1A-011</assert>
     </rule>
 </pattern>

@@ -647,11 +647,6 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
 
-  /**
-   * Called when exiting a WHEN clause.
-   * The WHEN clause provides conditional application of the rule.
-   * Pushes the condition XPath string to the stack.
-   */
   /** True while the condition of a WHEN clause is being translated. */
   private boolean translatingCondition = false;
 
@@ -660,6 +655,11 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     this.translatingCondition = true;
   }
 
+  /**
+   * Called when exiting a WHEN clause.
+   * The WHEN clause provides conditional application of the rule.
+   * Pushes the condition XPath string to the stack.
+   */
   @Override
   public void exitWhenClause(WhenClauseContext ctx) {
     this.translatingCondition = false;

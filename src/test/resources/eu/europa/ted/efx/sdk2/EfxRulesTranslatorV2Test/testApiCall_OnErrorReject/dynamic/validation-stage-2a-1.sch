@@ -2,7 +2,7 @@
 <pattern id="EFORMS-validation-stage-2a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
     <rule context="/*/PathNode/TextField">
         <let name="__apiResult3" value="number(efx:call-api('default', 'check', (../IdField/normalize-space(text()))))"/>
-        <assert id="R-S2A-001" role="ERROR" test=".">rule|text|R-S2A-001</assert>
+        <assert id="R-S2A-001" role="ERROR" test="exists(.)">rule|text|R-S2A-001</assert>
         <assert id="R-S2A-002-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">rule|text|api-error</assert>
         <assert id="R-S2A-002" role="ERROR" test="($__apiResult3 = -1) or ($__apiResult3 = 1)">rule|text|R-S2A-002</assert>
     </rule>
