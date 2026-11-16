@@ -33,6 +33,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.runtime.atn.ParseInfo;
 import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -480,8 +482,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   @Override
   public void exitFieldExpressionBlock(FieldExpressionBlockContext ctx) {
     FormatOptions options = ctx.formatOptions() != null ? this.translation.stack().pop(FormatOptions.class) : new DefaultFormatOptions(false);
-    this.translation.stack().push(
-        this.createFormattedExpressionBlockFragment(ctx.FieldId().getText(), options));
+    this.lookingUpField(ctx.FieldId(), () -> this.translation.stack().push(
+        this.createFormattedExpressionBlockFragment(ctx.FieldId().getText(), options)));
   }
 
   /**
@@ -1008,7 +1010,22 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     NumericExpression quantity = ctx.pluraliser() != null
         ? this.labelPart(ctx, PLURALISER).numericAt(0)
         : NumericExpression.empty();
-    this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity);
+    this.lookingUpField(ctx.FieldId(),
+        () -> this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity));
+  }
+
+  /**
+   * Runs a translation that looks up a field written as a single token, as BT-00-Number is in
+   * ${BT-00-Number} and BT-00-Code in #{BT-00-Code}, and places an error in that lookup at the
+   * token. The grammar reads such a field as a token, not as a rule, so the error would otherwise
+   * be placed at the start of the block.
+   */
+  private void lookingUpField(final TerminalNode fieldId, final Runnable translation) {
+    try {
+      translation.run();
+    } catch (final SymbolResolutionException e) {
+      throw e.at(fieldId.getSymbol());
+    }
   }
 
   /**

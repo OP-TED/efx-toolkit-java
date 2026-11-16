@@ -3476,6 +3476,36 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals("line 2:1 Unknown symbol 'ND-NONEXISTENT'.", ex.getMessage());
   }
 
+  @Test
+  void testUnknownFieldInFieldExpressionBlock_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate(lines("{ND-Root} a", "{ND-Root} ${BT-999-Unknown}")));
+    assertEquals("line 2:12 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
+  @Test
+  void testUnknownFieldInFieldExpressionBlockWithOptions_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{ND-Root} ${BT-999-Unknown|2}"));
+    assertEquals("line 1:12 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
+  @Test
+  void testOptionsThatDoNotFitTheField_ArePlacedAtTheBlock() {
+    InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("{ND-Root} ${BT-00-Text|2}"));
+    assertEquals(
+        "line 1:10 Format option '2' cannot format a value of type 'text': it is for a number or a duration.",
+        ex.getMessage());
+  }
+
+  @Test
+  void testUnknownFieldInIndirectLabelReference_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{ND-Root} #{BT-999-Unknown;${1}}"));
+    assertEquals("line 1:12 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
   // #endregion Errors raised with no position ---------------------------------
 
   // #region IllegalArgumentException ------------------------------------------

@@ -121,7 +121,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
 
   @Test
   void testTemplate_ExpressionBlockNotRead() {
-    assertSyntaxErrorMessage("line 1:15 Syntax error: unexpected '${1 +}' in template content.",
+    assertSyntaxErrorMessage("line 1:10 Syntax error: unexpected '${1 +}' in template content.",
         () -> translateTemplate("{ND-Root} ${1 +}"));
   }
 

@@ -80,8 +80,29 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
             }
         }
 
-        this.universal = !validNoticeSubtypesInAscendingOrder.isEmpty()
-            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
+        this.universal = covers(this.noticeSubtypes, validNoticeSubtypesInAscendingOrder);
+    }
+
+    /**
+     * The notice subtypes of the given ranges, in their order, as a list of the ranges separated by
+     * commas gives them: the ranges {@code 1} and {@code 3-5} give the subtypes of {@code 1, 3-5}.
+     *
+     * @param ranges the ranges, each read on its own
+     * @param validNoticeSubtypesInAscendingOrder every notice subtype, by which the result is
+     *        universal when it holds them all
+     */
+    public NoticeSubtypeRange(List<NoticeSubtypeRange> ranges, List<String> validNoticeSubtypesInAscendingOrder) {
+        this.noticeSubtypes = new ArrayList<>();
+        for (NoticeSubtypeRange range : ranges) {
+            this.noticeSubtypes.addAll(range.noticeSubtypes);
+        }
+        this.universal = covers(this.noticeSubtypes,
+            validNoticeSubtypesInAscendingOrder == null ? List.of() : validNoticeSubtypesInAscendingOrder);
+    }
+
+    private static boolean covers(List<String> noticeSubtypes, List<String> validNoticeSubtypesInAscendingOrder) {
+        return !validNoticeSubtypesInAscendingOrder.isEmpty()
+            && new HashSet<>(noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
     }
 
     public boolean isUniversal() {

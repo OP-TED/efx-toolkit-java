@@ -164,14 +164,14 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
 
     /**
      * Reports text that starts none of the constructs the parser can read there. The message names
-     * the whole text the parser read before it gave up.
+     * the whole text the parser read before it gave up, at the position where that text starts.
      */
     @Override
     protected void reportNoViableAlternative(Parser recognizer, NoViableAltException e) {
         final Token start = e.getStartToken();
         final String found = start.getType() == Token.EOF ? END_OF_INPUT
                 : quoted(recognizer.getTokenStream().getText(start, e.getOffendingToken()));
-        recognizer.notifyErrorListeners(e.getOffendingToken(), message(found, recognizer, ""), e);
+        recognizer.notifyErrorListeners(start, message(found, recognizer, ""), e);
     }
 
     @Override

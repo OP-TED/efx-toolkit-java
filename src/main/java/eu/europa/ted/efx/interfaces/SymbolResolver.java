@@ -32,6 +32,11 @@ import eu.europa.ted.efx.model.expressions.PathExpression;
  * a public constructor that takes the path's script alone. The translators and their script
  * generator build expressions of the class of a path with that constructor, around the scripts
  * they compose.</p>
+ *
+ * <p>A resolver raises a new exception for each error. The translators write the position of an
+ * error in the EFX source into the exception (see
+ * {@link eu.europa.ted.efx.exceptions.EfxCompilationException}), so an exception raised again would
+ * give the position of the first error.</p>
  */
 public interface SymbolResolver {
 

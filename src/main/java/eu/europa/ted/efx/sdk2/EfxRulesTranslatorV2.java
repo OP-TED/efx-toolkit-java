@@ -510,16 +510,34 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   public void exitInClause(InClauseContext ctx) {
     logger.debug("Processing IN clause");
 
-    String compressedList = ctx.noticeTypeList() instanceof AnyNoticeTypesContext ? "*" : ctx.noticeTypeList().getText();
+    var noticeSubtypes = this.noticeSubtypesOf(ctx.noticeTypeList());
+    this.ruleStack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
+    this.validationPlan.addNoticeSubtypes(noticeSubtypes.asList());
+  }
+
+  /**
+   * Reads the notice subtypes of an IN clause. Each range of a list is read on its own, so that an
+   * error in a range, such as an unknown subtype, is placed at it.
+   */
+  private NoticeSubtypeRange noticeSubtypesOf(NoticeTypeListContext list) {
     if (this.cachedSortedNoticeSubtypeIds == null) {
       this.cachedSortedNoticeSubtypeIds = this.translation.symbols().getAllNoticeSubtypes().stream()
           .sorted()
           .map(SdkNoticeSubtype::getId)
           .collect(Collectors.toUnmodifiableList());
     }
-    var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.cachedSortedNoticeSubtypeIds);
-    this.ruleStack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
-    this.validationPlan.addNoticeSubtypes(noticeSubtypes.asList());
+    if (list instanceof AnyNoticeTypesContext) {
+      return new NoticeSubtypeRange("*", this.cachedSortedNoticeSubtypeIds);
+    }
+    final List<NoticeSubtypeRange> ranges = new ArrayList<>();
+    for (final NoticeTypeRangeContext range : ((ExplicitNoticeTypesContext) list).noticeTypeRange()) {
+      try {
+        ranges.add(new NoticeSubtypeRange(range.getText(), this.cachedSortedNoticeSubtypeIds));
+      } catch (final EfxCompilationException e) {
+        throw e.at(range);
+      }
+    }
+    return new NoticeSubtypeRange(ranges, this.cachedSortedNoticeSubtypeIds);
   }
 
   @Override

@@ -29,9 +29,11 @@ import eu.europa.ted.efx.model.LineMap;
  * mechanisms.
  *
  * <p>An error has a position in the EFX source when it is raised with the parse context it is
- * about, or when it is placed there afterwards with {@link #at}. Its message starts with that
- * position, as "line X:Y ", or as "line X:Y in 'file' " when the error is in a file included with
- * {@code #include}.
+ * about, or when it is placed there afterwards with {@link #at(ParserRuleContext)} or
+ * {@link #at(Token)}. Its message starts with that position, as "line X:Y ", or as "line X:Y in
+ * 'file' " when the error is in a file included with {@code #include}. The position is kept in the
+ * error itself, so an error is raised once: an error raised again keeps the position it was first
+ * placed at.
  *
  * <p>A message writes its numbers in ASCII digits whatever the default locale.
  */
@@ -50,7 +52,7 @@ public abstract class EfxCompilationException extends ParseCancellationException
 
     protected EfxCompilationException(ParserRuleContext ctx, String template, Object... args) {
         super(String.format(Locale.ROOT, template, args));
-        this.position = positionOf(ctx);
+        this.position = positionOf(ctx.getStart());
     }
 
     /**
@@ -61,8 +63,19 @@ public abstract class EfxCompilationException extends ParseCancellationException
      * @return this error
      */
     public EfxCompilationException at(final ParserRuleContext ctx) {
+        return this.at(ctx.getStart());
+    }
+
+    /**
+     * Places an error that has no position yet at the given token, such as a field that the grammar
+     * reads as a single token rather than as a rule. An error that has a position keeps it.
+     *
+     * @param token the token being translated when the error was raised
+     * @return this error
+     */
+    public EfxCompilationException at(final Token token) {
         if (this.position == null) {
-            this.position = positionOf(ctx);
+            this.position = positionOf(token);
         }
         return this;
     }
@@ -78,9 +91,8 @@ public abstract class EfxCompilationException extends ParseCancellationException
         return this.position + " " + super.getMessage();
     }
 
-    private static String positionOf(final ParserRuleContext ctx) {
-        final Token start = ctx.getStart();
-        return positionOf(start.getLine(), start.getCharPositionInLine(), start.getInputStream());
+    private static String positionOf(final Token token) {
+        return positionOf(token.getLine(), token.getCharPositionInLine(), token.getInputStream());
     }
 
     /**

@@ -45,6 +45,11 @@ import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
  * to form the target language script and return it as an {@link Expression}.
  * 
  * As a reference implementation you can use the XPathScriptGenerator class.
+ *
+ * <p>A script generator raises a new exception for each error. The translators write the position
+ * of an error in the EFX source into the exception (see
+ * {@link eu.europa.ted.efx.exceptions.EfxCompilationException}), so an exception raised again would
+ * give the position of the first error.</p>
  */
 public interface ScriptGenerator {
 
