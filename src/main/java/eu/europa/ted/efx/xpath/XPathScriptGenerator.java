@@ -1051,9 +1051,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
     }
     if (argument.is(EfxDataType.Boolean.class)) {
       if (argument instanceof PathExpression) {
-        // An indicator field: its text, read as a boolean.
-        return "(for $__value in " + script + " return if (normalize-space($__value) castable as"
-            + " xs:boolean) then string(xs:boolean(normalize-space($__value))) else '')";
+        // The value of an indicator field, already read as a boolean (TEDEFO-5328).
+        return "(for $__value in " + script + " return string($__value))";
       }
       if (argument instanceof SequenceExpression) {
         return "(for $__value in " + script + " return string(boolean($__value)))";
