@@ -525,8 +525,9 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * Reads the notice subtypes of an IN clause. Each range of a list is read on its own, so that an
-   * error in a range, such as an unknown subtype, is placed at it.
+   * Reads the notice subtypes of an IN clause. Each range of a list is first read on its own, only
+   * so that an error in a range, such as an unknown subtype, is placed at it; then the whole list is
+   * read.
    */
   private NoticeSubtypeRange noticeSubtypesOf(NoticeTypeListContext list) {
     if (this.cachedSortedNoticeSubtypeIds == null) {
@@ -538,15 +539,14 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     if (list instanceof AnyNoticeTypesContext) {
       return new NoticeSubtypeRange("*", this.cachedSortedNoticeSubtypeIds);
     }
-    final List<NoticeSubtypeRange> ranges = new ArrayList<>();
     for (final NoticeTypeRangeContext range : ((ExplicitNoticeTypesContext) list).noticeTypeRange()) {
       try {
-        ranges.add(new NoticeSubtypeRange(range.getText(), this.cachedSortedNoticeSubtypeIds));
+        new NoticeSubtypeRange(range.getText(), this.cachedSortedNoticeSubtypeIds);
       } catch (final EfxCompilationException e) {
         throw e.at(range);
       }
     }
-    return NoticeSubtypeRange.union(ranges, this.cachedSortedNoticeSubtypeIds);
+    return new NoticeSubtypeRange(list.getText(), this.cachedSortedNoticeSubtypeIds);
   }
 
   @Override

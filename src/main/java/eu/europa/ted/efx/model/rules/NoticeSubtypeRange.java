@@ -80,39 +80,8 @@ public class NoticeSubtypeRange implements ParsedEntity, Iterable<String> {
             }
         }
 
-        this.universal = covers(this.noticeSubtypes, validNoticeSubtypesInAscendingOrder);
-    }
-
-    private NoticeSubtypeRange(List<String> noticeSubtypes, boolean universal) {
-        this.noticeSubtypes = noticeSubtypes;
-        this.universal = universal;
-    }
-
-    /**
-     * The notice subtypes of the given ranges, in their order, as a list of the ranges separated by
-     * commas gives them: the ranges {@code 1} and {@code 3-5} give the subtypes of {@code 1, 3-5}.
-     * The result is universal when one of the ranges is, or when it holds every notice subtype.
-     *
-     * @param ranges the ranges, each read on its own
-     * @param validNoticeSubtypesInAscendingOrder every notice subtype
-     * @return the notice subtypes of all the ranges
-     */
-    public static NoticeSubtypeRange union(List<NoticeSubtypeRange> ranges,
-            List<String> validNoticeSubtypesInAscendingOrder) {
-        List<String> noticeSubtypes = new ArrayList<>();
-        boolean universal = false;
-        for (NoticeSubtypeRange range : ranges) {
-            noticeSubtypes.addAll(range.noticeSubtypes);
-            universal |= range.universal;
-        }
-        List<String> valid = validNoticeSubtypesInAscendingOrder == null ? List.of()
-            : validNoticeSubtypesInAscendingOrder;
-        return new NoticeSubtypeRange(noticeSubtypes, universal || covers(noticeSubtypes, valid));
-    }
-
-    private static boolean covers(List<String> noticeSubtypes, List<String> validNoticeSubtypesInAscendingOrder) {
-        return !validNoticeSubtypesInAscendingOrder.isEmpty()
-            && new HashSet<>(noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
+        this.universal = !validNoticeSubtypesInAscendingOrder.isEmpty()
+            && new HashSet<>(this.noticeSubtypes).containsAll(validNoticeSubtypesInAscendingOrder);
     }
 
     public boolean isUniversal() {
