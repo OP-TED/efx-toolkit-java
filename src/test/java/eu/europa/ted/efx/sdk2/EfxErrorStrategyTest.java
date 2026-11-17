@@ -64,8 +64,38 @@ class EfxErrorStrategyTest extends EfxTestsBase {
 
   @Test
   void testExpression_BraceAfterContextBlock_IsNotAnExpressionBlock() {
-    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected '{ND-Root}{' in expression.",
+    assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '{' in expression.",
         () -> translateExpression("{ND-Root}{1}"));
+  }
+
+  @Test
+  void testExpression_ContextThatIsNotAnIdentifier() {
+    final String expected = "line 1:5 Syntax error: unexpected '1' in expression;"
+        + " expected a field identifier or a node identifier or an identifier.";
+    assertSyntaxErrorMessage(expected, () -> translateExpression("WITH 1 COMPUTE 1"));
+    assertSyntaxErrorMessage(expected, () -> translateExpression("WITH 1 SELECT ND-Root"));
+  }
+
+  @Test
+  void testExpression_ContextBlockThatIsNotAnIdentifier() {
+    assertSyntaxErrorMessage(
+        "line 1:1 Syntax error: unexpected '1' in expression;"
+            + " expected a field identifier or a node identifier or an identifier.",
+        () -> translateExpression("{1} ${1}"));
+  }
+
+  @Test
+  void testExpression_NeitherComputeNorSelect() {
+    assertSyntaxErrorMessage(
+        "line 1:13 Syntax error: unexpected '1' in expression; expected 'COMPUTE' or 'SELECT' or ','.",
+        () -> translateExpression("WITH ND-Root 1"));
+  }
+
+  @Test
+  void testExpression_ParameterWithoutItsVariable() {
+    assertSyntaxErrorMessage(
+        "line 1:20 Syntax error: unexpected 'COMPUTE' in parameter declaration; expected '$'.",
+        () -> translateExpression("WITH ND-Root, text: COMPUTE 1"));
   }
 
   @Test
@@ -186,8 +216,8 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testExpression_CharacterThatCannotBeSeenInTextNotRead_IsWrittenAsAnEscape() {
     assertSyntaxErrorMessage(
-        "line 1:0 Syntax error: unexpected 'WITH ND-Root, text:$x '\\u200B'' in expression.",
-        () -> translateExpression("WITH ND-Root, text:$x '\u200B'"));
+        "line 1:23 Syntax error: unexpected 'is not '\\u200B'' in expression.",
+        () -> translateExpression("WITH ND-Root COMPUTE 1 is not '\u200B'"));
   }
 
   @Test
