@@ -56,6 +56,19 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testExpression_NeitherWithNorContextBlock() {
+    assertSyntaxErrorMessage(
+        "line 1:0 Syntax error: unexpected '1' in expression; expected '{' or 'WITH'.",
+        () -> translateExpression("1"));
+  }
+
+  @Test
+  void testExpression_BraceAfterContextBlock_IsNotAnExpressionBlock() {
+    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected '{ND-Root}{' in expression.",
+        () -> translateExpression("{ND-Root}{1}"));
+  }
+
+  @Test
   void testExpression_MissingComma() {
     assertSyntaxErrorMessage(
         "line 1:35 Syntax error: unexpected '1' in function call; expected ','.",
@@ -224,6 +237,12 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   void testTemplate_ExpressionBlockNotRead() {
     assertSyntaxErrorMessage("line 1:10 Syntax error: unexpected '${1 +}' in template content.",
         () -> translateTemplate("{ND-Root} ${1 +}"));
+  }
+
+  @Test
+  void testTemplate_BraceAfterContextBlock_IsNotAnExpressionBlock() {
+    assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '{' in template content.",
+        () -> translateTemplate("{ND-Root}{1} a"));
   }
 
   @Test
