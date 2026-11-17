@@ -20,16 +20,35 @@ import org.antlr.v4.runtime.misc.Interval;
 /**
  * The EFX-2 lexer, which words its errors as {@link EfxErrorStrategy} words those of the parser:
  * "Syntax error: unexpected character '¤'." for a character that starts no token, and "Syntax
- * error: unexpected end of line in text literal." for a token it cannot finish.
+ * error: unexpected end of line in text literal." for a token it cannot finish. It counts the
+ * errors it reports, as a parser does.
  */
 public class EfxErrorReportingLexer extends EfxLexer {
+
+    private int syntaxErrors = 0;
 
     public EfxErrorReportingLexer(final CharStream input) {
         super(input);
     }
 
+    /**
+     * @return the number of syntax errors this lexer has reported since it was created or last
+     *         reset, as {@link org.antlr.v4.runtime.Parser#getNumberOfSyntaxErrors()} gives those
+     *         of a parser
+     */
+    public int getNumberOfSyntaxErrors() {
+        return this.syntaxErrors;
+    }
+
+    @Override
+    public void reset() {
+        super.reset();
+        this.syntaxErrors = 0;
+    }
+
     @Override
     public void notifyListeners(final LexerNoViableAltException e) {
+        this.syntaxErrors++;
         final String read = this._input
                 .getText(Interval.of(this._tokenStartCharIndex, this._input.index() - 1));
         this.getErrorListenerDispatch().syntaxError(this, null, this._tokenStartLine,

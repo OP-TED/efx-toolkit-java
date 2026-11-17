@@ -129,11 +129,12 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
    */
   private <T extends Expression> T translateArgument(final String parameterValue,
       final Class<T> parameterType) {
-    final EfxLexer lexer = new EfxErrorReportingLexer(CharStreams.fromString(parameterValue));
+    final EfxErrorReportingLexer lexer =
+        new EfxErrorReportingLexer(CharStreams.fromString(parameterValue));
     lexer.pushMode(EfxLexer.EXPRESSION);
     final EfxParser parser = this.parserOf(lexer);
     final ParameterValueContext value = parser.parameterValue();
-    if (parser.getNumberOfSyntaxErrors() > 0) {
+    if (lexer.getNumberOfSyntaxErrors() > 0 || parser.getNumberOfSyntaxErrors() > 0) {
       return Expression.empty(parameterType);
     }
     final EfxExpressionVisitor visitor =

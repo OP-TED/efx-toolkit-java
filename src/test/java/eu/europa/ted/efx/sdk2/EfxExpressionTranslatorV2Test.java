@@ -6879,7 +6879,28 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testCompute_ParameterValueWithASyntaxError_IsEmptyBehindAListenerThatDoesNotThrow() {
     final List<String> syntaxErrors = new ArrayList<>();
-    final String translation = new EfxExpressionTranslatorV2(
+    final String translation = translateExpressionBehindAListenerThatDoesNotThrow(syntaxErrors,
+        "WITH ND-Root, text:$p COMPUTE $p", "}");
+    assertEquals(List.of("Syntax error: unexpected '}' in parameter value."), syntaxErrors);
+    assertEquals("", translation);
+  }
+
+  @Test
+  void testCompute_ParameterValueWithAnUnknownCharacter_IsEmptyBehindAListenerThatDoesNotThrow() {
+    final List<String> syntaxErrors = new ArrayList<>();
+    final String translation = translateExpressionBehindAListenerThatDoesNotThrow(syntaxErrors,
+        "WITH ND-Root, number:$p COMPUTE $p", "1¤");
+    assertEquals(List.of("Syntax error: unexpected character '¤'."), syntaxErrors);
+    assertEquals("", translation);
+  }
+
+  /**
+   * Translates an expression behind an error listener that collects the messages of the syntax
+   * errors and does not throw.
+   */
+  private String translateExpressionBehindAListenerThatDoesNotThrow(
+      final List<String> syntaxErrors, final String expression, final String... parameterValues) {
+    return new EfxExpressionTranslatorV2(
         DependencyFactoryMock.INSTANCE.createSymbolResolver(getSdkVersion(), ""),
         DependencyFactoryMock.INSTANCE.createScriptGenerator(getSdkVersion(), "", DEFAULT_OPTIONS),
         new BaseErrorListener() {
@@ -6889,9 +6910,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
               final RecognitionException exception) {
             syntaxErrors.add(message);
           }
-        }).translateExpression("WITH ND-Root, text:$p COMPUTE $p", "}");
-    assertEquals(List.of("Syntax error: unexpected '}' in parameter value."), syntaxErrors);
-    assertEquals("", translation);
+        }).translateExpression(expression, parameterValues);
   }
 
   @Test

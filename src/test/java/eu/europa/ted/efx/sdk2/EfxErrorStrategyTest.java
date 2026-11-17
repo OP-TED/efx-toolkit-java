@@ -212,6 +212,18 @@ class EfxErrorStrategyTest extends EfxTestsBase {
         lexer::getAllTokens);
   }
 
+  @Test
+  void testLexer_CountsTheErrorsItReports() {
+    final EfxErrorReportingLexer lexer =
+        new EfxErrorReportingLexer(CharStreams.fromString("1 ¤ 2 ¤"));
+    lexer.removeErrorListeners();
+    lexer.pushMode(EfxLexer.EXPRESSION);
+    lexer.getAllTokens();
+    assertEquals(2, lexer.getNumberOfSyntaxErrors());
+    lexer.setInputStream(CharStreams.fromString("1"));
+    assertEquals(0, lexer.getNumberOfSyntaxErrors());
+  }
+
   // #endregion Expressions ----------------------------------------------------
 
   // #region Parameter values --------------------------------------------------
