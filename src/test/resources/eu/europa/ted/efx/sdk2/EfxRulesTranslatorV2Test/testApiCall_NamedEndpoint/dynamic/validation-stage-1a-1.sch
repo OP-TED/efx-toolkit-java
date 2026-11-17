@@ -5,7 +5,7 @@
     </rule>
     <rule context="/*/PathNode/TextField">
         <let name="__apiResult1" value="number(efx:call-api('ext-db', 'validate-ext', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
-        <assert id="R-K7P-M2Q-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
+        <assert id="R-K7P-M2Q-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-K7P-M2Q" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1)">rule|text|R-K7P-M2Q</assert>
     </rule>
 </pattern>

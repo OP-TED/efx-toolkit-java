@@ -4,9 +4,9 @@
     <let name="alias" value="$apiResult = 1 and exists(/*/PathNode/TextField)"/>
     <let name="alias2" value="$alias or exists(/*/PathNode/IndicatorField)"/>
     <rule context="/*/PathNode/TextField">
-        <assert id="R-S1A-001-api-error-apiResult" role="ERROR" test="not($apiResult = -1)">rule|text|api-error</assert>
+        <assert id="R-S1A-001-api-error-apiResult" role="ERROR" test="not($apiResult = -1)">auxiliary|text|api-error</assert>
         <assert id="R-S1A-001" role="ERROR" test="($apiResult = -1) or ($alias)">rule|text|R-S1A-001</assert>
-        <assert id="R-S1A-002-api-error-apiResult" role="ERROR" test="not($apiResult = -1)">rule|text|api-error</assert>
+        <assert id="R-S1A-002-api-error-apiResult" role="ERROR" test="not($apiResult = -1)">auxiliary|text|api-error</assert>
         <assert id="R-S1A-002" role="ERROR" test="($apiResult = -1) or ($alias2)">rule|text|R-S1A-002</assert>
         <assert id="R-S1A-003" role="ERROR" test="exists(.)">rule|text|R-S1A-003</assert>
     </rule>

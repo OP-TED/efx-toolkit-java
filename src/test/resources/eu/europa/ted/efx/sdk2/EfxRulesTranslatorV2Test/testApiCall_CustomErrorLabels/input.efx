@@ -1,6 +1,6 @@
 // Test: Custom error labels on API function declarations.
 // Verifies that each companion error assert uses the custom label from the declaration:
-// - No error clause: default label (rule|text|api-error)
+// - No error clause: default label (auxiliary|text|api-error)
 // - ON ERROR WARN 'label': role=WARNING, message=label
 // - ON ERROR REJECT 'label': role=ERROR, message=label
 

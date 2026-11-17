@@ -5,7 +5,7 @@
         <let name="__apiResult2" value="number(efx:call-api('default', 'check-warn', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <let name="__apiResult3" value="number(efx:call-api('default', 'check-reject', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1]))), '&amp;')))"/>
         <assert id="R-S1A-001" role="ERROR" test="exists(.)">rule|text|R-S1A-001</assert>
-        <assert id="R-S1A-002-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
+        <assert id="R-S1A-002-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-S1A-002-api-error-2" role="WARNING" test="not($__apiResult2 = -1)">auxiliary|text|custom-warning</assert>
         <assert id="R-S1A-002-api-error-3" role="ERROR" test="not($__apiResult3 = -1)">auxiliary|text|custom-error</assert>
         <assert id="R-S1A-002" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult2 = -1) or ($__apiResult3 = -1) or ($__apiResult1 = 1 and $__apiResult2 = 1 and $__apiResult3 = 1)">rule|text|R-S1A-002</assert>
