@@ -277,8 +277,28 @@ class EfxErrorStrategyTest extends EfxTestsBase {
 
   @Test
   void testTemplate_ExpressionBlockNotRead() {
-    assertSyntaxErrorMessage("line 1:10 Syntax error: unexpected '${1 +}' in template content.",
+    assertSyntaxErrorMessage(
+        "line 1:10 Syntax error: unexpected '${BT-00-Text|}' in template content.",
+        () -> translateTemplate("{ND-Root} ${BT-00-Text|}"));
+  }
+
+  @Test
+  void testTemplate_ErrorInAnExpressionBlock() {
+    assertSyntaxErrorMessage("line 1:15 Syntax error: unexpected '}' in expression.",
         () -> translateTemplate("{ND-Root} ${1 +}"));
+    assertSyntaxErrorMessage(
+        "line 1:14 Syntax error: unexpected '2' in template content; expected '|' or '}'.",
+        () -> translateTemplate("{ND-Root} ${1 2"));
+    assertSyntaxErrorMessage("line 1:26 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY ${1 +};"));
+  }
+
+  @Test
+  void testTemplate_ErrorInALinkBlock() {
+    assertSyntaxErrorMessage("line 1:19 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} ${1}@{1 +}"));
+    assertSyntaxErrorMessage("line 1:39 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} #{field|name|BT-00-Text}@{1 +}"));
   }
 
   @Test

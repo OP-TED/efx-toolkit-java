@@ -425,16 +425,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   public void exitLabelTemplate(LabelTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
     if (ctx.labelBlock() != null) {
-      template.prepend(this.translation.stack().pop(ContentTemplateFragment.class));
+      template.prepend(this.linked(this.translation.stack().pop(ContentTemplateFragment.class), ctx.linkBlock()));
     }
-    this.translation.stack().push(template);
-  }
-
-  @Override
-  public void exitLinkedLabelTemplate(LinkedLabelTemplateContext ctx) {
-    DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    ContentTemplateFragment label = this.translation.stack().pop(ContentTemplateFragment.class);
-    template.prepend(label);
     this.translation.stack().push(template);
   }
 
@@ -443,14 +435,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   @Override
   public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    template.prepend(this.translation.stack().pop(FormatContentTemplateFragment.class));
-    this.translation.stack().push(template);
-  }
-
-  @Override
-  public void exitLinkedExpressionTemplate(LinkedExpressionTemplateContext ctx) {
-    DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    template.prepend(this.translation.stack().pop(HyperlinkContentTemplateFragment.class));
+    template.prepend(this.linked(this.translation.stack().pop(FormatContentTemplateFragment.class), ctx.linkBlock()));
     this.translation.stack().push(template);
   }
 
@@ -517,14 +502,6 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     } else if (style.FormatLong() != null) {
       this.translation.stack().push(new DateTimeFormatOptions(FormatStyle.LONG));
     }
-  }
-
-  @Override
-  public void exitLinkedExpressionBlock(LinkedExpressionBlockContext ctx) {
-    var url =
-        this.expressions.valueOf(ctx.linkBlock().expression(), HYPERLINK).stringAt(0);
-    var value = this.translation.stack().pop(FormatContentTemplateFragment.class);
-    this.translation.stack().push(new HyperlinkContentTemplateFragment(value, url));
   }
 
   /**
@@ -1414,17 +1391,24 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   @Override
   public void exitLinkedTextBlock(LinkedTextBlockContext ctx) {
-    var url =
-        this.expressions.valueOf(ctx.linkBlock().expression(), HYPERLINK).stringAt(0);
-    this.translation.stack().push(new HyperlinkContentTemplateFragment(new TextContentTemplateFragment(ctx.textBlock().getText()), url));
+    this.translation.stack().push(this.linked(new TextContentTemplateFragment(ctx.textBlock().getText()), ctx.linkBlock()));
   }
 
-  @Override
-  public void exitLinkedLabelBlock(LinkedLabelBlockContext ctx) {
-    var url =
-        this.expressions.valueOf(ctx.linkBlock().expression(), HYPERLINK).stringAt(0);
-    var label = this.translation.stack().pop(ContentTemplateFragment.class);
-    this.translation.stack().push(new HyperlinkContentTemplateFragment(label, url));
+  /**
+   * Displays a fragment as a hyperlink when a link block follows it, as in
+   * {@code ${'a link'}@{'https://example.com'}}.
+   *
+   * @param fragment the text, the label or the value displayed
+   * @param link the link block that follows the fragment, or null if there is none
+   * @return the fragment, as a hyperlink to the URL of the link block if there is one
+   */
+  private ContentTemplateFragment linked(final ContentTemplateFragment fragment,
+      final LinkBlockContext link) {
+    if (link == null) {
+      return fragment;
+    }
+    final StringExpression url = this.expressions.valueOf(link.expression(), HYPERLINK).stringAt(0);
+    return new HyperlinkContentTemplateFragment(fragment, url);
   }
 
   // #endregion Hyperlinks ----------------------------------------------------
