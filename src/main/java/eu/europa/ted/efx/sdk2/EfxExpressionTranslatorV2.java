@@ -62,9 +62,6 @@ import eu.europa.ted.efx.sdk2.EfxParser.SingleExpressionContext;
 public class EfxExpressionTranslatorV2 extends TranslatorListener
     implements EfxExpressionTranslator {
 
-  private static final String BEGIN_EXPRESSION_BLOCK = "{";
-  private static final String END_EXPRESSION_BLOCK = "}";
-
   /** The expression after {@code COMPUTE}, as a type error names it. */
   private static final Clause COMPUTE = Clause.ofValueAsGiven(Clause.describe("COMPUTE"),
       "expression");
@@ -121,7 +118,8 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
   /**
    * Translates the value passed for a parameter of the expression. The value is translated in a
    * translation of its own, which {@link Translation#next} gives, so that the declarations and
-   * contexts of the expression are not visible in it.
+   * contexts of the expression are not visible in it. The value is a literal written on its own,
+   * so its lexer starts in expression mode.
    *
    * @param parameterValue the value passed, as EFX
    * @param parameterType the expression class of the parameter
@@ -129,8 +127,9 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
    */
   private <T extends Expression> T translateArgument(final String parameterValue,
       final Class<T> parameterType) {
-    final EfxParser parser = this.parserOf(
-        CharStreams.fromString(BEGIN_EXPRESSION_BLOCK + parameterValue + END_EXPRESSION_BLOCK));
+    final EfxLexer lexer = new EfxErrorReportingLexer(CharStreams.fromString(parameterValue));
+    lexer.pushMode(EfxLexer.EXPRESSION);
+    final EfxParser parser = this.parserOf(lexer);
     final EfxExpressionVisitor visitor =
         new EfxExpressionVisitor(this.translation.next());
     return Expression.instantiate(visitor.visit(parser.parameterValue()).value().getScript(),

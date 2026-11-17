@@ -201,6 +201,23 @@ class EfxErrorStrategyTest extends EfxTestsBase {
 
   // #endregion Expressions ----------------------------------------------------
 
+  // #region Parameter values --------------------------------------------------
+
+  @Test
+  void testParameterValue_NotALiteral() {
+    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected 'big' in parameter value.",
+        () -> translateExpression("WITH ND-Root, text:$p COMPUTE $p", "big"));
+  }
+
+  @Test
+  void testParameterValue_ClosingBrace() {
+    assertSyntaxErrorMessage(
+        "line 1:3 Syntax error: unexpected '}' in parameter value; expected end of input.",
+        () -> translateExpression("WITH ND-Root, text:$p COMPUTE $p", "'a'}"));
+  }
+
+  // #endregion Parameter values -----------------------------------------------
+
   // #region Templates ---------------------------------------------------------
 
   @Test
