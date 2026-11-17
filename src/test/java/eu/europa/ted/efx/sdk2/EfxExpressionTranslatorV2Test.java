@@ -18,8 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
@@ -4780,6 +4784,14 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testParameterizedExpression_NullArgument_IsMissing() {
+    InvalidArgumentException exception = assertThrows(InvalidArgumentException.class,
+        () -> translateExpression("WITH ND-Root, text:$p COMPUTE $p", (String) null));
+    assertEquals(InvalidArgumentException.ErrorCode.MISSING_ARGUMENT, exception.getErrorCode());
+    assertEquals("line 1:14 No argument passed for Parameter '$p'.", exception.getMessage());
+  }
+
+  @Test
   void testParameterizedExpression_WithUnquotedStringParameter() {
     assertSyntaxError(
         () -> translateExpression("{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "hello", "world"));
@@ -6857,6 +6869,29 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testCompute_WithSequenceParameter() {
     testExpressionTranslation("count(('a','b','c'))",
         "WITH ND-Root, text*:$items COMPUTE count($items)", "['a', 'b', 'c']");
+  }
+
+  @Test
+  void testCompute_ParameterValueFollowedByAComment() {
+    testExpressionTranslation("1", "WITH ND-Root, number:$p COMPUTE $p", "1 // a comment");
+  }
+
+  @Test
+  void testCompute_ParameterValueWithASyntaxError_IsEmptyBehindAListenerThatDoesNotThrow() {
+    final List<String> syntaxErrors = new ArrayList<>();
+    final String translation = new EfxExpressionTranslatorV2(
+        DependencyFactoryMock.INSTANCE.createSymbolResolver(getSdkVersion(), ""),
+        DependencyFactoryMock.INSTANCE.createScriptGenerator(getSdkVersion(), "", DEFAULT_OPTIONS),
+        new BaseErrorListener() {
+          @Override
+          public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
+              final int line, final int column, final String message,
+              final RecognitionException exception) {
+            syntaxErrors.add(message);
+          }
+        }).translateExpression("WITH ND-Root, text:$p COMPUTE $p", "}");
+    assertEquals(List.of("Syntax error: unexpected '}' in parameter value."), syntaxErrors);
+    assertEquals("", translation);
   }
 
   @Test

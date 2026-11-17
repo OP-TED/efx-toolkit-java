@@ -37,6 +37,7 @@ import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.identifiers.ParsedParameter;
 import eu.europa.ted.efx.sdk2.EfxParser.AttributeReferenceContext;
 import eu.europa.ted.efx.sdk2.EfxParser.ParameterDeclarationContext;
+import eu.europa.ted.efx.sdk2.EfxParser.ParameterValueContext;
 import eu.europa.ted.efx.sdk2.EfxParser.SelectionContext;
 import eu.europa.ted.efx.sdk2.EfxParser.SingleExpressionContext;
 
@@ -123,17 +124,21 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
    *
    * @param parameterValue the value passed, as EFX
    * @param parameterType the expression class of the parameter
-   * @return the translated value
+   * @return the translated value, or an empty value if the value has a syntax error, which an
+   *         error listener that does not throw has been told of
    */
   private <T extends Expression> T translateArgument(final String parameterValue,
       final Class<T> parameterType) {
     final EfxLexer lexer = new EfxErrorReportingLexer(CharStreams.fromString(parameterValue));
     lexer.pushMode(EfxLexer.EXPRESSION);
     final EfxParser parser = this.parserOf(lexer);
+    final ParameterValueContext value = parser.parameterValue();
+    if (parser.getNumberOfSyntaxErrors() > 0) {
+      return Expression.empty(parameterType);
+    }
     final EfxExpressionVisitor visitor =
         new EfxExpressionVisitor(this.translation.next());
-    return Expression.instantiate(visitor.visit(parser.parameterValue()).value().getScript(),
-        parameterType);
+    return Expression.instantiate(visitor.visit(value).value().getScript(), parameterType);
   }
 
   /**
@@ -224,17 +229,18 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
 
   /**
    * Declares a parameter of the single expression, whose value is the next argument passed to
-   * {@link #translateExpression}.
+   * {@link #translateExpression}. A {@code null} argument is no value, as a missing one is.
    */
   @Override
   public void exitParameterDeclaration(final ParameterDeclarationContext ctx) {
     final String parameterName = ctx.parameterName.getText();
-    if (this.expressionArguments.isEmpty()) {
+    final String parameterValue = this.expressionArguments.poll();
+    if (parameterValue == null) {
       throw InvalidArgumentException.missingArgument(ctx, ParsedParameter.describe(parameterName));
     }
 
     final ParsedParameter parameter = new ParsedParameter(parameterName,
-        this.translateArgument(this.expressionArguments.pop(),
+        this.translateArgument(parameterValue,
             EfxExpressionVisitor.typeOf(ctx.typeDeclaration())));
     this.translation.stack().declareIdentifier(parameter);
   }

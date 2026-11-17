@@ -246,6 +246,12 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testTemplate_BraceAfterDisplay_IsNotAnExpressionBlock() {
+    assertSyntaxErrorMessage("line 1:20 Syntax error: unexpected '{' in template content.",
+        () -> translateTemplate("WITH ND-Root DISPLAY{1} ;"));
+  }
+
+  @Test
   void testTemplate_CharacterThatStartsNoToken() {
     assertSyntaxErrorMessage("line 1:10 Syntax error: unexpected character '{'.",
         () -> translateTemplate("{ND-Root ${1}"));
