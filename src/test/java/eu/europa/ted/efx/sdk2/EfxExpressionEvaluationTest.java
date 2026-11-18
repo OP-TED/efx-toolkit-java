@@ -20,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
 
 /**
- * Evaluates with Saxon the XPath that EFX expressions are translated to. The XPath keeps the
- * grouping of the EFX expression where XPath would group the same operations differently, or would
- * not accept them without parentheses.
+ * Evaluates with Saxon the XPath that EFX expressions are translated to, so that each result shows
+ * how the expression is grouped: by the order of the operators in the grammar, and in the XPath,
+ * which keeps that grouping where XPath would group the same operations differently, or would not
+ * accept them without parentheses.
  */
 class EfxExpressionEvaluationTest extends EfxTestsBase {
 
@@ -57,6 +58,63 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
     assertResult("false", "(FALSE == TRUE) not in [TRUE, FALSE]");
     assertResult("true", "FALSE == (TRUE not in [TRUE, FALSE])");
     assertResult("true", "TRUE in [TRUE] in [TRUE]");
+  }
+
+  /**
+   * A condition binds tighter than a comparison, on either side of it:
+   * {@code TRUE == 3 in BT-00-Repeatable-Number} compares {@code TRUE} with the result of
+   * {@code 3 in BT-00-Repeatable-Number}.
+   */
+  @Test
+  void testConditionBeforeComparison_In() {
+    assertResult("true", "TRUE == 3 in BT-00-Repeatable-Number");
+    assertResult("true", "3 in BT-00-Repeatable-Number == TRUE");
+    assertResult("true", "TRUE != 3 not in BT-00-Repeatable-Number");
+    assertResult("true", "3 not in BT-00-Repeatable-Number != TRUE");
+  }
+
+  @Test
+  void testConditionBeforeComparison_UniqueIn() {
+    assertResult("true", "TRUE == 3 is unique in BT-00-Repeatable-Number");
+    assertResult("true", "3 is unique in BT-00-Repeatable-Number == TRUE");
+    assertResult("true", "TRUE != 3 is not unique in BT-00-Repeatable-Number");
+    assertResult("true", "3 is not unique in BT-00-Repeatable-Number != TRUE");
+  }
+
+  @Test
+  void testConditionBeforeComparison_Empty() {
+    assertResult("true", "TRUE == BT-00-Repeatable-Text is empty");
+    assertResult("true", "BT-00-Repeatable-Text is empty == TRUE");
+    assertResult("true", "TRUE != BT-00-Repeatable-Text is not empty");
+    assertResult("true", "BT-00-Repeatable-Text is not empty != TRUE");
+  }
+
+  @Test
+  void testConditionBeforeComparison_Duplicates() {
+    assertResult("true", "TRUE == BT-00-Repeatable-Number has duplicates");
+    assertResult("true", "BT-00-Repeatable-Number has duplicates == TRUE");
+    assertResult("true", "TRUE != BT-00-Repeatable-Number has no duplicates");
+    assertResult("true", "BT-00-Repeatable-Number has no duplicates != TRUE");
+  }
+
+  @Test
+  void testConditionBeforeComparison_Like() {
+    assertResult("true", "TRUE == 'a' like 'a'");
+    assertResult("true", "'a' like 'a' == TRUE");
+    assertResult("true", "TRUE != 'a' not like 'a'");
+    assertResult("true", "'a' not like 'a' != TRUE");
+  }
+
+  /**
+   * Only the negated form: {@code is present} gives the path itself, which XPath cannot compare
+   * with an indicator (TEDEFO-5329).
+   */
+  @Test
+  void testConditionBeforeComparison_NotPresent() {
+    assertResult("true", "FALSE == BT-00-Repeatable-Number is not present");
+    assertResult("true", "BT-00-Repeatable-Number is not present == FALSE");
+    assertResult("true", "TRUE != BT-00-Repeatable-Number is not present");
+    assertResult("true", "BT-00-Repeatable-Number is not present != TRUE");
   }
 
   /**
