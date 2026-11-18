@@ -3556,6 +3556,20 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals("line 1:12 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
   }
 
+  @Test
+  void testUnknownFieldInShorthandFieldLabelReference_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{ND-Root} #{name|BT-999-Unknown}"));
+    assertEquals("line 1:17 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
+  @Test
+  void testUnknownFieldInShorthandFieldLabelReferenceWithComputedLabelType_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{ND-Root} #{${'name'}|BT-999-Unknown}"));
+    assertEquals("line 1:22 Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
   // #endregion Errors raised with no position ---------------------------------
 
   // #region IllegalArgumentException ------------------------------------------

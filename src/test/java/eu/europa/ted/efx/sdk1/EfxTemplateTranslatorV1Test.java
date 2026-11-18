@@ -19,6 +19,7 @@ import eu.europa.ted.efx.component.EfxTranslatorFactory;
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
@@ -445,6 +446,13 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
     assertEquals(
         "TEMPLATES:\nlet block01() -> { label(concat('field', '|', 'name', '|', 'BT-00-Text')) }\nMAIN:\nfor-each(/*/PathNode/TextField).call(block01())",
         translateTemplate("{BT-00-Text}  #{name|BT-00-Text}"));
+  }
+
+  @Test
+  void testShorthandFieldLabelReference_UnknownField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{BT-00-Text}  #{name|BT-999-Unknown}"));
+    assertEquals("Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
   }
 
   @Test

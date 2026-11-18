@@ -369,9 +369,14 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
+  /**
+   * Renders the label of #{labelType|BT-00-Text}. The field is looked up first, so that a field
+   * that does not exist is reported, as in #{BT-00-Code}.
+   */
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldId().getText();
+    this.symbols.getTypeOfField(fieldId);
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
 

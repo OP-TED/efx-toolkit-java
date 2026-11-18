@@ -1026,7 +1026,9 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * Renders the label of #{labelType|BT-00-Text}, whose label type is on the stack.
+   * Renders the label of #{labelType|BT-00-Text}, whose label type is on the stack. The field is
+   * looked up first, so that a field that does not exist is reported at the field, as in
+   * #{BT-00-Code}.
    *
    * @param labelBlock the label block, where an error is reported
    * @param field      the field that the label is of
@@ -1034,6 +1036,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   private void shorthandFieldLabelReference(final ParserRuleContext labelBlock,
       final TerminalNode field) {
     final String fieldId = field.getText();
+    this.lookingUpField(field, () -> this.translation.symbols().getTypeOfField(fieldId));
     StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
 
     if (labelType.getScript().equals("value")) {
