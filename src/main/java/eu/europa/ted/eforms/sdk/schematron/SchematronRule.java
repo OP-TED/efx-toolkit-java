@@ -36,9 +36,11 @@ public class SchematronRule {
   private final List<SchematronLet> promotedLetElements;
   private final List<SchematronTest> tests;
   private final Context context;
+  private final String ruleContextPath;
 
   SchematronRule(final RuleSet ruleSet, final Predicate<ValidationRule> applicableRules) {
     this.context = ruleSet.getContext();
+    this.ruleContextPath = ruleSet.getRuleContextPath().getScript();
 
     this.tests = this.createTests(ruleSet, applicableRules);
 
@@ -90,7 +92,7 @@ public class SchematronRule {
 
   /** Used by pattern.ftl */
   public String getContext() {
-    return this.context.absolutePath().getScript();
+    return this.ruleContextPath;
   }
 
   /** Used by pattern.ftl */

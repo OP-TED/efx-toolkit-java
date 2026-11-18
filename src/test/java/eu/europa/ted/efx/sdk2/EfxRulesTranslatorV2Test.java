@@ -149,6 +149,34 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testWithClause_Every() throws IOException {
+    String testName = "testWithClause_Every";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testWithClause_EveryVariations() throws IOException {
+    String testName = "testWithClause_EveryVariations";
+    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
+
+    assertAllOutputs(testName, outputFiles);
+  }
+
+  @Test
+  void testWithClause_EveryBeforeShortcut_ThrowsError() {
+    for (String shortcut : List.of(".", "..", "/")) {
+      String rules = "---- STAGE 1a ----\n\nWITH EVERY " + shortcut + "\n"
+          + "    ASSERT BT-00-Text is present\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+      InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+          () -> translator.translateRules(rules), "WITH EVERY " + shortcut);
+      assertEquals(InvalidUsageException.ErrorCode.EVERY_REQUIRES_NODE_OR_FIELD,
+          exception.getErrorCode());
+    }
+  }
+
+  @Test
   void testWithClause_ContextVariable() throws IOException {
     String testName = "testWithClause_ContextVariable";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
