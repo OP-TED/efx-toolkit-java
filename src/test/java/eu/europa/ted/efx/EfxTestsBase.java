@@ -3,6 +3,11 @@ package eu.europa.ted.efx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.StringReader;
+import java.util.stream.Collectors;
+
+import javax.xml.transform.stream.StreamSource;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.function.Executable;
 
@@ -14,6 +19,10 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmAtomicValue;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
 
 public abstract class EfxTestsBase {
 
@@ -21,12 +30,11 @@ public abstract class EfxTestsBase {
       DecimalFormat.EFX_DEFAULT);
 
   private static final String EFX_NAMESPACE = "http://ted.europa.eu/efx";
+  private static final Processor PROCESSOR = new Processor(false);
   private static final XPathCompiler XPATH_COMPILER;
 
   static {
-    Processor processor = new Processor(false);
-
-    XPATH_COMPILER = processor.newXPathCompiler();
+    XPATH_COMPILER = PROCESSOR.newXPathCompiler();
     XPATH_COMPILER.setLanguageVersion("3.1");
     XPATH_COMPILER.declareNamespace("fn", "http://www.w3.org/2005/xpath-functions");
     XPATH_COMPILER.declareNamespace("xs", "http://www.w3.org/2001/XMLSchema");
@@ -89,6 +97,29 @@ public abstract class EfxTestsBase {
     } catch (SaxonApiException e) {
       throw new AssertionError(
           "Generated XPath is not valid: " + xpath + "\n" + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Evaluates an XPath with Saxon, with the root element of a document as the context item, as the
+   * XPath of an expression read in the context of {@code ND-Root} expects.
+   *
+   * @param xpath the XPath
+   * @param xml the document
+   * @return the string values of the items of the result, separated by spaces
+   */
+  protected static String evaluate(final String xpath, final String xml) {
+    try {
+      final XdmNode document =
+          PROCESSOR.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
+      final XPathSelector selector = XPATH_COMPILER.compile(xpath).load();
+      selector.setVariable(new QName("urlPrefix"), new XdmAtomicValue(""));
+      selector.setContextItem(XPATH_COMPILER.evaluateSingle("/*", document));
+      return selector.evaluate().stream().map(XdmItem::getStringValue)
+          .collect(Collectors.joining(" "));
+    } catch (SaxonApiException e) {
+      throw new AssertionError("Generated XPath cannot be evaluated: " + xpath + "\n"
+          + e.getMessage(), e);
     }
   }
 

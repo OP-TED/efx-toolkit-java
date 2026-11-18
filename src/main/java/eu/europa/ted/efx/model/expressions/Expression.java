@@ -37,6 +37,11 @@ public interface Expression extends ParsedEntity {
 
   public String getScript();
 
+  /**
+   * @return how tightly the operation at the top of the script binds
+   */
+  public Precedence getPrecedence();
+
   static <T extends Expression> T instantiate(String script, Class<T> type) {
     try {
       Constructor<T> constructor = type.getConstructor(String.class);
@@ -46,8 +51,27 @@ public interface Expression extends ParsedEntity {
     }
   }
 
+  /**
+   * Instantiates an expression whose script may have an operation at its top, such as a
+   * comparison.
+   *
+   * @param script the script
+   * @param precedence how tightly the operation at the top of the script binds
+   * @param type the class of the expression
+   * @return the expression
+   */
+  static <T extends Expression> T instantiate(String script, Precedence precedence, Class<T> type) {
+    final T expression = instantiate(script, type);
+    ((Impl) expression).precedence = precedence;
+    return expression;
+  }
+
+  /**
+   * Gives the script of an expression as an expression of another class. The script keeps its
+   * precedence.
+   */
   static <T extends Expression> T from(Expression source, Class<T> returnType) {
-    return Expression.instantiate(source.getScript(), returnType);
+    return Expression.instantiate(source.getScript(), source.getPrecedence(), returnType);
   }
 
   static <T extends Expression> T empty(Class<T> type) {
@@ -61,9 +85,20 @@ public interface Expression extends ParsedEntity {
 
     private final String script;
 
+    /**
+     * {@link Precedence#PRIMARY}, unless {@link Expression#instantiate(String, Precedence, Class)}
+     * sets another before it returns the expression.
+     */
+    private Precedence precedence = Precedence.PRIMARY;
+
     @Override
     public String getScript() {
       return this.script;
+    }
+
+    @Override
+    public Precedence getPrecedence() {
+      return this.precedence;
     }
 
     protected Impl(final String script) {
