@@ -15,7 +15,7 @@ package eu.europa.ted.efx.model.constructs;
 
 /**
  * How EFX writes a function, a template or an operator: a function with the token before its
- * arguments in parentheses, a template with its name after {@code invoke}, an operator with the
+ * arguments in parentheses, a template with its name after {@code INVOKE}, an operator with the
  * token beside its operands. A type error names what was written, and each of its arguments, by
  * its spelling.
  *
@@ -62,7 +62,7 @@ public final class Spelling {
   }
 
   /**
-   * @param name the name of the template, as {@code invoke} writes it
+   * @param name the name of the template, as {@code INVOKE} writes it
    * @return the spelling of a template
    */
   public static Spelling template(final String name) {

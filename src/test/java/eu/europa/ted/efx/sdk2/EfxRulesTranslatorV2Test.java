@@ -222,6 +222,13 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
    * declared predicate inside them, so that the index counts every element of the kind.
    */
   @Test
+  void testWithClause_EveryInLowerCase_IsRejected() {
+    String rules = "---- STAGE 1a ----\n\nWITH every ND-PrivacyInRepeatableNode\n"
+        + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+    assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules));
+  }
+
+  @Test
   void testWithClause_EveryWithIndex() throws IOException {
     final Map<String, String> ruleContexts = Map.of(
         "ND-PrivacyInRepeatableNode[at 1]", "(/*/RepeatableNode/FieldsPrivacy)[1]",
@@ -521,9 +528,13 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testInClause_AnyInCapitalsOrSmallLetters_NamesEveryNoticeSubtype() {
+  void testInClause_Any_NamesEveryNoticeSubtype() {
     assertEquals(translateIn("*"), translateIn("ANY"));
-    assertEquals(translateIn("*"), translateIn("any"));
+  }
+
+  @Test
+  void testInClause_AnyInSmallLetters_IsAnUnknownNoticeSubtype() {
+    assertUnknownNoticeSubtype("line 6:22 Unknown notice subtype 'any'.", "any");
   }
 
   @Test
@@ -1241,6 +1252,20 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
         () -> translator.translateRules(rules));
     assertEquals(InvalidIdentifierException.ErrorCode.UNDECLARED_ENDPOINT, exception.getErrorCode());
+  }
+
+  @Test
+  void testApiCall_EndpointAtInLowerCase_IsRejected() {
+    String rules = lines(
+        "ENDPOINT 'ted' at 'https://api.ted.europa.eu/v1';",
+        "",
+        "---- STAGE 1a ----",
+        "",
+        "WITH BT-00-Text",
+        "    ASSERT BT-00-Text is present",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN 1");
+    assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules));
   }
 
   @Test

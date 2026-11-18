@@ -60,7 +60,7 @@ final class Clause implements Construct {
   /**
    * Names a clause by the keyword that introduces it, as a type error does.
    *
-   * @param keyword the keyword as written, such as {@code WHEN}, {@code when} or {@code by}
+   * @param keyword the keyword, such as {@code WHEN} or {@code BY}
    * @return the name of the clause, such as "Clause 'WHEN'"
    */
   static String describe(final String keyword) {

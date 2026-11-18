@@ -139,16 +139,16 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let text:?f() = 'hi';",
-            "display count: ${count(?f())};")));
+            "LET text:?f() = 'hi';",
+            "DISPLAY count: ${count(?f())};")));
   }
 
   @Test
   void testResolveFunctionInvocation_Scalar_SequenceFunction_Throws() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
-            "let text*:?f() = ['a', 'b'];",
-            "with BT-00-Text[?f() == 'a'] display foo;")));
+            "LET text*:?f() = ['a', 'b'];",
+            "WITH BT-00-Text[?f() == 'a'] DISPLAY foo;")));
     assertEquals(TypeMismatchException.ErrorCode.IDENTIFIER_IS_SEQUENCE, ex.getErrorCode());
   }
 
@@ -156,16 +156,16 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testResolveFunctionInvocation_Either_ScalarFunction() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text:?f() = 'hi';",
-            "display ${?f()};")));
+            "LET text:?f() = 'hi';",
+            "DISPLAY ${?f()};")));
   }
 
   @Test
   void testResolveFunctionInvocation_Either_SequenceFunction() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text*:?f() = ['a', 'b'];",
-            "display count: ${count(?f())};")));
+            "LET text*:?f() = ['a', 'b'];",
+            "DISPLAY count: ${count(?f())};")));
   }
 
   // #endregion resolveFunctionInvocation ---------------------------------------
@@ -216,16 +216,16 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testResolveRegularVariable_Scalar_ScalarVariable() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text:$x = 'a';",
-            "with BT-00-Text[$x == 'a'] display foo;")));
+            "LET text:$x = 'a';",
+            "WITH BT-00-Text[$x == 'a'] DISPLAY foo;")));
   }
 
   @Test
   void testResolveRegularVariable_Scalar_SequenceVariable_Throws() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
-            "let text*:$items = ['a', 'b'];",
-            "with BT-00-Text[$items == 'a'] display foo;")));
+            "LET text*:$items = ['a', 'b'];",
+            "WITH BT-00-Text[$items == 'a'] DISPLAY foo;")));
     assertEquals(TypeMismatchException.ErrorCode.IDENTIFIER_IS_SEQUENCE, ex.getErrorCode());
   }
 
@@ -241,32 +241,32 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "let text:$x = 'a';",
-            "display count: ${count($x)};")));
+            "LET text:$x = 'a';",
+            "DISPLAY count: ${count($x)};")));
   }
 
   @Test
   void testResolveRegularVariable_Sequence_SequenceVariable() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text*:$items = ['a', 'b', 'c'];",
-            "display count: ${count($items)};")));
+            "LET text*:$items = ['a', 'b', 'c'];",
+            "DISPLAY count: ${count($items)};")));
   }
 
   @Test
   void testResolveRegularVariable_Either_ScalarVariable() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text:$x = 'test';",
-            "display value: ${$x};")));
+            "LET text:$x = 'test';",
+            "DISPLAY value: ${$x};")));
   }
 
   @Test
   void testResolveRegularVariable_Either_SequenceVariable() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let text*:$items = ['a', 'b'];",
-            "display ${for text:$x in $items return $x};")));
+            "LET text*:$items = ['a', 'b'];",
+            "DISPLAY ${for text:$x in $items return $x};")));
   }
 
   @Test
@@ -284,8 +284,8 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testResolveDictionaryLookup_Scalar_Throws() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Text;",
-            "with BT-00-Text[$dic['key'] == 1] display foo;")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Text;",
+            "WITH BT-00-Text[$dic['key'] == 1] DISPLAY foo;")));
     assertEquals(TypeMismatchException.ErrorCode.DICTIONARY_IS_SEQUENCE, ex.getErrorCode());
   }
 
@@ -293,16 +293,16 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testResolveDictionaryLookup_Either_InDisplayBlock() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Text;",
-            "display ${$dic['key']};")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Text;",
+            "DISPLAY ${$dic['key']};")));
   }
 
   @Test
   void testResolveDictionaryLookup_Sequence_InCountFunction() {
     assertDoesNotThrow(
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Text;",
-            "display ${count($dic['key'])};")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Text;",
+            "DISPLAY ${count($dic['key'])};")));
   }
 
   // #endregion resolveDictionaryLookup -----------------------------------------
@@ -467,40 +467,40 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testOperandOrigin_SequenceFunction() {
     assertSequenceError(ErrorCode.IDENTIFIER_IS_SEQUENCE, "2:16", "?f",
         () -> translateTemplate(lines(
-            "let text*:?f() = ['a', 'b'];",
-            "with BT-00-Text[?f() == 'a'] display foo;")));
+            "LET text*:?f() = ['a', 'b'];",
+            "WITH BT-00-Text[?f() == 'a'] DISPLAY foo;")));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedSequenceFunction() {
     assertSequenceError(ErrorCode.IDENTIFIER_IS_SEQUENCE, "2:17", "?f",
         () -> translateTemplate(lines(
-            "let text*:?f() = ['a', 'b'];",
-            "with BT-00-Text[(?f()) == 'a'] display foo;")));
+            "LET text*:?f() = ['a', 'b'];",
+            "WITH BT-00-Text[(?f()) == 'a'] DISPLAY foo;")));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedSequenceVariable() {
     assertSequenceError(ErrorCode.IDENTIFIER_IS_SEQUENCE, "2:17", "$items",
         () -> translateTemplate(lines(
-            "let text*:$items = ['a', 'b'];",
-            "with BT-00-Text[($items) == 'a'] display foo;")));
+            "LET text*:$items = ['a', 'b'];",
+            "WITH BT-00-Text[($items) == 'a'] DISPLAY foo;")));
   }
 
   @Test
   void testOperandOrigin_DictionaryLookup() {
     assertSequenceError(ErrorCode.DICTIONARY_IS_SEQUENCE, "2:16", "$dic",
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Text;",
-            "with BT-00-Text[$dic['key'] == 1] display foo;")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Text;",
+            "WITH BT-00-Text[$dic['key'] == 1] DISPLAY foo;")));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedDictionaryLookup() {
     assertSequenceError(ErrorCode.DICTIONARY_IS_SEQUENCE, "2:17", "$dic",
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Text;",
-            "with BT-00-Text[($dic['key']) == 1] display foo;")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Text;",
+            "WITH BT-00-Text[($dic['key']) == 1] DISPLAY foo;")));
   }
 
   @Test
@@ -546,10 +546,10 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testOperandOrigin_DictionaryKey_NamesTheIndexedField() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
-            "let $dic index BT-00-Number by BT-00-Repeatable-Text;",
-            "display ${$dic['a']};")));
+            "LET $dic INDEX BT-00-Number BY BT-00-Repeatable-Text;",
+            "DISPLAY ${$dic['a']};")));
     assertEquals(ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
-    assertEquals("line 1:31 Type mismatch. Clause 'by' cannot take 'text*'."
+    assertEquals("line 1:31 Type mismatch. Clause 'BY' cannot take 'text*'."
         + " Its key must be 'text'. Field 'BT-00-Repeatable-Text' may return multiple values from"
         + " context 'BT-00-Number': use a sequence expression or change the context.",
         ex.getMessage());
@@ -559,24 +559,24 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testOperandOrigin_FunctionBody() {
     assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:17", "BT-00-Repeatable-Text",
         () -> translateTemplate(lines(
-            "let text:?f() = (BT-00-Repeatable-Text);",
-            "display ${?f()};")));
+            "LET text:?f() = (BT-00-Repeatable-Text);",
+            "DISPLAY ${?f()};")));
   }
 
   @Test
   void testOperandOrigin_VariableInitializer() {
     assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:15", "BT-00-Repeatable-Text",
         () -> translateTemplate(lines(
-            "let text:$x = (BT-00-Repeatable-Text);",
-            "display ${$x};")));
+            "LET text:$x = (BT-00-Repeatable-Text);",
+            "DISPLAY ${$x};")));
   }
 
   @Test
   void testOperandOrigin_TemplateCondition() {
     assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:6", "BT-00-Repeatable-Indicator",
         () -> translateTemplate(lines(
-            "when (BT-00-Repeatable-Indicator) display foo",
-            "otherwise display bar;")));
+            "WHEN (BT-00-Repeatable-Indicator) DISPLAY foo",
+            "OTHERWISE DISPLAY bar;")));
   }
 
   @Test

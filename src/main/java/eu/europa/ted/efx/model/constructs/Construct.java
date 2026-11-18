@@ -25,7 +25,7 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
  *
  * <p>A <em>call</em> is one place in EFX where a construct is written with its arguments, such as
  * {@code substring($s, 1, 3)}, {@code $a == $b}, {@code if $c then 1 else 2} or
- * {@code invoke greeting('World')}. The construct checks the type of each argument against what
+ * {@code INVOKE greeting('World')}. The construct checks the type of each argument against what
  * it takes at that position.</p>
  *
  * <p>Every construct is checked this way. A {@link Composable} also translates its calls, with

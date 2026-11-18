@@ -359,7 +359,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testTemplate_VariableWithoutValue() {
     assertSyntaxErrorMessage("line 1:14 Syntax error: unexpected ';' in expression.",
-        () -> translateTemplate("let text:$x = ;"));
+        () -> translateTemplate("LET text:$x = ;"));
   }
 
   // #endregion Templates ------------------------------------------------------

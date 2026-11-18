@@ -150,6 +150,12 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testIndex_AtInUpperCase_IsRejected() {
+    assertSyntaxError(
+        () -> translateComputeExpressionWithContext("ND-Root", "ND-SubNode[AT 1] is present"));
+  }
+
+  @Test
   void testPresenceCondition_WithRawValue() {
     testExpressionTranslationWithContext("exists(PathNode/TextField/text())", "ND-Root",
         "BT-00-Text:rawValue is present");
@@ -794,6 +800,12 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   // #endregion: Boolean expressions
 
   // #region: Quantified expressions ------------------------------------------
+
+  @Test
+  void testQuantifiedExpression_EveryInUpperCase_IsRejected() {
+    assertSyntaxError(() -> translateComputeExpressionWithContext("ND-Root",
+        "EVERY text:$x in ['a', 'b'] satisfies $x <= 'a'"));
+  }
 
   @Test
   void testStringQuantifiedExpression_UsingLiterals() {
@@ -6927,13 +6939,11 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testCompute_CaseInsensitive() {
+  void testCompute_KeywordsInUpperCaseOnly() {
     testComputeExpressionWithContext("(true() or true()) and false()", "BT-00-Text",
         "(ALWAYS or TRUE) and NEVER");
-    // Also test lowercase
-    assertEquals(
-        translateComputeExpressionWithContext("BT-00-Text", "(ALWAYS or TRUE) and NEVER"),
-        translateExpression("with BT-00-Text compute (ALWAYS or TRUE) and NEVER"));
+    assertSyntaxError(() -> translateExpression("with BT-00-Text compute TRUE"));
+    assertSyntaxError(() -> translateExpression("WITH BT-00-Text compute TRUE"));
   }
 
   // #endregion: EFX-2 COMPUTE syntax
@@ -7008,9 +7018,8 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testSelector_KeywordIsCaseInsensitive() {
-    assertEquals(translateExpression("WITH ND-Root SELECT BT-00-Text"),
-        translateExpression("with ND-Root select BT-00-Text"));
+  void testSelector_KeywordInLowerCase_IsRejected() {
+    assertSyntaxError(() -> translateExpression("WITH ND-Root select BT-00-Text"));
   }
 
   @Test

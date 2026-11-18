@@ -152,8 +152,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
 
     /**
      * How a message names each token that the parser reads and that has no literal name: a keyword
-     * by its first spelling in the lexer grammar, as in "'WITH'" for {@code WITH} or {@code with},
-     * and any other token by what it is. EfxErrorStrategyTest checks that no such token is missing.
+     * by its spelling in the lexer grammar, as in "'WITH'", and any other token by what it is.
+     * EfxErrorStrategyTest checks that no such token is missing.
      */
     private static final Map<Integer, String> TOKEN_NAMES = Map.ofEntries(
             Map.entry(Token.EOF, END_OF_INPUT),
@@ -178,7 +178,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.Let, "'LET'"),
             Map.entry(EfxLexer.Endpoint, "'ENDPOINT'"),
             Map.entry(EfxLexer.With, "'WITH'"),
-            Map.entry(EfxLexer.Every, "'every'"),
             Map.entry(EfxLexer.When, "'WHEN'"),
             Map.entry(EfxLexer.Otherwise, "'OTHERWISE'"),
             Map.entry(EfxLexer.Display, "'DISPLAY'"),
@@ -192,14 +191,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.OtherwiseReport, "'OTHERWISE REPORT'"),
             Map.entry(EfxLexer.Compute, "'COMPUTE'"),
             Map.entry(EfxLexer.Select, "'SELECT'"),
-            Map.entry(EfxLexer.As, "'AS'"),
-            Map.entry(EfxLexer.Any, "'ANY'"),
-            Map.entry(EfxLexer.Call, "'CALL'"),
-            Map.entry(EfxLexer.Api, "'API'"),
-            Map.entry(EfxLexer.At, "'AT'"),
-            Map.entry(EfxLexer.On, "'ON'"),
-            Map.entry(EfxLexer.Warn, "'WARN'"),
-            Map.entry(EfxLexer.Reject, "'REJECT'"),
 
             // Template text and blocks
             Map.entry(EfxLexer.FreeText, "text"),

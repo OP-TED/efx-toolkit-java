@@ -9,7 +9,7 @@ import eu.europa.ted.efx.model.types.EfxDataType;
 
 /**
  * An identifier that EFX source declares with parameters and invokes with arguments: a function,
- * invoked as {@code ?name(...)}, or a template, invoked as {@code invoke name(...)}.
+ * invoked as {@code ?name(...)}, or a template, invoked as {@code INVOKE name(...)}.
  *
  * <p>An invocable is a {@link Construct} with one parameter list, its declared parameters, so
  * that a call of it is checked as a call of a built-in is. The translator translates the call

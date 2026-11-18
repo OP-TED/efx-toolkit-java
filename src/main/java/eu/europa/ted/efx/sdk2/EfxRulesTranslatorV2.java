@@ -465,7 +465,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   private static boolean isEveryContext(ContextDeclarationContext ctx) {
     return ctx.getParent() instanceof ContextDeclarationBlockContext
         && ctx.getParent().getParent() instanceof WithClauseContext
-        && ((WithClauseContext) ctx.getParent().getParent()).Every() != null;
+        && ((WithClauseContext) ctx.getParent().getParent()).EVERY() != null;
   }
 
   /**

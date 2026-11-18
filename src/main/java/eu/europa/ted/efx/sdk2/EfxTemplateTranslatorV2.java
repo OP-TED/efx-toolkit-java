@@ -136,11 +136,11 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   private static final String CODE_VARIABLE = Translation.RESERVED_PREFIX + "code";
 
   /** The condition of a conditional template block, as a type error names it. */
-  private static final Clause WHEN = Clause.of(Clause.describe("when"),
+  private static final Clause WHEN = Clause.of(Clause.describe("WHEN"),
       parameter("condition", INDICATOR));
 
   /** The key of a dictionary declaration, as a type error names it. */
-  private static final Clause BY = Clause.of(Clause.describe("by"), parameter("key", TEXT));
+  private static final Clause BY = Clause.of(Clause.describe("BY"), parameter("key", TEXT));
 
   /** The URL of a hyperlink, as a type error names it. */
   private static final Clause HYPERLINK = Clause.of("Hyperlink", parameter("URL", TEXT));
