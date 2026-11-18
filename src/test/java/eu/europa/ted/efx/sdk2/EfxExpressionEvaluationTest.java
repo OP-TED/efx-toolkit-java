@@ -136,14 +136,10 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
     assertResult("true", "'a' not like 'a' != TRUE");
   }
 
-  /**
-   * Only the negated form: {@code is present} gives the path itself, which XPath cannot compare
-   * with an indicator (TEDEFO-5329).
-   */
   @Test
-  void testConditionBeforeComparison_NotPresent() {
-    assertResult("true", "FALSE == BT-00-Repeatable-Number is not present");
-    assertResult("true", "BT-00-Repeatable-Number is not present == FALSE");
+  void testConditionBeforeComparison_Present() {
+    assertResult("true", "TRUE == BT-00-Repeatable-Number is present");
+    assertResult("true", "BT-00-Repeatable-Number is present == TRUE");
     assertResult("true", "TRUE != BT-00-Repeatable-Number is not present");
     assertResult("true", "BT-00-Repeatable-Number is not present != TRUE");
   }
