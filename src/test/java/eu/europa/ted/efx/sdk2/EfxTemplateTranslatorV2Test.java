@@ -1772,6 +1772,17 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testLabelBlock_Expression_LabelTypeWithPluraliser() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01(string:labelType) -> { label(concat('field', '|', $labelType, '|', 'BT-00-Text'), 2) }",
+            "MAIN:",
+            "for-each(/*).call(body01(string:labelType='name'))"),
+        translateTemplate("{/, text:$labelType='name'}  #{${$labelType}|BT-00-Text;${2}}"));
+  }
+
+  @Test
   void testLabelBlock_Expression_NestedExpressions() {
     assertEquals(
         lines(

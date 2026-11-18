@@ -31,6 +31,11 @@ public class LabelFromKeyContentTemplateFragment extends LabelContentTemplateFra
   }
 
   @Override
+  public LabelFromKeyContentTemplateFragment pluralisedBy(NumericExpression quantity) {
+    return new LabelFromKeyContentTemplateFragment(this.key, quantity);
+  }
+
+  @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     return markupGenerator.renderLabelFromKey(this.key, this.quantity, translatorContext);
   }

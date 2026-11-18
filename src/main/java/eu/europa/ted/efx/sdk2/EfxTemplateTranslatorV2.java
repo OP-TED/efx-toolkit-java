@@ -88,6 +88,7 @@ import eu.europa.ted.efx.model.templates.FormatOptions.NoFormattingOptions;
 import eu.europa.ted.efx.model.templates.FormatOptions.NumberFormatOptions;
 import eu.europa.ted.efx.model.templates.HyperlinkContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.InvokeContentTemplate;
+import eu.europa.ted.efx.model.templates.LabelContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromExpressionContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromKeyContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LineBreakContentTemplateFragment;
@@ -839,16 +840,89 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   
   // #region Label Blocks #{...} ----------------------------------------------
 
+  /**
+   * Pluralises the label that the label id gave, when the label block has a pluraliser. The
+   * pluraliser follows the label id, so it is translated after the label is.
+   */
   @Override
-  public void exitStandardLabelReference(StandardLabelReferenceContext ctx) {
+  public void exitLabelReference(LabelReferenceContext ctx) {
+    if (ctx.pluraliser() != null) {
+      final NumericExpression quantity = this.labelPart(ctx, PLURALISER).numericAt(0);
+      final LabelContentTemplateFragment label =
+          this.translation.stack().pop(LabelContentTemplateFragment.class);
+      this.translation.stack().push(label.pluralisedBy(quantity));
+    }
+  }
 
-    // New in EFX-2: Pluralisation of labels based on a supplied quantity.
-    // The quantity is on top of the stack, above the assetId, so it is popped first.
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
+  /**
+   * Leaves the asset type of #{field|name|BT-00-Text} on the stack before the parts that follow it,
+   * as an expression block leaves a computed asset type, so that both are taken off the stack in the
+   * same way.
+   */
+  @Override
+  public void enterStandardLabelId(StandardLabelIdContext ctx) {
+    this.translation.stack().push(this.translation.script().getStringLiteralFromUnquotedString(
+        ctx.AssetType().getText()));
+  }
 
-    if (!this.translation.stack().empty() && StringSequenceExpression.class.isAssignableFrom(this.translation.stack().peek().getClass()) && ctx.assetId() != null) {
+  @Override
+  public void exitStandardLabelId(StandardLabelIdContext ctx) {
+    this.standardLabelReference(ctx.getParent());
+  }
+
+  /**
+   * Leaves the label type of #{name|BT-00} and #{name|BT-00-Text} on the stack, as an expression
+   * block leaves a computed label type.
+   */
+  @Override
+  public void enterShorthandLabelId(ShorthandLabelIdContext ctx) {
+    this.translation.stack().push(this.translation.script().getStringLiteralFromUnquotedString(
+        ctx.LabelType().getText()));
+  }
+
+  @Override
+  public void exitShorthandLabelId(ShorthandLabelIdContext ctx) {
+    if (ctx.BtId() != null) {
+      this.shorthandBtLabelReference(ctx.getParent(), ctx.BtId());
+    } else {
+      this.shorthandFieldLabelReference(ctx.getParent(), ctx.FieldId());
+    }
+  }
+
+  @Override
+  public void exitShorthandIndirectLabelId(ShorthandIndirectLabelIdContext ctx) {
+    this.lookingUpField(ctx.FieldId(),
+        () -> this.shorthandIndirectLabelReference(ctx.getParent(), ctx.FieldId().getText()));
+  }
+
+  /**
+   * Translates a label id that starts with an expression block. Depending on what follows it, the
+   * expression block is the asset type, as in #{${$assetType}|name|BT-00-Text}, the label type, as
+   * in #{${$labelType}|BT-00} and #{${$labelType}|BT-00-Text}, or the whole label id, as in
+   * #{${concat('code|name|currency.', BT-00-Code)}}.
+   */
+  @Override
+  public void exitLabelIdStartingWithExpressionBlock(LabelIdStartingWithExpressionBlockContext ctx) {
+    final ParserRuleContext labelBlock = ctx.getParent();
+    if (ctx.assetId() != null) {
+      this.standardLabelReference(labelBlock);
+    } else if (ctx.BtId() != null) {
+      this.shorthandBtLabelReference(labelBlock, ctx.BtId());
+    } else if (ctx.FieldId() != null) {
+      this.shorthandFieldLabelReference(labelBlock, ctx.FieldId());
+    } else {
+      this.computedLabelReference(labelBlock);
+    }
+  }
+
+  /**
+   * Renders the label, or labels, of #{assetType|labelType|assetId}, whose three parts are on the
+   * stack, the asset id on top.
+   *
+   * @param labelBlock the label block, where an error is reported
+   */
+  private void standardLabelReference(final ParserRuleContext labelBlock) {
+    if (StringSequenceExpression.class.isAssignableFrom(this.translation.stack().peek().getClass())) {
 
       // TODO: Review this in EFX-2
 
@@ -863,37 +937,32 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
       StringSequenceExpression assetIdSequence = this.translation.stack().pop(
           StringSequenceExpression.class);
-      this.exitStandardLabelReference(ctx, assetIdSequence, quantity);
+      this.standardLabelReference(labelBlock, assetIdSequence);
     } else {
 
       // Standard implementation as originally intended by EFX 1
 
-      StringExpression assetId = ctx.assetId() != null
-          ? this.labelPart(ctx, ASSET_ID).stringAt(0)
-          : this.translation.script().getStringLiteralFromUnquotedString("");
-      this.exitStandardLabelReference(ctx, assetId, quantity);
+      StringExpression assetId = this.labelPart(labelBlock, ASSET_ID).stringAt(0);
+      this.standardLabelReference(labelBlock, assetId);
     }
   }
-  
+
   /**
    * Renders a single label from a standard label reference.
-   * 
-   * @param ctx     The ParserRuleContext of the standard label reference.
-   * @param assetId The assetId of the label to render.
+   *
+   * @param labelBlock the label block, where an error is reported
+   * @param assetId    the assetId of the label to render
    */
-  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringExpression assetId, NumericExpression quantity) {
-    StringExpression labelType = ctx.labelType() != null
-        ? this.labelPart(ctx, LABEL_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
-    StringExpression assetType = ctx.assetType() != null
-        ? this.labelPart(ctx, ASSET_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
+  private void standardLabelReference(final ParserRuleContext labelBlock, StringExpression assetId) {
+    StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
+    StringExpression assetType = this.labelPart(labelBlock, ASSET_TYPE).stringAt(0);
 
     StringExpression key = this.translation.script().composeStringConcatenation(
         List.of(assetType, this.translation.script().getStringLiteralFromUnquotedString("|"),
             labelType, this.translation.script().getStringLiteralFromUnquotedString("|"),
             assetId));
-    this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key, quantity));
+    this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+        NumericExpression.empty()));
   }
 
   /**
@@ -908,20 +977,14 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   /**
    * Renders a sequence of labels from a standard label reference.
-   * 
-   * @param ctx             The ParserRuleContext of the standard label reference.
-   * @param assetIdSequence The sequence of assetIds for the labels to render.
-   * @param quantity        The quantity used to select the plural form of the labels, or an
-   *                        empty expression if no pluraliser was given.
+   *
+   * @param labelBlock      the label block, where an error is reported
+   * @param assetIdSequence the sequence of assetIds for the labels to render
    */
-  private void exitStandardLabelReference(StandardLabelReferenceContext ctx, StringSequenceExpression assetIdSequence,
-      NumericExpression quantity) {
-    StringExpression labelType = ctx.labelType() != null
-        ? this.labelPart(ctx, LABEL_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
-    StringExpression assetType = ctx.assetType() != null
-        ? this.labelPart(ctx, ASSET_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
+  private void standardLabelReference(final ParserRuleContext labelBlock,
+      StringSequenceExpression assetIdSequence) {
+    StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
+    StringExpression assetType = this.labelPart(labelBlock, ASSET_TYPE).stringAt(0);
 
     Variable loopVariable = this.composeAssetIdVariable();
 
@@ -938,57 +1001,62 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
                 new StringExpression(loopVariable.referenceExpression.getScript()))),
             StringSequenceExpression.class),
         StringSequenceExpression.class);
-    this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(keys, quantity));
+    this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(keys,
+        NumericExpression.empty()));
   }
 
-
-  @Override
-  public void exitShorthandBtLabelReference(ShorthandBtLabelReferenceContext ctx) {
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
+  /**
+   * Renders the label of #{labelType|BT-00}, whose label type is on the stack.
+   *
+   * @param labelBlock the label block, where an error is reported
+   * @param btId       the business term that the label is of
+   */
+  private void shorthandBtLabelReference(final ParserRuleContext labelBlock, final TerminalNode btId) {
     StringExpression assetId = this.translation.script().getStringLiteralFromUnquotedString(
-        ctx.BtId().getText());
-    StringExpression labelType = ctx.labelType() != null
-        ? this.labelPart(ctx, LABEL_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
+        btId.getText());
+    StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
     StringExpression key = this.translation.script().composeStringConcatenation(
         List.of(this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_BT),
             this.translation.script().getStringLiteralFromUnquotedString("|"), labelType,
             this.translation.script().getStringLiteralFromUnquotedString("|"), assetId));
-    this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key, quantity));
+    this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+        NumericExpression.empty()));
   }
 
-  @Override
-  public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
-    final String fieldId = ctx.FieldId().getText();
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
-    StringExpression labelType = ctx.labelType() != null
-        ? this.labelPart(ctx, LABEL_TYPE).stringAt(0)
-        : this.translation.script().getStringLiteralFromUnquotedString("");
+  /**
+   * Renders the label of #{labelType|BT-00-Text}, whose label type is on the stack.
+   *
+   * @param labelBlock the label block, where an error is reported
+   * @param field      the field that the label is of
+   */
+  private void shorthandFieldLabelReference(final ParserRuleContext labelBlock,
+      final TerminalNode field) {
+    final String fieldId = field.getText();
+    StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
 
     if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(fieldId, quantity);
+      this.shorthandIndirectLabelReference(labelBlock, fieldId);
     } else {
       StringExpression key = this.translation.script().composeStringConcatenation(
           List.of(this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
               this.translation.script().getStringLiteralFromUnquotedString("|"), labelType,
               this.translation.script().getStringLiteralFromUnquotedString("|"),
               this.translation.script().getStringLiteralFromUnquotedString(fieldId)));
-      this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key, quantity));
+      this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+          NumericExpression.empty()));
     }
   }
 
-  @Override
-  public void exitShorthandIndirectLabelReference(ShorthandIndirectLabelReferenceContext ctx) {
-    // New in EFX-2: Pluralisation of labels based on a supplied quantity
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
-    this.lookingUpField(ctx.FieldId(),
-        () -> this.shorthandIndirectLabelReference(ctx.FieldId().getText(), quantity));
+  /**
+   * Renders the label whose whole key is computed, as in
+   * #{${concat('code|name|currency.', BT-00-Code)}}, and on the stack.
+   *
+   * @param labelBlock the label block, where an error is reported
+   */
+  private void computedLabelReference(final ParserRuleContext labelBlock) {
+    StringExpression expression = this.labelPart(labelBlock, LABEL_KEY).stringAt(0);
+    this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(expression,
+        NumericExpression.empty()));
   }
 
   /**
@@ -1006,12 +1074,16 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * Renders the label of the value of a code or indicator field. Without a pluraliser, the label of
-   * the unit of an amount, a measure or a duration is pluralised by the number that it is the unit of.
+   * Renders the label of the value of a code or indicator field. The label of the unit of an amount,
+   * a measure or a duration is pluralised by the number that it is the unit of, unless the label
+   * block has a pluraliser (see {@link #exitLabelReference}).
+   *
+   * @param labelBlock the label block, where an error is reported
+   * @param fieldId    the field whose value the label is of
    */
-  private void shorthandIndirectLabelReference(final String fieldId, final NumericExpression pluraliser) {
+  private void shorthandIndirectLabelReference(final ParserRuleContext labelBlock, final String fieldId) {
     final Context currentContext = this.translation.efxContext().peek();
-    final NumericExpression quantity = pluraliser.isEmpty() ? this.composeQuantityOfUnit(fieldId) : pluraliser;
+    final NumericExpression quantity = this.composeQuantityOfUnit(fieldId);
     final String fieldType = this.translation.symbols().getTypeOfField(fieldId);
     final PathExpression valueReference = this.expressions.fieldValueOf(fieldId,
         this.translation.symbols().getRelativePathOfField(fieldId, currentContext.symbol()));
@@ -1063,7 +1135,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
         break;
       }
       default:
-        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(this.translation.stack().peekParserContext(), fieldId, fieldType);
+        throw InvalidUsageException.shorthandRequiresCodeOrIndicator(labelBlock, fieldId, fieldType);
     }
   }
 
@@ -1102,17 +1174,11 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * context.
    */
   @Override
-  public void exitShorthandLabelReferenceFromContext(ShorthandLabelReferenceFromContextContext ctx) {
-
-    // New in EFX-2: Pluralisation of labels based on a supplied quantity
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
-
+  public void exitShorthandLabelIdFromContext(ShorthandLabelIdFromContextContext ctx) {
     final String labelType = ctx.LabelType().getText();
     if (this.translation.efxContext().isFieldContext()) {
       if (labelType.equals(SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE)) {
-        this.shorthandIndirectLabelReference(this.translation.efxContext().symbol(), quantity);
+        this.shorthandIndirectLabelReference(ctx.getParent(), this.translation.efxContext().symbol());
       } else {
         StringExpression key = this.translation.script().composeStringConcatenation(
             List.of(this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
@@ -1121,7 +1187,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
                 this.translation.script().getStringLiteralFromUnquotedString("|"),
                 this.translation.script().getStringLiteralFromUnquotedString(
                     this.translation.efxContext().symbol())));
-        this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key, quantity));
+        this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+            NumericExpression.empty()));
       }
     } else if (this.translation.efxContext().isNodeContext()) {
       StringExpression key = this.translation.script().composeStringConcatenation(
@@ -1131,7 +1198,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
               this.translation.script().getStringLiteralFromUnquotedString("|"),
               this.translation.script().getStringLiteralFromUnquotedString(
                   this.translation.efxContext().symbol())));
-      this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key, quantity));
+      this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+          NumericExpression.empty()));
     }
   }
 
@@ -1146,8 +1214,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     if (!this.translation.efxContext().isFieldContext()) {
       throw InvalidUsageException.shorthandRequiresFieldContext(ctx, "#value");
     }
-    this.shorthandIndirectLabelReference(this.translation.efxContext().symbol(),
-        NumericExpression.empty());
+    this.shorthandIndirectLabelReference(ctx, this.translation.efxContext().symbol());
   }
 
   /**
@@ -1167,14 +1234,6 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
 
   @Override
-  public void exitAssetType(AssetTypeContext ctx) {
-    if (ctx.expressionBlock() == null) {
-      this.translation.stack().push(this.translation.script().getStringLiteralFromUnquotedString(
-          ctx.getText()));
-    }
-  }
-
-  @Override
   public void exitLabelType(LabelTypeContext ctx) {
     if (ctx.expressionBlock() == null) {
       this.translation.stack().push(this.translation.script().getStringLiteralFromUnquotedString(
@@ -1191,17 +1250,6 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
  
   // #region New in EFX-2 -----------------------------------------------------
-
-  @Override
-  public void exitComputedLabelReference(ComputedLabelReferenceContext ctx) {
-    NumericExpression quantity = ctx.pluraliser() != null
-        ? this.labelPart(ctx, PLURALISER).numericAt(0)
-        : NumericExpression.empty();
-    StringExpression expression = this.labelPart(ctx, LABEL_KEY).stringAt(0);
-    this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(expression,
-        quantity));
-  }
-
 
   @Override
   public void exitDictionaryDeclaration(DictionaryDeclarationContext ctx) {

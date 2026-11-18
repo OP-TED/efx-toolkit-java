@@ -294,6 +294,23 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testTemplate_ErrorInAnExpressionBlockThatStartsALabel() {
+    assertSyntaxErrorMessage("line 1:17 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} #{${1 +}}"));
+    assertSyntaxErrorMessage("line 1:17 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} #{${1 +}|name|BT-00-Text}"));
+  }
+
+  @Test
+  void testTemplate_LabelPartWhereItIsNotAllowed() {
+    assertSyntaxErrorMessage(
+        "line 1:17 Syntax error: unexpected 'field' in label block; expected a field identifier or a business term identifier.",
+        () -> translateTemplate("{ND-Root} #{name|field|BT-00}"));
+    assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected 'field' in label block.",
+        () -> translateTemplate("{ND-Root} #{${'name'}|field|BT-00}"));
+  }
+
+  @Test
   void testTemplate_ErrorInALinkBlock() {
     assertSyntaxErrorMessage("line 1:19 Syntax error: unexpected '}' in expression.",
         () -> translateTemplate("{ND-Root} ${1}@{1 +}"));

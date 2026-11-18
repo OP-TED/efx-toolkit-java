@@ -31,6 +31,11 @@ public class LabelFromExpressionContentTemplateFragment extends LabelContentTemp
   }
 
   @Override
+  public LabelFromExpressionContentTemplateFragment pluralisedBy(NumericExpression quantity) {
+    return new LabelFromExpressionContentTemplateFragment(this.expression, quantity);
+  }
+
+  @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     return markupGenerator.renderLabelFromExpression(this.expression, this.quantity, translatorContext);
   }
