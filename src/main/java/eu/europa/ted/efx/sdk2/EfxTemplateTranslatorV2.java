@@ -409,16 +409,12 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    String text = ctx.textBlock() != null ? ctx.textBlock().getText() : "";
-    template.prepend(new TextContentTemplateFragment(text));
-    this.translation.stack().push(template);
-  }
-
-  @Override
-  public void exitLinkedTextTemplate(LinkedTextTemplateContext ctx) {
-    DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    ContentTemplateFragment text = this.translation.stack().pop(ContentTemplateFragment.class);
-    template.prepend(text);
+    TextContentTemplateFragment text = new TextContentTemplateFragment(ctx.textBlock() != null ? ctx.textBlock().getText() : "");
+    if (ctx.linkBlock() == null) {
+      template.prependText(text);
+    } else {
+      template.prepend(this.linked(text, ctx.linkBlock()));
+    }
     this.translation.stack().push(template);
   }
 
@@ -1436,11 +1432,6 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   // #endregion Variable Initializers -----------------------------------------
 
   // #region Hyperlinks -------------------------------------------------------
-
-  @Override
-  public void exitLinkedTextBlock(LinkedTextBlockContext ctx) {
-    this.translation.stack().push(this.linked(new TextContentTemplateFragment(ctx.textBlock().getText()), ctx.linkBlock()));
-  }
 
   /**
    * Displays a fragment as a hyperlink when a link block follows it, as in

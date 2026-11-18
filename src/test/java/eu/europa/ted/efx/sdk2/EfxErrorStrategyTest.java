@@ -319,6 +319,14 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testTemplate_ErrorAfterAText() {
+    assertSyntaxErrorMessage("line 1:29 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} here is a Link@{1 +}"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("{ND-Root} here is ${1 +}"));
+  }
+
+  @Test
   void testTemplate_BraceAfterContextBlock_IsNotAnExpressionBlock() {
     assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '{' in template content.",
         () -> translateTemplate("{ND-Root}{1} a"));
