@@ -139,7 +139,7 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
     }
     final EfxExpressionVisitor visitor =
         new EfxExpressionVisitor(this.translation.next());
-    return Expression.instantiate(visitor.visit(value).value().getScript(), parameterType);
+    return Expression.from(visitor.visit(value).value(), parameterType);
   }
 
   /**

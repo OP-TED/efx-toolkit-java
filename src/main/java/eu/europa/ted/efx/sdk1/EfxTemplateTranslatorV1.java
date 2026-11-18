@@ -350,7 +350,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.getStringLiteralFromUnquotedString("|"),
                 labelType,
                 this.script.getStringLiteralFromUnquotedString("|"),
-                new StringExpression(loopVariable.referenceExpression.getScript()))),
+                Expression.from(loopVariable.referenceExpression, StringExpression.class))),
             StringSequenceExpression.class),
         StringSequenceExpression.class);
     this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
@@ -416,7 +416,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                         this.script.getStringLiteralFromUnquotedString("|"),
                         this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
                         this.script.getStringLiteralFromUnquotedString("-"),
-                        new StringExpression(loopVariable.referenceExpression.getScript()),
+                        Expression.from(loopVariable.referenceExpression, StringExpression.class),
                         this.script.getStringLiteralFromUnquotedString("|"),
                         this.script.getStringLiteralFromUnquotedString(fieldId))),
                 StringSequenceExpression.class),
@@ -439,7 +439,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                     this.script.getStringLiteralFromUnquotedString(
                         this.symbols.getRootCodelistOfField(fieldId)),
                     this.script.getStringLiteralFromUnquotedString("."),
-                    new StringExpression(loopVariable.referenceExpression.getScript()))),
+                    Expression.from(loopVariable.referenceExpression, StringExpression.class))),
                 StringSequenceExpression.class),
             StringSequenceExpression.class);
         this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
@@ -545,7 +545,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         expression = this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new DateSequenceExpression(expression.getScript())))),
+                    Expression.from(expression, DateSequenceExpression.class)))),
             new StringExpression("format-date($item, '[D01]/[M01]/[Y0001]')"),
             StringSequenceExpression.class);
       } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
@@ -557,7 +557,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         expression = this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new TimeSequenceExpression(expression.getScript())))),
+                    Expression.from(expression, TimeSequenceExpression.class)))),
             new StringExpression("format-time($item, '[H01]:[m01] [Z]')"),
             StringSequenceExpression.class);
       }

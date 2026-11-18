@@ -90,28 +90,28 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeNodeReferenceWithPredicate(PathExpression nodeReference,
       BooleanExpression predicate) {
-    return Expression.instantiate(nodeReference.getScript() + '[' + predicate.getScript() + ']', nodeReference.getClass());
+    return Expression.instantiate(operand(nodeReference, Precedence.PRIMARY) + '[' + predicate.getScript() + ']', nodeReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldReferenceWithPredicate(PathExpression fieldReference,
       BooleanExpression predicate) {
-    return Expression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getClass());
+    return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + '[' + predicate.getScript() + ']', fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldValueReference(PathExpression fieldReference) {
     if (fieldReference.is(EfxDataType.String.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/normalize-space(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/normalize-space(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Number.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/number()", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Date.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/xs:date(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Time.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/xs:time(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/xs:time(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Duration.class)) {
       final String f = this.ownVariable("F");
@@ -129,12 +129,12 @@ public class XPathScriptGenerator implements ScriptGenerator {
           " else ()))", fieldReference.getClass());
     }
 
-    return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
+    return Expression.from(fieldReference, fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldRawValueReference(PathExpression fieldReference) {
-    String script = fieldReference.getScript() + "/text()";
+    String script = operand(fieldReference, Precedence.PRIMARY) + "/text()";
     if (fieldReference instanceof SequenceExpression) {
       return new StringSequencePath(script);
     }
@@ -145,7 +145,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends PathExpression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
     return Expression.instantiate(
-        fieldReference.getScript() + (fieldReference.getScript().isEmpty() ? "" : "/") + "@" + attribute,
+        operand(fieldReference, Precedence.PRIMARY) + (fieldReference.getScript().isEmpty() ? "" : "/") + "@" + attribute,
         type);
   }
 
@@ -356,7 +356,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public BooleanExpression composeExistsCondition(PathExpression reference) {
-    return new BooleanExpression(reference.getScript());
+    return Expression.from(reference, BooleanExpression.class);
   }
 
   @Override

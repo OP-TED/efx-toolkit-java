@@ -162,6 +162,16 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
   }
 
   /**
+   * A value passed for a parameter keeps its grouping: the negative number before the predicate
+   * that {@code is unique in} is translated to is put in parentheses.
+   */
+  @Test
+  void testUniqueValueCondition_NegativeParameterValue() {
+    assertEquals("true", evaluate(
+        translateExpression("WITH ND-Root, number:$p COMPUTE -1 is unique in $p", "-1"), NOTICE));
+  }
+
+  /**
    * Additions and multiplications keep their grouping, with or without parentheses.
    */
   @Test

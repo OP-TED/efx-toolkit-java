@@ -554,11 +554,11 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       if (!options.hideUnit()) {
         throw InvalidUsageException.unitForList(this.translation.stack().peekParserContext());
       }
-      PathExpression numbers = this.translation.script().composeFieldValueReference(new NumericSequencePath(field.getScript()));
+      PathExpression numbers = this.translation.script().composeFieldValueReference(Expression.from(field, NumericSequencePath.class));
       return new FormatContentTemplateFragment(this.composeFormattedExpression(numbers, options));
     }
     NumericExpression number = TypedExpression.from(
-        this.translation.script().composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
+        this.translation.script().composeFieldValueReference(Expression.from(field, NumericPath.class)), NumericExpression.class);
     if (options.hideUnit()) {
       return new FormatContentTemplateFragment(this.composeFormattedExpression(number, options));
     }
@@ -663,7 +663,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * NaN, whereas an absent number is not displayed at all.
    */
   private StringSequenceExpression composeFormattedScalar(NumericExpression number, NumberFormatOptions options) {
-    return this.composeFormattedSequence(new NumericSequenceExpression(number.getScript()), options);
+    return this.composeFormattedSequence(Expression.from(number, NumericSequenceExpression.class), options);
   }
 
   private StringSequenceExpression composeFormattedSequence(NumericSequenceExpression numbers, NumberFormatOptions options) {
@@ -785,7 +785,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     IteratorListExpression iterators = this.translation.script().composeIteratorList(List.of(this.translation.script().composeIteratorExpression(
         this.translation.script().composeVariableDeclaration(ITEM_VARIABLE,
             DurationExpression.class),
-        new DurationSequenceExpression(duration.getScript()))));
+        Expression.from(duration, DurationSequenceExpression.class))));
     return this.translation.script().composeForExpression(iterators,
         this.translation.script().composeConditionalExpression(
             this.composeIsYearMonthDuration(
@@ -1000,7 +1000,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
                 this.translation.script().getStringLiteralFromUnquotedString("|"),
                 labelType,
                 this.translation.script().getStringLiteralFromUnquotedString("|"),
-                new StringExpression(loopVariable.referenceExpression.getScript()))),
+                Expression.from(loopVariable.referenceExpression, StringExpression.class))),
             StringSequenceExpression.class),
         StringSequenceExpression.class);
     this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(keys,
@@ -1105,7 +1105,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
                         this.translation.script().getStringLiteralFromUnquotedString(
                             LABEL_TYPE_WHEN),
                         this.translation.script().getStringLiteralFromUnquotedString("-"),
-                        new StringExpression(loopVariable.referenceExpression.getScript()),
+                        Expression.from(loopVariable.referenceExpression, StringExpression.class),
                         this.translation.script().getStringLiteralFromUnquotedString("|"),
                         this.translation.script().getStringLiteralFromUnquotedString(fieldId))),
                 StringSequenceExpression.class),
@@ -1129,7 +1129,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
                     this.translation.script().getStringLiteralFromUnquotedString(
                         this.translation.symbols().getRootCodelistOfField(fieldId)),
                     this.translation.script().getStringLiteralFromUnquotedString("."),
-                    new StringExpression(loopVariable.referenceExpression.getScript()))),
+                    Expression.from(loopVariable.referenceExpression, StringExpression.class))),
                 StringSequenceExpression.class),
             StringSequenceExpression.class);
         this.translation.stack().push(new LabelFromExpressionContentTemplateFragment(keys,
@@ -1164,7 +1164,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       return NumericExpression.empty();
     }
     return TypedExpression.from(
-        this.translation.script().composeFieldValueReference(new NumericPath(field.getScript())), NumericExpression.class);
+        this.translation.script().composeFieldValueReference(Expression.from(field, NumericPath.class)), NumericExpression.class);
   }
 
   /**
