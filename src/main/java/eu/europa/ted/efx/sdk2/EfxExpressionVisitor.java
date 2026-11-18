@@ -728,7 +728,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * A predicate, or a key in brackets after the name of a dictionary.
    */
   @Override
-  public Subexpression<?> visitFilteredExpression(final FilteredExpressionContext ctx) {
+  public Subexpression<?> visitPredicateOrLookupExpression(
+      final PredicateOrLookupExpressionContext ctx) {
     return this.visit(ctx.expression(0)).filteredBy(ctx.expression(1));
   }
 
@@ -983,7 +984,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitInListCondition(final InListConditionContext ctx) {
+  public Subexpression<?> visitMembershipCondition(final MembershipConditionContext ctx) {
     return this.operation(ctx,
         ctx.modifier == null ? ConditionOperators.IN : ConditionOperators.NOT_IN);
   }
@@ -1001,7 +1002,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitDistinctCondition(final DistinctConditionContext ctx) {
+  public Subexpression<?> visitDuplicatesCondition(final DuplicatesConditionContext ctx) {
     return this.condition(ctx, ctx.modifier == null ? ConditionOperators.HAS_DUPLICATES
         : ConditionOperators.HAS_NO_DUPLICATES);
   }
@@ -1080,7 +1081,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * not a single value, as any other item is.
    */
   @Override
-  public Subexpression<?> visitList(final ListContext ctx) {
+  public Subexpression<?> visitListExpression(final ListExpressionContext ctx) {
     final List<ExpressionContext> items = ctx.expression();
     final List<Subexpression<?>> parts = this.subexpressionsOf(ctx);
     final boolean bindsT = ParameterType.T.boundBy(parts.get(0).value()).isPresent();
@@ -1114,7 +1115,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * the built-in {@code distinct-values} gives them.
    */
   @Override
-  public Subexpression<?> visitSequenceFromIteration(final SequenceFromIterationContext ctx) {
+  public Subexpression<?> visitIterationExpression(final IterationExpressionContext ctx) {
     this.translation.stack().pushStackFrame();
     final IteratorListExpression iterators = this.iteratorsOf(ctx.iteratorList());
     final Subexpression<?> iteration = this.subexpression(
@@ -1455,7 +1456,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   // #region Built-in functions -----------------------------------------------
 
   @Override
-  public Subexpression<?> visitFunctionExpression(final FunctionExpressionContext ctx) {
+  public Subexpression<?> visitBuiltInFunctionExpression(
+      final BuiltInFunctionExpressionContext ctx) {
     return this.visit(ctx.builtInFunction());
   }
 
@@ -1492,13 +1494,13 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitBooleanFromNumberFunction(
-      final BooleanFromNumberFunctionContext ctx) {
+  public Subexpression<?> visitIndicatorConversionFunction(
+      final IndicatorConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_INDICATOR);
   }
 
   @Override
-  public Subexpression<?> visitStringEmptyFunction(final StringEmptyFunctionContext ctx) {
+  public Subexpression<?> visitEmptyFunction(final EmptyFunctionContext ctx) {
     return this.call(ctx, StringFunctions.EMPTY);
   }
 
@@ -1515,7 +1517,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitNumberFunction(final NumberFunctionContext ctx) {
+  public Subexpression<?> visitNumberConversionFunction(final NumberConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_NUMBER);
   }
 
@@ -1575,49 +1577,47 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitYearFromDateFunction(final YearFromDateFunctionContext ctx) {
+  public Subexpression<?> visitYearFunction(final YearFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.YEAR);
   }
 
   @Override
-  public Subexpression<?> visitMonthFromDateFunction(final MonthFromDateFunctionContext ctx) {
+  public Subexpression<?> visitMonthFunction(final MonthFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.MONTH);
   }
 
   @Override
-  public Subexpression<?> visitDayFromDateFunction(final DayFromDateFunctionContext ctx) {
+  public Subexpression<?> visitDayFunction(final DayFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.DAY);
   }
 
   @Override
-  public Subexpression<?> visitHoursFromTimeFunction(final HoursFromTimeFunctionContext ctx) {
+  public Subexpression<?> visitHoursFunction(final HoursFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.HOURS);
   }
 
   @Override
-  public Subexpression<?> visitMinutesFromTimeFunction(final MinutesFromTimeFunctionContext ctx) {
+  public Subexpression<?> visitMinutesFunction(final MinutesFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.MINUTES);
   }
 
   @Override
-  public Subexpression<?> visitSecondsFromTimeFunction(final SecondsFromTimeFunctionContext ctx) {
+  public Subexpression<?> visitSecondsFunction(final SecondsFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.SECONDS);
   }
 
   @Override
-  public Subexpression<?> visitYearsFromDurationFunction(
-      final YearsFromDurationFunctionContext ctx) {
+  public Subexpression<?> visitYearsFunction(final YearsFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.YEARS);
   }
 
   @Override
-  public Subexpression<?> visitMonthsFromDurationFunction(
-      final MonthsFromDurationFunctionContext ctx) {
+  public Subexpression<?> visitMonthsFunction(final MonthsFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.MONTHS);
   }
 
   @Override
-  public Subexpression<?> visitDaysFromDurationFunction(final DaysFromDurationFunctionContext ctx) {
+  public Subexpression<?> visitDaysFunction(final DaysFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.DAYS);
   }
 
@@ -1639,7 +1639,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitTextFunction(final TextFunctionContext ctx) {
+  public Subexpression<?> visitTextConversionFunction(final TextConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_TEXT);
   }
 
@@ -1763,18 +1763,17 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   // Date, time and duration functions
 
   @Override
-  public Subexpression<?> visitDateFromStringFunction(final DateFromStringFunctionContext ctx) {
+  public Subexpression<?> visitDateConversionFunction(final DateConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_DATE);
   }
 
   @Override
-  public Subexpression<?> visitDatePlusDurationFunction(final DatePlusDurationFunctionContext ctx) {
+  public Subexpression<?> visitAddDurationFunction(final AddDurationFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.ADD_DURATION);
   }
 
   @Override
-  public Subexpression<?> visitDateMinusDurationFunction(
-      final DateMinusDurationFunctionContext ctx) {
+  public Subexpression<?> visitSubtractDurationFunction(final SubtractDurationFunctionContext ctx) {
     return this.call(ctx, DateTimeFunctions.SUBTRACT_DURATION);
   }
 
@@ -1784,7 +1783,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitTimeFromStringFunction(final TimeFromStringFunctionContext ctx) {
+  public Subexpression<?> visitTimeConversionFunction(final TimeConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_TIME);
   }
 
@@ -1794,14 +1793,14 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitDayTimeDurationFromStringFunction(
-      final DayTimeDurationFromStringFunctionContext ctx) {
+  public Subexpression<?> visitDayTimeDurationConversionFunction(
+      final DayTimeDurationConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_DAY_TIME_DURATION);
   }
 
   @Override
-  public Subexpression<?> visitYearMonthDurationFromStringFunction(
-      final YearMonthDurationFromStringFunctionContext ctx) {
+  public Subexpression<?> visitYearMonthDurationConversionFunction(
+      final YearMonthDurationConversionFunctionContext ctx) {
     return this.call(ctx, ConversionFunctions.TO_YEAR_MONTH_DURATION);
   }
 
