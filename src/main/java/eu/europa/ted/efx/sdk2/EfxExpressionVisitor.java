@@ -934,7 +934,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   /**
-   * Counts a read of the current context: a reference is resolved from it.
+   * Counts a read of the current context: a reference is resolved from it. Where no context is
+   * declared, the reference is resolved from the root, and its read is a read of the root.
    *
    * <p>A reference is resolved only through {@link #relativePathOfField},
    * {@link #relativePathOfNode}, {@link #absolutePathOfCurrentContext}, {@link #absolutePathOfField}
@@ -943,7 +944,12 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * what the target language would read differently for each element: see {@link Reads}.</p>
    */
   private void countReadOfCurrentContext() {
-    this.translation.efxContext().readsInCurrentContext().countReadOfContext();
+    final Reads reads = this.translation.efxContext().readsInCurrentContext();
+    if (this.translation.efxContext().symbol() == NO_CONTEXT) {
+      reads.countReadOfRoot();
+      return;
+    }
+    reads.countReadOfContext();
   }
 
   /**

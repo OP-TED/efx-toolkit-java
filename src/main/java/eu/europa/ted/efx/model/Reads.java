@@ -16,8 +16,8 @@ package eu.europa.ted.efx.model;
 /**
  * The references resolved, and the dictionaries looked up, while a context is the current one:
  * the reads of the context, and the reads of the root, which an absolute reference and a lookup
- * start from. Where no context is declared, the root is the context that a relative reference
- * reads.
+ * start from. Where no context is declared, a relative reference starts from the root, and its
+ * read is a read of the root.
  *
  * <p>Each {@link Context} keeps its reads, and the {@link ContextStack} keeps those made where no
  * context is declared, so that an index can tell whether its position reads what the target

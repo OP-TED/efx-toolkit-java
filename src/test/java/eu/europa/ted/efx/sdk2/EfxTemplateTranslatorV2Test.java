@@ -3748,14 +3748,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testContextDeclaration_WithFieldContextIndexReadingAField() {
-    // No context is declared above the line, so the field is read from the root, as the target
-    // language would read it for each element, and the position is bound first
+    // No context is declared above the line, so the field is read from the root, which is the
+    // same for each element, and the position is not bound first
     assertEquals(
         lines(
             "TEMPLATES:",
             "let body01() -> { eval(./normalize-space(text())) }",
             "MAIN:",
-            "for-each((for $__index in /*/PathNode/NumberField/number() return (/*/PathNode/RepeatableTextField)[$__index])).call(body01())"),
+            "for-each((/*/PathNode/RepeatableTextField)[/*/PathNode/NumberField/number()]).call(body01())"),
         translateTemplate("{BT-00-Repeatable-Text[at BT-00-Number]} ${BT-00-Repeatable-Text}"));
   }
 

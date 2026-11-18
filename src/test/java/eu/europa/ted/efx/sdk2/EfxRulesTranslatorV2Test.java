@@ -245,6 +245,39 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testWithClause_IndexReadingAField() throws IOException {
+    // No context is declared above a rule context, so a field that its index reads is read from
+    // the root, which is the same for each element. The index stays a predicate, and the rule
+    // context is an XSLT 3 pattern that matches the element at that position.
+    final String notice = lines(
+        "<Notice>",
+        "  <PathNode><NumberField>2</NumberField><TextField>x</TextField></PathNode>",
+        "  <SubNode><SubSubNode><SubTextField>a</SubTextField></SubSubNode></SubNode>",
+        "  <SubNode><SubSubNode><SubTextField>b</SubTextField></SubSubNode></SubNode>",
+        "</Notice>");
+    final Map<String, List<String>> ruleContexts = Map.of(
+        "ND-SubNode[at BT-00-Number]",
+        List.of("(/*/SubNode)[/*/PathNode/NumberField/number()]", "b"),
+        "ND-SubNode[at count(BT-00-Text)]",
+        List.of("(/*/SubNode)[count(/*/PathNode/TextField/normalize-space(text()))]", "a"),
+        "BT-01-SubSubNode-Text[at BT-00-Number]",
+        List.of("(/*/SubNode/SubSubNode/SubTextField[0 = 0])[/*/PathNode/NumberField/number()]",
+            "b"),
+        "EVERY BT-01-SubSubNode-Text[at BT-00-Number]",
+        List.of("(/*/SubNode/SubSubNode/SubTextField)[/*/PathNode/NumberField/number()]", "b"));
+    for (Map.Entry<String, List<String>> ruleContext : ruleContexts.entrySet()) {
+      final String expected = ruleContext.getValue().get(0);
+      String rules = "---- STAGE 1a ----\n\nWITH " + ruleContext.getKey() + "\n"
+          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+      String pattern = translator.translateRules(rules).get("static/validation-stage-1a-1.sch");
+      assertTrue(pattern.contains("<rule context=\"" + expected + "\">"),
+          "WITH " + ruleContext.getKey() + ":\n" + pattern);
+      assertEquals(ruleContext.getValue().get(1), elementsMatching(expected, notice),
+          "WITH " + ruleContext.getKey());
+    }
+  }
+
+  @Test
   void testWithClause_ContextVariable() throws IOException {
     String testName = "testWithClause_ContextVariable";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));

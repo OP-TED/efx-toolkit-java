@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.stream.StreamSource;
@@ -23,6 +25,8 @@ import net.sf.saxon.s9api.XPathSelector;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.streams.Predicates;
+import net.sf.saxon.s9api.streams.Steps;
 
 public abstract class EfxTestsBase {
 
@@ -120,6 +124,34 @@ public abstract class EfxTestsBase {
     } catch (SaxonApiException e) {
       throw new AssertionError("Generated XPath cannot be evaluated: " + xpath + "\n"
           + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Gives the elements of a document that a rule context matches. The rule context is compiled as
+   * an XSLT 3 pattern, as a Schematron whose query binding is {@code xslt3} needs it to be.
+   *
+   * @param ruleContext the rule context
+   * @param xml the document
+   * @return the string values of the elements that match, separated by spaces
+   */
+  protected static String elementsMatching(final String ruleContext, final String xml) {
+    try {
+      final XdmNode document =
+          PROCESSOR.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
+      final XPathSelector pattern = XPATH_COMPILER.compilePattern(ruleContext).load();
+      final List<String> matching = new ArrayList<>();
+      for (final XdmNode element : document.select(Steps.descendant(Predicates.isElement()))
+          .asListOfNodes()) {
+        pattern.setContextItem(element);
+        if (pattern.effectiveBooleanValue()) {
+          matching.add(element.getStringValue());
+        }
+      }
+      return String.join(" ", matching);
+    } catch (SaxonApiException e) {
+      throw new AssertionError("Rule context cannot be matched as an XSLT 3 pattern: "
+          + ruleContext + "\n" + e.getMessage(), e);
     }
   }
 
