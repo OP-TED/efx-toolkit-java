@@ -407,13 +407,19 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   // #region Source template blocks -------------------------------------------
 
   @Override
+  public void exitTextBlock(TextBlockContext ctx) {
+    this.translation.stack().push(new TextContentTemplateFragment(ctx.getText()));
+  }
+
+  @Override
   public void exitTextTemplate(TextTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    TextContentTemplateFragment text = new TextContentTemplateFragment(ctx.textBlock() != null ? ctx.textBlock().getText() : "");
-    if (ctx.linkBlock() == null) {
-      template.prependText(text);
-    } else {
-      template.prepend(this.linked(text, ctx.linkBlock()));
+    if (ctx.textBlock() != null) {
+      if (ctx.linkBlock() == null) {
+        template.prependText(this.translation.stack().pop(TextContentTemplateFragment.class));
+      } else {
+        template.prepend(this.translation.stack().pop(HyperlinkContentTemplateFragment.class));
+      }
     }
     this.translation.stack().push(template);
   }
@@ -422,7 +428,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   public void exitLabelTemplate(LabelTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
     if (ctx.labelBlock() != null) {
-      template.prepend(this.linked(this.translation.stack().pop(ContentTemplateFragment.class), ctx.linkBlock()));
+      template.prepend(this.translation.stack().pop(ContentTemplateFragment.class));
     }
     this.translation.stack().push(template);
   }
@@ -432,7 +438,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   @Override
   public void exitExpressionTemplate(ExpressionTemplateContext ctx) {
     DisplayContentTemplate template = ctx.templateFragment() != null ? this.translation.stack().pop(DisplayContentTemplate.class) : new DisplayContentTemplate();
-    template.prepend(this.linked(this.translation.stack().pop(FormatContentTemplateFragment.class), ctx.linkBlock()));
+    template.prepend(this.translation.stack().pop(ContentTemplateFragment.class));
     this.translation.stack().push(template);
   }
 
@@ -1434,20 +1440,15 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   // #region Hyperlinks -------------------------------------------------------
 
   /**
-   * Displays a fragment as a hyperlink when a link block follows it, as in
-   * {@code ${'a link'}@{'https://example.com'}}.
-   *
-   * @param fragment the text, the label or the value displayed
-   * @param link the link block that follows the fragment, or null if there is none
-   * @return the fragment, as a hyperlink to the URL of the link block if there is one
+   * Displays the text, the label or the value before a link block as a hyperlink, as in
+   * {@code ${'a link'}@{'https://example.com'}}. The URL is read here, before the rest of the line,
+   * so that an error in it is reported before an error that comes after it.
    */
-  private ContentTemplateFragment linked(final ContentTemplateFragment fragment,
-      final LinkBlockContext link) {
-    if (link == null) {
-      return fragment;
-    }
-    final StringExpression url = this.expressions.valueOf(link.expression(), HYPERLINK).stringAt(0);
-    return new HyperlinkContentTemplateFragment(fragment, url);
+  @Override
+  public void exitLinkBlock(LinkBlockContext ctx) {
+    final ContentTemplateFragment fragment = this.translation.stack().pop(ContentTemplateFragment.class);
+    final StringExpression url = this.expressions.valueOf(ctx.expression(), HYPERLINK).stringAt(0);
+    this.translation.stack().push(new HyperlinkContentTemplateFragment(fragment, url));
   }
 
   // #endregion Hyperlinks ----------------------------------------------------

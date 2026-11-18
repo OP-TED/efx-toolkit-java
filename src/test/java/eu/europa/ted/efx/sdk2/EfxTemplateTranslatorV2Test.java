@@ -3348,6 +3348,26 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         "DISPLAY here is a Link@{1};");
   }
 
+  /**
+   * The URL of a link is checked before the rest of the line, so the first mistake of the line is
+   * the one reported, whether the link follows a text, a label or an expression block.
+   */
+  @Test
+  void testTypeErrorMessage_Hyperlink_BeforeTheRestOfTheLine() {
+    assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
+        "line 1:13 Type mismatch. Hyperlink cannot take 'number'. Its URL must be 'text'.",
+        "{ND-Root} a@{1} #{BT-999-Unknown}");
+    assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
+        "line 1:13 Type mismatch. Hyperlink cannot take 'number'. Its URL must be 'text'.",
+        "{ND-Root} a@{1} b@{TRUE}");
+    assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
+        "line 1:36 Type mismatch. Hyperlink cannot take 'number'. Its URL must be 'text'.",
+        "{ND-Root} #{field|name|BT-00-Text}@{1} #{BT-999-Unknown}");
+    assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
+        "line 1:25 Type mismatch. Hyperlink cannot take 'number'. Its URL must be 'text'.",
+        "{ND-Root} ${BT-00-Text}@{1} #{BT-999-Unknown}");
+  }
+
   @Test
   void testTypeErrorMessage_LabelBlock() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
