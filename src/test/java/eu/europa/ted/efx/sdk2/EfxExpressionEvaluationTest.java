@@ -71,6 +71,16 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
   }
 
   /**
+   * Asserts the result of an expression that reads an indicator parameter {@code $p}.
+   */
+  private void assertResultWithParameter(final String expected, final String expression,
+      final String parameterValue) {
+    final String withParameter = "WITH ND-Root, indicator:$p COMPUTE " + expression;
+    assertEquals(expected, evaluate(translateExpression(withParameter, parameterValue), NOTICE),
+        withParameter);
+  }
+
+  /**
    * A membership test is translated to an XPath comparison, which cannot be an operand of another
    * comparison without parentheses. The two groupings give different results.
    */
@@ -182,6 +192,18 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
   }
 
   /**
+   * The expression after {@code else} extends as far to the right as it can, also when the
+   * operand after the operator is a variable.
+   */
+  @Test
+  void testElseExtendsToTheRight_VariableOperand() {
+    assertResultWithParameter("true", "if TRUE then TRUE else FALSE == $p", "FALSE");
+    assertResultWithParameter("false", "(if TRUE then TRUE else FALSE) == $p", "FALSE");
+    assertResultWithParameter("true", "if TRUE then TRUE else FALSE and $p", "FALSE");
+    assertResultWithParameter("false", "(if TRUE then TRUE else FALSE) and $p", "FALSE");
+  }
+
+  /**
    * The expression after {@code satisfies} extends as far to the right as it can. The notice has
    * no {@code BT-00-Repeatable-Text}, so {@code every} gives {@code true} and {@code some} gives
    * {@code false}, whatever follows {@code satisfies}: a {@code not in} applied to the whole
@@ -193,6 +215,22 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
     assertResult("false", "(every text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [TRUE]");
     assertResult("false", "some text:$x in BT-00-Repeatable-Text satisfies FALSE not in [TRUE]");
     assertResult("true", "(some text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [TRUE]");
+  }
+
+  /**
+   * The expression after {@code satisfies} extends as far to the right as it can, also when the
+   * list after {@code not in} holds a variable.
+   */
+  @Test
+  void testSatisfiesExtendsToTheRight_VariableInTheList() {
+    assertResultWithParameter("true",
+        "every text:$x in BT-00-Repeatable-Text satisfies FALSE not in [$p]", "TRUE");
+    assertResultWithParameter("false",
+        "(every text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [$p]", "TRUE");
+    assertResultWithParameter("false",
+        "some text:$x in BT-00-Repeatable-Text satisfies FALSE not in [$p]", "TRUE");
+    assertResultWithParameter("true",
+        "(some text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [$p]", "TRUE");
   }
 
   /**
