@@ -21,9 +21,10 @@ import eu.europa.ted.efx.EfxTestsBase;
 
 /**
  * Evaluates with Saxon the XPath that EFX expressions are translated to, so that each result shows
- * how the expression is grouped: by the order of the operators in the grammar, and in the XPath,
- * which keeps that grouping where XPath would group the same operations differently, or would not
- * accept them without parentheses.
+ * what the expression means: how it is grouped, by the order of the operators in the grammar, and
+ * in the XPath, which keeps that grouping where XPath would group the same operations differently,
+ * or would not accept them without parentheses; what an index selects; and what value a context
+ * variable gives.
  */
 class EfxExpressionEvaluationTest extends EfxTestsBase {
 
@@ -38,14 +39,34 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
       + "<RepeatableNumberField>3</RepeatableNumberField>"
       + "</PathNode></Notice>";
 
+  /**
+   * A notice with two {@code ND-RepeatableNode}, each with one
+   * {@code BT-00-Text-In-Repeatable-Node}: {@code a} in the first and {@code b} in the second.
+   */
+  private static final String TWO_REPEATABLE_NODES = "<Notice>"
+      + "<RepeatableNode><TextField>a</TextField></RepeatableNode>"
+      + "<RepeatableNode><TextField>b</TextField></RepeatableNode>"
+      + "</Notice>";
+
+  /**
+   * A notice whose {@code BT-00-Text} holds {@code abc} with a space before and after it.
+   */
+  private static final String TEXT_WITH_SPACES = "<Notice><PathNode>"
+      + "<TextField> abc </TextField>"
+      + "</PathNode></Notice>";
+
   @Override
   protected String getSdkVersion() {
     return "eforms-sdk-2.0";
   }
 
   private void assertResult(final String expected, final String expression) {
+    assertResult(expected, expression, NOTICE);
+  }
+
+  private void assertResult(final String expected, final String expression, final String notice) {
     assertEquals(expected,
-        evaluate(translateComputeExpressionWithContext("ND-Root", expression), NOTICE),
+        evaluate(translateComputeExpressionWithContext("ND-Root", expression), notice),
         expression);
   }
 
@@ -140,6 +161,41 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
   }
 
   /**
+   * The expression after {@code return} extends as far to the right as it can, so a condition
+   * after it is tested for each value: {@code for number:$x in [1, 2] return 1 has duplicates}
+   * gives {@code false} twice. Applied to the whole sequence, the condition gives one value.
+   */
+  @Test
+  void testReturnExtendsToTheRight() {
+    assertResult("false false", "for number:$x in [1, 2] return 1 has duplicates");
+    assertResult("true", "(for number:$x in [1, 2] return 1) has duplicates");
+    assertResult("", "for text:$x in BT-00-Repeatable-Text return $x is empty");
+    assertResult("true", "(for text:$x in BT-00-Repeatable-Text return $x) is empty");
+  }
+
+  @Test
+  void testElseExtendsToTheRight() {
+    assertResult("true", "if TRUE then TRUE else FALSE == FALSE");
+    assertResult("false", "(if TRUE then TRUE else FALSE) == FALSE");
+    assertResult("1", "if TRUE then 1 else 2 + 3");
+    assertResult("4", "(if TRUE then 1 else 2) + 3");
+  }
+
+  /**
+   * The expression after {@code satisfies} extends as far to the right as it can. The notice has
+   * no {@code BT-00-Repeatable-Text}, so {@code every} gives {@code true} and {@code some} gives
+   * {@code false}, whatever follows {@code satisfies}: a {@code not in} applied to the whole
+   * quantified expression gives the opposite.
+   */
+  @Test
+  void testSatisfiesExtendsToTheRight() {
+    assertResult("true", "every text:$x in BT-00-Repeatable-Text satisfies FALSE not in [TRUE]");
+    assertResult("false", "(every text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [TRUE]");
+    assertResult("false", "some text:$x in BT-00-Repeatable-Text satisfies FALSE not in [TRUE]");
+    assertResult("true", "(some text:$x in BT-00-Repeatable-Text satisfies FALSE) not in [TRUE]");
+  }
+
+  /**
    * A function or a property that is translated to an operation keeps the grouping of a call.
    */
   @Test
@@ -180,5 +236,35 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
     assertResult("2", "1 - (2 - 3)");
     assertResult("2", "1 - -1");
     assertResult("9", "(1 + 2) * 3");
+  }
+
+  /**
+   * Additions and subtractions of durations are read from the left, as those of numbers are.
+   */
+  @Test
+  void testDurationArithmetic() {
+    assertResult("P2D", "P1D - P2D + P3D");
+    assertResult("-P4D", "P1D - (P2D + P3D)");
+  }
+
+  /**
+   * An index selects the nth element of the whole sequence, also before {@code :rawValue}, and
+   * not the nth element under each parent: {@code [at 2]} selects the field of the second
+   * {@code ND-RepeatableNode}.
+   */
+  @Test
+  void testIndexBeforeRawValue_CountsAcrossParents() {
+    assertResult("a", "BT-00-Text-In-Repeatable-Node[at 1]:rawValue", TWO_REPEATABLE_NODES);
+    assertResult("b", "BT-00-Text-In-Repeatable-Node[at 2]:rawValue", TWO_REPEATABLE_NODES);
+  }
+
+  /**
+   * A field context variable used as a value gives the value of its field, with its spaces
+   * normalised, as the field itself does.
+   */
+  @Test
+  void testContextVariableComparedWithText() {
+    assertResult("true", "for context:$c in BT-00-Text return $c == 'abc'", TEXT_WITH_SPACES);
+    assertResult("true", "BT-00-Text == 'abc'", TEXT_WITH_SPACES);
   }
 }
