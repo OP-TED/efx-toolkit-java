@@ -37,7 +37,8 @@ public class InvalidUsageException extends EfxCompilationException {
         INVALID_ENDPOINT_NAME,
         INVALID_FORMAT_OPTIONS,
         UNIT_FOR_LIST,
-        NO_UNIT_NOT_APPLICABLE
+        NO_UNIT_NOT_APPLICABLE,
+        EVERY_REQUIRES_NODE_OR_FIELD
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "Indirect label reference shorthand #{%1$s}, requires a field of type 'code' or 'indicator'. Field %1$s is of type %2$s.";
@@ -54,6 +55,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String INVALID_ENDPOINT_NAME = "Endpoint name '%s' is not valid. Endpoint names must start with a letter and contain only letters, digits, hyphens, and underscores.";
     private static final String INVALID_FORMAT_OPTIONS = "A number of decimals can only format a number, and short, medium or long only a date or a time.";
     private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
+    private static final String EVERY_REQUIRES_NODE_OR_FIELD = "WITH EVERY needs a node or a field as context, not the shortcut '%s'.";
     private static final String NO_UNIT_NOT_APPLICABLE = "no-unit can only be used for an amount, a measure or a duration.";
 
     private final ErrorCode errorCode;
@@ -130,5 +132,9 @@ public class InvalidUsageException extends EfxCompilationException {
 
     public static InvalidUsageException noUnitNotApplicable(ParserRuleContext ctx) {
         return new InvalidUsageException(ErrorCode.NO_UNIT_NOT_APPLICABLE, ctx, NO_UNIT_NOT_APPLICABLE);
+    }
+
+    public static InvalidUsageException everyRequiresNodeOrField(ParserRuleContext ctx, String shortcut) {
+        return new InvalidUsageException(ErrorCode.EVERY_REQUIRES_NODE_OR_FIELD, ctx, EVERY_REQUIRES_NODE_OR_FIELD, shortcut);
     }
 }

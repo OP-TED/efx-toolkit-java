@@ -1,0 +1,71 @@
+{
+  "schematrons" : [ {
+    "name" : "complete-validation",
+    "type" : "dynamic",
+    "filename" : "dynamic/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-1a-1",
+    "type" : "dynamic",
+    "stage" : "1a",
+    "filename" : "dynamic/validation-stage-1a-1.sch"
+  }, {
+    "name" : "validation-stage-1b-1",
+    "type" : "dynamic",
+    "stage" : "1b",
+    "filename" : "dynamic/validation-stage-1b-1.sch"
+  }, {
+    "name" : "validation-stage-2a-1",
+    "type" : "dynamic",
+    "stage" : "2a",
+    "filename" : "dynamic/validation-stage-2a-1.sch"
+  }, {
+    "name" : "validation-stage-3b-1",
+    "type" : "dynamic",
+    "stage" : "3b",
+    "filename" : "dynamic/validation-stage-3b-1.sch"
+  }, {
+    "name" : "validation-stage-4b-1",
+    "type" : "dynamic",
+    "stage" : "4b",
+    "filename" : "dynamic/validation-stage-4b-1.sch"
+  }, {
+    "name" : "validation-stage-4c-1",
+    "type" : "dynamic",
+    "stage" : "4c",
+    "filename" : "dynamic/validation-stage-4c-1.sch"
+  }, {
+    "name" : "complete-validation",
+    "type" : "static",
+    "filename" : "static/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-1a-1",
+    "type" : "static",
+    "stage" : "1a",
+    "filename" : "static/validation-stage-1a-1.sch"
+  }, {
+    "name" : "validation-stage-1b-1",
+    "type" : "static",
+    "stage" : "1b",
+    "filename" : "static/validation-stage-1b-1.sch"
+  }, {
+    "name" : "validation-stage-2a-1",
+    "type" : "static",
+    "stage" : "2a",
+    "filename" : "static/validation-stage-2a-1.sch"
+  }, {
+    "name" : "validation-stage-3b-1",
+    "type" : "static",
+    "stage" : "3b",
+    "filename" : "static/validation-stage-3b-1.sch"
+  }, {
+    "name" : "validation-stage-4b-1",
+    "type" : "static",
+    "stage" : "4b",
+    "filename" : "static/validation-stage-4b-1.sch"
+  }, {
+    "name" : "validation-stage-4c-1",
+    "type" : "static",
+    "stage" : "4c",
+    "filename" : "static/validation-stage-4c-1.sch"
+  } ]
+}

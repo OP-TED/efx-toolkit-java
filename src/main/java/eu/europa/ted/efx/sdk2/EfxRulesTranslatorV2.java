@@ -66,7 +66,9 @@ import eu.europa.ted.efx.model.rules.AssertRule;
 import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.efx.model.rules.ReportRule;
+import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.rules.RuleSet;
+import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.model.rules.RuleScope;
 import eu.europa.ted.efx.model.rules.RuleSeverity;
 import eu.europa.ted.efx.model.rules.RuleStack;
@@ -561,6 +563,10 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
     String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
+    final boolean every = isEveryContext(ctx);
+    if (every && ctx.shortcut != null) {
+      throw InvalidUsageException.everyRequiresNodeOrField(ctx, shortcut);
+    }
     switch (shortcut) {
       case ".":
         throw new UnsupportedOperationException("Same context (.) is not supported in EFX Rules.");
@@ -591,8 +597,35 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
           assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
           this.exitNodeContextDeclaration(nodeId, contextPath, null);
         }
+        if (every) {
+          this.setEveryRuleContextPath(contextPath);
+        }
         break;
     }
+  }
+
+  /**
+   * True when the context is declared with WITH EVERY.
+   */
+  private static boolean isEveryContext(ContextDeclarationContext ctx) {
+    return ctx.getParent() instanceof ContextDeclarationBlockContext
+        && ctx.getParent().getParent() instanceof WithClauseContext
+        && ((WithClauseContext) ctx.getParent().getParent()).Every() != null;
+  }
+
+  /**
+   * For WITH EVERY, sets the context of the Schematron rule to the path of the context without
+   * the declared predicates on its last step. The EFX context keeps the full path, so everything
+   * inside the rule set is read as for WITH without EVERY.
+   */
+  private void setEveryRuleContextPath(PathExpression contextPath) {
+    final RuleSet ruleSet = this.ruleStack.peek(RuleSet.class);
+    final Context context = ruleSet.getContext();
+    final PathExpression declaredPath = context.isFieldContext()
+        ? this.symbols.getAbsolutePathOfField(context.symbol())
+        : this.symbols.getAbsolutePathOfNode(context.symbol());
+    ruleSet.setRuleContextPath(
+        XPathContextualizer.removeDeclaredPredicatesOfLastStep(context.absolutePath(), declaredPath));
   }
 
   private void exitRootContextDeclaration() {
