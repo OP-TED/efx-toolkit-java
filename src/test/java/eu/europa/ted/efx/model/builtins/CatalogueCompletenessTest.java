@@ -38,8 +38,7 @@ import eu.europa.ted.efx.sdk2.EfxLexer;
 class CatalogueCompletenessTest {
 
   private static final Set<Integer> KEYWORD_FUNCTIONS = Set.of(EfxLexer.Not, EfxLexer.Text,
-      EfxLexer.Number, EfxLexer.Indicator, EfxLexer.Date, EfxLexer.Time, EfxLexer.Empty,
-      EfxLexer.AddDuration, EfxLexer.SubtractDuration);
+      EfxLexer.Number, EfxLexer.Indicator, EfxLexer.Date, EfxLexer.Time, EfxLexer.Empty);
 
   private static final Set<String> OPERATORS = Set.of(
       "and", "or",
