@@ -43,7 +43,7 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     @Override
     public PathExpression composeFieldValueReference(final PathExpression fieldReference) {
         if (fieldReference.is(EfxDataType.Boolean.class)) {
-            return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
+            return fieldReference;
         }
         return super.composeFieldValueReference(fieldReference);
     }
@@ -54,7 +54,7 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      */
     @Override
     public BooleanExpression composeExistsCondition(final PathExpression reference) {
-        return new BooleanExpression(reference.getScript());
+        return Expression.from(reference, BooleanExpression.class);
     }
 
     @Override

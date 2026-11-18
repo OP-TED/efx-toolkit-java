@@ -217,6 +217,26 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     }
   }
 
+  /**
+   * An index selects from the whole sequence, which it puts in parentheses. WITH EVERY removes the
+   * declared predicate inside them, so that the index counts every element of the kind.
+   */
+  @Test
+  void testWithClause_EveryWithIndex() throws IOException {
+    final Map<String, String> ruleContexts = Map.of(
+        "ND-PrivacyInRepeatableNode[at 1]", "(/*/RepeatableNode/FieldsPrivacy)[1]",
+        "context : $priv = ND-PrivacyInRepeatableNode[at 1]", "(/*/RepeatableNode/FieldsPrivacy)[1]",
+        "BT-01-SubSubNode-Text[at 1]", "(/*/SubNode/SubSubNode/SubTextField)[1]",
+        "context : $text = BT-01-SubSubNode-Text[at 1]", "(/*/SubNode/SubSubNode/SubTextField)[1]");
+    for (Map.Entry<String, String> ruleContext : ruleContexts.entrySet()) {
+      String rules = "---- STAGE 1a ----\n\nWITH EVERY " + ruleContext.getKey() + "\n"
+          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+      String pattern = translator.translateRules(rules).get("static/validation-stage-1a-1.sch");
+      assertTrue(pattern.contains("<rule context=\"" + ruleContext.getValue() + "\">"),
+          "WITH EVERY " + ruleContext.getKey() + ":\n" + pattern);
+    }
+  }
+
   @Test
   void testWithClause_ContextVariable() throws IOException {
     String testName = "testWithClause_ContextVariable";

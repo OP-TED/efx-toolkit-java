@@ -55,6 +55,14 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
       + "<TextField> abc </TextField>"
       + "</PathNode></Notice>";
 
+  /**
+   * A notice with one {@code BT-00-Repeatable-Number}, whose value is 0. Compared with a boolean,
+   * the element is read as its value, 0, which is false.
+   */
+  private static final String ZERO_NUMBER = "<Notice><PathNode>"
+      + "<RepeatableNumberField>0</RepeatableNumberField>"
+      + "</PathNode></Notice>";
+
   @Override
   protected String getSdkVersion() {
     return "eforms-sdk-2.0";
@@ -138,10 +146,10 @@ class EfxExpressionEvaluationTest extends EfxTestsBase {
 
   @Test
   void testConditionBeforeComparison_Present() {
-    assertResult("true", "TRUE == BT-00-Repeatable-Number is present");
-    assertResult("true", "BT-00-Repeatable-Number is present == TRUE");
-    assertResult("true", "TRUE != BT-00-Repeatable-Number is not present");
-    assertResult("true", "BT-00-Repeatable-Number is not present != TRUE");
+    assertResult("true", "TRUE == BT-00-Repeatable-Number is present", ZERO_NUMBER);
+    assertResult("true", "BT-00-Repeatable-Number is present == TRUE", ZERO_NUMBER);
+    assertResult("true", "TRUE != BT-00-Repeatable-Number is not present", ZERO_NUMBER);
+    assertResult("true", "BT-00-Repeatable-Number is not present != TRUE", ZERO_NUMBER);
   }
 
   /**

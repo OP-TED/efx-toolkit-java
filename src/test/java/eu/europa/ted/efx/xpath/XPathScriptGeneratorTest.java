@@ -20,11 +20,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import eu.europa.ted.efx.EfxTranslatorOptions;
+import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.Precedence;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringPath;
+import eu.europa.ted.efx.model.expressions.sequence.BooleanSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.NodeSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.SequencePath;
 import eu.europa.ted.efx.sdk1.xpath.XPathScriptGeneratorV1;
@@ -62,6 +64,21 @@ class XPathScriptGeneratorTest {
     assertEquals("(for $x in /*/n return $x)/a",
         new XPathScriptGeneratorV1(EfxTranslatorOptions.DEFAULT)
             .composeFieldInExternalReference(this.loop(), new StringPath("/a")).getScript());
+  }
+
+  @Test
+  void testSdk1PresenceOfAForExpression() {
+    final XPathScriptGeneratorV1 v1 = new XPathScriptGeneratorV1(EfxTranslatorOptions.DEFAULT);
+    assertEquals("true() and (for $x in /*/n return $x)",
+        v1.composeLogicalAnd(new BooleanExpression("true()"),
+            v1.composeExistsCondition(this.loop())).getScript());
+  }
+
+  @Test
+  void testSdk1IndicatorValueOfAForExpression() {
+    final XPathScriptGeneratorV1 v1 = new XPathScriptGeneratorV1(EfxTranslatorOptions.DEFAULT);
+    assertEquals(Precedence.PREFIX, v1.composeFieldValueReference(
+        Expression.from(this.loop(), BooleanSequencePath.class)).getPrecedence());
   }
 
   @Test
