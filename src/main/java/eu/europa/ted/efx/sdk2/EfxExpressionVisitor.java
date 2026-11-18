@@ -1817,17 +1817,17 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   @Override
-  public Subexpression<?> visitUnionFunction(final UnionFunctionContext ctx) {
+  public Subexpression<?> visitValueUnionFunction(final ValueUnionFunctionContext ctx) {
     return this.call(ctx, SequenceFunctions.VALUE_UNION);
   }
 
   @Override
-  public Subexpression<?> visitIntersectFunction(final IntersectFunctionContext ctx) {
+  public Subexpression<?> visitValueIntersectFunction(final ValueIntersectFunctionContext ctx) {
     return this.call(ctx, SequenceFunctions.VALUE_INTERSECT);
   }
 
   @Override
-  public Subexpression<?> visitExceptFunction(final ExceptFunctionContext ctx) {
+  public Subexpression<?> visitValueExceptFunction(final ValueExceptFunctionContext ctx) {
     return this.call(ctx, SequenceFunctions.VALUE_EXCEPT);
   }
 
