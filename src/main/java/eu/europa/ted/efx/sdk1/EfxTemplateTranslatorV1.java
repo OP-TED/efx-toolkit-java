@@ -379,17 +379,12 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     this.symbols.getTypeOfField(fieldId);
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
-
-    if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(fieldId);
-    } else {
-      StringExpression key = this.script.composeStringConcatenation(
-          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
-              this.script.getStringLiteralFromUnquotedString("|"), labelType,
-              this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId)));
-      this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
-    }
+    StringExpression key = this.script.composeStringConcatenation(
+        List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
+            this.script.getStringLiteralFromUnquotedString("|"), labelType,
+            this.script.getStringLiteralFromUnquotedString("|"),
+            this.script.getStringLiteralFromUnquotedString(fieldId)));
+    this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
   @Override

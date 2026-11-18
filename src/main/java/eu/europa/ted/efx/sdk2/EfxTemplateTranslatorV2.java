@@ -1038,18 +1038,13 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     final String fieldId = field.getText();
     this.lookingUpField(field, () -> this.translation.symbols().getTypeOfField(fieldId));
     StringExpression labelType = this.labelPart(labelBlock, LABEL_TYPE).stringAt(0);
-
-    if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(labelBlock, fieldId);
-    } else {
-      StringExpression key = this.translation.script().composeStringConcatenation(
-          List.of(this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
-              this.translation.script().getStringLiteralFromUnquotedString("|"), labelType,
-              this.translation.script().getStringLiteralFromUnquotedString("|"),
-              this.translation.script().getStringLiteralFromUnquotedString(fieldId)));
-      this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
-          NumericExpression.empty()));
-    }
+    StringExpression key = this.translation.script().composeStringConcatenation(
+        List.of(this.translation.script().getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
+            this.translation.script().getStringLiteralFromUnquotedString("|"), labelType,
+            this.translation.script().getStringLiteralFromUnquotedString("|"),
+            this.translation.script().getStringLiteralFromUnquotedString(fieldId)));
+    this.translation.stack().push(new LabelFromKeyContentTemplateFragment(key,
+        NumericExpression.empty()));
   }
 
   /**
