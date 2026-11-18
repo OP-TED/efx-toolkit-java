@@ -1060,7 +1060,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
    * {@code 1 = 1 = true()} is not XPath;</li>
    * <li>on the left of {@code and}, {@code or}, an addition or a multiplication, the same
    * precedence as the operation or a tighter one; on its right, a tighter one;</li>
-   * <li>before a predicate or an index, no operation at all.</li>
+   * <li>before a predicate, an index or a path step, no operation at all.</li>
    * </ul>
    * An argument of a function, an item of a list, and the parts of {@code for}, {@code some},
    * {@code every} and {@code if} take any operand.
@@ -1069,7 +1069,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
    * @param required the precedence its place requires
    * @return the script of the operand, in parentheses where needed
    */
-  private static String operand(final Expression operand, final Precedence required) {
+  protected static String operand(final Expression operand, final Precedence required) {
     return operand.getPrecedence().bindsAtLeast(required) ? operand.getScript()
         : "(" + operand.getScript() + ")";
   }

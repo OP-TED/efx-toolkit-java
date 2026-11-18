@@ -24,12 +24,15 @@ import eu.europa.ted.efx.model.expressions.Precedence;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
+import eu.europa.ted.efx.model.expressions.scalar.StringPath;
 import eu.europa.ted.efx.model.expressions.sequence.NodeSequencePath;
 import eu.europa.ted.efx.model.expressions.sequence.SequencePath;
+import eu.europa.ted.efx.sdk1.xpath.XPathScriptGeneratorV1;
 
 /**
  * A path that the generator composes from a {@code for} expression keeps the precedence of the
- * {@code for}, so that a predicate or an index after it applies to the whole sequence.
+ * {@code for}, so that a predicate, an index or a path step after it applies to the whole
+ * sequence.
  */
 class XPathScriptGeneratorTest {
 
@@ -52,6 +55,13 @@ class XPathScriptGeneratorTest {
     assertEquals("(for $x in /*/n return $x)[true()]",
         this.generator.composeFieldReferenceWithPredicate(this.loop(),
             new BooleanExpression("true()")).getScript());
+  }
+
+  @Test
+  void testFieldInExternalReferenceAfterAForExpression() {
+    assertEquals("(for $x in /*/n return $x)/a",
+        new XPathScriptGeneratorV1(EfxTranslatorOptions.DEFAULT)
+            .composeFieldInExternalReference(this.loop(), new StringPath("/a")).getScript());
   }
 
   @Test

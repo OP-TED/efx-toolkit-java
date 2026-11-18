@@ -204,7 +204,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
     walker.walk(translator, tree);
 
-    return Expression.instantiate(translator.getTranslatedScript(), parameterType);
+    return translator.stack.empty() ? Expression.empty(parameterType)
+        : Expression.from(translator.stack.pop(Expression.class), parameterType);
   }
 
   /**

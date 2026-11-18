@@ -1293,8 +1293,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
       throw SdkInconsistencyException.missingPrivacyCodeField(fieldId);
     }
     return this.translation.script().composeComparisonOperation(
-        new StringExpression(this.translation.script().composeFieldValueReference(
-            this.relativePathOfField(privacyCodeFieldId)).getScript()),
+        Expression.from(this.translation.script().composeFieldValueReference(
+            this.relativePathOfField(privacyCodeFieldId)), StringExpression.class),
         "==", this.translation.script().getStringLiteralFromUnquotedString(privacyCode));
   }
 
@@ -1311,8 +1311,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
             this.translation.script().composeLogicalNot(
                 this.translation.script().composeExistsCondition(publicationDate)),
             this.translation.script().composeComparisonOperation(
-                new DateExpression(this.translation.script()
-                    .composeFieldValueReference(publicationDate).getScript()),
+                Expression.from(this.translation.script()
+                    .composeFieldValueReference(publicationDate), DateExpression.class),
                 ">", this.translation.script().getCurrentDate())),
         BooleanExpression.class);
   }
