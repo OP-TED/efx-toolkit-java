@@ -138,7 +138,7 @@ public class SchematronAssert extends SchematronTest {
         return this.dynamicVariable.errorLabel();
       }
       return this.dynamicVariable.errorSeverity() == RuleSeverity.WARNING
-          ? "rule|text|api-warning" : "rule|text|api-error";
+          ? "auxiliary|text|api-warning" : "auxiliary|text|api-error";
     }
 
     @Override

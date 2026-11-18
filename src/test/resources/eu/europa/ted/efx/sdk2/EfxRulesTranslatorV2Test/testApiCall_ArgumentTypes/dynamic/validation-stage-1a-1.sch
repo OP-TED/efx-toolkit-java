@@ -11,25 +11,25 @@
         <let name="__apiResult8" value="number(efx:call-api('default', 'texts', string-join(((if (exists((../RepeatableTextField/normalize-space(text())))) then string-join(for $__value in (../RepeatableTextField/normalize-space(text())) return concat('arg1=', encode-for-uri($__value)), '&amp;') else 'arg1=')), '&amp;')))"/>
         <let name="__apiResult9" value="number(efx:call-api('default', 'numbers', string-join(((if (exists((for $__value in (../RepeatableNumberField/number()) return if ($__value = $__value and abs($__value) != xs:double('INF')) then (for $__text in string($__value) return if (contains($__text, 'E')) then (for $__exponent in xs:integer(substring-after($__text, 'E')) return string(xs:decimal(substring-before($__text, 'E')) * (if ($__exponent &gt;= 0) then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', ''))) else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1'))))) else string(xs:decimal($__text))) else ''))) then string-join(for $__value in (for $__value in (../RepeatableNumberField/number()) return if ($__value = $__value and abs($__value) != xs:double('INF')) then (for $__text in string($__value) return if (contains($__text, 'E')) then (for $__exponent in xs:integer(substring-after($__text, 'E')) return string(xs:decimal(substring-before($__text, 'E')) * (if ($__exponent &gt;= 0) then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', ''))) else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1'))))) else string(xs:decimal($__text))) else '') return concat('arg1=', encode-for-uri($__value)), '&amp;') else 'arg1=')), '&amp;')))"/>
         <let name="__apiResult10" value="number(efx:call-api('default', 'mixed', string-join((concat('arg1=', encode-for-uri(((../IdField/normalize-space(text())), '')[1])), (if (exists((../RepeatableTextField/normalize-space(text())))) then string-join(for $__value in (../RepeatableTextField/normalize-space(text())) return concat('arg2=', encode-for-uri($__value)), '&amp;') else 'arg2='), concat('arg3=', encode-for-uri(((for $__value in (../NumberField/number()) return if ($__value = $__value and abs($__value) != xs:double('INF')) then (for $__text in string($__value) return if (contains($__text, 'E')) then (for $__exponent in xs:integer(substring-after($__text, 'E')) return string(xs:decimal(substring-before($__text, 'E')) * (if ($__exponent &gt;= 0) then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', ''))) else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1'))))) else string(xs:decimal($__text))) else ''), '')[1]))), '&amp;')))"/>
-        <assert id="R-TYP-001-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-001-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-001" role="ERROR" test="($__apiResult1 = -1) or ($__apiResult1 = 1)">rule|text|R-TYP-001</assert>
-        <assert id="R-TYP-002-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-002-api-error-1" role="ERROR" test="not($__apiResult2 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-002" role="ERROR" test="($__apiResult2 = -1) or ($__apiResult2 = 1)">rule|text|R-TYP-002</assert>
-        <assert id="R-TYP-003-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-003-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-003" role="ERROR" test="($__apiResult3 = -1) or ($__apiResult3 = 1)">rule|text|R-TYP-003</assert>
-        <assert id="R-TYP-004-api-error-1" role="ERROR" test="not($__apiResult4 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-004-api-error-1" role="ERROR" test="not($__apiResult4 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-004" role="ERROR" test="($__apiResult4 = -1) or ($__apiResult4 = 1)">rule|text|R-TYP-004</assert>
-        <assert id="R-TYP-005-api-error-1" role="ERROR" test="not($__apiResult5 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-005-api-error-1" role="ERROR" test="not($__apiResult5 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-005" role="ERROR" test="($__apiResult5 = -1) or ($__apiResult5 = 1)">rule|text|R-TYP-005</assert>
-        <assert id="R-TYP-006-api-error-1" role="ERROR" test="not($__apiResult6 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-006-api-error-1" role="ERROR" test="not($__apiResult6 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-006" role="ERROR" test="($__apiResult6 = -1) or ($__apiResult6 = 1)">rule|text|R-TYP-006</assert>
-        <assert id="R-TYP-007-api-error-1" role="ERROR" test="not($__apiResult7 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-007-api-error-1" role="ERROR" test="not($__apiResult7 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-007" role="ERROR" test="($__apiResult7 = -1) or ($__apiResult7 = 1)">rule|text|R-TYP-007</assert>
-        <assert id="R-TYP-008-api-error-1" role="ERROR" test="not($__apiResult8 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-008-api-error-1" role="ERROR" test="not($__apiResult8 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-008" role="ERROR" test="($__apiResult8 = -1) or ($__apiResult8 = 1)">rule|text|R-TYP-008</assert>
-        <assert id="R-TYP-009-api-error-1" role="ERROR" test="not($__apiResult9 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-009-api-error-1" role="ERROR" test="not($__apiResult9 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-009" role="ERROR" test="($__apiResult9 = -1) or ($__apiResult9 = 1)">rule|text|R-TYP-009</assert>
-        <assert id="R-TYP-010-api-error-1" role="ERROR" test="not($__apiResult10 = -1)">rule|text|api-error</assert>
+        <assert id="R-TYP-010-api-error-1" role="ERROR" test="not($__apiResult10 = -1)">auxiliary|text|api-error</assert>
         <assert id="R-TYP-010" role="ERROR" test="($__apiResult10 = -1) or ($__apiResult10 = 1)">rule|text|R-TYP-010</assert>
     </rule>
 </pattern>

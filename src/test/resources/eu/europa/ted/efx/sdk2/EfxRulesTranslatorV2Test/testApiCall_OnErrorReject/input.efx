@@ -1,6 +1,6 @@
 // Test: Explicit ON ERROR REJECT on an API function.
 // Verifies that the companion error assert uses role="ERROR" (not WARNING)
-// and uses the default error label (rule|text|api-error).
+// and uses the default error label (auxiliary|text|api-error).
 
 ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
 
