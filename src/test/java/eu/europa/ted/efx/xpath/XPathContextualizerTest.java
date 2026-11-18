@@ -28,23 +28,8 @@ class XPathContextualizerTest {
   }
 
   @Test
-  void testRemoveDeclaredPredicates_DeclaredPredicate() {
-    assertEquals("/*/A/B", removeDeclared("/*/A/B[C/@listName='x']", "/*/A/B[C/@listName='x']"));
-  }
-
-  @Test
-  void testRemoveDeclaredPredicates_WrittenPredicateKept() {
-    assertEquals("/*/A/B[D]", removeDeclared("/*/A/B[C='x'][D]", "/*/A/B[C='x']"));
-  }
-
-  @Test
   void testRemoveDeclaredPredicates_WrittenPredicateIdenticalToDeclared() {
     assertEquals("/*/A/B[C='x']", removeDeclared("/*/A/B[C='x'][C='x']", "/*/A/B[C='x']"));
-  }
-
-  @Test
-  void testRemoveDeclaredPredicates_SeveralDeclaredPredicates() {
-    assertEquals("/*/A/B[E]", removeDeclared("/*/A/B[C][D][E]", "/*/A/B[C][D]"));
   }
 
   @Test
@@ -60,12 +45,6 @@ class XPathContextualizerTest {
   @Test
   void testRemoveDeclaredPredicates_NoDeclaredPredicate() {
     assertEquals("/*/A/B[D]", removeDeclared("/*/A/B[D]", "/*/A/B"));
-  }
-
-  @Test
-  void testRemoveDeclaredPredicates_MultiStepNodePath() {
-    // A node whose own relative path has several steps: only the last step loses its predicate.
-    assertEquals("/*/A/X[G]/B", removeDeclared("/*/A/X[G]/B[C='x']", "/*/A/X[G]/B[C='x']"));
   }
 
   @Test

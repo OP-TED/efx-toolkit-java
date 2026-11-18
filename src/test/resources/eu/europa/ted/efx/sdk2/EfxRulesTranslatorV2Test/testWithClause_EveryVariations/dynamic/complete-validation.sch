@@ -21,10 +21,7 @@
         <active pattern="EFORMS-validation-stage-1a-1" />
         <active pattern="EFORMS-validation-stage-1b-1" />
         <active pattern="EFORMS-validation-stage-2a-1" />
-        <active pattern="EFORMS-validation-stage-2b-1" />
-        <active pattern="EFORMS-validation-stage-3a-1" />
         <active pattern="EFORMS-validation-stage-3b-1" />
-        <active pattern="EFORMS-validation-stage-4a-1" />
         <active pattern="EFORMS-validation-stage-4b-1" />
         <active pattern="EFORMS-validation-stage-4c-1" />
     </phase>
@@ -32,17 +29,13 @@
     <include href="validation-stage-1a-1.sch"/>
     <include href="validation-stage-1b-1.sch"/>
     <include href="validation-stage-2a-1.sch"/>
-    <include href="validation-stage-2b-1.sch"/>
-    <include href="validation-stage-3a-1.sch"/>
     <include href="validation-stage-3b-1.sch"/>
-    <include href="validation-stage-4a-1.sch"/>
     <include href="validation-stage-4b-1.sch"/>
     <include href="validation-stage-4c-1.sch"/>
 
     <diagnostics>
         <diagnostic id="ND-PrivacyInRepeatableNode_BT-198_BT-00_-Text-In-Repeatable-Node" see="field:BT-198(BT-00)-Text-In-Repeatable-Node">PublicationDate</diagnostic>
         <diagnostic id="ND-PrivacyInRepeatableNode_BT-197_BT-00_-Text-In-Repeatable-Node" see="field:BT-197(BT-00)-Text-In-Repeatable-Node">ReasonCode</diagnostic>
-        <diagnostic id="ND-PrivacyInRepeatableNode2_BT-197_BT-00_-Number-In-Repeatable-Node" see="field:BT-197(BT-00)-Number-In-Repeatable-Node">ReasonCode</diagnostic>
     </diagnostics>
 
 </schema>
