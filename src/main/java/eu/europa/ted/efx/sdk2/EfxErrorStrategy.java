@@ -178,6 +178,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.Let, "'LET'"),
             Map.entry(EfxLexer.Endpoint, "'ENDPOINT'"),
             Map.entry(EfxLexer.With, "'WITH'"),
+            Map.entry(EfxLexer.Every, "'every'"),
             Map.entry(EfxLexer.When, "'WHEN'"),
             Map.entry(EfxLexer.Otherwise, "'OTHERWISE'"),
             Map.entry(EfxLexer.Display, "'DISPLAY'"),

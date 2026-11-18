@@ -89,13 +89,13 @@ class ResolverPathClassesTest {
   @Test
   void testContextIterator_PredicateOnItsSource() {
     assertExpression(SDK_2,
-        "for $t in PathNode/TextField[../NumberField] return $t/normalize-space(text())",
+        "for $t in PathNode/TextField[exists(../NumberField)] return $t/normalize-space(text())",
         "for context:$t in BT-00-Text[BT-00-Number is present] return $t");
   }
 
   @Test
   void testIndex() {
-    assertExpression(SDK_2, "(PathNode/TextField)[1]", "BT-00-Text[at 1] is present");
+    assertExpression(SDK_2, "exists((PathNode/TextField)[1])", "BT-00-Text[at 1] is present");
   }
 
   // #endregion EFX-2 expressions ---------------------------------------------

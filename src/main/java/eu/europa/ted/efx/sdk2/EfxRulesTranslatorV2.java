@@ -50,6 +50,7 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DynamicExpression;
@@ -59,6 +60,7 @@ import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.efx.model.rules.ReportRule;
 import eu.europa.ted.efx.model.rules.RuleSet;
+import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.model.rules.RuleScope;
 import eu.europa.ted.efx.model.rules.RuleSeverity;
 import eu.europa.ted.efx.model.rules.RuleStack;
@@ -420,6 +422,10 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
     String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
+    final boolean every = isEveryContext(ctx);
+    if (every && ctx.shortcut != null) {
+      throw InvalidUsageException.everyRequiresNodeOrField(ctx, shortcut);
+    }
     switch (shortcut) {
       case ".":
       case "..":
@@ -437,6 +443,9 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
           this.exitContextDeclaration(
               this.expressions.contextOf(ctx.getRuleContext(ParserRuleContext.class, 0)), null);
         }
+        if (every) {
+          this.setEveryRuleContextPath();
+        }
         break;
     }
   }
@@ -448,6 +457,30 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   void declareContext(final Context context, final Variable contextVariable) {
     this.ruleStack.peek(RuleSet.class).setContext(context, contextVariable);
     super.declareContext(context, contextVariable);
+  }
+
+  /**
+   * True when the context is declared with WITH EVERY.
+   */
+  private static boolean isEveryContext(ContextDeclarationContext ctx) {
+    return ctx.getParent() instanceof ContextDeclarationBlockContext
+        && ctx.getParent().getParent() instanceof WithClauseContext
+        && ((WithClauseContext) ctx.getParent().getParent()).Every() != null;
+  }
+
+  /**
+   * For WITH EVERY, sets the context of the Schematron rule to the path of the context without
+   * the declared predicates on its last step. The EFX context keeps the full path, so everything
+   * inside the rule set is read as for WITH without EVERY.
+   */
+  private void setEveryRuleContextPath() {
+    final RuleSet ruleSet = this.ruleStack.peek(RuleSet.class);
+    final Context context = ruleSet.getContext();
+    final PathExpression declaredPath = context.isFieldContext()
+        ? this.translation.symbols().getAbsolutePathOfField(context.symbol())
+        : this.translation.symbols().getAbsolutePathOfNode(context.symbol());
+    ruleSet.setRuleContextPath(
+        XPathContextualizer.removeDeclaredPredicatesOfLastStep(context.absolutePath(), declaredPath));
   }
 
 
@@ -462,11 +495,6 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   }
 
 
-  /**
-   * Called when exiting a WHEN clause.
-   * The WHEN clause provides conditional application of the rule.
-   * Pushes the condition XPath string to the stack.
-   */
   /** True while the condition of a WHEN clause is being translated. */
   private boolean translatingCondition = false;
 
@@ -475,6 +503,11 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     this.translatingCondition = true;
   }
 
+  /**
+   * Called when exiting a WHEN clause.
+   * The WHEN clause provides conditional application of the rule.
+   * Pushes the condition XPath string to the stack.
+   */
   @Override
   public void exitWhenClause(WhenClauseContext ctx) {
     var condition = this.expressions.valueOf(ctx.expression(), WHEN).booleanAt(0);

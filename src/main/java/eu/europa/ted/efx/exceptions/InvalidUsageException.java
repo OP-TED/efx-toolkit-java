@@ -46,7 +46,8 @@ public class InvalidUsageException extends EfxCompilationException {
         STYLE_NOT_APPLICABLE,
         UNIT_FOR_LIST,
         NO_UNIT_NOT_APPLICABLE,
-        OUTLINE_NUMBER_TOO_LARGE
+        OUTLINE_NUMBER_TOO_LARGE,
+        EVERY_REQUIRES_NODE_OR_FIELD
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
@@ -66,6 +67,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
     private static final String NO_UNIT_NOT_APPLICABLE = "Format option 'no-unit' cannot format a value of type '%s': it is for an amount, a measure or a duration.";
     private static final String OUTLINE_NUMBER_TOO_LARGE = "Outline number '%s' is too large: the largest is %d.";
+    private static final String EVERY_REQUIRES_NODE_OR_FIELD = "WITH EVERY needs a node or a field as context, not the shortcut '%s'.";
 
     private final ErrorCode errorCode;
 
@@ -224,5 +226,9 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException outlineNumberTooLarge(Token outlineNumber, String number) {
         return new InvalidUsageException(ErrorCode.OUTLINE_NUMBER_TOO_LARGE, outlineNumber, OUTLINE_NUMBER_TOO_LARGE, number, Integer.MAX_VALUE);
+    }
+
+    public static InvalidUsageException everyRequiresNodeOrField(ParserRuleContext ctx, String shortcut) {
+        return new InvalidUsageException(ErrorCode.EVERY_REQUIRES_NODE_OR_FIELD, ctx, EVERY_REQUIRES_NODE_OR_FIELD, shortcut);
     }
 }

@@ -513,7 +513,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
   void testOperandOrigin_ConditionalBranch_SequenceJoins() {
     // A branch takes a sequence: the conditional takes the join of its branches.
     testExpressionTranslationWithContext(
-        "(if (PathNode/IndicatorField) then PathNode/RepeatableTextField/normalize-space(text()) else 'x')",
+        "(if (PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))) then PathNode/RepeatableTextField/normalize-space(text()) else 'x')",
         "ND-Root", "if BT-00-Indicator then BT-00-Repeatable-Text else 'x'");
   }
 

@@ -1517,7 +1517,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { label(distinct-values(for $__item in ../IndicatorField return concat('indicator', '|', 'when', '-', $__item, '|', 'BT-00-Indicator'))) }",
+            "let body01() -> { label(distinct-values(for $__item in ../IndicatorField/(normalize-space(text()) = ('true', '1')) return concat('indicator', '|', 'when', '-', $__item, '|', 'BT-00-Indicator'))) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
         translateTemplate("{BT-00-Text}  #{BT-00-Indicator}"));
@@ -3500,7 +3500,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         lines(
             "TEMPLATES:",
-            "let body01() -> { text('Values: ')eval((if (PathNode/IndicatorField) then PathNode/RepeatableTextField/normalize-space(text()) else 'a')) }",
+            "let body01() -> { text('Values: ')eval((if (PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))) then PathNode/RepeatableTextField/normalize-space(text()) else 'a')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(
@@ -3663,7 +3663,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(SubTextField).call(body0101()) }",
             "let body0101() -> { text('line2') }",
             "MAIN:",
-            "for-each(/*/SubNode[SubTextField]).call(body01())"),
+            "for-each(/*/SubNode[exists(SubTextField)]).call(body01())"),
         translateTemplate(lines(
             "{ND-SubNode[BT-01-SubNode-Text is present]} line1",
             "  {BT-01-SubNode-Text} line2")));
