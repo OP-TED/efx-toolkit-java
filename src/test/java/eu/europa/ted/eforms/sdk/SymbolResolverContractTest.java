@@ -479,6 +479,17 @@ public abstract class SymbolResolverContractTest {
     assertEquals("../Number", path.getScript());
   }
 
+  @Test
+  @DisplayName("Multilingual field relative to itself returns ScalarPath")
+  protected void fieldToField_multilingualFieldItself_shouldReturnScalarPath() {
+    // Inside its own context the multilingual field is the one element being tested
+    PathExpression path = resolver.getRelativePathOfField("BT-00-Text-Multilingual", "BT-00-Text-Multilingual");
+
+    assertTrue(path instanceof ScalarPath,
+        "Multilingual field relative to itself should return ScalarPath, got: " + path.getClass().getSimpleName());
+    assertEquals(".", path.getScript());
+  }
+
   // Basic lookups
 
   @Test

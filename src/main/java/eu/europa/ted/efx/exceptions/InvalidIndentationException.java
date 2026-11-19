@@ -25,16 +25,14 @@ public class InvalidIndentationException extends EfxCompilationException {
         INDENTATION_LEVEL_SKIPPED,
         START_INDENT_AT_ZERO,
         MIXED_INDENTATION,
-        NO_NESTING_ON_INVOCATIONS,
         NO_INDENT_ON_TEMPLATE_DECLARATIONS
     }
 
-    private static final String INCONSISTENT_INDENTATION_SPACES = "Inconsistent indentation. Expected a multiple of %d spaces.";
-    private static final String INDENTATION_LEVEL_SKIPPED = "Indentation level skipped.";
-    private static final String START_INDENT_AT_ZERO = "Incorrect indentation. Please do not indent the first level in your template.";
-    private static final String MIXED_INDENTATION = "Do not mix indentation methods. Stick with either tabs or spaces.";
-    private static final String NO_NESTING_ON_INVOCATIONS = "Nesting content under a template invocation is not allowed.";
-    private static final String NO_INDENT_ON_TEMPLATE_DECLARATIONS = "Indentation is not allowed on template declaration lines.";
+    private static final String INCONSISTENT_INDENTATION_SPACES = "This line is indented with %d spaces, not a multiple of %d, the indentation of the first indented line.";
+    private static final String INDENTATION_LEVEL_SKIPPED = "This line is indented more than one level deeper than the line above it.";
+    private static final String START_INDENT_AT_ZERO = "This line cannot be indented: there is no line above it to nest under.";
+    private static final String MIXED_INDENTATION = "Indentation mixes tabs and spaces: a template is indented with tabs only or with spaces only.";
+    private static final String NO_INDENT_ON_TEMPLATE_DECLARATIONS = "A template declaration cannot be indented.";
 
     private final ErrorCode errorCode;
 
@@ -47,8 +45,15 @@ public class InvalidIndentationException extends EfxCompilationException {
         return this.errorCode;
     }
 
-    public static InvalidIndentationException inconsistentSpaces(ParserRuleContext ctx, int spaces) {
-        return new InvalidIndentationException(ErrorCode.INCONSISTENT_INDENTATION_SPACES, ctx, INCONSISTENT_INDENTATION_SPACES, spaces);
+    /**
+     * @param ctx the line, or its indentation
+     * @param spaces the number of spaces the line is indented with
+     * @param levelSpaces the number of spaces of one level of indentation: those of the first
+     *        indented line
+     * @return the error for a line whose spaces are not a whole number of levels
+     */
+    public static InvalidIndentationException inconsistentSpaces(ParserRuleContext ctx, int spaces, int levelSpaces) {
+        return new InvalidIndentationException(ErrorCode.INCONSISTENT_INDENTATION_SPACES, ctx, INCONSISTENT_INDENTATION_SPACES, spaces, levelSpaces);
     }
 
     public static InvalidIndentationException indentationLevelSkipped(ParserRuleContext ctx) {
@@ -61,10 +66,6 @@ public class InvalidIndentationException extends EfxCompilationException {
 
     public static InvalidIndentationException mixedIndentation(ParserRuleContext ctx) {
         return new InvalidIndentationException(ErrorCode.MIXED_INDENTATION, ctx, MIXED_INDENTATION);
-    }
-
-    public static InvalidIndentationException noNestingOnInvocations(ParserRuleContext ctx) {
-        return new InvalidIndentationException(ErrorCode.NO_NESTING_ON_INVOCATIONS, ctx, NO_NESTING_ON_INVOCATIONS);
     }
 
     public static InvalidIndentationException noIndentOnTemplateDeclarations(ParserRuleContext ctx) {

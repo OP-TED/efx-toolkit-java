@@ -1,0 +1,8 @@
+LET date : $cutoff = 2024-01-01Z;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT $cutoff < 2025-01-01Z
+AS ERROR R-VAR-004
+FOR BT-00-Text IN 1, 2

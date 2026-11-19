@@ -18,8 +18,8 @@ import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 
 /**
- * A text, a label or a value displayed as a hyperlink, as described by the linkedTextBlock,
- * linkedLabelBlock and linkedExpressionBlock rules of the grammar.
+ * A text, a label or a value displayed as a hyperlink: in a template, a text, a label block or an
+ * expression block followed by a link block.
  */
 public class HyperlinkContentTemplateFragment extends ContentTemplateFragment {
 

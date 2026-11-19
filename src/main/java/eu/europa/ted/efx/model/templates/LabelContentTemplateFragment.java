@@ -26,4 +26,12 @@ public abstract class LabelContentTemplateFragment extends ContentTemplateFragme
   protected LabelContentTemplateFragment(NumericExpression quantity) {
     this.quantity = quantity;
   }
+
+  /**
+   * Returns this label pluralised by the given quantity, in place of its own.
+   *
+   * @param quantity the quantity that selects the plural form of the label
+   * @return the same label with the given quantity
+   */
+  public abstract LabelContentTemplateFragment pluralisedBy(NumericExpression quantity);
 }

@@ -13,9 +13,9 @@
  */
 package eu.europa.ted.eforms.sdk.schematron;
 
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 import eu.europa.ted.efx.model.rules.RuleNature;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
-import eu.europa.ted.efx.model.variables.Variable;
 
 /**
  * Represents a Schematron &lt;let&gt; element for variable declarations.

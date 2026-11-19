@@ -1,13 +1,34 @@
 package eu.europa.ted.efx.sdk1;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.junit.jupiter.api.Test;
+import eu.europa.ted.eforms.sdk.component.SdkComponent;
+import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.EfxTestsBase;
 import eu.europa.ted.efx.component.EfxTranslatorFactory;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
+import eu.europa.ted.efx.exceptions.InvalidIndentationException;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
+import eu.europa.ted.efx.interfaces.MarkupGenerator;
+import eu.europa.ted.efx.interfaces.ScriptGenerator;
+import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
+import eu.europa.ted.efx.model.ContextStack;
+import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.templates.ViewTemplateSection;
+import eu.europa.ted.efx.sdk1.EfxParser.TemplateFileContext;
 
 class EfxTemplateTranslatorV1Test extends EfxTestsBase {
 
@@ -26,6 +47,128 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
     translator.renderTemplate(lines("{BT-00-Text} foo", "  {ND-Root} bar") + "\n", DEFAULT_OPTIONS);
     assertEquals(translateTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar")),
         translator.renderTemplate(lines("{BT-00-Text} foo", "\t{ND-Root} bar") + "\n", DEFAULT_OPTIONS));
+  }
+
+  /**
+   * The context stack keeps the context of each context variable by its declaration, and every
+   * render declares its variables anew, so a translator that kept one context stack for all its
+   * renders would keep the contexts of every one of them.
+   */
+  @Test
+  void testTranslatorReused_TakesANewContextStackForEachTemplate() throws InstantiationException {
+    final EfxTemplateTranslatorV1 translator = (EfxTemplateTranslatorV1) EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    final String template = "{ND-Root} ${for context:$x in BT-00-Text return $x::BT-00-Text}\n";
+    translator.renderTemplate(template, DEFAULT_OPTIONS);
+    final ContextStack contextsOfTheFirst = translator.efxContext;
+    translator.renderTemplate(template, DEFAULT_OPTIONS);
+    assertNotSame(contextsOfTheFirst, translator.efxContext);
+  }
+
+  @Test
+  void testTranslatorReused_AfterAFailedTemplate_RendersAsANewOne() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate(
+        lines("{ND-Root} foo", "\t{BT-00-Text} ${$missing}") + "\n", DEFAULT_OPTIONS));
+    final String template = lines("{ND-Root} foo", "\t{BT-00-Text} bar");
+    assertEquals(translateTemplate(template),
+        translator.renderTemplate(template + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_AfterASyntaxError_RendersAsANewOne() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate(
+        lines("{ND-Root} foo", "\t{ND-Root} ${for context:$c in BT-00-Text return $missing}") + "\n",
+        DEFAULT_OPTIONS));
+    assertThrows(ParseCancellationException.class,
+        () -> translator.renderTemplate("{ND-Root} ${1 + }\n", DEFAULT_OPTIONS));
+    final String template = lines("{ND-Root} foo", "\t{BT-00-Text} bar");
+    assertEquals(translateTemplate(template),
+        translator.renderTemplate(template + "\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTranslatorReused_ForAnExpression_KeepsNothingOfTheTemplateBefore()
+      throws InstantiationException {
+    final EfxTemplateTranslatorV1 translator = (EfxTemplateTranslatorV1) EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate(lines("{ND-Root} foo", "\t{BT-00-Text} bar") + "\n", DEFAULT_OPTIONS);
+    final ViewTemplateSection sectionOfTheTemplate = translator.section;
+    translator.translateExpression("{ND-Root} ${1}");
+    assertNotSame(sectionOfTheTemplate, translator.section);
+  }
+
+  /**
+   * The translator is a listener that a walk of a template file can call directly, without
+   * {@code renderTemplate}: the walk leaves the translated file on the stack.
+   */
+  @Test
+  void testTranslatorWalkedDirectly_TranslatesTheTemplateAsANewOne() throws InstantiationException {
+    final EfxTemplateTranslatorV1 translator = (EfxTemplateTranslatorV1) EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    ParseTreeWalker.DEFAULT.walk(translator, templateFileOf("{ND-Root} first\n"));
+    translator.stack.pop(Markup.class);
+    ParseTreeWalker.DEFAULT.walk(translator, templateFileOf("{ND-Root} second\n"));
+    assertEquals(translateTemplate("{ND-Root} second"), translator.stack.pop(Markup.class).script);
+  }
+
+  @Test
+  void testTranslatorWalkedDirectly_AfterARender_TranslatesTheTemplateAsANewOne()
+      throws InstantiationException {
+    final EfxTemplateTranslatorV1 translator = (EfxTemplateTranslatorV1) EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    translator.renderTemplate("{ND-Root} first\n", DEFAULT_OPTIONS);
+    ParseTreeWalker.DEFAULT.walk(translator, templateFileOf("{ND-Root} second\n"));
+    assertEquals(translateTemplate("{ND-Root} second"), translator.stack.pop(Markup.class).script);
+  }
+
+  /**
+   * The template file is the parser context of the call stack while the file is translated, so that
+   * an error raised at the level of the file names its position.
+   */
+  @Test
+  void testTranslation_TakesTheTemplateFileAsItsParserContext() {
+    final DependencyFactoryMock dependencies = DependencyFactoryMock.INSTANCE;
+    final FileParserContextRecorder translator = new FileParserContextRecorder(
+        dependencies.createMarkupGenerator(this.getSdkVersion(), "", DEFAULT_OPTIONS),
+        dependencies.createSymbolResolver(this.getSdkVersion(), ""),
+        dependencies.createScriptGenerator(this.getSdkVersion(), "", DEFAULT_OPTIONS),
+        dependencies.createErrorListener());
+    translator.renderTemplate("{ND-Root} x\n", DEFAULT_OPTIONS);
+    assertSame(translator.templateFile, translator.parserContextOfTheFile);
+  }
+
+  /**
+   * Records the parser context of the call stack where the walk leaves the template file. It is
+   * declared with a qualifier of its own, as it would otherwise inherit the declaration of the
+   * translator it extends, and two translators would be declared as one.
+   */
+  @SdkComponent(versions = {"1"}, componentType = SdkComponentType.EFX_TEMPLATE_TRANSLATOR,
+      qualifier = "file-parser-context")
+  static final class FileParserContextRecorder extends EfxTemplateTranslatorV1 {
+    ParserRuleContext templateFile;
+    ParserRuleContext parserContextOfTheFile;
+
+    FileParserContextRecorder(final MarkupGenerator markupGenerator,
+        final SymbolResolver symbolResolver, final ScriptGenerator scriptGenerator,
+        final BaseErrorListener errorListener) {
+      super(markupGenerator, symbolResolver, scriptGenerator, errorListener);
+    }
+
+    @Override
+    public void exitTemplateFile(final TemplateFileContext ctx) {
+      this.templateFile = ctx;
+      this.parserContextOfTheFile = this.stack.peekParserContext();
+      super.exitTemplateFile(ctx);
+    }
+  }
+
+  private static ParseTree templateFileOf(final String template) {
+    return new EfxParser(new CommonTokenStream(new EfxLexer(CharStreams.fromString(template))))
+        .templateFile();
   }
   @Override
   protected String getSdkVersion() {
@@ -127,8 +270,75 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testTemplateLineOutline_TooLarge() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("2147483648 {BT-00-Text} foo"));
+    assertEquals(InvalidUsageException.ErrorCode.OUTLINE_NUMBER_TOO_LARGE, exception.getErrorCode());
+    assertEquals("line 1:0 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineOutline_TooLarge_OnIndentedLine() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines("{ND-Root} foo", "\t2147483648 {BT-00-Text} bar")));
+    assertEquals("line 2:1 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
+  }
+
+  @Test
   void testTemplateLineFirstIndented() {
-    assertThrows(ParseCancellationException.class, () -> translateTemplate("  {BT-00-Text} foo"));
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate("  {BT-00-Text} foo"));
+    assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
+        exception.getErrorCode());
+    assertEquals(
+        "line 1:0 This line cannot be indented: there is no line above it to nest under.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineFirstIndented_TwoLevels() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate("\t\t{BT-00-Text} foo"));
+    assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
+        exception.getErrorCode());
+    assertEquals(
+        "line 1:0 This line cannot be indented: there is no line above it to nest under.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineIndent_MixedTabsAndSpaces() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate(lines("{BT-00-Text} foo", "\t  {BT-00-Text} bar")));
+    assertEquals(InvalidIndentationException.ErrorCode.MIXED_INDENTATION, exception.getErrorCode());
+    assertEquals(
+        "line 2:0 Indentation mixes tabs and spaces: a template is indented with tabs only or with spaces only.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineIndent_LevelSkipped() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate(lines("{BT-00-Text} foo", "\t\t{BT-00-Text} bar")));
+    assertEquals(InvalidIndentationException.ErrorCode.INDENTATION_LEVEL_SKIPPED,
+        exception.getErrorCode());
+    assertEquals(
+        "line 2:0 This line is indented more than one level deeper than the line above it.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLineIndent_InconsistentSpaces() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate(
+            lines("{BT-00-Text} foo", "  {BT-00-Text} bar", "   {BT-00-Text} baz")));
+    assertEquals(InvalidIndentationException.ErrorCode.INCONSISTENT_INDENTATION_SPACES,
+        exception.getErrorCode());
+    assertEquals(
+        "line 3:0 This line is indented with 3 spaces, not a multiple of 2, the indentation of the first indented line.",
+        exception.getMessage());
   }
 
   @Test
@@ -239,6 +449,13 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
   }
 
   @Test
+  void testShorthandFieldLabelReference_UnknownField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateTemplate("{BT-00-Text}  #{name|BT-999-Unknown}"));
+    assertEquals("Unknown symbol 'BT-999-Unknown'.", ex.getMessage());
+  }
+
+  @Test
   void testShorthandBtLabelReference_MissingLabelType() {
     assertThrows(ParseCancellationException.class,
         () -> translateTemplate("{BT-00-Text}  #{BT-01}"));
@@ -288,8 +505,13 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testShorthandIndirectLabelReferenceForText() {
-    assertThrows(ParseCancellationException.class,
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateTemplate("{BT-00-Text}  #{BT-00-Text}"));
+    assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_CODE_OR_INDICATOR,
+        exception.getErrorCode());
+    assertEquals(
+        "line 1:14 '#{BT-00-Text}' needs a field of type 'code' or 'indicator', but 'BT-00-Text' is of type 'text'.",
+        exception.getMessage());
   }
 
   @Test
@@ -347,7 +569,12 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testShorthandIndirectLabelReferenceFromContextField_WithNodeContext() {
-    assertThrows(ParseCancellationException.class, () -> translateTemplate("{ND-Root} #value"));
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("{ND-Root} #value"));
+    assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT,
+        exception.getErrorCode());
+    assertEquals("line 1:10 '#value' can only be used when the context is a field.",
+        exception.getMessage());
   }
 
 
@@ -368,7 +595,12 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
 
   @Test
   void testShorthandFieldValueReferenceFromContextField_WithNodeContext() {
-    assertThrows(ParseCancellationException.class, () -> translateTemplate("{ND-Root} $value"));
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("{ND-Root} $value"));
+    assertEquals(InvalidUsageException.ErrorCode.SHORTHAND_REQUIRES_FIELD_CONTEXT,
+        exception.getErrorCode());
+    assertEquals("line 1:10 '$value' can only be used when the context is a field.",
+        exception.getMessage());
   }
 
 
@@ -443,5 +675,20 @@ class EfxTemplateTranslatorV1Test extends EfxTestsBase {
     assertEquals(
         "TEMPLATES:\nlet block01() -> { eval(efx:preferred-language-text(.)) }\nMAIN:\nfor-each(/*/PathNode/TextMultilingualField).call(block01())",
         translateTemplate("{BT-00-Text-Multilingual} $value"));
+  }
+
+  /**
+   * A name declared again, as a variable that holds a value, no longer names the context that an
+   * earlier declaration of it held.
+   */
+  @Test
+  void testContextVariableNameDeclaredAgain_AsAValue_IsNotAContextVariable() {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "{ND-Root} ${for context:$x in BT-00-Text return $x::BT-00-Text}",
+            "{ND-Root} ${for text:$x in BT-00-Text return $x::BT-00-Text}")));
+    assertEquals(InvalidIdentifierException.ErrorCode.NOT_A_CONTEXT_VARIABLE,
+        exception.getErrorCode());
+    assertEquals("line 2:45 Variable '$x' is not a context variable.", exception.getMessage());
   }
 }

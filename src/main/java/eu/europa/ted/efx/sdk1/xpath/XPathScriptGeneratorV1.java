@@ -20,6 +20,7 @@ import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.Precedence;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
@@ -42,7 +43,7 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     @Override
     public PathExpression composeFieldValueReference(final PathExpression fieldReference) {
         if (fieldReference.is(EfxDataType.Boolean.class)) {
-            return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
+            return fieldReference;
         }
         return super.composeFieldValueReference(fieldReference);
     }
@@ -53,7 +54,7 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
      */
     @Override
     public BooleanExpression composeExistsCondition(final PathExpression reference) {
-        return new BooleanExpression(reference.getScript());
+        return Expression.from(reference, BooleanExpression.class);
     }
 
     @Override
@@ -125,6 +126,6 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     @Override
     public PathExpression composeFieldInExternalReference(PathExpression externalReference,
         PathExpression fieldReference) {
-        return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
+        return Expression.instantiate(operand(externalReference, Precedence.PRIMARY) + fieldReference.getScript(), fieldReference.getClass());
     }
 }

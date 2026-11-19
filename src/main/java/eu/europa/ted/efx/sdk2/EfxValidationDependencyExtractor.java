@@ -7,8 +7,8 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
@@ -70,7 +70,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
     this.stack.clear();
     this.stack.push(new DependencySet());
 
-    final EfxLexer lexer = new EfxLexer(input);
+    final EfxLexer lexer = new EfxErrorReportingLexer(input);
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
     parser.setErrorHandler(new EfxErrorStrategy());
@@ -82,8 +82,11 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
       parser.addErrorListener(this.errorListener);
     }
 
-    final ParseTree tree = parser.rulesFile();
-    new ParseTreeWalker().walk(this, tree);
+    final RulesFileContext rulesFile = parser.rulesFile();
+    if (rulesFile.validationStage().isEmpty()) {
+      throw InvalidUsageException.emptyRulesFile();
+    }
+    new ParseTreeWalker().walk(this, rulesFile);
 
     this.graph.computeRequiredBy();
     return this.graph;

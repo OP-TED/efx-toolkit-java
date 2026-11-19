@@ -106,6 +106,23 @@ public interface SequencePath extends SequenceExpression, PathExpression {
   }
 
   /**
+   * Gives the script of an expression as a {@link SequencePath} for the given {@link EfxDataType}.
+   * The script keeps its precedence.
+   *
+   * @param <T>         The type of the returned object.
+   * @param source      The expression whose script the returned expression takes.
+   * @param efxDataType The {@link EfxDataType} of the field that the returned expression points to.
+   *
+   * @return A {@link SequencePath} for the given data type.
+   */
+  @SuppressWarnings("unchecked")
+  static <T extends SequencePath> T from(Expression source, Class<? extends EfxDataType> efxDataType) {
+    Class<? extends EfxDataType> primitiveType = EfxTypeLattice.toPrimitive(efxDataType);
+    Class<? extends SequencePath> type = fromEfxDataType.get(primitiveType);
+    return (T) Expression.from(source, type);
+  }
+
+  /**
    * A base class for {@link SequencePath} implementations.
    *
    * @param <T> the EFX data type for the expression.
@@ -120,7 +137,7 @@ public interface SequencePath extends SequenceExpression, PathExpression {
     @Override
     public ScalarPath asScalar() {
       Class<? extends EfxDataType> scalarType = EfxTypeLattice.toScalar(getDataType());
-      return ScalarPath.instantiate(getScript(), scalarType);
+      return ScalarPath.from(this, scalarType);
     }
 
     @Override

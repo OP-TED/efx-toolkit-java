@@ -14,7 +14,7 @@
 package eu.europa.ted.efx.model;
 
 import eu.europa.ted.efx.model.expressions.PathExpression;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 /**
  * Used to store an evaluation context.
@@ -76,6 +76,7 @@ public abstract class Context {
   private final PathExpression absolutePath;
   private final PathExpression relativePath;
   private final Variable variable;
+  private final Reads reads = new Reads();
 
   protected Context(final String symbol, final PathExpression absolutePath,
       final PathExpression relativePath, final Variable variable) {
@@ -137,5 +138,12 @@ public abstract class Context {
    */
   public PathExpression relativePath() {
     return relativePath;
+  }
+
+  /**
+   * @return the reads made while this context is the current one
+   */
+  public Reads reads() {
+    return this.reads;
   }
 }

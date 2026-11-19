@@ -17,6 +17,7 @@ import static java.util.Map.entry;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
@@ -32,6 +33,7 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.Precedence;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorExpression;
 import eu.europa.ted.efx.model.expressions.iteration.IteratorListExpression;
@@ -88,57 +90,59 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public PathExpression composeNodeReferenceWithPredicate(PathExpression nodeReference,
       BooleanExpression predicate) {
-    return Expression.instantiate(nodeReference.getScript() + '[' + predicate.getScript() + ']', nodeReference.getClass());
+    return Expression.instantiate(operand(nodeReference, Precedence.PRIMARY) + '[' + predicate.getScript() + ']', nodeReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldReferenceWithPredicate(PathExpression fieldReference,
       BooleanExpression predicate) {
-    return Expression.instantiate(fieldReference.getScript() + '[' + predicate.getScript() + ']', fieldReference.getClass());
+    return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + '[' + predicate.getScript() + ']', fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldValueReference(PathExpression fieldReference) {
     if (fieldReference.is(EfxDataType.String.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/normalize-space(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/normalize-space(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Number.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/number()", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/number()", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Boolean.class)) {
       // The value of an indicator field is its text read as a boolean ('true' and '1' are the
       // true values of xs:boolean). The element alone would only tell whether the field is
       // present: a field holding false would count as true. One value per element, so that
       // count() still counts the fields.
-      return Expression.instantiate(fieldReference.getScript()
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY)
           + "/(normalize-space(text()) = ('true', '1'))", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Date.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/xs:date(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/xs:date(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Time.class)) {
-      return Expression.instantiate(fieldReference.getScript() + "/xs:time(text())", fieldReference.getClass());
+      return Expression.instantiate(operand(fieldReference, Precedence.PRIMARY) + "/xs:time(text())", fieldReference.getClass());
     }
     if (fieldReference.is(EfxDataType.Duration.class)) {
-      return Expression.instantiate("(for $F in " + fieldReference.getScript() + " return (if ($F/@unitCode='WEEK')" + //
-          " then xs:dayTimeDuration(concat('P', $F/number() * 7, 'D'))" + //
-          " else if ($F/@unitCode='DAY')" + //
-          " then xs:dayTimeDuration(concat('P', $F/number(), 'D'))" + //
-          " else if ($F/@unitCode='YEAR')" + //
-          " then xs:yearMonthDuration(concat('P', $F/number(), 'Y'))" + //
-          " else if ($F/@unitCode='MONTH')" + //
-          " then xs:yearMonthDuration(concat('P', $F/number(), 'M'))" + //
+      final String f = this.ownVariable("F");
+      return Expression.instantiate("(for " + f + " in " + fieldReference.getScript() + //
+          " return (if (" + f + "/@unitCode='WEEK')" + //
+          " then xs:dayTimeDuration(concat('P', " + f + "/number() * 7, 'D'))" + //
+          " else if (" + f + "/@unitCode='DAY')" + //
+          " then xs:dayTimeDuration(concat('P', " + f + "/number(), 'D'))" + //
+          " else if (" + f + "/@unitCode='YEAR')" + //
+          " then xs:yearMonthDuration(concat('P', " + f + "/number(), 'Y'))" + //
+          " else if (" + f + "/@unitCode='MONTH')" + //
+          " then xs:yearMonthDuration(concat('P', " + f + "/number(), 'M'))" + //
           // " else if (" + fieldReference.script + ")" + //
           // " then fn:error('Invalid @unitCode')" + //
           " else ()))", fieldReference.getClass());
     }
 
-    return Expression.instantiate(fieldReference.getScript(), fieldReference.getClass());
+    return Expression.from(fieldReference, fieldReference.getClass());
   }
 
   @Override
   public PathExpression composeFieldRawValueReference(PathExpression fieldReference) {
-    String script = fieldReference.getScript() + "/text()";
+    String script = operand(fieldReference, Precedence.PRIMARY) + "/text()";
     if (fieldReference instanceof SequenceExpression) {
       return new StringSequencePath(script);
     }
@@ -149,7 +153,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends PathExpression> T composeFieldAttributeReference(PathExpression fieldReference,
       String attribute, Class<T> type) {
     return Expression.instantiate(
-        fieldReference.getScript() + (fieldReference.getScript().isEmpty() ? "" : "/") + "@" + attribute,
+        operand(fieldReference, Precedence.PRIMARY) + (fieldReference.getScript().isEmpty() ? "" : "/") + "@" + attribute,
         type);
   }
 
@@ -197,7 +201,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public NumericLiteral getNumericLiteralEquivalent(String literal) {
-    return new NumericLiteral(literal);
+    return Expression.instantiate(literal,
+        literal.startsWith("-") ? Precedence.UNARY : Precedence.PRIMARY, NumericLiteral.class);
   }
 
   @Override
@@ -228,7 +233,7 @@ public class XPathScriptGenerator implements ScriptGenerator {
     if (literal.contains("W")) {
       final int weeks = this.getWeeksFromDurationLiteral(literal);
       return new DurationLiteral(
-          "xs:dayTimeDuration(" + quoted(String.format("P%dD", weeks * 7)) + ")");
+          "xs:dayTimeDuration(" + quoted(String.format(Locale.ROOT, "P%dD", weeks * 7)) + ")");
     }
     return new DurationLiteral("xs:dayTimeDuration(" + quoted(literal) + ")");
   }
@@ -236,7 +241,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeContainsCondition(
       ScalarExpression needle, SequenceExpression haystack) {
-    return new BooleanExpression(String.format("%s = %s", needle.getScript(), haystack.getScript()));
+    return Expression.instantiate(operand(needle, Precedence.ADDITIVE) + " = "
+        + operand(haystack, Precedence.ADDITIVE), Precedence.COMPARISON, BooleanExpression.class);
   }
 
   @Override
@@ -250,15 +256,17 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeAllSatisfy(
       IteratorListExpression iterators, BooleanExpression booleanExpression) {
-    return new BooleanExpression(
-        "every " + iterators.getScript() + " satisfies " + booleanExpression.getScript());
+    return Expression.instantiate(
+        "every " + iterators.getScript() + " satisfies " + booleanExpression.getScript(),
+        Precedence.PREFIX, BooleanExpression.class);
   }
 
   @Override
   public BooleanExpression composeAnySatisfies(
       IteratorListExpression iterators, BooleanExpression booleanExpression) {
-    return new BooleanExpression(
-        "some " + iterators.getScript() + " satisfies " + booleanExpression.getScript());
+    return Expression.instantiate(
+        "some " + iterators.getScript() + " satisfies " + booleanExpression.getScript(),
+        Precedence.PREFIX, BooleanExpression.class);
   }
 
   @Override
@@ -273,14 +281,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, ScalarExpression expression, Class<T> targetListType) {
     return Expression.instantiate("for " + iterators.getScript() + " return " + expression.getScript(),
-        targetListType);
+        Precedence.PREFIX, targetListType);
   }
 
   @Override
   public <T extends SequenceExpression> T composeForExpression(
       IteratorListExpression iterators, SequenceExpression expression, Class<T> targetListType) {
     return Expression.instantiate("for " + iterators.getScript() + " return " + expression.getScript(),
-        targetListType);
+        Precedence.PREFIX, targetListType);
   }
 
   @Override
@@ -326,7 +334,8 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends ScalarExpression> T composeIndexer(SequenceExpression list,
       NumericExpression index, Class<T> type) {
-    return Expression.instantiate(String.format("%s[%s]", list.getScript(), index.getScript()), type);
+    return Expression.instantiate(
+        operand(list, Precedence.PRIMARY) + "[" + index.getScript() + "]", type);
   }
 
   //#endregion Indexers -------------------------------------------------------
@@ -337,15 +346,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeLogicalAnd(BooleanExpression leftOperand,
       BooleanExpression rightOperand) {
-    return new BooleanExpression(
-        String.format("%s and %s", leftOperand.getScript(), rightOperand.getScript()));
+    return Expression.instantiate(operand(leftOperand, Precedence.AND) + " and "
+        + operand(rightOperand, Precedence.COMPARISON), Precedence.AND, BooleanExpression.class);
   }
 
   @Override
   public BooleanExpression composeLogicalOr(BooleanExpression leftOperand,
       BooleanExpression rightOperand) {
-    return new BooleanExpression(
-        String.format("%s or %s", leftOperand.getScript(), rightOperand.getScript()));
+    return Expression.instantiate(operand(leftOperand, Precedence.OR) + " or "
+        + operand(rightOperand, Precedence.AND), Precedence.OR, BooleanExpression.class);
   }
 
   @Override
@@ -373,49 +382,56 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public BooleanExpression composeUniqueValueCondition(PathExpression needle,
       PathExpression haystack) {
-    return new BooleanExpression("count(for $x in " + needle.getScript() + ", $y in " + haystack.getScript()
-        + "[. = $x] return $y) = 1");
+    final String x = this.ownVariable("x");
+    final String y = this.ownVariable("y");
+    return Expression.instantiate("count(for " + x + " in " + needle.getScript() + ", " + y
+        + " in " + operand(haystack, Precedence.PRIMARY) + "[. = " + x + "] return " + y + ") = 1",
+        Precedence.COMPARISON, BooleanExpression.class);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(StringExpression needle,
       StringSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(NumericExpression needle,
       NumericSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(BooleanExpression needle,
       BooleanSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(DateExpression needle,
       DateSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(TimeExpression needle,
       TimeSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
   @Override
   public BooleanExpression composeUniqueValueCondition(DurationExpression needle,
       DurationSequenceExpression haystack) {
-    return composeTypedUniqueValueCondition(needle.getScript(), haystack.getScript());
+    return composeTypedUniqueValueCondition(needle, haystack);
   }
 
-  private BooleanExpression composeTypedUniqueValueCondition(String needle, String haystack) {
-    return new BooleanExpression(
-        "count(for $n in " + needle + ", $x in " + haystack + "[. = $n] return $x) = 1");
+  private BooleanExpression composeTypedUniqueValueCondition(final ScalarExpression needle,
+      final SequenceExpression haystack) {
+    final String n = this.ownVariable("n");
+    final String x = this.ownVariable("x");
+    return Expression.instantiate("count(for " + n + " in " + needle.getScript() + ", " + x + " in "
+        + operand(haystack, Precedence.PRIMARY) + "[. = " + n + "] return " + x + ") = 1",
+        Precedence.COMPARISON, BooleanExpression.class);
   }
 
   //#endregion Boolean Expressions ------------------------------------------
@@ -446,12 +462,15 @@ public class XPathScriptGenerator implements ScriptGenerator {
     if (leftOperand.is(EfxDataType.Duration.class)) {
       // TODO: Improve this implementation; Check if both are dayTime or yearMonth and compare
       // directly, otherwise, compare by adding to current-date()
+      final String t = this.ownVariable("T");
       return new BooleanExpression(
-          "boolean(for $T in (current-date()) return ($T + " + leftOperand.getScript() + " "
-              + operators.get(operator) + " $T + " + rightOperand.getScript() + "))");
+          "boolean(for " + t + " in (current-date()) return (" + t + " + "
+              + operand(leftOperand, Precedence.MULTIPLICATIVE) + " " + operators.get(operator)
+              + " " + t + " + " + operand(rightOperand, Precedence.MULTIPLICATIVE) + "))");
     }
-    return new BooleanExpression(
-        leftOperand.getScript() + " " + operators.get(operator) + " " + rightOperand.getScript());
+    return Expression.instantiate(operand(leftOperand, Precedence.ADDITIVE) + " "
+        + operators.get(operator) + " " + operand(rightOperand, Precedence.ADDITIVE),
+        Precedence.COMPARISON, BooleanExpression.class);
   }
 
   @Override
@@ -467,8 +486,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public BooleanExpression composeIsDistinctCondition(SequenceExpression sequence) {
-    return new BooleanExpression(
-        "count(" + sequence.getScript() + ") = count(distinct-values(" + sequence.getScript() + "))");
+    return Expression.instantiate(
+        "count(" + sequence.getScript() + ") = count(distinct-values(" + sequence.getScript() + "))",
+        Precedence.COMPARISON, BooleanExpression.class);
   }
 
   //#endregion Boolean functions ----------------------------------------------
@@ -477,8 +497,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public NumericExpression composeCountDuplicatesFunction(final SequenceExpression sequence) {
-    return new NumericExpression(
-        "count(" + sequence.getScript() + ") - count(distinct-values(" + sequence.getScript() + "))");
+    return Expression.instantiate(
+        "count(" + sequence.getScript() + ") - count(distinct-values(" + sequence.getScript() + "))",
+        Precedence.ADDITIVE, NumericExpression.class);
   }
 
   @Override
@@ -590,8 +611,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeNumericOperation(NumericExpression leftOperand, String operator,
       NumericExpression rightOperand) {
-    return new NumericExpression(
-        leftOperand.getScript() + " " + operators.get(operator) + " " + rightOperand.getScript());
+    if (operator.equals("+") || operator.equals("-")) {
+      return Expression.instantiate(operand(leftOperand, Precedence.ADDITIVE) + " "
+          + operators.get(operator) + " " + operand(rightOperand, Precedence.MULTIPLICATIVE),
+          Precedence.ADDITIVE, NumericExpression.class);
+    }
+    return Expression.instantiate(operand(leftOperand, Precedence.MULTIPLICATIVE) + " "
+        + operators.get(operator) + " " + operand(rightOperand, Precedence.UNARY),
+        Precedence.MULTIPLICATIVE, NumericExpression.class);
   }
 
   //#endregion Numeric functions ----------------------------------------------
@@ -684,45 +711,53 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public StringExpression composePadLeftFunction(StringExpression text, NumericExpression length,
       StringExpression padChar) {
-    String len = length.getScript();
+    String len = operand(length, Precedence.ADDITIVE);
     String ch = padChar.getScript();
-    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
-    return new StringExpression("(for $__s in " + text.getScript()
+    String i = this.ownVariable("i");
+    String s = this.ownVariable("s");
+    String padding = "string-join(for " + i + " in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for " + s + " in " + text.getScript()
         + " return concat(substring(" + padding + ", 1, " + len
-        + " - string-length($__s)), $__s))");
+        + " - string-length(" + s + ")), " + s + "))");
   }
 
   @Override
   public StringExpression composePadRightFunction(StringExpression text, NumericExpression length,
       StringExpression padChar) {
-    String len = length.getScript();
+    String len = operand(length, Precedence.ADDITIVE);
     String ch = padChar.getScript();
-    String padding = "string-join(for $__i in 1 to " + len + " return " + ch + ", '')";
-    return new StringExpression("(for $__s in " + text.getScript()
-        + " return concat($__s, substring(" + padding + ", 1, " + len
-        + " - string-length($__s))))");
+    String i = this.ownVariable("i");
+    String s = this.ownVariable("s");
+    String padding = "string-join(for " + i + " in 1 to " + len + " return " + ch + ", '')";
+    return new StringExpression("(for " + s + " in " + text.getScript()
+        + " return concat(" + s + ", substring(" + padding + ", 1, " + len
+        + " - string-length(" + s + "))))");
   }
 
   @Override
   public StringExpression composeRepeatFunction(StringExpression text, NumericExpression count) {
-    return new StringExpression("(for $__s in " + text.getScript()
-        + " return string-join(for $__i in 1 to " + count.getScript()
-        + " return $__s, ''))");
+    final String s = this.ownVariable("s");
+    final String i = this.ownVariable("i");
+    return new StringExpression("(for " + s + " in " + text.getScript()
+        + " return string-join(for " + i + " in 1 to " + operand(count, Precedence.ADDITIVE)
+        + " return " + s + ", ''))");
   }
 
   @Override
   public StringExpression composeReplaceFunction(StringExpression text, StringExpression search,
       StringExpression replacement) {
+    String s = this.ownVariable("s");
+    String t = this.ownVariable("t");
     // Escape regex metacharacters in the search string for literal matching
-    String escapedSearch = "replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
+    String escapedSearch = "replace(" + s + ", '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1')";
     // Escape replacement-string semantics: \ must become \\, $ must become \$
     // (order matters: escape backslashes first, then dollars)
     String escapedReplacement = "replace(replace(" + replacement.getScript()
         + ", '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')";
     // Bind text and search to avoid double evaluation; guard against empty search at runtime
-    return new StringExpression("(for $__s in " + search.getScript() + ", $__t in "
-        + text.getScript() + " return if ($__s = '') then $__t else replace($__t, "
-        + escapedSearch + ", " + escapedReplacement + "))");
+    return new StringExpression("(for " + s + " in " + search.getScript() + ", " + t + " in "
+        + text.getScript() + " return if (" + s + " = '') then " + t + " else replace(" + t
+        + ", " + escapedSearch + ", " + escapedReplacement + "))");
   }
 
   @Override
@@ -740,9 +775,9 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public StringExpression composeCapitalizeFirstFunction(StringExpression text) {
-    return new StringExpression(
-        "(for $__s in " + text.getScript()
-            + " return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))");
+    final String s = this.ownVariable("s");
+    return new StringExpression("(for " + s + " in " + text.getScript()
+        + " return concat(upper-case(substring(" + s + ", 1, 1)), substring(" + s + ", 2)))");
   }
 
   @Override
@@ -838,12 +873,14 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public DateExpression composeAddition(DateExpression date, DurationExpression duration) {
-    return new DateExpression("(" + date.getScript() + " + " + duration.getScript() + ")");
+    return new DateExpression("(" + operand(date, Precedence.ADDITIVE) + " + "
+        + operand(duration, Precedence.MULTIPLICATIVE) + ")");
   }
 
   @Override
   public DateExpression composeSubtraction(DateExpression date, DurationExpression duration) {
-    return new DateExpression("(" + date.getScript() + " - " + duration.getScript() + ")");
+    return new DateExpression("(" + operand(date, Precedence.ADDITIVE) + " - "
+        + operand(duration, Precedence.MULTIPLICATIVE) + ")");
   }
 
   @Override
@@ -881,24 +918,27 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public DurationExpression composeSubtraction(DateExpression startDate, DateExpression endDate) {
-    return new DurationExpression("xs:dayTimeDuration(" + endDate.getScript() + " " + operators.get("-")
-        + " " + startDate.getScript() + ")");
+    return new DurationExpression("xs:dayTimeDuration(" + operand(endDate, Precedence.ADDITIVE)
+        + " " + operators.get("-") + " " + operand(startDate, Precedence.MULTIPLICATIVE) + ")");
   }
 
   @Override
   public DurationExpression composeMultiplication(NumericExpression number,
       DurationExpression duration) {
-    return new DurationExpression("(" + number.getScript() + " * " + duration.getScript() + ")");
+    return new DurationExpression("(" + operand(number, Precedence.MULTIPLICATIVE) + " * "
+        + operand(duration, Precedence.UNARY) + ")");
   }
 
   @Override
   public DurationExpression composeAddition(DurationExpression left, DurationExpression right) {
-    return new DurationExpression("(" + left.getScript() + " + " + right.getScript() + ")");
+    return new DurationExpression("(" + operand(left, Precedence.ADDITIVE) + " + "
+        + operand(right, Precedence.MULTIPLICATIVE) + ")");
   }
 
   @Override
   public DurationExpression composeSubtraction(DurationExpression left, DurationExpression right) {
-    return new DurationExpression("(" + left.getScript() + " - " + right.getScript() + ")");
+    return new DurationExpression("(" + operand(left, Precedence.ADDITIVE) + " - "
+        + operand(right, Precedence.MULTIPLICATIVE) + ")");
   }
 
 
@@ -911,10 +951,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public <T extends SequenceExpression> T composeGetDuplicatesFunction(
       final T list, final Class<T> listType) {
-    final String seq = list.getScript();
+    final String v = this.ownVariable("v");
     return Expression.instantiate(
-        "for $v in distinct-values(" + seq + ") return if (count(" + seq + "[. = $v]) > 1) then $v else ()",
-        listType);
+        "for " + v + " in distinct-values(" + list.getScript() + ") return if (count("
+            + operand(list, Precedence.PRIMARY) + "[. = " + v + "]) > 1) then " + v + " else ()",
+        Precedence.PREFIX, listType);
   }
 
   @Override
@@ -926,12 +967,20 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   @Override
   public <T extends SequenceExpression> T composeIntersectFunction(T listOne, T listTwo, Class<T> listType) {
-    return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (some $L2 in " + listTwo.getScript() + " satisfies $L1 = $L2) then $L1 else ())", listType);
+    final String l1 = this.ownVariable("L1");
+    final String l2 = this.ownVariable("L2");
+    return Expression.instantiate("distinct-values(for " + l1 + " in " + listOne.getScript()
+        + " return if (some " + l2 + " in " + listTwo.getScript()
+        + " satisfies " + l1 + " = " + l2 + ") then " + l1 + " else ())", listType);
   }
 
   @Override
   public <T extends SequenceExpression> T composeExceptFunction(T listOne, T listTwo, Class<T> listType) {
-    return Expression.instantiate("distinct-values(for $L1 in " + listOne.getScript() + " return if (every $L2 in " + listTwo.getScript() + " satisfies $L1 != $L2) then $L1 else ())", listType);
+    final String l1 = this.ownVariable("L1");
+    final String l2 = this.ownVariable("L2");
+    return Expression.instantiate("distinct-values(for " + l1 + " in " + listOne.getScript()
+        + " return if (every " + l2 + " in " + listTwo.getScript()
+        + " satisfies " + l1 + " != " + l2 + ") then " + l1 + " else ())", listType);
   }
 
   @Override
@@ -970,9 +1019,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
   @Override
   public NumericExpression composeIndexOfSubstringFunction(StringExpression text,
       StringExpression substring) {
-    return new NumericExpression(
-        "(for $__s in " + text.getScript() + ", $__sub in " + substring.getScript()
-            + " return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)");
+    final String s = this.ownVariable("s");
+    final String sub = this.ownVariable("sub");
+    return new NumericExpression("(for " + s + " in " + text.getScript() + ", " + sub + " in "
+        + substring.getScript() + " return if (contains(" + s + ", " + sub + "))"
+        + " then string-length(substring-before(" + s + ", " + sub + ")) + 1 else 0)");
   }
 
   @Override
@@ -1065,6 +1116,41 @@ public class XPathScriptGenerator implements ScriptGenerator {
 
   //#region Helpers -----------------------------------------------------------
 
+  /**
+   * Gives the script of an operand as an operation places it: in parentheses where the operand
+   * binds looser than its place allows, so that XPath groups the operand as the EFX expression
+   * does. XPath requires of an operand:
+   * <ul>
+   * <li>of a comparison, an addition or anything tighter: comparisons do not chain, so
+   * {@code 1 = 1 = true()} is not XPath;</li>
+   * <li>on the left of {@code and}, {@code or}, an addition or a multiplication, the same
+   * precedence as the operation or a tighter one; on its right, a tighter one;</li>
+   * <li>before a predicate, an index or a path step, no operation at all.</li>
+   * </ul>
+   * An argument of a function, an item of a list, and the parts of {@code for}, {@code some},
+   * {@code every} and {@code if} take any operand.
+   *
+   * @param operand the operand
+   * @param required the precedence its place requires
+   * @return the script of the operand, in parentheses where needed
+   */
+  protected static String operand(final Expression operand, final Precedence required) {
+    return operand.getPrecedence().bindsAtLeast(required) ? operand.getScript()
+        : "(" + operand.getScript() + ")";
+  }
+
+  /**
+   * Names a variable that the XPath binds for its own use, such as the variable of the
+   * {@code for} that a function is translated to. The names start with {@code __}, which EFX-2
+   * reserves, so that they cannot hide a variable of an EFX-2 program. EFX-1 does not reserve the
+   * prefix, and its XPath takes the same names.
+   *
+   * @param name The variable's name without the prefix, such as {@code "L1"}.
+   * @return The variable as the XPath writes it, such as {@code "$__L1"}.
+   */
+  private String ownVariable(final String name) {
+    return "$__" + name;
+  }
 
   private String quoted(final String text) {
     return "'" + text.replaceAll("\"", "").replaceAll("'", "") + "'";

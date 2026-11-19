@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
@@ -69,8 +70,8 @@ import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxTypeLattice;
 import eu.europa.ted.efx.model.types.FieldTypes;
-import eu.europa.ted.efx.model.variables.ParsedParameter;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.ParsedParameter;
+import eu.europa.ted.efx.model.identifiers.Variable;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 
 /**
@@ -144,8 +145,19 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.stack.popParserContext();
   }
 
+  /**
+   * Starts a translation with no declarations, no context and no parameter values, so that nothing
+   * of an earlier translation, finished or failed, stays in it.
+   */
+  void startTranslation() {
+    this.stack = new CallStack(TypeChecker.V1);
+    this.efxContext = new ContextStack(this.symbols);
+    this.expressionParameters.clear();
+  }
+
   @Override
   public String translateExpression(final String expression, final String... parameters) {
+    this.startTranslation();
     this.expressionParameters.addAll(Arrays.asList(parameters));
 
     final EfxLexer lexer =
@@ -192,7 +204,8 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
     walker.walk(translator, tree);
 
-    return Expression.instantiate(translator.getTranslatedScript(), parameterType);
+    return translator.stack.empty() ? Expression.empty(parameterType)
+        : Expression.from(translator.stack.pop(Expression.class), parameterType);
   }
 
   /**
@@ -494,6 +507,14 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   // #region Quantified expressions -------------------------------------------
 
+  /**
+   * Opens the scope of the variables of the iterators, which closes after the condition.
+   */
+  @Override
+  public void enterQuantifiedExpression(QuantifiedExpressionContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
   @Override
   public void exitQuantifiedExpression(QuantifiedExpressionContext ctx) {
     BooleanExpression booleanExpression = this.stack.pop(BooleanExpression.class);
@@ -504,6 +525,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
       this.stack.push(this.script.composeAnySatisfies(this.stack.pop(IteratorListExpression.class),
           booleanExpression));
     }
+    this.stack.popStackFrame();
   }
 
   // #endregion Quantified expressions ----------------------------------------
@@ -781,13 +803,13 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, path.asSequence()));
     if (ctx.fieldContext() != null) {
       final String contextFieldId = getFieldId(ctx.fieldContext());
-      this.efxContext.declareContextVariable(variable.name,
+      this.efxContext.declareContextVariable(variable,
           new FieldContext(contextFieldId, this.symbols.getAbsolutePathOfField(contextFieldId),
               this.symbols.getRelativePathOfField(contextFieldId, this.efxContext.symbol())));
     } else if (ctx.nodeContext() != null) {
       final String contextNodeId =
           getNodeId(ctx.nodeContext());
-      this.efxContext.declareContextVariable(variable.name,
+      this.efxContext.declareContextVariable(variable,
           new NodeContext(contextNodeId, this.symbols.getAbsolutePathOfNode(contextNodeId),
               this.symbols.getRelativePathOfNode(contextNodeId, this.efxContext.symbol())));
     }
@@ -841,8 +863,18 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
+  public void enterStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
   public void exitStringSequenceFromIteration(StringSequenceFromIterationContext ctx) {
     this.exitIterationExpression(StringExpression.class, StringSequenceExpression.class);
+  }
+
+  @Override
+  public void enterNumericSequenceFromIteration(NumericSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
   }
 
   @Override
@@ -851,8 +883,18 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
+  public void enterBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
   public void exitBooleanSequenceFromIteration(BooleanSequenceFromIterationContext ctx) {
     this.exitIterationExpression(BooleanExpression.class, BooleanSequenceExpression.class);
+  }
+
+  @Override
+  public void enterDateSequenceFromIteration(DateSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
   }
 
   @Override
@@ -861,8 +903,18 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
   }
 
   @Override
+  public void enterTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
+  }
+
+  @Override
   public void exitTimeSequenceFromIteration(TimeSequenceFromIterationContext ctx) {
     this.exitIterationExpression(TimeExpression.class, TimeSequenceExpression.class);
+  }
+
+  @Override
+  public void enterDurationSequenceFromIteration(DurationSequenceFromIterationContext ctx) {
+    this.stack.pushStackFrame();
   }
 
   @Override
@@ -881,6 +933,10 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     this.stack.push(this.script.composeIteratorExpression(variable.declarationExpression, initialisationExpression));
   }
 
+  /**
+   * Composes an iteration, and closes the scope of the variables of its iterators, which the
+   * iteration opened when it was entered.
+   */
   public <T extends ScalarExpression> void exitIterationExpression(
       Class<T> expressionType,
       Class<? extends SequenceExpression> targetListType) {
@@ -888,6 +944,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     IteratorListExpression iterators = this.stack.pop(IteratorListExpression.class);
     this.stack
         .push(this.script.composeForExpression(iterators, expression, targetListType));
+    this.stack.popStackFrame();
   }
 
   // #endregion Iterators -----------------------------------------------------
@@ -1183,9 +1240,20 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
     }
   }
 
+  /**
+   * Takes the context that a context variable holds. A parameter or a variable that holds a value
+   * names no context.
+   */
   @Override
   public void exitContextVariableSpecifier(ContextVariableSpecifierContext ctx) {
-    Context variableContext = this.efxContext.getContextFromVariable(getVariableName(ctx.variableReference()));
+    final String name = getVariableName(ctx.variableReference());
+    final Context variableContext =
+        this.stack.getVariable(name).map(this.efxContext::getContextFromVariable).orElse(null);
+    if (variableContext == null) {
+      throw InvalidIdentifierException.notAContextVariable(ctx.variableReference(),
+          this.stack.getParameter(name).isPresent() ? ParsedParameter.describe(name)
+              : Variable.describe(name));
+    }
     if (variableContext.isFieldContext()) {
       this.efxContext.push(new FieldContext(variableContext.symbol(),
           this.symbols.getAbsolutePathOfField(variableContext.symbol()), this.symbols
@@ -1266,7 +1334,7 @@ public class EfxExpressionTranslatorV1 extends EfxBaseListener
 
   private void exitParameterDeclaration(ParserRuleContext ctx, String parameterName, Class<? extends TypedExpression> parameterType) {
     if (this.expressionParameters.isEmpty()) {
-      throw InvalidArgumentException.missingArgument(ctx, parameterName);
+      throw InvalidArgumentException.missingArgument(ctx, ParsedParameter.describe(parameterName));
     }
 
     ParsedParameter parameter = new ParsedParameter(parameterName,

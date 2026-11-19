@@ -45,7 +45,7 @@ public class EfxComputeDependencyExtractor extends EfxBaseListener
     this.stack.clear();
     this.stack.push(new DependencySet());
 
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(expression));
+    final EfxLexer lexer = new EfxErrorReportingLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
     parser.setErrorHandler(new EfxErrorStrategy());

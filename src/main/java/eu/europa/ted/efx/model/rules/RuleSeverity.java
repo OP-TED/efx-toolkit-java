@@ -13,6 +13,8 @@
  */
 package eu.europa.ted.efx.model.rules;
 
+import java.util.Locale;
+
 public enum RuleSeverity {
     ERROR,
     WARNING,
@@ -23,7 +25,7 @@ public enum RuleSeverity {
             throw new IllegalArgumentException("RuleSeverity value cannot be null");
         }
         try {
-            return RuleSeverity.valueOf(value.trim().toUpperCase());
+            return RuleSeverity.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Unknown RuleSeverity: " + value, ex);
         }

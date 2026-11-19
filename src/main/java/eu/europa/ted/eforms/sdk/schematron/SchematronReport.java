@@ -16,9 +16,9 @@ package eu.europa.ted.eforms.sdk.schematron;
 import java.util.List;
 
 import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
 import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ValidationRule;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
 
 /**
  * Represents a Schematron &lt;report&gt; element.

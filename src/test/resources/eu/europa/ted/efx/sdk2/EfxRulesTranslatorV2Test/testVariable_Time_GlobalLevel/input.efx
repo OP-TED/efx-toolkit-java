@@ -1,0 +1,8 @@
+LET time : $opening = 09:00:00Z;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT $opening < 17:00:00Z
+AS ERROR R-VAR-005
+FOR BT-00-Text IN 1, 2

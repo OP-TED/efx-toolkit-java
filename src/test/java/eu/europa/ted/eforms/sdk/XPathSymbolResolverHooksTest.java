@@ -136,6 +136,18 @@ class XPathSymbolResolverHooksTest {
     }
 
     @Test
+    @DisplayName("a field whose parent node is missing repeats only if it is itself repeatable")
+    void fieldWithMissingParentNode() {
+      minimalResolver.addField("BT-NoParent", "text", null, "/*/cbc:Note", false);
+      minimalResolver.addField("BT-UnknownParent", "text", "ND-Unknown", "/*/cbc:Note", false);
+      minimalResolver.addField("BT-RepeatableNoParent", "text", null, "/*/cbc:Note", true);
+
+      assertFalse(minimalResolver.isFieldRepeatableFromContext("BT-NoParent", null));
+      assertFalse(minimalResolver.isFieldRepeatableFromContext("BT-UnknownParent", LOT));
+      assertTrue(minimalResolver.isFieldRepeatableFromContext("BT-RepeatableNoParent", null));
+    }
+
+    @Test
     @DisplayName("resolveField is an overridable hook for all field resolution")
     void resolveFieldHookIsOverridable() {
       MapBackedSymbolResolver prefixing = new MapBackedSymbolResolver() {

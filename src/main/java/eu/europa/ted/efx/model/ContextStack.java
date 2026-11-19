@@ -13,7 +13,7 @@
  */
 package eu.europa.ted.efx.model;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -21,6 +21,7 @@ import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 /**
  * Used to keep track of the current evaluation context. Extends Stack&lt;Context&gt; to provide
@@ -31,7 +32,18 @@ public class ContextStack extends Stack<Context> {
 
   private final SymbolResolver symbols;
 
-  private final Map<String, Context> variables = new HashMap<>();
+  /**
+   * The context of each context variable, by its declaration. The call stack finds the declaration
+   * that a name refers to where it is read, and that declaration is a context variable if it has a
+   * context here. A name declared again is another declaration, which has a context only if it is
+   * given one.
+   */
+  private final Map<Variable, Context> contextsOfVariables = new IdentityHashMap<>();
+
+  /**
+   * The reads made where no context is declared.
+   */
+  private final Reads readsWithoutContext = new Reads();
 
   /**
    * Creates a new ContextStack.
@@ -83,12 +95,23 @@ public class ContextStack extends Stack<Context> {
     return context;
   }
 
-  public void declareContextVariable(final String variableName, final Context variableValue) {
-    this.variables.put(variableName, variableValue);
+  /**
+   * Declares a context variable: gives a variable the context that it holds one element of.
+   *
+   * @param variable the declaration of the variable
+   * @param context the context
+   */
+  public void declareContextVariable(final Variable variable, final Context context) {
+    this.contextsOfVariables.put(variable, context);
   }
 
-  public Context getContextFromVariable(final String variableName) {
-    return this.variables.get(variableName);
+  /**
+   * @param variable the declaration of a variable
+   * @return the context that the variable holds one element of, or {@code null} if it is not a
+   *         context variable
+   */
+  public Context getContextFromVariable(final Variable variable) {
+    return this.contextsOfVariables.get(variable);
   }
 
   /**
@@ -159,6 +182,19 @@ public class ContextStack extends Stack<Context> {
     }
 
     return this.peek().relativePath();
+  }
+
+  /**
+   * @return the reads made while the context at the top of the stack is the current one, or, if the
+   *         stack is empty or its top is {@code null}, as EFX-1 pushes for an absolute reference,
+   *         the reads made where no context is declared
+   */
+  public Reads readsInCurrentContext() {
+    if (this.isEmpty() || this.peek() == null) {
+      return this.readsWithoutContext;
+    }
+
+    return this.peek().reads();
   }
 
   /**

@@ -26,7 +26,7 @@ import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ReportRule;
 import eu.europa.ted.efx.model.rules.RuleSet;
 import eu.europa.ted.efx.model.rules.ValidationRule;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
 
 /**
  * Represents a Schematron &lt;rule&gt; element.

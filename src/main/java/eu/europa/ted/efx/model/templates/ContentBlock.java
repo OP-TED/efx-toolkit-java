@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,11 +15,10 @@ import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.Parameter;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.variables.ParsedArgument;
-import eu.europa.ted.efx.model.variables.ParsedArguments;
-import eu.europa.ted.efx.model.variables.ParsedParameter;
-import eu.europa.ted.efx.model.variables.ParsedParameters;
-import eu.europa.ted.efx.model.variables.Variables;
+import eu.europa.ted.efx.model.constructs.Arguments;
+import eu.europa.ted.efx.model.identifiers.ParsedParameter;
+import eu.europa.ted.efx.model.identifiers.ParsedParameters;
+import eu.europa.ted.efx.model.identifiers.Variables;
 
 public class ContentBlock {
   private final int number;
@@ -34,7 +34,7 @@ public class ContentBlock {
   protected final Context context;
   protected final Queue<ContentBlock> children = new LinkedList<>();
   protected final ParsedParameters parameters;
-  protected final ParsedArguments arguments;
+  protected final Arguments<ParsedParameter> arguments;
 
   private ContentBlock(String id) {
     this.parent = null;
@@ -44,12 +44,12 @@ public class ContentBlock {
     this.context = null;
     this.number = 0;
     this.parameters = new ParsedParameters();
-    this.arguments = new ParsedArguments(this.parameters);
+    this.arguments = this.parameters.toArguments();
   }
 
   public ContentBlock(final ContentBlock parent, final String id, final int number,
       final List<ContentTemplate> contentTemplates, Context contextPath, ParsedParameters parameters,
-      ParsedArguments arguments) {
+      Arguments<ParsedParameter> arguments) {
     this.parent = parent;
     this.id = id;
     this.indentationLevel = parent.indentationLevel + 1;
@@ -63,7 +63,7 @@ public class ContentBlock {
   public ContentBlock(final ContentBlock parent, final String id, final int number,
       final List<ContentTemplate> contentTemplates, Context contextPath, Variables variables) {
     this(parent, id, number, contentTemplates, contextPath, new ParsedParameters(variables),
-        new ParsedArguments(variables));
+        variables.toArguments());
   }
 
   public static ContentBlock newRootBlock(String id) {
@@ -96,24 +96,8 @@ public class ContentBlock {
   }
 
   public ContentBlock addChild(final int number, final Context context, final Variables variables,
-      final TemplateDefinition template) {
-    // number < 0 means "autogenerate", number == 0 means "no number", number > 0
-    // means "use this number"
-    final int actualNumber = number >= 0 ? number
-        : this.children.stream()
-            .filter(ContentBlock.class::isInstance)
-            .map(ContentBlock::getNumber)
-            .max(Comparator.naturalOrder())
-            .orElse(0) + 1;
-
-    ContentBlock newBlock = new TemplateInvocation(this, template, actualNumber, context, variables);
-    this.children.add(newBlock);
-    return newBlock;
-  }
-
-  public ContentBlock addChild(final int number, final Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
-    String newBlockId = String.format("%s%02d", this.id, this.children.size() + 1);
+    String newBlockId = String.format(Locale.ROOT, "%s%02d", this.id, this.children.size() + 1);
     return this.addChild(newBlockId, number, context, variables, contentTemplates);
   }
 
@@ -124,11 +108,6 @@ public class ContentBlock {
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
     return this.parent.addChild(number, context, variables, contentTemplates);
-  }
-
-  public ContentBlock addSibling(final int number, final Context context, final Variables variables,
-      final TemplateDefinition template) {
-    return this.parent.addChild(number, context, variables, template);
   }
 
   // #endregion Add Siblings
@@ -167,15 +146,15 @@ public class ContentBlock {
     }
 
     if (this.parent == null || (this.parent.number == 0)) {
-      return String.format("%d", this.number);
+      return String.format(Locale.ROOT, "%d", this.number);
     }
 
     final String parentNumber = this.parent.getOutlineNumber();
     if (parentNumber.isEmpty()) {
-      return String.format("%d", this.number);
+      return String.format(Locale.ROOT, "%d", this.number);
     }
 
-    return String.format("%s.%d", parentNumber, this.number);
+    return String.format(Locale.ROOT, "%s.%d", parentNumber, this.number);
   }
 
   public Integer getIndentationLevel() {
@@ -193,32 +172,23 @@ public class ContentBlock {
     return this.parent.getContext();
   }
 
-  protected Set<ParsedArgument> getOwnArguments() {
-    return this.arguments.toSet();
+  protected Arguments<ParsedParameter> getOwnArguments() {
+    return this.arguments;
   }
 
   protected Set<ParsedParameter> getOwnParameters() {
     return this.parameters.toSet();
   }
 
+  /**
+   * @return the parameters of the arguments of this block and of the blocks that hold it, those of
+   *         the outermost block first
+   */
   protected Set<ParsedParameter> getAllParameters() {
-    if (this.parent == null) {
-      return new LinkedHashSet<>(this.getOwnArguments());
-    }
-    final Set<ParsedParameter> merged = new LinkedHashSet<>();
-    merged.addAll(this.parent.getAllArguments());
-    merged.addAll(this.getOwnArguments());
-    return merged;
-  }
-
-  protected Set<ParsedArgument> getAllArguments() {
-    if (this.parent == null) {
-      return new LinkedHashSet<>(this.getOwnArguments());
-    }
-    final Set<ParsedArgument> merged = new LinkedHashSet<>();
-    merged.addAll(this.parent.getAllArguments());
-    merged.addAll(this.getOwnArguments());
-    return merged;
+    final Set<ParsedParameter> all =
+        this.parent == null ? new LinkedHashSet<>() : this.parent.getAllParameters();
+    this.arguments.forEach(argument -> all.add(argument.parameter));
+    return all;
   }
 
   // #region Render -----------------------------------------------------------
@@ -261,11 +231,15 @@ public class ContentBlock {
   public Markup renderInvocation(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Argument> args = new LinkedHashSet<>();
     if (this.parent != null) {
-      args.addAll(this.parent.getAllArguments().stream()
-          .map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.referenceExpression))
+      args.addAll(this.parent.getAllParameters().stream()
+          .map(parameter -> new Argument.Impl(parameter.name,
+              markupGenerator.getEfxDataTypeEquivalent(parameter.dataType),
+              parameter.referenceExpression))
           .collect(Collectors.toCollection(LinkedHashSet::new)));
     }
-    args.addAll(this.getOwnArguments().stream().map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
+    args.addAll(this.getOwnArguments().stream()
+        .map(a -> new Argument.Impl(a.parameter.name,
+            markupGenerator.getEfxDataTypeEquivalent(a.parameter.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new)));
     var invocation = markupGenerator.renderFragmentInvocation(this.id, args, translatorContext);
     return markupGenerator.renderContextLoop(this.context.relativePath(), invocation, args);

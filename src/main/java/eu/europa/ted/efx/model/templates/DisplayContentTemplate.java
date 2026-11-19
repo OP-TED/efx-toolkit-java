@@ -37,6 +37,21 @@ public class DisplayContentTemplate extends ContentTemplate {
     this.fragments.addFirst(fragment);
   }
 
+  /**
+   * Puts a text in front of those already in the template. When the template starts with a text,
+   * the two are joined into one text, because the EFX-2 grammar reads a text one text block at a
+   * time: a word, a run of whitespace, an escape sequence or a character reference.
+   */
+  public void prependText(final TextContentTemplateFragment text) {
+    final ContentTemplateFragment first = this.fragments.peekFirst();
+    if (first instanceof TextContentTemplateFragment) {
+      this.fragments.removeFirst();
+      this.fragments.addFirst(text.followedBy((TextContentTemplateFragment) first));
+    } else {
+      this.fragments.addFirst(text);
+    }
+  }
+
   @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     StringBuilder markup = new StringBuilder();

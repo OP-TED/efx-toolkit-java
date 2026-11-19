@@ -45,6 +45,9 @@
 
     <sdk.antlr4.dir>${project.build.directory}/eforms-sdk/antlr4</sdk.antlr4.dir>
 
+    <!-- Tests tagged "corpus" are opt-in: mvn test -Dgroups=corpus -DexcludedGroups= -->
+    <excludedGroups>corpus</excludedGroups>
+
     <!-- Versions - eForms -->
     <version.eforms-sdk-1>1.16.0-SNAPSHOT</version.eforms-sdk-1>
     <version.eforms-sdk-2>2.0.0-SNAPSHOT</version.eforms-sdk-2>
@@ -81,6 +84,11 @@
         <groupId>eu.europa.ted.eforms</groupId>
         <artifactId>eforms-core-java</artifactId>
         <version>${version.eforms-core}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.europa.ted.eforms</groupId>
+        <artifactId>eforms-sdk</artifactId>
+        <version>${version.eforms-sdk-2}</version>
       </dependency>
 
       <dependency>
@@ -141,6 +149,11 @@
     <dependency>
       <groupId>eu.europa.ted.eforms</groupId>
       <artifactId>eforms-core-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.europa.ted.eforms</groupId>
+      <artifactId>eforms-sdk</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -325,6 +338,7 @@
             </goals>
             <configuration>
               <sourceDirectory>${sdk.antlr4.dir}</sourceDirectory>
+              <visitor>true</visitor>
             </configuration>
           </execution>
           <execution>

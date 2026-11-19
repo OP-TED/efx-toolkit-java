@@ -1,7 +1,7 @@
 package eu.europa.ted.efx.mock;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 
@@ -24,8 +24,9 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
 
   final public static DependencyFactoryMock INSTANCE = new DependencyFactoryMock();
 
-  Map<String, ScriptGenerator> scriptGenerators = new HashMap<>();
-  Map<String, MarkupGenerator> markupGenerators = new HashMap<>();
+  // Concurrent, as tests that run in parallel ask for the same instance at once
+  Map<String, ScriptGenerator> scriptGenerators = new ConcurrentHashMap<>();
+  Map<String, MarkupGenerator> markupGenerators = new ConcurrentHashMap<>();
 
   @Override
   public SymbolResolver createSymbolResolver(String sdkVersion, String qualifier) {
@@ -38,14 +39,13 @@ public class DependencyFactoryMock implements TranslatorDependencyFactory {
     // Default hashCode() implementation is OK here
     // we just need to distinguish TranslatorOptions instances
     String key = sdkVersion + qualifier + options.hashCode();
-    if (!scriptGenerators.containsKey(key)) {
+    return this.scriptGenerators.computeIfAbsent(key, k -> {
       try {
-        this.scriptGenerators.put(key, ComponentFactory.getScriptGenerator(sdkVersion, qualifier, options));
+        return ComponentFactory.getScriptGenerator(sdkVersion, qualifier, options);
       } catch (InstantiationException e) {
         throw new RuntimeException(e.getMessage(), e);
       }
-    }
-    return this.scriptGenerators.get(key);
+    });
   }
 
   @Override

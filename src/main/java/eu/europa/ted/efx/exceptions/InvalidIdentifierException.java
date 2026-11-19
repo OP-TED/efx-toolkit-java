@@ -25,13 +25,18 @@ public class InvalidIdentifierException extends EfxCompilationException {
         UNDECLARED_IDENTIFIER,
         IDENTIFIER_ALREADY_DECLARED,
         NOT_A_CONTEXT_VARIABLE,
-        UNDECLARED_ENDPOINT
+        UNDECLARED_ENDPOINT,
+        IDENTIFIER_IS_RESERVED,
+        DICTIONARY_WITHOUT_KEY
     }
 
-    private static final String UNDECLARED_IDENTIFIER = "Identifier '%s' is not declared.";
-    private static final String IDENTIFIER_ALREADY_DECLARED = "Identifier '%s' is already declared in this scope.";
-    private static final String NOT_A_CONTEXT_VARIABLE = "Variable '%s' is not a context variable.";
-    private static final String UNDECLARED_ENDPOINT = "Dynamic function '%s' references undeclared API endpoint '%s'.";
+    private static final String UNDECLARED_IDENTIFIER = "%s is not declared.";
+    private static final String IDENTIFIER_ALREADY_DECLARED = "%s is already declared in this scope.";
+    private static final String NAME_ALREADY_DECLARED = "%s has the same name as %s, already declared in this scope.";
+    private static final String NOT_A_CONTEXT_VARIABLE = "%s is not a context variable.";
+    private static final String UNDECLARED_ENDPOINT = "%s references undeclared API endpoint '%s'.";
+    private static final String IDENTIFIER_IS_RESERVED = "%s is reserved: the translator generates the names that start with '%s'.";
+    private static final String DICTIONARY_WITHOUT_KEY = "Dictionary '$%1$s' has no value of its own: look up a key in it, as in $%1$s['key'].";
 
     private final ErrorCode errorCode;
 
@@ -44,19 +49,91 @@ public class InvalidIdentifierException extends EfxCompilationException {
         return this.errorCode;
     }
 
-    public static InvalidIdentifierException undeclaredIdentifier(ParserRuleContext ctx, String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, ctx, UNDECLARED_IDENTIFIER, identifierName);
+    /**
+     * A reference to a name that nothing of its kind declares.
+     *
+     * @param ctx the reference
+     * @param identifier the identifier as an error names it, such as "Variable '$x'" or
+     *        "Function '?f'": see {@link eu.europa.ted.efx.model.identifiers.Identifier#describe()}
+     * @return the exception
+     */
+    public static InvalidIdentifierException undeclaredIdentifier(ParserRuleContext ctx,
+            String identifier) {
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_IDENTIFIER, ctx,
+                UNDECLARED_IDENTIFIER, identifier);
     }
 
-    public static InvalidIdentifierException alreadyDeclared(ParserRuleContext ctx, String identifierName) {
-        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, ctx, IDENTIFIER_ALREADY_DECLARED, identifierName);
+    /**
+     * A declaration of a name that is already declared in the scope. When the identifier that
+     * holds the name is of another kind, and so named otherwise, the message names both.
+     *
+     * @param ctx the declaration
+     * @param identifier the identifier declared, as an error names it, such as "Variable '$x'"
+     * @param declared the identifier that holds the name, as an error names it, such as
+     *        "Function '?x'"
+     * @return the exception
+     */
+    public static InvalidIdentifierException alreadyDeclared(ParserRuleContext ctx,
+            String identifier, String declared) {
+        if (identifier.equals(declared)) {
+            return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, ctx,
+                    IDENTIFIER_ALREADY_DECLARED, identifier);
+        }
+        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_ALREADY_DECLARED, ctx,
+                NAME_ALREADY_DECLARED, identifier, declared);
     }
 
-    public static InvalidIdentifierException notAContextVariable(ParserRuleContext ctx, String variableName) {
-        return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, ctx, NOT_A_CONTEXT_VARIABLE, variableName);
+    /**
+     * A context taken from a variable that holds no context.
+     *
+     * @param ctx the reference to the variable
+     * @param variable the variable as an error names it, such as "Variable '$x'"
+     * @return the exception
+     */
+    public static InvalidIdentifierException notAContextVariable(ParserRuleContext ctx,
+            String variable) {
+        return new InvalidIdentifierException(ErrorCode.NOT_A_CONTEXT_VARIABLE, ctx,
+                NOT_A_CONTEXT_VARIABLE, variable);
     }
 
-    public static InvalidIdentifierException undeclaredEndpoint(ParserRuleContext ctx, String functionName, String endpointName) {
-        return new InvalidIdentifierException(ErrorCode.UNDECLARED_ENDPOINT, ctx, UNDECLARED_ENDPOINT, functionName, endpointName);
+    /**
+     * A dynamic function whose endpoint the validation plan does not declare.
+     *
+     * @param ctx the declaration of the function
+     * @param function the function as an error names it, such as "Function '?check'"
+     * @param endpointName the name of the endpoint
+     * @return the exception
+     */
+    public static InvalidIdentifierException undeclaredEndpoint(ParserRuleContext ctx,
+            String function, String endpointName) {
+        return new InvalidIdentifierException(ErrorCode.UNDECLARED_ENDPOINT, ctx,
+                UNDECLARED_ENDPOINT, function, endpointName);
+    }
+
+    /**
+     * A declaration that gives a name the translator keeps for the variables it generates.
+     *
+     * @param ctx the declaration
+     * @param identifier the identifier declared, as an error names it, such as "Variable '$__x'"
+     * @param reservedPrefix what the names the translator generates start with
+     * @return the exception that rejects the declaration
+     */
+    public static InvalidIdentifierException identifierIsReserved(ParserRuleContext ctx,
+            String identifier, String reservedPrefix) {
+        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_IS_RESERVED, ctx,
+                IDENTIFIER_IS_RESERVED, identifier, reservedPrefix);
+    }
+
+    /**
+     * A use of the name of a dictionary other than a lookup of a key in it.
+     *
+     * @param ctx the name, as written
+     * @param dictionaryName the name of the dictionary
+     * @return the exception that rejects the use
+     */
+    public static InvalidIdentifierException dictionaryWithoutKey(ParserRuleContext ctx,
+            String dictionaryName) {
+        return new InvalidIdentifierException(ErrorCode.DICTIONARY_WITHOUT_KEY, ctx,
+                DICTIONARY_WITHOUT_KEY, dictionaryName);
     }
 }

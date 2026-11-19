@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 import eu.europa.ted.efx.model.Context;
-import eu.europa.ted.efx.model.variables.Variables;
+import eu.europa.ted.efx.model.identifiers.Variables;
 
 public class ContentBlockStack extends Stack<ContentBlock> {
 
@@ -22,11 +22,6 @@ public class ContentBlockStack extends Stack<ContentBlock> {
     this.push(this.peek().addChild(number, context, variables, contentTemplates));
   }
 
-  public void pushChild(final int number, final Context context, final Variables variables,
-      final TemplateDefinition template) {
-    this.push(this.peek().addChild(number, context, variables, template));
-  }
-
   /**
    * Removes the block at the top of the stack and replaces it by a new sibling block. When the last
    * sibling is later removed, their parent block will return to the top of the stack again.
@@ -39,11 +34,6 @@ public class ContentBlockStack extends Stack<ContentBlock> {
   public void pushSibling(final int number, Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
     this.push(this.pop().addSibling(number, context, variables, contentTemplates));
-  }
-
-  public void pushSibling(final int number, Context context, final Variables variables,
-      final TemplateDefinition template) {
-    this.push(this.pop().addSibling(number, context, variables, template));
   }
 
   /**

@@ -1,0 +1,8 @@
+LET number : $threshold = 10;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+ASSERT $threshold > 0
+AS ERROR R-VAR-002
+FOR BT-00-Text IN 1, 2

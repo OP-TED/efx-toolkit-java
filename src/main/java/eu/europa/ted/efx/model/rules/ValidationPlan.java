@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import eu.europa.ted.efx.model.ParsedEntity;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 public class ValidationPlan implements ParsedEntity {
 

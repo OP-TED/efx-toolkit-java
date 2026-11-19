@@ -1,6 +1,7 @@
 package eu.europa.ted.efx.sdk2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import eu.europa.ted.efx.EfxTestsBase;
+import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.exceptions.ThrowingErrorListener;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.dependencies.DependencyGraph;
@@ -126,6 +128,28 @@ class EfxValidationDependencyExtractorTest extends EfxTestsBase {
   }
 
   // #endregion: Structure
+
+  // #region: Rules file without a stage ---------------------------------------
+
+  @Test
+  void testEmptyRulesFile_IsRejected() {
+    assertEmptyRulesFile("");
+  }
+
+  @Test
+  void testRulesFileWithoutAStage_IsRejected() {
+    assertEmptyRulesFile("LET text : $testVar = \"test-value\";");
+  }
+
+  private void assertEmptyRulesFile(final String rules) {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> this.extractor.extractDependencyGraph(rules));
+    assertEquals(InvalidUsageException.ErrorCode.EMPTY_RULES_FILE, exception.getErrorCode());
+    assertEquals("Rules file must contain at least one validation stage.",
+        exception.getMessage());
+  }
+
+  // #endregion: Rules file without a stage
 
   // #region: Comprehensive ----------------------------------------------------
 

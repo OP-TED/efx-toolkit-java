@@ -1,0 +1,173 @@
+# The completion items EfxAutocomplete gives for SDK 2, one per line:
+#   KIND label(name TYPE, ...) -> TYPE
+# where a parameter is marked ? when it is optional and ... when it repeats; keywords and
+# properties have no parameter list.
+#
+# Order: the functions in the order of the signature catalogue, BuiltIns.getAll(), enum by enum
+# (LogicalOperators, StringFunctions, NumericFunctions, DateTimeFunctions, ConversionFunctions,
+# SequenceFunctions, TemplateFunctions), each built-in's overloads in their order, and an overload
+# over T once per value type in the order T knows them (text, indicator, number, date, time,
+# duration); a form folded into a longer one, whose extra parameters it makes optional, has no
+# line of its own. Then the keywords and the properties, in the order of EfxKeyword and
+# EfxLinkedProperty.
+FUNCTION not(value INDICATOR) -> INDICATOR
+FUNCTION empty(value TEXT) -> INDICATOR
+FUNCTION contains(haystack TEXT, needle TEXT) -> INDICATOR
+FUNCTION starts-with(haystack TEXT, needle TEXT) -> INDICATOR
+FUNCTION ends-with(haystack TEXT, needle TEXT) -> INDICATOR
+FUNCTION string-length(value TEXT) -> NUMBER
+FUNCTION index-of-substring(value TEXT, substring TEXT) -> NUMBER
+FUNCTION substring(value TEXT, start NUMBER, length NUMBER?) -> TEXT
+FUNCTION substring-before(value TEXT, delimiter TEXT) -> TEXT
+FUNCTION substring-after(value TEXT, delimiter TEXT) -> TEXT
+FUNCTION upper-case(value TEXT) -> TEXT
+FUNCTION lower-case(value TEXT) -> TEXT
+FUNCTION normalize-space(value TEXT) -> TEXT
+FUNCTION trim(value TEXT) -> TEXT
+FUNCTION trim-left(value TEXT) -> TEXT
+FUNCTION trim-right(value TEXT) -> TEXT
+FUNCTION pad-left(value TEXT, length NUMBER, padChar TEXT) -> TEXT
+FUNCTION pad-right(value TEXT, length NUMBER, padChar TEXT) -> TEXT
+FUNCTION repeat(value TEXT, count NUMBER) -> TEXT
+FUNCTION replace(value TEXT, search TEXT, replacement TEXT) -> TEXT
+FUNCTION replace-regex(value TEXT, pattern TEXT, replacement TEXT) -> TEXT
+FUNCTION url-encode(value TEXT) -> TEXT
+FUNCTION capitalize-first(value TEXT) -> TEXT
+FUNCTION concat(values TEXT...) -> TEXT
+FUNCTION string-join(values TEXT_SEQUENCE, separator TEXT) -> TEXT
+FUNCTION split(value TEXT, delimiter TEXT) -> TEXT_SEQUENCE
+FUNCTION count(sequence TEXT_SEQUENCE) -> NUMBER
+FUNCTION count(sequence INDICATOR_SEQUENCE) -> NUMBER
+FUNCTION count(sequence NUMBER_SEQUENCE) -> NUMBER
+FUNCTION count(sequence DATE_SEQUENCE) -> NUMBER
+FUNCTION count(sequence TIME_SEQUENCE) -> NUMBER
+FUNCTION count(sequence DURATION_SEQUENCE) -> NUMBER
+FUNCTION sum(values NUMBER_SEQUENCE) -> NUMBER
+FUNCTION min(values NUMBER_SEQUENCE) -> NUMBER
+FUNCTION max(values NUMBER_SEQUENCE) -> NUMBER
+FUNCTION average(values NUMBER_SEQUENCE) -> NUMBER
+FUNCTION absolute(value NUMBER) -> NUMBER
+FUNCTION round(value NUMBER) -> NUMBER
+FUNCTION round-down(value NUMBER) -> NUMBER
+FUNCTION round-up(value NUMBER) -> NUMBER
+FUNCTION year(value DATE) -> NUMBER
+FUNCTION month(value DATE) -> NUMBER
+FUNCTION day(value DATE) -> NUMBER
+FUNCTION hours(value TIME) -> NUMBER
+FUNCTION minutes(value TIME) -> NUMBER
+FUNCTION seconds(value TIME) -> NUMBER
+FUNCTION years(value DURATION) -> NUMBER
+FUNCTION months(value DURATION) -> NUMBER
+FUNCTION days(value DURATION) -> NUMBER
+FUNCTION current-date() -> DATE
+FUNCTION current-time() -> TIME
+FUNCTION add-duration(date DATE, duration DURATION) -> DATE
+FUNCTION subtract-duration(date DATE, duration DURATION) -> DATE
+FUNCTION text(value NUMBER) -> TEXT
+FUNCTION text(value INDICATOR) -> TEXT
+FUNCTION text(value DATE) -> TEXT
+FUNCTION text(value TIME) -> TEXT
+FUNCTION text(value DURATION) -> TEXT
+FUNCTION number(value TEXT) -> NUMBER
+FUNCTION number(value INDICATOR) -> NUMBER
+FUNCTION indicator(value NUMBER) -> INDICATOR
+FUNCTION date(value TEXT) -> DATE
+FUNCTION time(value TEXT) -> TIME
+FUNCTION day-time-duration(value TEXT) -> DURATION
+FUNCTION year-month-duration(value TEXT) -> DURATION
+FUNCTION distinct-values(sequence TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION distinct-values(sequence INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION distinct-values(sequence NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION distinct-values(sequence DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION distinct-values(sequence TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION distinct-values(sequence DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION count-duplicates(sequence TEXT_SEQUENCE) -> NUMBER
+FUNCTION count-duplicates(sequence INDICATOR_SEQUENCE) -> NUMBER
+FUNCTION count-duplicates(sequence NUMBER_SEQUENCE) -> NUMBER
+FUNCTION count-duplicates(sequence DATE_SEQUENCE) -> NUMBER
+FUNCTION count-duplicates(sequence TIME_SEQUENCE) -> NUMBER
+FUNCTION count-duplicates(sequence DURATION_SEQUENCE) -> NUMBER
+FUNCTION get-duplicates(sequence TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION get-duplicates(sequence INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION get-duplicates(sequence NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION get-duplicates(sequence DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION get-duplicates(sequence TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION get-duplicates(sequence DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION value-union(left TEXT_SEQUENCE, right TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION value-union(left INDICATOR_SEQUENCE, right INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION value-union(left NUMBER_SEQUENCE, right NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION value-union(left DATE_SEQUENCE, right DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION value-union(left TIME_SEQUENCE, right TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION value-union(left DURATION_SEQUENCE, right DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION value-intersect(left TEXT_SEQUENCE, right TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION value-intersect(left INDICATOR_SEQUENCE, right INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION value-intersect(left NUMBER_SEQUENCE, right NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION value-intersect(left DATE_SEQUENCE, right DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION value-intersect(left TIME_SEQUENCE, right TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION value-intersect(left DURATION_SEQUENCE, right DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION value-except(left TEXT_SEQUENCE, right TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION value-except(left INDICATOR_SEQUENCE, right INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION value-except(left NUMBER_SEQUENCE, right NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION value-except(left DATE_SEQUENCE, right DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION value-except(left TIME_SEQUENCE, right TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION value-except(left DURATION_SEQUENCE, right DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION sequence-equal(left TEXT_SEQUENCE, right TEXT_SEQUENCE) -> INDICATOR
+FUNCTION sequence-equal(left INDICATOR_SEQUENCE, right INDICATOR_SEQUENCE) -> INDICATOR
+FUNCTION sequence-equal(left NUMBER_SEQUENCE, right NUMBER_SEQUENCE) -> INDICATOR
+FUNCTION sequence-equal(left DATE_SEQUENCE, right DATE_SEQUENCE) -> INDICATOR
+FUNCTION sequence-equal(left TIME_SEQUENCE, right TIME_SEQUENCE) -> INDICATOR
+FUNCTION sequence-equal(left DURATION_SEQUENCE, right DURATION_SEQUENCE) -> INDICATOR
+FUNCTION sort(sequence TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION sort(sequence INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION sort(sequence NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION sort(sequence DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION sort(sequence TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION sort(sequence DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION reverse(sequence TEXT_SEQUENCE) -> TEXT_SEQUENCE
+FUNCTION reverse(sequence INDICATOR_SEQUENCE) -> INDICATOR_SEQUENCE
+FUNCTION reverse(sequence NUMBER_SEQUENCE) -> NUMBER_SEQUENCE
+FUNCTION reverse(sequence DATE_SEQUENCE) -> DATE_SEQUENCE
+FUNCTION reverse(sequence TIME_SEQUENCE) -> TIME_SEQUENCE
+FUNCTION reverse(sequence DURATION_SEQUENCE) -> DURATION_SEQUENCE
+FUNCTION subsequence(sequence TEXT_SEQUENCE, start NUMBER, length NUMBER?) -> TEXT_SEQUENCE
+FUNCTION subsequence(sequence INDICATOR_SEQUENCE, start NUMBER, length NUMBER?) -> INDICATOR_SEQUENCE
+FUNCTION subsequence(sequence NUMBER_SEQUENCE, start NUMBER, length NUMBER?) -> NUMBER_SEQUENCE
+FUNCTION subsequence(sequence DATE_SEQUENCE, start NUMBER, length NUMBER?) -> DATE_SEQUENCE
+FUNCTION subsequence(sequence TIME_SEQUENCE, start NUMBER, length NUMBER?) -> TIME_SEQUENCE
+FUNCTION subsequence(sequence DURATION_SEQUENCE, start NUMBER, length NUMBER?) -> DURATION_SEQUENCE
+FUNCTION index-of(sequence TEXT_SEQUENCE, value TEXT) -> NUMBER
+FUNCTION index-of(sequence INDICATOR_SEQUENCE, value INDICATOR) -> NUMBER
+FUNCTION index-of(sequence NUMBER_SEQUENCE, value NUMBER) -> NUMBER
+FUNCTION index-of(sequence DATE_SEQUENCE, value DATE) -> NUMBER
+FUNCTION index-of(sequence TIME_SEQUENCE, value TIME) -> NUMBER
+FUNCTION index-of(sequence DURATION_SEQUENCE, value DURATION) -> NUMBER
+FUNCTION format-number(value NUMBER, format TEXT) -> TEXT
+FUNCTION format-short(value TIME) -> TEXT
+FUNCTION format-short(value DATE, time TIME?) -> TEXT
+FUNCTION format-medium(value TIME) -> TEXT
+FUNCTION format-medium(value DATE, time TIME?) -> TEXT
+FUNCTION format-long(value TIME) -> TEXT
+FUNCTION format-long(value DATE, time TIME?) -> TEXT
+FUNCTION preferred-language(field TEXT_SEQUENCE) -> TEXT
+FUNCTION preferred-language-text(field TEXT_SEQUENCE) -> TEXT
+KEYWORD text -> TEXT
+KEYWORD number -> NUMBER
+KEYWORD indicator -> INDICATOR
+KEYWORD date -> DATE
+KEYWORD time -> TIME
+KEYWORD TRUE -> INDICATOR
+KEYWORD FALSE -> INDICATOR
+KEYWORD ALWAYS -> INDICATOR
+KEYWORD NEVER -> INDICATOR
+PROPERTY :publicationDate -> DATE
+PROPERTY :justificationCode -> TEXT
+PROPERTY :justificationDescription -> TEXT
+PROPERTY :privacyCode -> TEXT
+PROPERTY :wasWithheld -> INDICATOR
+PROPERTY :isWithheld -> INDICATOR
+PROPERTY :isWithholdable -> INDICATOR
+PROPERTY :isDisclosed -> INDICATOR
+PROPERTY :isMasked -> INDICATOR
+PROPERTY :rawValue -> TEXT
+PROPERTY :preferredLanguage -> TEXT
+PROPERTY :preferredLanguageText -> TEXT

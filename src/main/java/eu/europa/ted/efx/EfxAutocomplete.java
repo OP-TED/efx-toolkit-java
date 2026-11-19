@@ -19,9 +19,11 @@ import java.util.List;
 import eu.europa.ted.eforms.sdk.SdkVersion;
 import eu.europa.ted.efx.autocomplete.CompletionItem;
 import eu.europa.ted.efx.autocomplete.CompletionKind;
-import eu.europa.ted.efx.autocomplete.EfxBuiltInFunction;
 import eu.europa.ted.efx.autocomplete.EfxKeyword;
 import eu.europa.ted.efx.autocomplete.EfxLinkedProperty;
+import eu.europa.ted.efx.autocomplete.FunctionCompletions;
+import eu.europa.ted.efx.model.builtins.BuiltIn;
+import eu.europa.ted.efx.model.builtins.BuiltIns;
 
 /**
  * Exposes autocomplete suggestions for the EFX graphical UI editors.
@@ -36,8 +38,10 @@ public class EfxAutocomplete {
 
   private static List<CompletionItem> buildSdk2Items() {
     List<CompletionItem> items = new ArrayList<>();
-    for (EfxBuiltInFunction f : EfxBuiltInFunction.values()) {
-      items.add(new CompletionItem(f.getLabel(), CompletionKind.FUNCTION, f.getDataType(), f.getParameters()));
+    for (BuiltIn function : BuiltIns.INSTANCE.getAll()) {
+      if (function.isFunction()) {
+        items.addAll(FunctionCompletions.itemsOf(function));
+      }
     }
     for (EfxKeyword k : EfxKeyword.values()) {
       items.add(new CompletionItem(k.getLabel(), CompletionKind.KEYWORD, k.getDataType(), null));
