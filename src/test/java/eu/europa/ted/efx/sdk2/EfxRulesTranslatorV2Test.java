@@ -1346,6 +1346,26 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testDynamicFunction_CannotTakeTheNameOfItsParameter() {
+    String rules = lines(
+        "ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';",
+        "LET dynamic : ?check(text : $check) CALL API;",
+        "",
+        "---- STAGE 1a ----",
+        "",
+        "WITH BT-00-Text",
+        "    ASSERT ?check(BT-00-Text)",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN 1");
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_ALREADY_DECLARED,
+        exception.getErrorCode());
+    assertEquals("line 2:0 Function '?check' has the same name as Parameter '$check', already"
+        + " declared in this scope.", exception.getMessage());
+  }
+
+  @Test
   void testApiCall_OutsideRule_ThrowsError() {
     String rules = lines(
         "ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';",

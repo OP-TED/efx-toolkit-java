@@ -775,10 +775,13 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     this.translation.stack().push(new ParsedParameters());
   }
 
+  /**
+   * Declares a dynamic function. The function is declared before the scope of its parameters
+   * closes, so it cannot take the name of one of its parameters.
+   */
   @Override
   public void exitDynamicFunctionDeclaration(DynamicFunctionDeclarationContext ctx) {
     ParsedParameters params = this.translation.stack().pop(ParsedParameters.class);
-    this.translation.stack().popStackFrame();
     String apiName = ctx.functionName.getText();
     String endpointName = ctx.endpointName != null ? unquote(ctx.endpointName.getText()) : "default";
     if (!this.validationPlan.getEndpoints().containsKey(endpointName)) {
@@ -790,6 +793,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     String errorLabel = ctx.onErrorClause() != null && ctx.onErrorClause().errorLabel != null
         ? unquote(ctx.onErrorClause().errorLabel.getText()) : null;
     this.translation.stack().declareFunction(new DynamicFunction(apiName, params, endpointName, errorSeverity, errorLabel));
+    this.translation.stack().popStackFrame();
   }
 
   private int apiCallCounter = 0;
