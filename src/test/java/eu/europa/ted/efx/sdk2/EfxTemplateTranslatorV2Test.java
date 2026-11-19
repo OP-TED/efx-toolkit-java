@@ -1406,6 +1406,59 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{BT-00-Text} Summary: ${BT-00-Text}")));
   }
 
+  @Test
+  void testMainSectionHeader_TranslatesAsWithout() {
+    assertEquals(
+        translateTemplate(lines(
+            "LET text:$t = 'x';",
+            "LET template:show(text:$v) DISPLAY ${$v};",
+            "{BT-00-Text} ${BT-00-Text}",
+            "    WITH ND-Root INVOKE show($t);",
+            "--- SUMMARY ---",
+            "{BT-00-Text} Summary: ${BT-00-Text}")),
+        translateTemplate(lines(
+            "LET text:$t = 'x';",
+            "LET template:show(text:$v) DISPLAY ${$v};",
+            "--- MAIN ---",
+            "{BT-00-Text} ${BT-00-Text}",
+            "    WITH ND-Root INVOKE show($t);",
+            "--- SUMMARY ---",
+            "{BT-00-Text} Summary: ${BT-00-Text}")));
+  }
+
+  @Test
+  void testMainSectionHeader_WithoutDeclarations() {
+    assertEquals(
+        translateTemplate("{BT-00-Text} ${BT-00-Text}"),
+        translateTemplate(lines(
+            "--- MAIN ---",
+            "{BT-00-Text} ${BT-00-Text}")));
+  }
+
+  @Test
+  void testMainSectionHeader_Twice_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- MAIN ---",
+        "--- MAIN ---",
+        "{BT-00-Text} ${BT-00-Text}")));
+  }
+
+  @Test
+  void testMainSectionHeader_AfterATemplateLine_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "{BT-00-Text} ${BT-00-Text}",
+        "--- MAIN ---",
+        "{BT-00-Text} ${BT-00-Text}")));
+  }
+
+  @Test
+  void testMainSectionHeader_BeforeADeclaration_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- MAIN ---",
+        "LET text:$t = 'x';",
+        "{BT-00-Text} ${$t}")));
+  }
+
   // #endregion otherSections --------------------------------------------------
 
   // #region Labels ------------------------------------------------------------
