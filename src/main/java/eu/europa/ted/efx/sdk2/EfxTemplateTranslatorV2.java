@@ -1314,48 +1314,18 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
-    String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
-    switch (shortcut) {
-      case ".":
-        this.exitSameContextDeclaration();
-        break;
-      case "..":
-        this.exitParentContextDeclaration();
-        break;
-      case "/":
-        this.declareRootLineContext();
-        break;
-      default:
-        final Context declared = this.declaredContextOf(ctx);
-        Variable contextVariable = null;
-        if (ctx.contextVariableInitializer() != null) {
-          contextVariable =
-              this.getContextVariable(ctx.contextVariableInitializer(), declared.relativePath());
-          this.translation.stack().peek(Variables.class).add(contextVariable);
-        }
-        this.declareContext(declared, contextVariable);
-        break;
+    final Context declared = this.declaredContextOf(ctx);
+    Variable contextVariable = null;
+    if (ctx.contextVariableInitializer() != null) {
+      contextVariable =
+          this.getContextVariable(ctx.contextVariableInitializer(), declared.relativePath());
+      this.translation.stack().peek(Variables.class).add(contextVariable);
     }
-  }
-
-  private void exitSameContextDeclaration() {
-    final Context currentContext = this.blockStack.currentContext();
-    // A line nested in the line before it stands in that line's element. A line after it, at the
-    // same level, stands in the same line above, so it takes that line's context as it is.
-    if (this.blockAbove != null && this.blockAbove == this.blockStack.peek()) {
-      this.declareLineContext(currentContext);
-    } else {
-      this.declareContext(currentContext, null);
-    }
-  }
-
-  private void exitParentContextDeclaration() {
-    this.declareLineContext(this.blockStack.parentContext());
+    this.declareContext(declared, contextVariable);
   }
 
   /**
-   * Declares the root as the context of a template line that writes it, {@code /}, or that
-   * declares no context.
+   * Declares the root as the context of a template line that declares no context.
    */
   private void declareRootLineContext() {
     this.declareLineContext(new NodeContext(this.translation.symbols().getRootNodeId(),

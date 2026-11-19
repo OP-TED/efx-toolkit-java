@@ -1321,35 +1321,6 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testTemplateLine_ContextDeclarationShortcuts() {
-    assertEquals(
-        translateTemplate(lines(
-            "{BT-00-Number} 1",
-            "    {BT-00-Text} 2",
-            "        {ND-Root} 3",
-            "        {BT-00-Text} ${BT-00-Number}",
-            "        {BT-00-Text} 5",
-            "    {BT-00-Text} ${BT-00-Number}", //
-            "    {BT-00-Number} ${BT-00-Text}",
-            "    {ND-SubNode} N2",
-            "        {ND-Root} N3",
-            "        {ND-Root} N4",
-            "        {ND-SubNode} ${BT-00-Number}")), //
-        translateTemplate(lines(
-            "{BT-00-Number} 1", //
-            "    {BT-00-Text} 2", //
-            "        {/} 3", //
-            "        {..} ${BT-00-Number}", //
-            "        {.} 5", //
-            "    {.} ${BT-00-Number}", //
-            "    {..} ${BT-00-Text}",
-            "    {ND-SubNode} N2",
-            "        {ND-Root} N3", //
-            "        {.} N4", //
-            "        {..} ${BT-00-Number}")));
-  }
-
-  @Test
   void testTemplateLine_SecondaryTemplate() {
     assertEquals(
         lines(
@@ -1766,7 +1737,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:assetId) -> { label(concat('field', '|', 'name', '|', $assetId)) }",
             "MAIN:",
             "for-each(/*).call(body01(string:assetId='BT-00-Text'))"),
-        translateTemplate("{/, text:$assetId='BT-00-Text'}  #{field|name|${$assetId}}"));
+        translateTemplate("{ND-Root, text:$assetId='BT-00-Text'}  #{field|name|${$assetId}}"));
   }
 
   @Test
@@ -1777,7 +1748,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:labelType) -> { label(concat('field', '|', $labelType, '|', 'BT-00-Text')) }",
             "MAIN:",
             "for-each(/*).call(body01(string:labelType='name'))"),
-        translateTemplate("{/, text:$labelType='name'}  #{field|${$labelType}|BT-00-Text}"));
+        translateTemplate("{ND-Root, text:$labelType='name'}  #{field|${$labelType}|BT-00-Text}"));
   }
 
   @Test
@@ -1788,7 +1759,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:assetType) -> { label(concat($assetType, '|', 'name', '|', 'BT-00-Text')) }",
             "MAIN:",
             "for-each(/*).call(body01(string:assetType='field'))"),
-        translateTemplate("{/, text:$assetType='field'}  #{${$assetType}|name|BT-00-Text}"));
+        translateTemplate("{ND-Root, text:$assetType='field'}  #{${$assetType}|name|BT-00-Text}"));
   }
 
   @Test
@@ -1799,7 +1770,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:labelType) -> { label(concat('field', '|', $labelType, '|', 'BT-00-Text'), 2) }",
             "MAIN:",
             "for-each(/*).call(body01(string:labelType='name'))"),
-        translateTemplate("{/, text:$labelType='name'}  #{${$labelType}|BT-00-Text;${2}}"));
+        translateTemplate("{ND-Root, text:$labelType='name'}  #{${$labelType}|BT-00-Text;${2}}"));
   }
 
   @Test
@@ -1811,7 +1782,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01(string:assetType='field', string:labelType='name', string:assetId='BT-00-Text'))"),
         translateTemplate(
-            "{/, text:$assetType='field', text:$labelType='name', text:$assetId='BT-00-Text'}  #{${$assetType}|${$labelType}|${$assetId}}"));
+            "{ND-Root, text:$assetType='field', text:$labelType='name', text:$assetId='BT-00-Text'}  #{${$assetType}|${$labelType}|${$assetId}}"));
   }
 
   /**
@@ -1827,7 +1798,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01(string:item='name'))"),
         translateTemplate(
-            "{/, text:$item='name'}  #{field|${$item}|${['BT-00-Text', 'BT-00-Number']}}"));
+            "{ND-Root, text:$item='name'}  #{field|${$item}|${['BT-00-Text', 'BT-00-Number']}}"));
   }
 
   // #endregion Labels ---------------------------------------------------------
@@ -1876,7 +1847,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01]/[M01]/[Y0001]')) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-short(date('2026-02-15'))}"));
+        translateTemplate("{ND-Root} ${format-short(date('2026-02-15'))}"));
   }
 
   @Test
@@ -1885,7 +1856,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-date(PathNode/StartDateField/xs:date(text()), '[D01]/[M01]/[Y0001]')) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-short(BT-00-StartDate)}"));
+        translateTemplate("{ND-Root} ${format-short(BT-00-StartDate)}"));
   }
 
   @Test
@@ -1894,7 +1865,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01] [MNn,3-3] [Y0001]', 'en', (), ())) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-medium(date('2026-02-15'))}"));
+        translateTemplate("{ND-Root} ${format-medium(date('2026-02-15'))}"));
   }
 
   @Test
@@ -1903,7 +1874,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-date(xs:date('2026-02-15'), '[D01] [MNn] [Y0001]', 'en', (), ())) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-long(date('2026-02-15'))}"));
+        translateTemplate("{ND-Root} ${format-long(date('2026-02-15'))}"));
   }
 
   @Test
@@ -1912,7 +1883,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01] [Z]')) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-short(time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-short(time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1921,7 +1892,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01]')) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-medium(time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-medium(time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1930,7 +1901,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01] [Z]')) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-long(time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-long(time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1939,7 +1910,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01]/[M01]/[Y0001]'), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01] [Z]'))) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-short(date('2026-02-15'), time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-short(date('2026-02-15'), time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1948,7 +1919,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01] [MNn,3-3] [Y0001]', 'en', (), ()), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01]'))) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-medium(date('2026-02-15'), time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-medium(date('2026-02-15'), time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1957,7 +1928,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(concat(format-date(xs:date('2026-02-15'), '[D01] [MNn] [Y0001]', 'en', (), ()), ' ', format-time(xs:time('14:30:00Z'), '[H01]:[m01]:[s01] [Z]'))) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${format-long(date('2026-02-15'), time('14:30:00Z'))}"));
+        translateTemplate("{ND-Root} ${format-long(date('2026-02-15'), time('14:30:00Z'))}"));
   }
 
   @Test
@@ -1981,19 +1952,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number}"));
+        translateTemplate("{ND-Root} ${BT-00-Number}"));
   }
 
   @Test
   void testFormattedExpressionBlock_Date_IsShort() {
-    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartDate)}"),
-        translateTemplate("{/} ${BT-00-StartDate}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-short(BT-00-StartDate)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartDate}"));
   }
 
   @Test
   void testFormattedExpressionBlock_Time_IsShort() {
-    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartTime)}"),
-        translateTemplate("{/} ${BT-00-StartTime}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-short(BT-00-StartTime)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartTime}"));
   }
 
   @Test
@@ -2003,7 +1974,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/TextField/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Text}"));
+        translateTemplate("{ND-Root} ${BT-00-Text}"));
   }
 
   @Test
@@ -2012,7 +1983,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() * 2 return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number * 2}"));
+        translateTemplate("{ND-Root} ${BT-00-Number * 2}"));
   }
 
   @Test
@@ -2022,7 +1993,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/DurationField/number() return format-number($__item, '# ##0,#########'))eval(for $__code in PathNode/DurationField/@unitCode return ' ')label(for $__code in PathNode/DurationField/@unitCode return concat('code', '|', 'name', '|', 'timeperiod.', $__code), PathNode/DurationField/number()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Duration}"));
+        translateTemplate("{ND-Root} ${BT-00-Duration}"));
   }
 
   @Test
@@ -2062,7 +2033,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/CodeField/@attribute) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-CodeAttribute}"));
+        translateTemplate("{ND-Root} ${BT-00-CodeAttribute}"));
   }
 
   @Test
@@ -2077,8 +2048,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFormattedExpressionBlock_NoFormatting_AttributeField() {
-    assertEquals(translateTemplate("{/} ${BT-00-CodeAttribute}"),
-        translateTemplate("{/} ${BT-00-CodeAttribute|no-formatting}"));
+    assertEquals(translateTemplate("{ND-Root} ${BT-00-CodeAttribute}"),
+        translateTemplate("{ND-Root} ${BT-00-CodeAttribute|no-formatting}"));
   }
 
   @Test
@@ -2092,45 +2063,45 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { hyperlink(eval(for $__item in PathNode/NumberField/number() return format-number($__item, '# ##0,#########')), 'http://example.com') }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number}@{'http://example.com'}"));
+        translateTemplate("{ND-Root} ${BT-00-Number}@{'http://example.com'}"));
   }
 
   // Dates and times: the options give the same result as the format-short/medium/long functions.
 
   @Test
   void testFormattedExpressionBlock_DateShort() {
-    assertEquals(translateTemplate("{/} ${format-short(BT-00-StartDate)}"),
-        translateTemplate("{/} ${BT-00-StartDate|short}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-short(BT-00-StartDate)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartDate|short}"));
   }
 
   @Test
   void testFormattedExpressionBlock_DateMedium() {
-    assertEquals(translateTemplate("{/} ${format-medium(BT-00-StartDate)}"),
-        translateTemplate("{/} ${BT-00-StartDate|medium}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-medium(BT-00-StartDate)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartDate|medium}"));
   }
 
   @Test
   void testFormattedExpressionBlock_DateLong() {
-    assertEquals(translateTemplate("{/} ${format-long(BT-00-StartDate)}"),
-        translateTemplate("{/} ${BT-00-StartDate|long}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-long(BT-00-StartDate)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartDate|long}"));
   }
 
   @Test
   void testFormattedExpressionBlock_TimeLong() {
-    assertEquals(translateTemplate("{/} ${format-long(BT-00-StartTime)}"),
-        translateTemplate("{/} ${BT-00-StartTime|long}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-long(BT-00-StartTime)}"),
+        translateTemplate("{ND-Root} ${BT-00-StartTime|long}"));
   }
 
   @Test
   void testFormattedExpressionBlock_WithSurroundingText() {
-    assertEquals(translateTemplate("{/} Date: ${format-medium(BT-00-StartDate)} end"),
-        translateTemplate("{/} Date: ${BT-00-StartDate|medium} end"));
+    assertEquals(translateTemplate("{ND-Root} Date: ${format-medium(BT-00-StartDate)} end"),
+        translateTemplate("{ND-Root} Date: ${BT-00-StartDate|medium} end"));
   }
 
   @Test
   void testFormattedExpressionBlock_WithOptionsAndHyperlink() {
-    assertEquals(translateTemplate("{/} ${format-medium(BT-00-StartDate)}@{'http://example.com'}"),
-        translateTemplate("{/} ${BT-00-StartDate|medium}@{'http://example.com'}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-medium(BT-00-StartDate)}@{'http://example.com'}"),
+        translateTemplate("{ND-Root} ${BT-00-StartDate|medium}@{'http://example.com'}"));
   }
 
   // Numbers: the options give the same result as format-number.
@@ -2141,7 +2112,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number|2}"));
+        translateTemplate("{ND-Root} ${BT-00-Number|2}"));
   }
 
   @Test
@@ -2150,7 +2121,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() return format-number($__item, '# ##0')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number|0}"));
+        translateTemplate("{ND-Root} ${BT-00-Number|0}"));
   }
 
   @Test
@@ -2159,18 +2130,29 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() return format-number($__item, '# ##0,000000000')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number|9}"));
+        translateTemplate("{ND-Root} ${BT-00-Number|9}"));
   }
 
   @Test
   void testFormattedExpressionBlock_MoreThanNineDecimals_IsSyntaxError() {
-    assertSyntaxError(() -> translateTemplate("{/} ${BT-00-Number|10}"));
+    assertSyntaxError(() -> translateTemplate("{ND-Root} ${BT-00-Number|10}"));
   }
+  @Test
+  void testContextDeclaration_Shortcuts_AreSyntaxErrors() {
+    assertSyntaxError(() -> translateTemplate("{.} a"));
+    assertSyntaxError(() -> translateTemplate("{..} a"));
+    assertSyntaxError(() -> translateTemplate("{/} a"));
+    assertSyntaxError(() -> translateTemplate("WITH . DISPLAY a;"));
+    assertSyntaxError(() -> translateTemplate("WITH .. DISPLAY a;"));
+    assertSyntaxError(() -> translateTemplate("WITH / DISPLAY a;"));
+    assertSyntaxError(() -> translateTemplate("{context:$x = /} a"));
+  }
+
 
   @Test
   void testFormattedExpressionBlock_WhitespaceAroundThePipe() {
-    assertEquals(translateTemplate("{/} ${BT-00-Number|2}"),
-        translateTemplate("{/} ${BT-00-Number | 2}"));
+    assertEquals(translateTemplate("{ND-Root} ${BT-00-Number|2}"),
+        translateTemplate("{ND-Root} ${BT-00-Number | 2}"));
   }
 
   // Units.
@@ -2182,7 +2164,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/AmountField/number() return format-number($__item, '# ##0,00'))eval(for $__code in PathNode/AmountField/@currencyID return ' ')label(for $__code in PathNode/AmountField/@currencyID return concat('code', '|', 'name', '|', 'currency.', $__code), PathNode/AmountField/number()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Amount|2}"));
+        translateTemplate("{ND-Root} ${BT-00-Amount|2}"));
   }
 
   @Test
@@ -2191,7 +2173,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/AmountField/number() return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Amount|2 no-unit}"));
+        translateTemplate("{ND-Root} ${BT-00-Amount|2 no-unit}"));
   }
 
   @Test
@@ -2201,7 +2183,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/DurationField/number() return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Duration|no-unit}"));
+        translateTemplate("{ND-Root} ${BT-00-Duration|no-unit}"));
   }
 
   @Test
@@ -2212,7 +2194,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in SubNode/SubSubNode/Duration/number() return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-11-Duration|2 no-unit}"));
+        translateTemplate("{ND-Root} ${BT-11-Duration|2 no-unit}"));
   }
 
   @Test
@@ -2225,50 +2207,50 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in " + number + " return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${P1D|no-unit}"));
+        translateTemplate("{ND-Root} ${P1D|no-unit}"));
   }
 
   @Test
   void testFormattedExpressionBlock_NoUnitOnNumber_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.NO_UNIT_NOT_APPLICABLE,
-        "line 1:4 Format option 'no-unit' cannot format a value of type 'number': it is for an amount, a measure or a duration.",
-        "{/} ${BT-00-Number|2 no-unit}");
+        "line 1:10 Format option 'no-unit' cannot format a value of type 'number': it is for an amount, a measure or a duration.",
+        "{ND-Root} ${BT-00-Number|2 no-unit}");
   }
 
   @Test
   void testFormattedExpressionBlock_NoUnitOnDate_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.NO_UNIT_NOT_APPLICABLE,
-        "line 1:4 Format option 'no-unit' cannot format a value of type 'date': it is for an amount, a measure or a duration.",
-        "{/} ${BT-00-StartDate|no-unit}");
+        "line 1:10 Format option 'no-unit' cannot format a value of type 'date': it is for an amount, a measure or a duration.",
+        "{ND-Root} ${BT-00-StartDate|no-unit}");
   }
 
   @Test
   void testFormattedExpressionBlock_NoUnitAfterStyle_IsSyntaxError() {
-    assertSyntaxError(() -> translateTemplate("{/} ${BT-00-StartDate|medium no-unit}"));
+    assertSyntaxError(() -> translateTemplate("{ND-Root} ${BT-00-StartDate|medium no-unit}"));
   }
 
   @Test
   void testFormattedExpressionBlock_StyleOnDurationField_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
-        "line 1:4 Format option 'short' cannot format a value of type 'duration': it is for a date or a time.",
-        "{/} ${BT-00-Duration|short}");
+        "line 1:10 Format option 'short' cannot format a value of type 'duration': it is for a date or a time.",
+        "{ND-Root} ${BT-00-Duration|short}");
   }
 
   @Test
   void testFormattedExpressionBlock_StyleOnRepeatableDurationField_IsErrorOfTheStyle() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
-        "line 1:4 Format option 'short' cannot format a value of type 'duration*': it is for a date or a time.",
-        "{/} ${BT-00-Repeatable-Duration|short}");
+        "line 1:10 Format option 'short' cannot format a value of type 'duration*': it is for a date or a time.",
+        "{ND-Root} ${BT-00-Repeatable-Duration|short}");
   }
 
   @Test
   void testFormattedExpressionBlock_NoUnitOnText_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Text|no-unit}"));
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{ND-Root} ${BT-00-Text|no-unit}"));
   }
 
   @Test
   void testFormattedExpressionBlock_UnitOfRepeatableField_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${BT-00-Repeatable-Duration}"));
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{ND-Root} ${BT-00-Repeatable-Duration}"));
   }
 
   @Test
@@ -2278,7 +2260,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/RepeatableDurationField/number() return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Duration|no-unit}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Duration|no-unit}"));
   }
 
   @Test
@@ -2291,7 +2273,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
                 + number + ", '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${[P1D, P2M]|no-unit}"));
+        translateTemplate("{ND-Root} ${[P1D, P2M]|no-unit}"));
   }
 
   @Test
@@ -2309,12 +2291,12 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
                 + ", '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Duration[TRUE]|no-unit}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Duration[TRUE]|no-unit}"));
   }
 
   @Test
   void testFormattedExpressionBlock_UnitOfCalculatedDurations_IsError() {
-    assertThrows(InvalidUsageException.class, () -> translateTemplate("{/} ${[P1D, P2M]}"));
+    assertThrows(InvalidUsageException.class, () -> translateTemplate("{ND-Root} ${[P1D, P2M]}"));
   }
 
   // No formatting: the value is displayed as it is, without its unit.
@@ -2326,7 +2308,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/NumberField/text()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number|no-formatting}"));
+        translateTemplate("{ND-Root} ${BT-00-Number|no-formatting}"));
   }
 
   @Test
@@ -2336,7 +2318,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/StartDateField/text()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-StartDate|no-formatting}"));
+        translateTemplate("{ND-Root} ${BT-00-StartDate|no-formatting}"));
   }
 
   @Test
@@ -2346,7 +2328,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/AmountField/text()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Amount|no-formatting}"));
+        translateTemplate("{ND-Root} ${BT-00-Amount|no-formatting}"));
   }
 
   @Test
@@ -2356,7 +2338,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(PathNode/DurationField/text()) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Duration|no-formatting}"));
+        translateTemplate("{ND-Root} ${BT-00-Duration|no-formatting}"));
   }
 
   @Test
@@ -2371,13 +2353,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testFormattedExpressionBlock_NoFormatting_Text() {
-    assertEquals(translateTemplate("{/} ${BT-00-Text}"),
-        translateTemplate("{/} ${BT-00-Text|no-formatting}"));
+    assertEquals(translateTemplate("{ND-Root} ${BT-00-Text}"),
+        translateTemplate("{ND-Root} ${BT-00-Text|no-formatting}"));
   }
 
   @Test
   void testFormattedExpressionBlock_NoFormattingWithOtherOptions_IsSyntaxError() {
-    assertSyntaxError(() -> translateTemplate("{/} ${BT-00-Number|2 no-formatting}"));
+    assertSyntaxError(() -> translateTemplate("{ND-Root} ${BT-00-Number|2 no-formatting}"));
   }
 
   // Expressions: formatted according to the type of their result.
@@ -2388,19 +2370,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/NumberField/number() * 2 return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number * 2|2}"));
+        translateTemplate("{ND-Root} ${BT-00-Number * 2|2}"));
   }
 
   @Test
   void testFormattedExpressionBlock_DateExpression() {
-    assertEquals(translateTemplate("{/} ${format-medium(date('2026-02-15'))}"),
-        translateTemplate("{/} ${date('2026-02-15')|medium}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-medium(date('2026-02-15'))}"),
+        translateTemplate("{ND-Root} ${date('2026-02-15')|medium}"));
   }
 
   @Test
   void testFormattedExpressionBlock_TimeExpression() {
-    assertEquals(translateTemplate("{/} ${format-long(time('14:30:00Z'))}"),
-        translateTemplate("{/} ${time('14:30:00Z')|long}"));
+    assertEquals(translateTemplate("{ND-Root} ${format-long(time('14:30:00Z'))}"),
+        translateTemplate("{ND-Root} ${time('14:30:00Z')|long}"));
   }
 
   @Test
@@ -2409,21 +2391,21 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { hyperlink(eval(for $__item in PathNode/NumberField/number() * 2 return format-number($__item, '# ##0,00')), 'http://example.com') }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Number * 2|2}@{'http://example.com'}"));
+        translateTemplate("{ND-Root} ${BT-00-Number * 2|2}@{'http://example.com'}"));
   }
 
   @Test
   void testFormattedExpressionBlock_TextExpression_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.DECIMALS_NOT_APPLICABLE,
-        "line 1:4 Format option '2' cannot format a value of type 'text': it is for a number or a duration.",
-        "{/} ${'abc'|2}");
+        "line 1:10 Format option '2' cannot format a value of type 'text': it is for a number or a duration.",
+        "{ND-Root} ${'abc'|2}");
   }
 
   @Test
   void testFormattedExpressionBlock_DateStyleOnNumericExpression_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.STYLE_NOT_APPLICABLE,
-        "line 1:4 Format option 'short' cannot format a value of type 'number': it is for a date or a time.",
-        "{/} ${BT-00-Number * 2|short}");
+        "line 1:10 Format option 'short' cannot format a value of type 'number': it is for a date or a time.",
+        "{ND-Root} ${BT-00-Number * 2|short}");
   }
 
   // Sequences: each value is formatted.
@@ -2435,7 +2417,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/RepeatableNumberField/number() return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Number|2}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Number|2}"));
   }
 
   @Test
@@ -2445,7 +2427,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/RepeatableDateField/xs:date(text()) return format-date($__item, '[D01] [MNn,3-3] [Y0001]', 'en', (), ())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Date|medium}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Date|medium}"));
   }
 
   @Test
@@ -2455,7 +2437,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/RepeatableTimeField/xs:time(text()) return format-time($__item, '[H01]:[m01]:[s01] [Z]')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Time|long}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Time|long}"));
   }
 
   @Test
@@ -2465,37 +2447,37 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { eval(for $__item in PathNode/RepeatableNumberField[./number() > 1]/number() return format-number($__item, '# ##0,00')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Repeatable-Number[BT-00-Repeatable-Number > 1]|2}"));
+        translateTemplate("{ND-Root} ${BT-00-Repeatable-Number[BT-00-Repeatable-Number > 1]|2}"));
   }
 
   @Test
   void testFormattedExpressionBlock_TextSequence_IsError() {
     assertThrows(InvalidUsageException.class,
-        () -> translateTemplate("{/} ${BT-00-Repeatable-Text|2}"));
+        () -> translateTemplate("{ND-Root} ${BT-00-Repeatable-Text|2}"));
   }
 
   @Test
   void testFormattedExpressionBlock_DecimalsOnDateField_IsError() {
     assertInvalidUsage(InvalidUsageException.ErrorCode.DECIMALS_NOT_APPLICABLE,
-        "line 1:4 Format option '2' cannot format a value of type 'date': it is for a number or a duration.",
-        "{/} ${BT-00-StartDate|2}");
+        "line 1:10 Format option '2' cannot format a value of type 'date': it is for a number or a duration.",
+        "{ND-Root} ${BT-00-StartDate|2}");
   }
 
   @Test
   void testFormattedExpressionBlock_DateStyleOnNumberField_IsError() {
-    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-Number|short}"));
+    assertThrows(RuntimeException.class, () -> translateTemplate("{ND-Root} ${BT-00-Number|short}"));
   }
 
   @Test
   void testFormattedExpressionBlock_DecimalsOnTextField_IsError() {
-    assertThrows(RuntimeException.class, () -> translateTemplate("{/} ${BT-00-Text|2}"));
+    assertThrows(RuntimeException.class, () -> translateTemplate("{ND-Root} ${BT-00-Text|2}"));
   }
 
   // Labels: the expressions in a label are not formatted, and take no options.
 
   @Test
   void testFormattedExpressionBlock_OptionsInLabel_IsSyntaxError() {
-    assertSyntaxError(() -> translateTemplate("{/} #{${'field|name|BT-00-Text'|2}}"));
+    assertSyntaxError(() -> translateTemplate("{ND-Root} #{${'field|name|BT-00-Text'|2}}"));
   }
 
   // #endregion Formatted expression blocks ----------------------------------------
@@ -2508,7 +2490,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language(BT-00-Text-Multilingual)}"));
+        translateTemplate("{ND-Root} ${preferred-language(BT-00-Text-Multilingual)}"));
   }
 
   @Test
@@ -2517,7 +2499,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language-text(BT-00-Text-Multilingual)}"));
+        translateTemplate("{ND-Root} ${preferred-language-text(BT-00-Text-Multilingual)}"));
   }
 
   @Test
@@ -2526,7 +2508,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField['a' = 'a'])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language(BT-00-Text-Multilingual['a' == 'a'])}"));
+        translateTemplate("{ND-Root} ${preferred-language(BT-00-Text-Multilingual['a' == 'a'])}"));
   }
 
   @Test
@@ -2535,7 +2517,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField['a' = 'a'])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language-text(BT-00-Text-Multilingual['a' == 'a'])}"));
+        translateTemplate("{ND-Root} ${preferred-language-text(BT-00-Text-Multilingual['a' == 'a'])}"));
   }
 
   @Test
@@ -2544,7 +2526,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language(BT-13-TextMultilingual)}"));
+        translateTemplate("{ND-Root} ${preferred-language(BT-13-TextMultilingual)}"));
   }
 
   @Test
@@ -2553,7 +2535,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual)}"));
+        translateTemplate("{ND-Root} ${preferred-language-text(BT-13-TextMultilingual)}"));
   }
 
   @Test
@@ -2562,7 +2544,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language((SubNode/RepeatableInSubNode/TextMultilingual)[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language(BT-13-TextMultilingual[at 1])}"));
+        translateTemplate("{ND-Root} ${preferred-language(BT-13-TextMultilingual[at 1])}"));
   }
 
   @Test
@@ -2571,7 +2553,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text((SubNode/RepeatableInSubNode/TextMultilingual)[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual[at 1])}"));
+        translateTemplate("{ND-Root} ${preferred-language-text(BT-13-TextMultilingual[at 1])}"));
   }
 
   @Test
@@ -2580,19 +2562,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text((SubNode/RepeatableInSubNode/TextMultilingual['a' = 'a'])[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${preferred-language-text(BT-13-TextMultilingual['a' == 'a'][at 1])}"));
+        translateTemplate("{ND-Root} ${preferred-language-text(BT-13-TextMultilingual['a' == 'a'][at 1])}"));
   }
 
   @Test
   void testPreferredLanguageFunction_NonMultilingualField_Throws() {
     assertThrows(TypeMismatchException.class,
-        () -> translateTemplate("{/} ${preferred-language(BT-00-Text)}"));
+        () -> translateTemplate("{ND-Root} ${preferred-language(BT-00-Text)}"));
   }
 
   @Test
   void testPreferredLanguageTextFunction_NonMultilingualField_Throws() {
     assertThrows(TypeMismatchException.class,
-        () -> translateTemplate("{/} ${preferred-language-text(BT-00-Text)}"));
+        () -> translateTemplate("{ND-Root} ${preferred-language-text(BT-00-Text)}"));
   }
 
   // Property syntax: fieldContext:preferredLanguage / fieldContext:preferredLanguageText
@@ -2603,7 +2585,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Text-Multilingual:preferredLanguage}"));
+        translateTemplate("{ND-Root} ${BT-00-Text-Multilingual:preferredLanguage}"));
   }
 
   @Test
@@ -2612,7 +2594,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Text-Multilingual:preferredLanguageText}"));
+        translateTemplate("{ND-Root} ${BT-00-Text-Multilingual:preferredLanguageText}"));
   }
 
   @Test
@@ -2621,7 +2603,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(PathNode/TextMultilingualField['a' = 'a'])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguage}"));
+        translateTemplate("{ND-Root} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguage}"));
   }
 
   @Test
@@ -2630,7 +2612,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(PathNode/TextMultilingualField['a' = 'a'])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguageText}"));
+        translateTemplate("{ND-Root} ${BT-00-Text-Multilingual['a' == 'a']:preferredLanguageText}"));
   }
 
   @Test
@@ -2639,7 +2621,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language(SubNode/RepeatableInSubNode/TextMultilingual)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-13-TextMultilingual:preferredLanguage}"));
+        translateTemplate("{ND-Root} ${BT-13-TextMultilingual:preferredLanguage}"));
   }
 
   @Test
@@ -2648,7 +2630,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text(SubNode/RepeatableInSubNode/TextMultilingual)) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-13-TextMultilingual:preferredLanguageText}"));
+        translateTemplate("{ND-Root} ${BT-13-TextMultilingual:preferredLanguageText}"));
   }
 
   @Test
@@ -2657,7 +2639,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language((SubNode/RepeatableInSubNode/TextMultilingual)[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-13-TextMultilingual[at 1]:preferredLanguage}"));
+        translateTemplate("{ND-Root} ${BT-13-TextMultilingual[at 1]:preferredLanguage}"));
   }
 
   @Test
@@ -2666,7 +2648,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text((SubNode/RepeatableInSubNode/TextMultilingual)[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-13-TextMultilingual[at 1]:preferredLanguageText}"));
+        translateTemplate("{ND-Root} ${BT-13-TextMultilingual[at 1]:preferredLanguageText}"));
   }
 
   @Test
@@ -2675,19 +2657,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         lines("TEMPLATES:",
             "let body01() -> { eval(efx:preferred-language-text((SubNode/RepeatableInSubNode/TextMultilingual['a' = 'a'])[1])) }",
             "MAIN:", "for-each(/*).call(body01())"),
-        translateTemplate("{/} ${BT-13-TextMultilingual['a' == 'a'][at 1]:preferredLanguageText}"));
+        translateTemplate("{ND-Root} ${BT-13-TextMultilingual['a' == 'a'][at 1]:preferredLanguageText}"));
   }
 
   @Test
   void testPreferredLanguageProperty_NonMultilingualField_Throws() {
     assertThrows(TypeMismatchException.class,
-        () -> translateTemplate("{/} ${BT-00-Text:preferredLanguage}"));
+        () -> translateTemplate("{ND-Root} ${BT-00-Text:preferredLanguage}"));
   }
 
   @Test
   void testPreferredLanguageTextProperty_NonMultilingualField_Throws() {
     assertThrows(TypeMismatchException.class,
-        () -> translateTemplate("{/} ${BT-00-Text:preferredLanguageText}"));
+        () -> translateTemplate("{ND-Root} ${BT-00-Text:preferredLanguageText}"));
   }
 
   // #endregion Preferred language functions -------------------------------------
@@ -2950,7 +2932,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(
-            "{/, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), duration:$dur=day-time-duration('P1D')} All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur}"));
+            "{ND-Root, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), duration:$dur=day-time-duration('P1D')} All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur}"));
   }
 
   @Test
@@ -4015,7 +3997,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testContextDeclaration_NestedInRepeatingNode_SameContextAfterIndexedLine() {
+  void testContextDeclaration_NestedInRepeatingNode_IndexedLineRepeated() {
     assertEquals(
         lines(
             "TEMPLATES:",
@@ -4029,7 +4011,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate(lines(
             "{ND-RepeatableNode} a",
             "  {ND-RepeatableInRepeatableNode[at 2]} b",
-            "  {.} c")));
+            "  {ND-RepeatableInRepeatableNode[at 2]} c")));
   }
 
   @Test
@@ -4136,28 +4118,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testContextDeclaration_NestedInRepeatingNode_SameContextAfterADedent() {
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let body01() -> { #1: text('a')",
-            "for-each((RepeatableInRepeatableNode)[2]).call(body0101())",
-            "for-each((RepeatableInRepeatableNode)[2]).call(body0102()) }",
-            "let body0101() -> { #1.1: text('b')",
-            "for-each(../TextField).call(body010101()) }",
-            "let body010101() -> { text('c') }",
-            "let body0102() -> { text('d') }",
-            "MAIN:",
-            "for-each(/*/RepeatableNode).call(body01())"),
-        translateTemplate(lines(
-            "{ND-RepeatableNode} a",
-            "  {ND-RepeatableInRepeatableNode[at 2]} b",
-            "    {BT-00-Text-In-Repeatable-Node} c",
-            "  {.} d")));
-  }
-
-  @Test
-  void testContextDeclaration_NestedInRepeatingNode_ContextVariableAfterParentContext() {
+  void testContextDeclaration_NestedInRepeatingNode_ContextVariableInNestedLine() {
     assertEquals(
         lines(
             "TEMPLATES:",
@@ -4174,31 +4135,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "{ND-RepeatableNode} a",
             "  {context:$c = ND-RepeatableInRepeatableNode[at 2]} b",
             "    {ND-RepeatableInRepeatableNode} c",
-            "      {..} ${$c::BT-00-Text-In-Repeatable-Node}")));
+            "      {ND-RepeatableInRepeatableNode} ${$c::BT-00-Text-In-Repeatable-Node}")));
   }
-
-  @Test
-  void testContextDeclaration_NestedInRepeatingNode_ParentContextAfterALineThatLeavesIt() {
-    // The line above left the element of the line named, so its field or node is selected again, without its brackets
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let body01() -> { #1: text('a')",
-            "for-each(RepeatableInRepeatableNode[../TextField/normalize-space(text()) = 'x']).call(body0101()) }",
-            "let body0101() -> { #1.1: text('b')",
-            "for-each(../TextField).call(body010101()) }",
-            "let body010101() -> { #1.1.1: text('c')",
-            "for-each(../RepeatableInRepeatableNode).call(body01010101()) }",
-            "let body01010101() -> { text('d') }",
-            "MAIN:",
-            "for-each(/*/RepeatableNode).call(body01())"),
-        translateTemplate(lines(
-            "{ND-RepeatableNode} a",
-            "  {ND-RepeatableInRepeatableNode[BT-00-Text-In-Repeatable-Node == 'x']} b",
-            "    {BT-00-Text-In-Repeatable-Node} c",
-            "      {..} d")));
-  }
-
 
   @Test
   void testContextDeclaration_NestedInRepeatingNode_Plain() {
@@ -4228,49 +4166,6 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         translateTemplate(lines(
             "{ND-RepeatableNode} a",
             "  {ND-NonRepeatableSubNode[BT-00-Text-In-NonRepeatableSubNode == 'x']} b")));
-  }
-
-  @Test
-  void testContextDeclaration_NestedInRepeatingNode_SameContextUnderPredicatedLine() {
-    // A line after the predicated line repeats its predicate; a line nested in it stands in its element
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let body01() -> { #1: text('a')",
-            "for-each(NonRepeatableSubNode[TextField/normalize-space(text()) = 'x']).call(body0101())",
-            "for-each(NonRepeatableSubNode[TextField/normalize-space(text()) = 'x']).call(body0102()) }",
-            "let body0101() -> { text('b') }",
-            "let body0102() -> { #1.2: text('c')",
-            "for-each(.).call(body010201()) }",
-            "let body010201() -> { text('d') }",
-            "MAIN:",
-            "for-each(/*/RepeatableNode).call(body01())"),
-        translateTemplate(lines(
-            "{ND-RepeatableNode} a",
-            "  {ND-NonRepeatableSubNode[BT-00-Text-In-NonRepeatableSubNode == 'x']} b",
-            "  {.} c",
-            "    {.} d")));
-  }
-
-  @Test
-  void testContextDeclaration_NestedInRepeatingNode_ParentContextUnderPredicatedLine() {
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let body01() -> { #1: text('a')",
-            "for-each(NonRepeatableSubNode[TextField/normalize-space(text()) = 'x']).call(body0101()) }",
-            "let body0101() -> { #1.1: text('b')",
-            "for-each(RepeatableSubSubNode).call(body010101()) }",
-            "let body010101() -> { #1.1.1: text('c')",
-            "for-each(..).call(body01010101()) }",
-            "let body01010101() -> { text('d') }",
-            "MAIN:",
-            "for-each(/*/RepeatableNode).call(body01())"),
-        translateTemplate(lines(
-            "{ND-RepeatableNode} a",
-            "  {ND-NonRepeatableSubNode[BT-00-Text-In-NonRepeatableSubNode == 'x']} b",
-            "    {ND-RepeatableSubSubNode} c",
-            "      {..} d")));
   }
 
   @Test
@@ -4312,25 +4207,6 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each((/*/RepeatableNode/TextField)[2]).call(body01())"),
         translateTemplate("{BT-00-Text-In-Repeatable-Node[at 2]} ${BT-00-Attribute-In-Repeatable-Node}"));
-  }
-
-  @Test
-  void testContextDeclaration_SameAndParentContextUnderPredicatedLine() {
-    // Both lines stand in the element of the line above
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let body01() -> { #1: text('a')",
-            "for-each(.).call(body0101())",
-            "for-each(.).call(body0102()) }",
-            "let body0101() -> { text('b') }",
-            "let body0102() -> { text('c') }",
-            "MAIN:",
-            "for-each(/*/RepeatableNode[TextField/normalize-space(text()) = 'x']).call(body01())"),
-        translateTemplate(lines(
-            "{ND-RepeatableNode[BT-00-Text-In-Repeatable-Node == 'x']} a",
-            "  {.} b",
-            "  {..} c")));
   }
 
   // #endregion Context declarations of nested template lines ------------------

@@ -196,17 +196,4 @@ public class ContextStack extends Stack<Context> {
 
     return this.peek().reads();
   }
-
-  /**
-   * Returns the parent context (second from top of the stack) without removing it.
-   * This is useful for the ".." context shortcut which refers to the grandparent context.
-   *
-   * @return the parent context, or null if there are fewer than 2 contexts on the stack.
-   */
-  public Context peekParentContext() {
-    if (this.size() < 2) {
-      return null;
-    }
-    return this.get(this.size() - 2);
-  }
 }

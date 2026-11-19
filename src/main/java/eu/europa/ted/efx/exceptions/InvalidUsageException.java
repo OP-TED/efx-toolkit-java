@@ -36,7 +36,6 @@ public class InvalidUsageException extends EfxCompilationException {
         INVALID_NOTICE_SUBTYPE_TOKEN,
         FIELD_NOT_WITHHOLDABLE,
         TEMPLATE_ONLY_FUNCTION,
-        TEMPLATE_ONLY_CONTEXT,
         UNSUPPORTED_REGEX_CONSTRUCT,
         CIRCULAR_INCLUDE,
         EMPTY_RULES_FILE,
@@ -46,8 +45,7 @@ public class InvalidUsageException extends EfxCompilationException {
         STYLE_NOT_APPLICABLE,
         UNIT_FOR_LIST,
         NO_UNIT_NOT_APPLICABLE,
-        OUTLINE_NUMBER_TOO_LARGE,
-        EVERY_REQUIRES_NODE_OR_FIELD
+        OUTLINE_NUMBER_TOO_LARGE
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
@@ -56,7 +54,6 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
     private static final String TEMPLATE_ONLY_FUNCTION = "%s can only be used in templates, not in expressions or validation rules.";
-    private static final String TEMPLATE_ONLY_CONTEXT = "Context '%s' can only be used in templates, not in validation rules.";
     private static final String UNSUPPORTED_REGEX_CONSTRUCT = "Invalid regex pattern %s at position %d: %s";
     private static final String CIRCULAR_INCLUDE = "Circular #include: %s.";
     private static final String EMPTY_RULES_FILE = "Rules file must contain at least one validation stage.";
@@ -67,7 +64,6 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
     private static final String NO_UNIT_NOT_APPLICABLE = "Format option 'no-unit' cannot format a value of type '%s': it is for an amount, a measure or a duration.";
     private static final String OUTLINE_NUMBER_TOO_LARGE = "Outline number '%s' is too large: the largest is %d.";
-    private static final String EVERY_REQUIRES_NODE_OR_FIELD = "WITH EVERY needs a node or a field as context, not the shortcut '%s'.";
 
     private final ErrorCode errorCode;
 
@@ -120,18 +116,6 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException templateOnlyFunction(ParserRuleContext ctx, String call) {
         return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_FUNCTION, ctx, TEMPLATE_ONLY_FUNCTION, call);
-    }
-
-    /**
-     * A context written {@code .} or {@code ..} in a validation rule. Both are relative to the
-     * context of the line above in a template; a rule set stands on its own, with no such context.
-     *
-     * @param ctx the context declaration
-     * @param shortcut the context as written: "." or ".."
-     * @return the exception
-     */
-    public static InvalidUsageException templateOnlyContext(ParserRuleContext ctx, String shortcut) {
-        return new InvalidUsageException(ErrorCode.TEMPLATE_ONLY_CONTEXT, ctx, TEMPLATE_ONLY_CONTEXT, shortcut);
     }
 
     public static InvalidUsageException unsupportedRegexConstruct(String pattern, int position, String reason) {
@@ -226,9 +210,5 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException outlineNumberTooLarge(Token outlineNumber, String number) {
         return new InvalidUsageException(ErrorCode.OUTLINE_NUMBER_TOO_LARGE, outlineNumber, OUTLINE_NUMBER_TOO_LARGE, number, Integer.MAX_VALUE);
-    }
-
-    public static InvalidUsageException everyRequiresNodeOrField(ParserRuleContext ctx, String shortcut) {
-        return new InvalidUsageException(ErrorCode.EVERY_REQUIRES_NODE_OR_FIELD, ctx, EVERY_REQUIRES_NODE_OR_FIELD, shortcut);
     }
 }
