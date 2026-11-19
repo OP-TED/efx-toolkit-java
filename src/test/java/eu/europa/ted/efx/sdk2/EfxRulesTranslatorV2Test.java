@@ -152,25 +152,22 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertAllOutputs(testName, outputFiles);
   }
 
-  // A listener that does not throw lets the parser recover from a file without a stage, and the
-  // translator still rejects the file.
+  // The grammar reads a file without a stage, as a file that is only included may be, and the
+  // translator rejects it.
 
   @Test
-  void testEmptyRulesFile_IsRejectedBehindAListenerThatDoesNotThrow()
-      throws InstantiationException {
+  void testEmptyRulesFile_IsRejected() {
     assertEmptyRulesFile("");
   }
 
   @Test
-  void testRulesFileWithoutAStage_IsRejectedBehindAListenerThatDoesNotThrow()
-      throws InstantiationException {
+  void testRulesFileWithoutAStage_IsRejected() {
     assertEmptyRulesFile("LET text : $testVar = \"test-value\";");
   }
 
-  private static void assertEmptyRulesFile(final String rules) throws InstantiationException {
-    final EfxRulesTranslatorV2 lenient = translatorWith(new BaseErrorListener());
+  private void assertEmptyRulesFile(final String rules) {
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
-        () -> lenient.translateRules(rules));
+        () -> translator.translateRules(rules));
     assertEquals(InvalidUsageException.ErrorCode.EMPTY_RULES_FILE, exception.getErrorCode());
     assertEquals("Rules file must contain at least one validation stage.",
         exception.getMessage());
