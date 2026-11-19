@@ -166,6 +166,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.OutlineNumber, "an outline number"),
 
             // Headers and directives
+            Map.entry(EfxLexer.MainSectionHeader, "a main section header"),
             Map.entry(EfxLexer.SummarySectionHeader, "a summary section header"),
             Map.entry(EfxLexer.NavigationSectionHeader, "a navigation section header"),
             Map.entry(EfxLexer.StageHeaderStart, "a stage header"),
