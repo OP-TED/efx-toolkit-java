@@ -173,6 +173,27 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         exception.getMessage());
   }
 
+  // The last line of a file may be a comment or blanks with no line end after it.
+
+  @Test
+  void testLastLine_CommentWithoutLineEnd_IsIgnored() throws InstantiationException {
+    assertLastLineIsIgnored("// The last line has no line end.");
+  }
+
+  @Test
+  void testLastLine_BlanksWithoutLineEnd_AreIgnored() throws InstantiationException {
+    assertLastLineIsIgnored("  \t");
+  }
+
+  private void assertLastLineIsIgnored(final String lastLine) throws InstantiationException {
+    final String rules = lines(
+        "---- STAGE 1a ----",
+        "WITH ND-SubNode",
+        "    ASSERT BT-00-Text is present AS ERROR R-K7P-M2Q FOR BT-00-Text IN 1;");
+    assertEquals(translator.translateRules(rules + "\n"),
+        translatorWith(ThrowingErrorListener.INSTANCE).translateRules(lines(rules, lastLine)));
+  }
+
   //#endregion STAGE tests
 
   //#region WITH clause tests

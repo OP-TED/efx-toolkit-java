@@ -415,6 +415,26 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "INVOKE complex-template('BT-00-Text');")));
   }
 
+  // The last line of a file may be a comment or blanks with no line end after it.
+
+  @Test
+  void testLastLine_CommentWithoutLineEnd_IsIgnored() throws InstantiationException {
+    assertLastLineIsIgnored("// The last line has no line end.");
+  }
+
+  @Test
+  void testLastLine_BlanksWithoutLineEnd_AreIgnored() throws InstantiationException {
+    assertLastLineIsIgnored("  \t");
+  }
+
+  private void assertLastLineIsIgnored(final String lastLine) throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    final String template = "DISPLAY Hello;";
+    assertEquals(translateTemplate(template),
+        translator.renderTemplate(lines(template, lastLine), DEFAULT_OPTIONS));
+  }
+
   // #endregion Core Template Structure ----------------------------------------
 
   // #region Globals -----------------------------------------------------------

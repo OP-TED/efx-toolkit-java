@@ -233,12 +233,13 @@ class EfxErrorStrategyTest extends EfxTestsBase {
 
   @Test
   void testLexer_CharacterThatCannotBeSeenInTheTextRead_IsWrittenAsAnEscape() {
+    // After an outline number, a comment must end with a line end.
     final EfxErrorReportingLexer lexer =
-        new EfxErrorReportingLexer(CharStreams.fromString("//\u200B"));
+        new EfxErrorReportingLexer(CharStreams.fromString("1//\u200B"));
     lexer.removeErrorListeners();
     lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
     assertSyntaxErrorMessage(
-        "line 1:0 Syntax error: unexpected end of input after '//\\u200B'.",
+        "line 1:1 Syntax error: unexpected end of input after '//\\u200B'.",
         lexer::getAllTokens);
   }
 
