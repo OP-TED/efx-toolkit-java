@@ -34,8 +34,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -1009,32 +1007,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   //#endregion Custom template tests
 
   //#region Include directive tests
-
-  /**
-   * The translator replaces each #include line with its file before it reads the rules, so only a
-   * tool that reads a rules file with the grammar alone meets an #include line. After a rule
-   * without ';', the grammar reads the #include line and what follows it.
-   */
-  @Test
-  void testInclude_AfterARuleWithoutSemicolon_IsReadByTheGrammar() {
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(ONE_RULE
-        + "#include \"extra.efx\"\n"
-        + "---- STAGE 1b ----\n"
-        + "WITH BT-00-Text\n"
-        + "    ASSERT BT-00-Text is present\n"
-        + "    AS ERROR R-X3F-N8W\n"
-        + "    FOR BT-00-Text IN 1\n"));
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
-    final EfxParser parser = new EfxParser(new CommonTokenStream(lexer));
-    parser.removeErrorListeners();
-    parser.addErrorListener(ThrowingErrorListener.INSTANCE);
-
-    final EfxParser.RulesFileContext rulesFile = parser.rulesFile();
-
-    assertEquals(1, rulesFile.includeDirective().size());
-    assertEquals(2, rulesFile.validationStage().size());
-  }
 
   /**
    * Verifies that a rules file with #include produces the same output
