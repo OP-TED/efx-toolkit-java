@@ -4,7 +4,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 
 ## Improvements
 
-- **Clearer error messages**: an error in an EFX-2 expression, template or rule says where it is, with its line and column, also in a file included with `#include`. It says what is wrong and, where it can, how to fix it.
+- **Clearer error messages**: an error in an EFX-2 expression, template or rule says where it is, with its line and column, also in a file included with `#include`, but not an error in an `#include` line itself, such as a circular include. It says what is wrong and, where it can, how to fix it.
 - **Faster translation**: in our measurements, the view templates and the validation rules of the SDK translate about five times faster.
 - **Formatted values in templates**: numbers, dates, times, amounts, measures and durations are displayed formatted, with the label of their unit in the right plural. A template can choose the format, as in `${BT-00-Number|2}`.
 - **Dynamic rules**: each call of the API is made once, and every validation engine sends the same request.
