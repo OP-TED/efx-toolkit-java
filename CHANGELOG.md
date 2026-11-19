@@ -9,6 +9,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 - **Formatted values in templates**: numbers, dates, times, amounts, measures and durations are displayed formatted, with the label of their unit in the right plural. A template can choose the format, as in `${BT-00-Number|2}`.
 - **Dynamic rules**: each call of the API is made once, and every validation engine sends the same request.
 - **`WITH EVERY` in rules**: a rule set can apply to every element of a node or a field.
+- **Completions for editors**: the jar now includes the EFX-2 completions (functions, keywords and properties) in `eu/europa/ted/efx/autocomplete/sdk2-completions.json`, for editors written in other languages.
 - **The EFX-2 language changes of the SDK**: see the SDK changelog.
 - **EFX-1** works as before, with clearer error messages and a few corrections.
 
