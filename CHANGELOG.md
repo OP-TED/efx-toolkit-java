@@ -17,6 +17,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 
 - Build with the SDK pre-release that follows 2.0.0-alpha.5. Its EFX-2 grammar no longer types expressions, and this version does not build with an earlier one.
 - Write EFX-2 indexes as `[at n]`, and statement keywords, such as `WITH` and `LET`, in upper case. The SDK changelog lists the other language changes.
+- Replace the context shortcuts `.`, `..` and `/` with the node or field they stand for, for example `ND-Root` instead of `/`. They are no longer accepted as the context of a template line, a `WITH` clause or a context variable.
 - Validate the generated Schematron with an XSLT 3.0 processor, such as Saxon 12.
 - If you wrote your own `efx:call-api`, it now receives the whole query string.
 - If you wrote your own `SymbolResolver`, implement its three new methods.

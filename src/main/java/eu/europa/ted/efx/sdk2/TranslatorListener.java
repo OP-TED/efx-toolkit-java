@@ -184,11 +184,6 @@ abstract class TranslatorListener extends EfxBaseListener {
     }
   }
 
-  void exitRootContextDeclaration() {
-    this.exitNodeContextDeclaration(this.translation.symbols().getRootNodeId(),
-        this.translation.symbols().getRootPath(), null);
-  }
-
   void exitFieldContextDeclaration(final String fieldId, final PathExpression contextPath,
       final Variable contextVariable) {
     this.declareContext(new FieldContext(fieldId, contextPath, contextVariable), contextVariable);

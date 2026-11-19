@@ -85,11 +85,6 @@ class EfxValidationDependencyExtractorTest extends EfxTestsBase {
   // #region: Context variations -----------------------------------------------
 
   @Test
-  void testRootContextShortcut() throws IOException {
-    assertDependencyGraph("testRootContextShortcut");
-  }
-
-  @Test
   void testContextOverride() throws IOException {
     assertDependencyGraph("testContextOverride");
   }

@@ -236,13 +236,8 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   /**
    * @param initializer the initializer of a context variable
    * @return the context it gives the variable: a field or a node, with its predicates
-   * @throws TranslatorConfigurationException if the variable is initialized with the root, which
-   *         no translator handles yet
    */
   Context contextAssignedBy(final ContextVariableInitializerContext initializer) {
-    if (initializer.Slash() != null) {
-      throw TranslatorConfigurationException.unhandledVariableContext(initializer.getText());
-    }
     return this.contextOf(initializer.getRuleContext(ParserRuleContext.class, 0));
   }
 

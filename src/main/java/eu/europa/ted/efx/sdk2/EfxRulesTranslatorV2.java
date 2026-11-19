@@ -421,34 +421,20 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
 
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
-    String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
-    final boolean every = isEveryContext(ctx);
-    if (every && ctx.shortcut != null) {
-      throw InvalidUsageException.everyRequiresNodeOrField(ctx, shortcut);
+    if (ctx.contextVariableInitializer() != null) {
+      Context declared = this.expressions.contextAssignedBy(ctx.contextVariableInitializer());
+      Variable contextVariable =
+          this.getContextVariable(ctx.contextVariableInitializer(), declared.relativePath());
+      this.exitContextDeclaration(declared, contextVariable);
+    } else {
+      this.exitContextDeclaration(
+          this.expressions.contextOf(ctx.getRuleContext(ParserRuleContext.class, 0)), null);
     }
-    switch (shortcut) {
-      case ".":
-      case "..":
-        throw InvalidUsageException.templateOnlyContext(ctx, shortcut);
-      case "/":
-        this.exitRootContextDeclaration();
-        break;
-      default:
-        if (ctx.contextVariableInitializer() != null) {
-          Context declared = this.expressions.contextAssignedBy(ctx.contextVariableInitializer());
-          Variable contextVariable =
-              this.getContextVariable(ctx.contextVariableInitializer(), declared.relativePath());
-          this.exitContextDeclaration(declared, contextVariable);
-        } else {
-          this.exitContextDeclaration(
-              this.expressions.contextOf(ctx.getRuleContext(ParserRuleContext.class, 0)), null);
-        }
-        if (every) {
-          this.setEveryRuleContextPath();
-        }
-        break;
+    if (isEveryContext(ctx)) {
+      this.setEveryRuleContextPath();
     }
   }
+
 
   /**
    * The context declared is also the context of the rule set.

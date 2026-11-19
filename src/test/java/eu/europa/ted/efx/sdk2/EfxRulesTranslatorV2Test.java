@@ -199,15 +199,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   //#region WITH clause tests
 
   @Test
-  void testWithClause_RootContextShortcut() throws IOException {
-    String testName = "testWithClause_RootContextShortcut";
-    Map<String, String> outputFiles = translator.translateRules(readInput(testName));
-
-    assertEquals(7, outputFiles.size(), "Should generate exactly 7 files");
-    assertAllOutputs(testName, outputFiles);
-  }
-
-  @Test
   void testWithClause_Every() throws IOException {
     String testName = "testWithClause_Every";
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
@@ -221,18 +212,6 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     Map<String, String> outputFiles = translator.translateRules(readInput(testName));
 
     assertAllOutputs(testName, outputFiles);
-  }
-
-  @Test
-  void testWithClause_EveryBeforeShortcut_ThrowsError() {
-    for (String shortcut : List.of(".", "..", "/")) {
-      String rules = "---- STAGE 1a ----\n\nWITH EVERY " + shortcut + "\n"
-          + "    ASSERT BT-00-Text is present\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
-      InvalidUsageException exception = assertThrows(InvalidUsageException.class,
-          () -> translator.translateRules(rules), "WITH EVERY " + shortcut);
-      assertEquals(InvalidUsageException.ErrorCode.EVERY_REQUIRES_NODE_OR_FIELD,
-          exception.getErrorCode());
-    }
   }
 
   /**
@@ -323,29 +302,20 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testWithClause_SameContext_IsTemplateOnly() {
-    assertTemplateOnlyContext(".");
+  void testWithClause_Shortcuts_AreSyntaxErrors() {
+    for (String context : new String[] {".", "..", "/", "context:$x = /"}) {
+      String rules = lines(
+          "---- STAGE 1a ----",
+          "",
+          "WITH " + context,
+          "    ASSERT TRUE",
+          "    AS ERROR R-K7P-M2Q",
+          "    FOR BT-00-Text IN *");
+      assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules),
+          context);
+    }
   }
 
-  @Test
-  void testWithClause_ParentContext_IsTemplateOnly() {
-    assertTemplateOnlyContext("..");
-  }
-
-  private void assertTemplateOnlyContext(final String context) {
-    String rules = lines(
-        "---- STAGE 1a ----",
-        "",
-        "WITH " + context,
-        "    ASSERT TRUE",
-        "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN *");
-    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
-        () -> translator.translateRules(rules));
-    assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_CONTEXT, exception.getErrorCode());
-    assertEquals("line 3:5 Context '" + context
-        + "' can only be used in templates, not in validation rules.", exception.getMessage());
-  }
 
   //#endregion WITH clause tests
 
