@@ -5,9 +5,9 @@
 WITH ND-Root
     ASSERT BT-00-Text is present
     AS ERROR R-T02-001
-    FOR BT-00-Number IN *
+    FOR BT-00-Number IN *;
 
 WITH ND-Root
     ASSERT BT-00-Repeatable-Text is present
     AS ERROR R-T02-002
-    FOR BT-00-Number IN *
+    FOR BT-00-Number IN *;

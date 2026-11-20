@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.IntervalSet;
@@ -113,16 +114,28 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testExpression_EndingWithASemicolon_TranslatesAsWithout() {
+    assertEquals(translateExpression("WITH ND-Root COMPUTE 1 + 2"),
+        translateExpression("WITH ND-Root COMPUTE 1 + 2;"));
+  }
+
+  @Test
+  void testExpression_EndingWithASemicolonAndACommentWithoutLineEnd_TranslatesAsWithout() {
+    assertEquals(translateExpression("WITH ND-Root COMPUTE 1 + 2"),
+        translateExpression("WITH ND-Root COMPUTE 1 + 2;// a comment"));
+  }
+
+  @Test
   void testExpression_ExtraNumber() {
     assertSyntaxErrorMessage(
-        "line 1:23 Syntax error: unexpected '2' in expression; expected end of input.",
+        "line 1:23 Syntax error: unexpected '2' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 1 2"));
   }
 
   @Test
   void testExpression_ExtraText_KeepsItsQuotes() {
     assertSyntaxErrorMessage(
-        "line 1:25 Syntax error: unexpected 'b' in expression; expected end of input.",
+        "line 1:25 Syntax error: unexpected 'b' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 'a' 'b'"));
   }
 
@@ -206,10 +219,10 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   void testExpression_CharacterThatCannotBeSeenInATextLiteral_IsWrittenAsAnEscape() {
     // Written as it is, the zero-width space would show the literal as empty: ''
     assertSyntaxErrorMessage(
-        "line 1:23 Syntax error: unexpected '\\u200B' in expression; expected end of input.",
+        "line 1:23 Syntax error: unexpected '\\u200B' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 1 '\u200B'"));
     assertSyntaxErrorMessage(
-        "line 1:23 Syntax error: unexpected '\\u{E0001}' in expression; expected end of input.",
+        "line 1:23 Syntax error: unexpected '\\u{E0001}' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 1 '\uDB40\uDC01'"));
   }
 
@@ -223,25 +236,22 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testExpression_TextLiteralThatCanBeSeen_IsQuotedAsItIsWritten() {
     assertSyntaxErrorMessage(
-        "line 1:23 Syntax error: unexpected 'Ημερομηνία' in expression; expected end of input.",
+        "line 1:23 Syntax error: unexpected 'Ημερομηνία' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 1 'Ημερομηνία'"));
     // A combining mark after a letter shows as an accent on it
     assertSyntaxErrorMessage(
-        "line 1:23 Syntax error: unexpected 'e\u0301' in expression; expected end of input.",
+        "line 1:23 Syntax error: unexpected 'e\u0301' in expression; expected end of input or ';'.",
         () -> translateExpression("WITH ND-Root COMPUTE 1 'e\u0301'"));
   }
 
   @Test
   void testLexer_CharacterThatCannotBeSeenInTheTextRead_IsWrittenAsAnEscape() {
-    // After an outline number, a comment must end with a line end.
-    final EfxErrorReportingLexer lexer =
-        new EfxErrorReportingLexer(CharStreams.fromString("1//\u200B"));
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
-    assertSyntaxErrorMessage(
-        "line 1:1 Syntax error: unexpected end of input after '//\\u200B'.",
-        lexer::getAllTokens);
+    // No token of the grammar can stop, at the end of the input, after reading such a character
+    // outside a text literal or an #include directive, so the message is checked directly.
+    assertEquals("Syntax error: unexpected end of input after '//\\u200B'.",
+        EfxErrorStrategy.unreadable("//\u200B", IntStream.EOF, EfxLexer.DEFAULT_MODE));
   }
+
 
   @Test
   void testLexer_CountsTheErrorsItReports() {
@@ -374,23 +384,56 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   void testRule_AssertionEndsTooSoon() {
     assertSyntaxErrorMessage("line 5:4 Syntax error: unexpected 'AS' in expression.",
         () -> translateRules(lines(RULE_START, "    ASSERT 1 +", "    AS ERROR R-K7P-M2Q",
-            "    FOR BT-00-Text IN 1")));
+            "    FOR BT-00-Text IN 1;")));
   }
 
   @Test
   void testRule_WithoutAs() {
     assertSyntaxErrorMessage(
         "line 5:4 Syntax error: unexpected 'FOR' in as clause; expected 'AS'.",
-        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    FOR BT-00-Text IN 1")));
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    FOR BT-00-Text IN 1;")));
+  }
+
+  @Test
+  void testRule_WithoutSemicolon_BeforeAnotherRule() {
+    assertSyntaxErrorMessage(
+        "line 7:4 Syntax error: unexpected 'ASSERT' in rule; expected ';' or 'SCOPE'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1", "    ASSERT TRUE", "    AS ERROR R-K7P-M2R",
+            "    FOR BT-00-Text IN 1;")));
+  }
+
+  @Test
+  void testRule_WithoutSemicolon_BeforeAnotherRuleSet() {
+    assertSyntaxErrorMessage(
+        "line 7:0 Syntax error: unexpected 'WITH' in rule; expected ';' or 'SCOPE'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1", "WITH ND-Root", "    ASSERT TRUE", "    AS ERROR R-K7P-M2R",
+            "    FOR BT-00-Text IN 1;")));
+  }
+
+  @Test
+  void testRule_WithoutSemicolon_AtTheEnd() {
+    assertSyntaxErrorMessage(
+        "line 6:23 Syntax error: unexpected end of input in rule; expected ';' or 'SCOPE'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1")));
+  }
+
+  @Test
+  void testRuleSet_SemicolonAfterIt_IsSyntaxError() {
+    assertSyntaxErrorMessage(
+        "line 7:0 Syntax error: unexpected character ';'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1;", ";")));
   }
 
   @Test
   void testRule_NoticeSubtypeRangeOfThree() {
     assertSyntaxErrorMessage(
-        "line 6:25 Syntax error: unexpected '-' in rules file;"
-            + " expected end of input or '#include' or a stage header.",
+        "line 6:25 Syntax error: unexpected '-' in rule; expected ';' or 'SCOPE'.",
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
-            "    FOR BT-00-Text IN 1-2-3")));
+            "    FOR BT-00-Text IN 1-2-3;")));
   }
 
   @Test
@@ -426,7 +469,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
         "line 5:13 Syntax error: unexpected 'R-000-0001' in rule identifier;"
             + " expected a rule identifier, such as 'R-K7P-M2Q'.",
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-000-0001",
-            "    FOR BT-00-Text IN 1")));
+            "    FOR BT-00-Text IN 1;")));
   }
 
   // #endregion Rules ----------------------------------------------------------

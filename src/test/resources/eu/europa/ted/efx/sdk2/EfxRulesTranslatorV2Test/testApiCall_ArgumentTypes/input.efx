@@ -20,31 +20,31 @@ LET dynamic : ?mixed(text : $first, text* : $list, number : $last) CALL API;
 WITH BT-00-Text
     ASSERT ?text(BT-00-Identifier)
     AS ERROR R-TYP-001
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?indicator(BT-00-Indicator)
     AS ERROR R-TYP-002
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?indicator(BT-00-Code is present)
     AS ERROR R-TYP-003
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?number(BT-00-Number)
     AS ERROR R-TYP-004
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?date(BT-00-StartDate)
     AS ERROR R-TYP-005
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?time(BT-00-StartTime)
     AS ERROR R-TYP-006
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?duration(BT-00-Duration)
     AS ERROR R-TYP-007
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?texts(BT-00-Repeatable-Text)
     AS ERROR R-TYP-008
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?numbers(BT-00-Repeatable-Number)
     AS ERROR R-TYP-009
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
     ASSERT ?mixed(BT-00-Identifier, BT-00-Repeatable-Text, BT-00-Number)
     AS ERROR R-TYP-010
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

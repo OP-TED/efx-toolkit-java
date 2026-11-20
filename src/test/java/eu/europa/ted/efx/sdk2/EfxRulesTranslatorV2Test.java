@@ -13,6 +13,7 @@
  */
 package eu.europa.ted.efx.sdk2;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -221,7 +222,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   @Test
   void testWithClause_EveryInLowerCase_IsRejected() {
     String rules = "---- STAGE 1a ----\n\nWITH every ND-PrivacyInRepeatableNode\n"
-        + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+        + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1;\n";
     assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules));
   }
 
@@ -234,7 +235,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "context : $text = BT-01-SubSubNode-Text[at 1]", "(/*/SubNode/SubSubNode/SubTextField)[1]");
     for (Map.Entry<String, String> ruleContext : ruleContexts.entrySet()) {
       String rules = "---- STAGE 1a ----\n\nWITH EVERY " + ruleContext.getKey() + "\n"
-          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1;\n";
       String pattern = translator.translateRules(rules).get("static/validation-stage-1a-1.sch");
       assertTrue(pattern.contains("<rule context=\"" + ruleContext.getValue() + "\">"),
           "WITH EVERY " + ruleContext.getKey() + ":\n" + pattern);
@@ -265,7 +266,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     for (Map.Entry<String, List<String>> ruleContext : ruleContexts.entrySet()) {
       final String expected = ruleContext.getValue().get(0);
       String rules = "---- STAGE 1a ----\n\nWITH " + ruleContext.getKey() + "\n"
-          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1\n";
+          + "    ASSERT TRUE\n    AS ERROR R-EVR-009\n    FOR BT-00-Text IN 1;\n";
       String pattern = translator.translateRules(rules).get("static/validation-stage-1a-1.sch");
       assertTrue(pattern.contains("<rule context=\"" + expected + "\">"),
           "WITH " + ruleContext.getKey() + ":\n" + pattern);
@@ -310,7 +311,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
           "WITH " + context,
           "    ASSERT TRUE",
           "    AS ERROR R-K7P-M2Q",
-          "    FOR BT-00-Text IN *");
+          "    FOR BT-00-Text IN *;");
       assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules),
           context);
     }
@@ -338,7 +339,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT (BT-00-Repeatable-Indicator)",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
         () -> translator.translateRules(rules));
     assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, exception.getErrorCode());
@@ -357,7 +358,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT 'a'",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     assertThrows(TypeMismatchException.class, () -> translator.translateRules(rules));
   }
 
@@ -444,7 +445,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-SubNode",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 11-9"
+        "    FOR BT-00-Text IN 11-9;"
     );
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translator.translateRules(rules));
@@ -487,7 +488,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT BT-NONEXISTENT == 'a'",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
     assertEquals("line 4:11 Unknown symbol 'BT-NONEXISTENT'.", exception.getMessage());
@@ -501,7 +502,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-NONEXISTENT",
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
     assertEquals("line 3:5 Unknown symbol 'BT-NONEXISTENT'.", exception.getMessage());
@@ -516,7 +517,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
         "    FOR",
-        "        BT-999-Unknown IN 1");
+        "        BT-999-Unknown IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
     assertEquals("line 7:8 Unknown symbol 'BT-999-Unknown'.", exception.getMessage());
@@ -531,7 +532,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
         "    FOR",
-        "        ND-NONEXISTENT IN 1");
+        "        ND-NONEXISTENT IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
     assertEquals("line 7:8 Unknown symbol 'ND-NONEXISTENT'.", exception.getMessage());
@@ -613,7 +614,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-00-Text",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN " + list);
+        "    FOR BT-00-Text IN " + list + ";");
   }
 
   private Map<String, String> translateIn(final String list) {
@@ -924,7 +925,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
       + "WITH BT-00-Text\n"
       + "    ASSERT BT-00-Text is present\n"
       + "    AS ERROR R-X3F-N8W\n"
-      + "    FOR BT-00-Text IN 1\n";
+      + "    FOR BT-00-Text IN 1;\n";
 
   /**
    * @return the pattern of {@link #ONE_RULE}, written with the templates of the given folder,
@@ -1018,6 +1019,57 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     assertAllOutputs(testName, outputFiles);
   }
 
+  @Test
+  void testInclude_WithASemicolon_TranslatesAsWithout() {
+    String extra = lines(
+        "---- STAGE 1b ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT TRUE",
+        "    AS ERROR R-X3F-N8W",
+        "    FOR BT-00-Text IN 1;");
+    assertEquals(
+        translator.translateRules("#include \"extra.efx\"\n", including(Map.of("extra.efx", extra))),
+        translator.translateRules("#include \"extra.efx\"; // a comment\n",
+            including(Map.of("extra.efx", extra))));
+  }
+
+  @Test
+  void testLastRule_CommentWithoutLineEnd_IsIgnored() {
+    final String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT TRUE",
+        "    AS ERROR R-X3F-N8W",
+        "    FOR BT-00-Text IN 1;");
+    assertEquals(translator.translateRules(rules + "\n", EfxTranslatorOptions.DEFAULT),
+        translator.translateRules(rules + "// a comment", EfxTranslatorOptions.DEFAULT));
+  }
+
+  /**
+   * Verifies that rule sets after the first one of a stage translate as the first one, whatever
+   * their number: each rule ends with a semicolon, so that no lexer mode is left behind.
+   */
+  @Test
+  void testManyRuleSets_EachTranslatesAsTheFirst() {
+    final String ruleSet = lines(
+        "WITH ND-Root",
+        "    ASSERT TRUE",
+        "    AS ERROR R-X3F-N8W",
+        "    FOR BT-00-Text IN 1;",
+        "    WHEN FALSE ASSERT TRUE",
+        "    AS ERROR R-X3F-N8X",
+        "    FOR BT-00-Text IN 1;");
+    final StringBuilder rules = new StringBuilder("---- STAGE 1a ----\n\n");
+    for (int i = 0; i < 50; i++) {
+      rules.append(ruleSet.replace("R-X3F-N8W", String.format("R-A%02d-AAA", i))
+          .replace("R-X3F-N8X", String.format("R-B%02d-BBB", i))).append("\n\n");
+    }
+    rules.append("---- STAGE 1b ----\n\n").append(ruleSet).append("\n");
+    assertDoesNotThrow(() -> translator.translateRules(rules.toString(), EfxTranslatorOptions.DEFAULT));
+  }
+
   /**
    * Verifies that translateRules(Path) auto-wires a filesystem resolver
    * when no resolver is provided in options.
@@ -1029,7 +1081,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         + "WITH BT-00-Text\n"
         + "    REPORT empty(BT-00-Text)\n"
         + "    AS WARNING R-K7P-M2Q\n"
-        + "    FOR BT-00-Text IN 1\n\n"
+        + "    FOR BT-00-Text IN 1;\n\n"
         + "#include \"extra.efx\"\n";
 
     String extraContent =
@@ -1037,7 +1089,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         + "WITH BT-00-Text\n"
         + "    ASSERT BT-00-Text is present\n"
         + "    AS ERROR R-X3F-N8W\n"
-        + "    FOR BT-00-Text IN 1\n";
+        + "    FOR BT-00-Text IN 1;\n";
 
     Files.writeString(tempDir.resolve("rules.efx"), mainContent);
     Files.writeString(tempDir.resolve("extra.efx"), extraContent);
@@ -1082,7 +1134,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1",
+        "    FOR BT-00-Text IN 1;",
         "#include \"extra.efx\"");
     String extra = lines(
         "---- STAGE 1b ----",
@@ -1090,7 +1142,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT BT-999-Unknown == 'a'",
         "    AS ERROR R-X3F-N8W",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
     assertEquals("line 4:11 in 'extra.efx' Unknown symbol 'BT-999-Unknown'.",
@@ -1106,14 +1158,14 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT BT-999-Unknown == 'a'",
         "    AS ERROR R-X3F-N8W",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     String extra = lines(
         "---- STAGE 1a ----",
         "",
         "WITH ND-Root",
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
     assertEquals("line 5:11 Unknown symbol 'BT-999-Unknown'.", exception.getMessage());
@@ -1144,7 +1196,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1",
+        "    FOR BT-00-Text IN 1;",
         "#include \"inner.efx\"");
     String inner = lines(
         "---- STAGE 1b ----",
@@ -1152,7 +1204,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT BT-999-Unknown == 'a'",
         "    AS ERROR R-X3F-N8W",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules,
             including(Map.of("outer.efx", outer, "inner.efx", inner))));
@@ -1170,7 +1222,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT == 'a'",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     ParseCancellationException exception = assertThrows(ParseCancellationException.class,
         () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
     assertTrue(exception.getMessage().startsWith("line 4:11 in 'extra.efx' "),
@@ -1187,7 +1239,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH ND-Root",
         "    ASSERT TRUE ¤",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     ParseCancellationException exception = assertThrows(ParseCancellationException.class,
         () -> translator.translateRules(rules, including(Map.of("extra.efx", extra))));
     assertEquals("line 4:16 in 'extra.efx' Syntax error: unexpected character '¤'.",
@@ -1285,7 +1337,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-00-Text",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     assertThrows(ParseCancellationException.class, () -> translator.translateRules(rules));
   }
 
@@ -1299,7 +1351,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-00-Text",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translator.translateRules(rules));
     assertEquals(InvalidUsageException.ErrorCode.INVALID_ENDPOINT_NAME, exception.getErrorCode());
@@ -1319,7 +1371,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-00-Text",
         "    ASSERT ?check(BT-00-Text)",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
         () -> translator.translateRules(rules));
     assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_ALREADY_DECLARED,
@@ -1340,7 +1392,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "WITH BT-00-Text",
         "    ASSERT BT-00-Text is present",
         "    AS ERROR R-K7P-M2Q",
-        "    FOR BT-00-Text IN 1");
+        "    FOR BT-00-Text IN 1;");
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translator.translateRules(rules));
     assertEquals(InvalidUsageException.ErrorCode.DYNAMIC_FUNCTION_OUTSIDE_RULE,

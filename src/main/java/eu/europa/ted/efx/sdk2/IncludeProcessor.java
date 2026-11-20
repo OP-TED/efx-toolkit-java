@@ -33,7 +33,7 @@ import eu.europa.ted.efx.model.LineMap;
 public class IncludeProcessor {
 
   private static final Pattern INCLUDE_PATTERN =
-      Pattern.compile("^[ \\t]*#include[ \\t]+\"([^\"]+)\"[ \\t]*(?://[^\\r\\n]*)?[ \\t]*$",
+      Pattern.compile("^[ \\t]*#include[ \\t]+\"([^\"]+)\"[ \\t]*(?:;[ \\t]*)?(?://[^\\r\\n]*)?[ \\t]*$",
           Pattern.MULTILINE);
 
   private final IncludedFileResolver resolver;

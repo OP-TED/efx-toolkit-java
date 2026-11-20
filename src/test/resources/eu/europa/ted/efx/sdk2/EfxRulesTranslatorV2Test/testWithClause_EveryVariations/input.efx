@@ -12,28 +12,28 @@
 WITH EVERY ND-PrivacyInRepeatableNode[BT-197(BT-00)-Text-In-Repeatable-Node is present]
     ASSERT BT-198(BT-00)-Text-In-Repeatable-Node is present
     AS ERROR R-EVR-002
-    FOR BT-198(BT-00)-Text-In-Repeatable-Node IN 1
+    FOR BT-198(BT-00)-Text-In-Repeatable-Node IN 1;
 
 ---- STAGE 1b ----
 
 WITH EVERY context : $priv = ND-PrivacyInRepeatableNode
     ASSERT BT-197(BT-00)-Text-In-Repeatable-Node is present
     AS ERROR R-EVR-003
-    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1
+    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1;
 
 ---- STAGE 2a ----
 
 WITH EVERY BT-01-SubSubNode-Text
     ASSERT BT-01-SubSubNode-Text is present
     AS ERROR R-EVR-004
-    FOR BT-01-SubSubNode-Text IN 1
+    FOR BT-01-SubSubNode-Text IN 1;
 
 ---- STAGE 3b ----
 
 WITH EVERY context : $text = BT-01-SubSubNode-Text
     ASSERT BT-01-SubSubNode-Text is present
     AS ERROR R-EVR-007
-    FOR BT-01-SubSubNode-Text IN 1
+    FOR BT-01-SubSubNode-Text IN 1;
 
 ---- STAGE 4b ----
 
@@ -41,7 +41,7 @@ WITH EVERY ND-PrivacyInRepeatableNode, text : $reason = BT-197(BT-00)-Text-In-Re
     WHEN BT-198(BT-00)-Text-In-Repeatable-Node is present
     ASSERT $reason != ''
     AS ERROR R-EVR-010
-    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1
+    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1;
 
 ---- STAGE 4c ----
 
@@ -49,4 +49,4 @@ WITH ND-PrivacyInRepeatableNode, text : $reason = BT-197(BT-00)-Text-In-Repeatab
     WHEN BT-198(BT-00)-Text-In-Repeatable-Node is present
     ASSERT $reason != ''
     AS ERROR R-EVR-011
-    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1
+    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1;

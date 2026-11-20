@@ -3,6 +3,6 @@
 WITH BT-00-Text
     REPORT empty(BT-00-Text)
     AS WARNING R-K7P-M2Q
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
 #include "extra-rules.efx"

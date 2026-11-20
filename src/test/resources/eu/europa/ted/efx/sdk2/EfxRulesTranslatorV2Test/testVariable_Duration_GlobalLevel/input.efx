@@ -5,4 +5,4 @@ LET duration : $period = P1D;
 WITH BT-00-Text
 ASSERT $period < P1W
 AS ERROR R-VAR-006
-FOR BT-00-Text IN 1, 2
+FOR BT-00-Text IN 1, 2;

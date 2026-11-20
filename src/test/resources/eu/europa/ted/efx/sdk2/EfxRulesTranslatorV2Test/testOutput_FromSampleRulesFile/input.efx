@@ -26,7 +26,7 @@ WITH ND-SubNode
 WHEN BT-00-Indicator
 ASSERT BT-00-Text is present
 AS ERROR R-H9T-V5L
-FOR BT-00-Text IN *
+FOR BT-00-Text IN *;
 OTHERWISE
 ASSERT BT-00-Text is not present
 AS WARNING R-B6J-C4R

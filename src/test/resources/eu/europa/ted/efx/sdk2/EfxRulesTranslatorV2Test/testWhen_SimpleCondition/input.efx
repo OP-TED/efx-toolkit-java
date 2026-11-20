@@ -7,4 +7,4 @@ WITH ND-SubNode
     WHEN BT-00-Text is present
         ASSERT BT-00-Text == 'open'
         AS ERROR R-K7P-M2Q
-        FOR BT-00-Text IN 1, 2
+        FOR BT-00-Text IN 1, 2;

@@ -25,14 +25,14 @@ WITH BT-00-Text
     // Rule using direct alias — needs guard for $apiResult
     ASSERT $alias
     AS ERROR R-S1A-001
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
     // Rule using transitive alias — also needs guard for $apiResult
     ASSERT $alias2
     AS ERROR R-S1A-002
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
     // Static rule — no dynamic dependency, should appear in static bundle
     ASSERT BT-00-Text is present
     AS ERROR R-S1A-003
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
