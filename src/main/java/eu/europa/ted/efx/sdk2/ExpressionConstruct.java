@@ -130,7 +130,8 @@ class ExpressionConstruct implements Composable {
               boundClassOf(T, sequence))));
 
   /**
-   * A context override, {@code ::}: a field or a node read from the context its left side names.
+   * A context override, {@code ::}: a field or a node read from the element that a context variable
+   * holds.
    * The visitor gives it the path to that context and the path of the field or node from there,
    * typed as it continues from the context; the override joins them.
    */

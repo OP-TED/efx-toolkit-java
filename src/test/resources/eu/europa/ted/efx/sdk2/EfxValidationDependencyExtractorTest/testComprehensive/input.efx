@@ -23,7 +23,7 @@ WITH ND-Root
 // Rule 4: Conditional rule with context override
 WITH ND-Root
     WHEN BT-00-Code is present
-        ASSERT ND-SubNode::BT-01-SubNode-Text is present
+        ASSERT every context:$s in ND-SubNode satisfies $s::BT-01-SubNode-Text is present
         AS ERROR R-C01-004
         FOR BT-00-Text IN *
     OTHERWISE
