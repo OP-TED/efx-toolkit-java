@@ -11,7 +11,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 - **`WITH EVERY` in rules**: a rule set can apply to every element of a node or a field.
 - **Completions for editors**: the jar now includes the EFX-2 completions (functions, keywords and properties) in `eu/europa/ted/efx/autocomplete/sdk2-completions.json`, for editors written in other languages.
 - **The EFX-2 language changes of the SDK**: see the SDK changelog.
-- **Style and level of template lines**: a markup generator receives, for each template line, whether it is a heading or a normal line, and its level, through a new `composeFragmentDefinition` method. In EFX-2, a line that starts with an outline marker (a number, `?` or `#`) is a heading. The default implementation calls the existing method, so existing markup generators work unchanged.
+- **Style and level of template lines**: a markup generator receives, for each template line, whether it is a heading or a normal line, and its level. In EFX-2, a line that starts with an outline marker (a number, `?` or `#`) is a heading.
 - **EFX-1** works as before, with clearer error messages and a few corrections.
 
 ## What you need to change
@@ -24,6 +24,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 - Validate the generated Schematron with an XSLT 3.0 processor, such as Saxon 12.
 - If you wrote your own `efx:call-api`, it now receives the whole query string.
 - If you wrote your own `SymbolResolver`, implement its three new methods, and remove `getFieldIdFromAlias` and `getNodeIdFromAlias`: aliases are no longer part of EFX. If you extend `XPathSymbolResolver`, also remove `fieldByAlias` and `nodeByAlias`.
+- If you wrote your own `MarkupGenerator`, implement `composeFragmentDefinition` with the two new parameters `style` and `level`. The method without them is deprecated, and the toolkit no longer calls it.
 - If your code extends the EFX-2 translators or uses the toolkit's model or exception classes, see the javadoc: many of them changed. The public constructors of the translators did not change.
 - The dependency graph writes `codelists`, where it wrote `codeLists`.
 
