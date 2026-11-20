@@ -57,16 +57,18 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
-  void testExpression_NeitherWithNorContextBlock() {
-    assertSyntaxErrorMessage(
-        "line 1:0 Syntax error: unexpected '1' in expression; expected '{' or 'WITH'.",
-        () -> translateExpression("1"));
+  void testExpression_Efx1SingleExpression_IsSyntaxError() {
+    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected character '{'.",
+        () -> translateExpression("{ND-Root} ${1}"));
+    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected character '{'.",
+        () -> translateExpression("{ND-Root} &{BT-00-Text}"));
   }
 
   @Test
-  void testExpression_BraceAfterContextBlock_IsNotAnExpressionBlock() {
-    assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '{' in expression.",
-        () -> translateExpression("{ND-Root}{1}"));
+  void testExpression_WithoutWith() {
+    assertSyntaxErrorMessage(
+        "line 1:0 Syntax error: unexpected '1' in expression; expected 'WITH'.",
+        () -> translateExpression("1"));
   }
 
   @Test
@@ -80,9 +82,9 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testExpression_ContextBlockThatIsNotAnIdentifier() {
     assertSyntaxErrorMessage(
-        "line 1:1 Syntax error: unexpected '1' in expression;"
+        "line 1:5 Syntax error: unexpected '1' in expression;"
             + " expected a field identifier or a node identifier.",
-        () -> translateExpression("{1} ${1}"));
+        () -> translateExpression("WITH 1 COMPUTE 1"));
   }
 
   @Test
@@ -289,82 +291,74 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testTemplate_ExpressionBlockNotRead() {
     assertSyntaxErrorMessage(
-        "line 1:10 Syntax error: unexpected '${BT-00-Text|}' in template content.",
-        () -> translateTemplate("{ND-Root} ${BT-00-Text|}"));
+        "line 1:21 Syntax error: unexpected '${BT-00-Text|}' in template content.",
+        () -> translateTemplate("WITH ND-Root DISPLAY ${BT-00-Text|};"));
   }
 
   @Test
   void testTemplate_ErrorInAnExpressionBlock() {
-    assertSyntaxErrorMessage("line 1:15 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} ${1 +}"));
     assertSyntaxErrorMessage(
-        "line 1:14 Syntax error: unexpected '2' in template content; expected '|' or '}'.",
-        () -> translateTemplate("{ND-Root} ${1 2"));
+        "line 1:25 Syntax error: unexpected '2' in template content; expected '|' or '}'.",
+        () -> translateTemplate("WITH ND-Root DISPLAY ${1 2"));
     assertSyntaxErrorMessage("line 1:26 Syntax error: unexpected '}' in expression.",
         () -> translateTemplate("WITH ND-Root DISPLAY ${1 +};"));
   }
 
   @Test
   void testTemplate_ErrorInAnExpressionBlockThatStartsALabel() {
-    assertSyntaxErrorMessage("line 1:17 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} #{${1 +}}"));
-    assertSyntaxErrorMessage("line 1:17 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} #{${1 +}|name|BT-00-Text}"));
+    assertSyntaxErrorMessage("line 1:28 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY #{${1 +}};"));
+    assertSyntaxErrorMessage("line 1:28 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY #{${1 +}|name|BT-00-Text};"));
   }
 
   @Test
   void testTemplate_LabelPartWhereItIsNotAllowed() {
     assertSyntaxErrorMessage(
-        "line 1:17 Syntax error: unexpected 'field' in label block; expected a field identifier or a business term identifier.",
-        () -> translateTemplate("{ND-Root} #{name|field|BT-00}"));
-    assertSyntaxErrorMessage("line 1:22 Syntax error: unexpected 'field' in label block.",
-        () -> translateTemplate("{ND-Root} #{${'name'}|field|BT-00}"));
+        "line 1:28 Syntax error: unexpected 'field' in label block; expected a field identifier or a business term identifier.",
+        () -> translateTemplate("WITH ND-Root DISPLAY #{name|field|BT-00};"));
+    assertSyntaxErrorMessage("line 1:33 Syntax error: unexpected 'field' in label block.",
+        () -> translateTemplate("WITH ND-Root DISPLAY #{${'name'}|field|BT-00};"));
   }
 
   @Test
   void testTemplate_ErrorInALinkBlock() {
-    assertSyntaxErrorMessage("line 1:19 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} ${1}@{1 +}"));
-    assertSyntaxErrorMessage("line 1:39 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} #{field|name|BT-00-Text}@{1 +}"));
+    assertSyntaxErrorMessage("line 1:30 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY ${1}@{1 +};"));
+    assertSyntaxErrorMessage("line 1:50 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY #{field|name|BT-00-Text}@{1 +};"));
   }
 
   @Test
   void testTemplate_ErrorAfterAText() {
-    assertSyntaxErrorMessage("line 1:29 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} here is a Link@{1 +}"));
-    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected '}' in expression.",
-        () -> translateTemplate("{ND-Root} here is ${1 +}"));
-  }
-
-  @Test
-  void testTemplate_BraceAfterContextBlock_IsNotAnExpressionBlock() {
-    assertSyntaxErrorMessage("line 1:9 Syntax error: unexpected '{' in template content.",
-        () -> translateTemplate("{ND-Root}{1} a"));
+    assertSyntaxErrorMessage("line 1:40 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY here is a Link@{1 +};"));
+    assertSyntaxErrorMessage("line 1:34 Syntax error: unexpected '}' in expression.",
+        () -> translateTemplate("WITH ND-Root DISPLAY here is ${1 +};"));
   }
 
   @Test
   void testTemplate_BraceAfterDisplay_IsNotAnExpressionBlock() {
-    assertSyntaxErrorMessage("line 1:20 Syntax error: unexpected '{' in template content.",
+    assertSyntaxErrorMessage("line 1:20 Syntax error: unexpected character '{'.",
         () -> translateTemplate("WITH ND-Root DISPLAY{1} ;"));
   }
 
   @Test
-  void testTemplate_CharacterThatStartsNoToken() {
-    assertSyntaxErrorMessage("line 1:10 Syntax error: unexpected character '{'.",
-        () -> translateTemplate("{ND-Root ${1}"));
+  void testTemplate_Efx1TemplateLine_IsSyntaxError() {
+    assertSyntaxErrorMessage("line 1:0 Syntax error: unexpected character '{'.",
+        () -> translateTemplate("{ND-Root} ${1}"));
   }
 
   @Test
   void testTemplate_TextLiteralNotClosedOnItsLine() {
-    assertSyntaxErrorMessage("line 1:12 Syntax error: unexpected end of line in text literal.",
-        () -> translateTemplate("{ND-Root} ${'abc}"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected end of line in text literal.",
+        () -> translateTemplate("WITH ND-Root DISPLAY ${'abc};"));
   }
 
   @Test
   void testTemplate_EscapeSequenceNotAllowedInText() {
-    assertSyntaxErrorMessage("line 1:12 Syntax error: unexpected 'q' after '\\'.",
-        () -> translateTemplate("{ND-Root} a \\q b"));
+    assertSyntaxErrorMessage("line 1:23 Syntax error: unexpected 'q' after '\\'.",
+        () -> translateTemplate("WITH ND-Root DISPLAY a \\q b;"));
   }
 
   @Test

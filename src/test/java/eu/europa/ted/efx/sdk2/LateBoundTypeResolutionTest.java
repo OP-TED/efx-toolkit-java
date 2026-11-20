@@ -421,45 +421,45 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_FieldReference() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:12", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:21", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root", "BT-00-Repeatable-Text == 'test'"));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedFieldReference() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:13", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:22", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root", "(BT-00-Repeatable-Text) == 'test'"));
   }
 
   @Test
   void testOperandOrigin_NestedParentheses() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:14", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:23", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root", "((BT-00-Repeatable-Text)) == 'test'"));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedMultilingualField() {
-    assertSequenceError(ErrorCode.FIELD_IS_MULTILINGUAL, "1:13", "BT-00-Text-Multilingual",
+    assertSequenceError(ErrorCode.FIELD_IS_MULTILINGUAL, "1:22", "BT-00-Text-Multilingual",
         () -> translateExpressionWithContext("ND-Root", "(BT-00-Text-Multilingual) == 'test'"));
   }
 
   @Test
   void testOperandOrigin_AttributeReference() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:12", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:21", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root",
             "BT-00-Repeatable-Text/@attribute == 'test'"));
   }
 
   @Test
   void testOperandOrigin_ContextOverride() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:45", "BT-00-Text-In-Repeatable-Node",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:54", "BT-00-Text-In-Repeatable-Node",
         () -> translateExpressionWithContext("ND-Root",
             "for context:$c in ND-Root return $c::BT-00-Text-In-Repeatable-Node == 'test'"));
   }
 
   @Test
   void testOperandOrigin_ParenthesizedFunctionArgument() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:24", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:33", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root", "upper-case((BT-00-Repeatable-Text))"));
   }
 
@@ -505,7 +505,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_ListItem() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:24", "BT-00-Repeatable-Text",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:33", "BT-00-Repeatable-Text",
         () -> translateExpressionWithContext("ND-Root", "count(['a', BT-00-Repeatable-Text])"));
   }
 
@@ -519,7 +519,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_ConditionalCondition() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:15", "BT-00-Repeatable-Indicator",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:24", "BT-00-Repeatable-Indicator",
         () -> translateExpressionWithContext("ND-Root",
             "if BT-00-Repeatable-Indicator then 'a' else 'x'"));
   }
@@ -530,7 +530,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
         () -> translateExpressionWithContext("ND-Root",
             "BT-00-Text[(BT-00-Repeatable-Indicator)] is present"));
     assertEquals(ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
-    assertEquals("line 1:24 Type mismatch. Predicate cannot take 'text' and 'indicator*'. Its"
+    assertEquals("line 1:33 Type mismatch. Predicate cannot take 'text' and 'indicator*'. Its"
         + " condition must be 'indicator'. Field 'BT-00-Repeatable-Indicator' may return multiple"
         + " values from context 'BT-00-Text': use a sequence expression or change the context.",
         ex.getMessage());
@@ -538,7 +538,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_Indexer() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:26", "BT-00-Repeatable-Number",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:35", "BT-00-Repeatable-Number",
         () -> translateExpressionWithContext("ND-Root", "['a', 'b'][at BT-00-Repeatable-Number]"));
   }
 
@@ -581,8 +581,8 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_LinkTarget() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:25", "BT-00-Repeatable-Text",
-        () -> translateTemplate("{ND-Root} link ${'x'} @{(BT-00-Repeatable-Text)}"));
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:36", "BT-00-Repeatable-Text",
+        () -> translateTemplate("WITH ND-Root DISPLAY link ${'x'} @{(BT-00-Repeatable-Text)};"));
   }
 
   /**

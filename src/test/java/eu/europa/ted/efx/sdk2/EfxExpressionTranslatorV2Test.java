@@ -378,7 +378,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testLikePatternCondition_WithTextField() {
     testExpressionTranslation("fn:matches(normalize-space(PathNode/TextField/normalize-space(text())), '[0-9]*')",
-        "{ND-Root} ${BT-00-Text like '[0-9]*'}");
+        "WITH ND-Root COMPUTE BT-00-Text like '[0-9]*'");
   }
 
 
@@ -402,7 +402,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-Multilingual:preferredLanguage"));
     assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
-    assertEquals("line 1:12 Operator ':preferredLanguage' can only be used in templates,"
+    assertEquals("line 1:21 Operator ':preferredLanguage' can only be used in templates,"
         + " not in expressions or validation rules.", exception.getMessage());
   }
 
@@ -411,7 +411,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     InvalidUsageException exception = assertThrows(InvalidUsageException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text-Multilingual:preferredLanguageText"));
     assertEquals(InvalidUsageException.ErrorCode.TEMPLATE_ONLY_FUNCTION, exception.getErrorCode());
-    assertEquals("line 1:12 Operator ':preferredLanguageText' can only be used in templates,"
+    assertEquals("line 1:21 Operator ':preferredLanguageText' can only be used in templates,"
         + " not in expressions or validation rules.", exception.getMessage());
   }
 
@@ -1138,7 +1138,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testConditionalExpression_MultilingualFieldInBranch_IsATextSequence() {
     assertTypeError(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS,
-        "line 1:12 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
+        "line 1:21 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
             + " Its left operand must be 'text'.",
         "(if TRUE then BT-00-Text-Multilingual else 'a') == 'b'");
   }
@@ -2078,7 +2078,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testContextOverride_AfterAVariableThatHoldsNoContext_Throws() {
     InvalidIdentifierException ex = assertThrows(InvalidIdentifierException.class,
         () -> translateExpressionWithContext("ND-Root", "for text:$t in ['a'] return $t::BT-00-Text"));
-    assertEquals("line 1:40 Variable '$t' is not a context variable.", ex.getMessage());
+    assertEquals("line 1:49 Variable '$t' is not a context variable.", ex.getMessage());
   }
 
   @Test
@@ -2096,7 +2096,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testContextOverride_AfterAField_SuggestsAContextVariableOrAPredicate() {
     final ParseCancellationException error = assertThrows(ParseCancellationException.class,
         () -> translateExpressionWithContext("ND-Root", "BT-00-Text::BT-00-Number"));
-    assertEquals("line 1:22 Syntax error: unexpected '::' in expression block; expected '}'."
+    assertEquals("line 1:31 Syntax error: unexpected '::' in expression; expected end of input or ';'."
         + " Only a context variable can stand before '::', as in"
         + " 'for context:$c in ND-1 return $c::BT-1'. To keep the BT-2 next to a BT-1,"
         + " write 'BT-2[BT-1 is present]'.", error.getMessage());
@@ -2974,21 +2974,21 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUpperCaseFunction() {
     testExpressionTranslation(
         "upper-case(PathNode/TextField/normalize-space(text()))", 
-        "{ND-Root} ${upper-case(BT-00-Text)}");
+        "WITH ND-Root COMPUTE upper-case(BT-00-Text)");
   }
 
   @Test
   void testLowerCaseFunction() {
     testExpressionTranslation(
         "lower-case(PathNode/TextField/normalize-space(text()))",
-        "{ND-Root} ${lower-case(BT-00-Text)}");
+        "WITH ND-Root COMPUTE lower-case(BT-00-Text)");
   }
 
   @Test
   void testNormalizeSpaceFunction() {
     testExpressionTranslation(
         "normalize-space(PathNode/TextField/normalize-space(text()))",
-        "{ND-Root} ${normalize-space(BT-00-Text)}");
+        "WITH ND-Root COMPUTE normalize-space(BT-00-Text)");
   }
 
   @Test
@@ -3001,7 +3001,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTrimFunction() {
     testExpressionTranslation(
         "replace(replace(PathNode/TextField/normalize-space(text()), '^\\s+', ''), '\\s+$', '')",
-        "{ND-Root} ${trim(BT-00-Text)}");
+        "WITH ND-Root COMPUTE trim(BT-00-Text)");
   }
 
   @Test
@@ -3014,7 +3014,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTrimLeftFunction() {
     testExpressionTranslation(
         "replace(PathNode/TextField/normalize-space(text()), '^\\s+', '')",
-        "{ND-Root} ${trim-left(BT-00-Text)}");
+        "WITH ND-Root COMPUTE trim-left(BT-00-Text)");
   }
 
   @Test
@@ -3027,7 +3027,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testTrimRightFunction() {
     testExpressionTranslation(
         "replace(PathNode/TextField/normalize-space(text()), '\\s+$', '')",
-        "{ND-Root} ${trim-right(BT-00-Text)}");
+        "WITH ND-Root COMPUTE trim-right(BT-00-Text)");
   }
 
   @Test
@@ -3054,7 +3054,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testPadLeftFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in PathNode/TextField/normalize-space(text()) return concat(substring(string-join(for $__i in 1 to 10 return ' ', ''), 1, 10 - string-length($__s)), $__s))",
-        "{ND-Root} ${pad-left(BT-00-Text, 10, ' ')}");
+        "WITH ND-Root COMPUTE pad-left(BT-00-Text, 10, ' ')");
   }
 
   @Test
@@ -3068,7 +3068,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testPadRightFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in PathNode/TextField/normalize-space(text()) return concat($__s, substring(string-join(for $__i in 1 to 10 return ' ', ''), 1, 10 - string-length($__s))))",
-        "{ND-Root} ${pad-right(BT-00-Text, 10, ' ')}");
+        "WITH ND-Root COMPUTE pad-right(BT-00-Text, 10, ' ')");
   }
 
   @Test
@@ -3082,7 +3082,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testRepeatFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in PathNode/TextField/normalize-space(text()) return string-join(for $__i in 1 to 4 return $__s, ''))",
-        "{ND-Root} ${repeat(BT-00-Text, 4)}");
+        "WITH ND-Root COMPUTE repeat(BT-00-Text, 4)");
   }
 
   @Test
@@ -3096,7 +3096,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testReplaceFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in '-', $__t in PathNode/TextField/normalize-space(text()) return if ($__s = '') then $__t else replace($__t, replace($__s, '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'), replace(replace('_', '\\\\', '\\\\\\\\'), '\\$', '\\\\\\$')))",
-        "{ND-Root} ${replace(BT-00-Text, '-', '_')}");
+        "WITH ND-Root COMPUTE replace(BT-00-Text, '-', '_')");
   }
 
   @Test
@@ -3145,7 +3145,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testReplaceRegexFunction_WithFieldReference() {
     testExpressionTranslation(
         "replace(PathNode/TextField/normalize-space(text()), '[ \\t]+', ' ')",
-        "{ND-Root} ${replace-regex(BT-00-Text, '[ \\t]+', ' ')}");
+        "WITH ND-Root COMPUTE replace-regex(BT-00-Text, '[ \\t]+', ' ')");
   }
 
   @Test
@@ -3160,7 +3160,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     // Pattern is a field reference (non-literal) — static regex validation is skipped
     testExpressionTranslation(
         "replace('hello', PathNode/TextField/normalize-space(text()), 'x')",
-        "{ND-Root} ${replace-regex('hello', BT-00-Text, 'x')}");
+        "WITH ND-Root COMPUTE replace-regex('hello', BT-00-Text, 'x')");
   }
 
   @Test
@@ -3174,13 +3174,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUrlEncodeFunction_WithFieldReference() {
     testExpressionTranslation(
         "encode-for-uri(PathNode/TextField/normalize-space(text()))",
-        "{ND-Root} ${url-encode(BT-00-Text)}");
+        "WITH ND-Root COMPUTE url-encode(BT-00-Text)");
   }
 
   @Test
   void testUrlEncodeFunction_WithRepeatableField_Throws() {
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
-        () -> translateExpression("{ND-Root} ${url-encode(ND-Root)}"));
+        () -> translateExpression("WITH ND-Root COMPUTE url-encode(ND-Root)"));
     assertEquals(TypeMismatchException.ErrorCode.CANNOT_CONVERT, exception.getErrorCode());
   }
 
@@ -3195,13 +3195,13 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testCapitalizeFirstFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in PathNode/TextField/normalize-space(text()) return concat(upper-case(substring($__s, 1, 1)), substring($__s, 2)))",
-        "{ND-Root} ${capitalize-first(BT-00-Text)}");
+        "WITH ND-Root COMPUTE capitalize-first(BT-00-Text)");
   }
 
   @Test
   void testCapitalizeFirstFunction_WithRepeatableField_Throws() {
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
-        () -> translateExpression("{ND-Root} ${capitalize-first(ND-Root)}"));
+        () -> translateExpression("WITH ND-Root COMPUTE capitalize-first(ND-Root)"));
     assertEquals(TypeMismatchException.ErrorCode.CANNOT_CONVERT, exception.getErrorCode());
   }
 
@@ -3216,7 +3216,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testSplitFunction_WithFieldReference() {
     testExpressionTranslation(
         "tokenize(PathNode/TextField/normalize-space(text()), replace(';', '([.\\\\?*+{}\\[\\]()^$|])', '\\\\$1'))",
-        "{ND-Root} ${split(BT-00-Text, ';')}");
+        "WITH ND-Root COMPUTE split(BT-00-Text, ';')");
   }
 
   @Test
@@ -3236,7 +3236,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testSubstringBeforeFunction_WithFieldReference() {
     testExpressionTranslation(
         "substring-before(PathNode/TextField/normalize-space(text()), '-')",
-        "{ND-Root} ${substring-before(BT-00-Text, '-')}");
+        "WITH ND-Root COMPUTE substring-before(BT-00-Text, '-')");
   }
 
   @Test
@@ -3249,7 +3249,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testSubstringAfterFunction_WithFieldReference() {
     testExpressionTranslation(
         "substring-after(PathNode/TextField/normalize-space(text()), '-')",
-        "{ND-Root} ${substring-after(BT-00-Text, '-')}");
+        "WITH ND-Root COMPUTE substring-after(BT-00-Text, '-')");
   }
 
   @Test
@@ -3263,7 +3263,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testIndexOfSubstringFunction_WithFieldReference() {
     testExpressionTranslation(
         "(for $__s in PathNode/TextField/normalize-space(text()), $__sub in '-' return if (contains($__s, $__sub)) then string-length(substring-before($__s, $__sub)) + 1 else 0)",
-        "{ND-Root} ${index-of-substring(BT-00-Text, '-')}");
+        "WITH ND-Root COMPUTE index-of-substring(BT-00-Text, '-')");
   }
 
   @Test
@@ -4819,16 +4819,16 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testParameterizedExpression_WithStringParameter() {
-    testExpressionTranslation("'hello' = 'world'", "{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}",
+    testExpressionTranslation("'hello' = 'world'", "WITH ND-Root, text:$p1, text:$p2 COMPUTE $p1 == $p2",
         "'hello'", "'world'");
   }
 
   @Test
   void testParameterizedExpression_MissingArgument_Throws() {
     InvalidArgumentException exception = assertThrows(InvalidArgumentException.class,
-        () -> translateExpression("{ND-Root, text:$p} ${$p}"));
+        () -> translateExpression("WITH ND-Root, text:$p COMPUTE $p"));
     assertEquals(InvalidArgumentException.ErrorCode.MISSING_ARGUMENT, exception.getErrorCode());
-    assertEquals("line 1:10 No argument passed for Parameter '$p'.", exception.getMessage());
+    assertEquals("line 1:14 No argument passed for Parameter '$p'.", exception.getMessage());
   }
 
   @Test
@@ -4842,73 +4842,73 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testParameterizedExpression_WithUnquotedStringParameter() {
     assertSyntaxError(
-        () -> translateExpression("{ND-Root, text:$p1, text:$p2} ${$p1 == $p2}", "hello", "world"));
+        () -> translateExpression("WITH ND-Root, text:$p1, text:$p2 COMPUTE $p1 == $p2", "hello", "world"));
   }
 
   @Test
   void testParameterizedExpression_WithNumberParameter() {
-    testExpressionTranslation("1 = 2", "{ND-Root, number:$p1, number:$p2} ${$p1 == $p2}", "1", "2");
+    testExpressionTranslation("1 = 2", "WITH ND-Root, number:$p1, number:$p2 COMPUTE $p1 == $p2", "1", "2");
   }
 
   @Test
   void testParameterizedExpression_WithDateParameter() {
     testExpressionTranslation("xs:date('2018-01-01Z') = xs:date('2020-01-01Z')",
-        "{ND-Root, date:$p1, date:$p2} ${$p1 == $p2}", "2018-01-01Z", "2020-01-01Z");
+        "WITH ND-Root, date:$p1, date:$p2 COMPUTE $p1 == $p2", "2018-01-01Z", "2020-01-01Z");
   }
 
   @Test
   void testParameterizedExpression_WithTimeParameter() {
     testExpressionTranslation("xs:time('12:00:00Z') = xs:time('13:00:00Z')",
-        "{ND-Root, time:$p1, time:$p2} ${$p1 == $p2}", "12:00:00Z", "13:00:00Z");
+        "WITH ND-Root, time:$p1, time:$p2 COMPUTE $p1 == $p2", "12:00:00Z", "13:00:00Z");
   }
 
   @Test
   void testParameterizedExpression_WithBooleanParameter() {
     testExpressionTranslation("true() = false()",
-        "{ND-Root, indicator:$p1, indicator:$p2} ${$p1 == $p2}", "ALWAYS", "FALSE");
+        "WITH ND-Root, indicator:$p1, indicator:$p2 COMPUTE $p1 == $p2", "ALWAYS", "FALSE");
   }
 
   @Test
   void testParameterizedExpression_WithDurationParameter() {
     testExpressionTranslation(
         "boolean(for $__T in (current-date()) return ($__T + xs:yearMonthDuration('P1Y') = $__T + xs:yearMonthDuration('P2Y')))",
-        "{ND-Root, duration:$p1, duration:$p2} ${$p1 == $p2}", "P1Y", "P2Y");
+        "WITH ND-Root, duration:$p1, duration:$p2 COMPUTE $p1 == $p2", "P1Y", "P2Y");
   }
 
   @Test
   void testParameterizedExpression_WithTextSequenceParameter() {
     testExpressionTranslation("count(('a','b','c'))",
-        "{ND-Root, text*:$items} ${count($items)}", "['a', 'b', 'c']");
+        "WITH ND-Root, text*:$items COMPUTE count($items)", "['a', 'b', 'c']");
   }
 
   @Test
   void testParameterizedExpression_WithNumericSequenceParameter() {
     testExpressionTranslation("count((1,2,3))",
-        "{ND-Root, number*:$items} ${count($items)}", "[1, 2, 3]");
+        "WITH ND-Root, number*:$items COMPUTE count($items)", "[1, 2, 3]");
   }
 
   @Test
   void testParameterizedExpression_WithBooleanSequenceParameter() {
     testExpressionTranslation("count((true(),false(),true()))",
-        "{ND-Root, indicator*:$items} ${count($items)}", "[TRUE, FALSE, ALWAYS]");
+        "WITH ND-Root, indicator*:$items COMPUTE count($items)", "[TRUE, FALSE, ALWAYS]");
   }
 
   @Test
   void testParameterizedExpression_WithDateSequenceParameter() {
     testExpressionTranslation("count((xs:date('2024-01-01Z'),xs:date('2024-12-31Z')))",
-        "{ND-Root, date*:$items} ${count($items)}", "[2024-01-01Z, 2024-12-31Z]");
+        "WITH ND-Root, date*:$items COMPUTE count($items)", "[2024-01-01Z, 2024-12-31Z]");
   }
 
   @Test
   void testParameterizedExpression_WithTimeSequenceParameter() {
     testExpressionTranslation("count((xs:time('10:00:00Z'),xs:time('18:00:00Z')))",
-        "{ND-Root, time*:$items} ${count($items)}", "[10:00:00Z, 18:00:00Z]");
+        "WITH ND-Root, time*:$items COMPUTE count($items)", "[10:00:00Z, 18:00:00Z]");
   }
 
   @Test
   void testParameterizedExpression_WithDurationSequenceParameter() {
     testExpressionTranslation("count((xs:yearMonthDuration('P1Y'),xs:yearMonthDuration('P2M')))",
-        "{ND-Root, duration*:$items} ${count($items)}", "[P1Y, P2M]");
+        "WITH ND-Root, duration*:$items COMPUTE count($items)", "[P1Y, P2M]");
   }
 
   // #endregion: Compare sequences
@@ -5179,7 +5179,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
             "for number:$__index in [1, 2] return $__index"));
     assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_IS_RESERVED,
         exception.getErrorCode());
-    assertEquals("line 1:16 Variable '$__index' is reserved: the translator generates the names"
+    assertEquals("line 1:25 Variable '$__index' is reserved: the translator generates the names"
         + " that start with '__'.", exception.getMessage());
   }
 
@@ -5190,7 +5190,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
             "for text:$x in BT-00-Text, text:$x in BT-00-Text return $x"));
     assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_ALREADY_DECLARED,
         exception.getErrorCode());
-    assertEquals("line 1:39 Variable '$x' is already declared in this scope.",
+    assertEquals("line 1:48 Variable '$x' is already declared in this scope.",
         exception.getMessage());
   }
 
@@ -5198,21 +5198,21 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUndeclaredVariable_NamesItAsWritten() {
     final InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
         () -> translateExpressionWithContext("ND-Root", "$undeclared + 1"));
-    assertEquals("line 1:12 Variable '$undeclared' is not declared.", exception.getMessage());
+    assertEquals("line 1:21 Variable '$undeclared' is not declared.", exception.getMessage());
   }
 
   @Test
   void testUndeclaredFunction_NamesItAsWritten() {
     final InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
         () -> translateExpressionWithContext("ND-Root", "?undeclared(1)"));
-    assertEquals("line 1:12 Function '?undeclared' is not declared.", exception.getMessage());
+    assertEquals("line 1:21 Function '?undeclared' is not declared.", exception.getMessage());
   }
 
   @Test
   void testNotAContextVariable_NamesItAsWritten() {
     final InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
         () -> translateExpressionWithContext("ND-Root", "$y::BT-00-Number"));
-    assertEquals("line 1:12 Variable '$y' is not a context variable.", exception.getMessage());
+    assertEquals("line 1:21 Variable '$y' is not a context variable.", exception.getMessage());
   }
 
   // #endregion: Indexers
@@ -5468,7 +5468,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ComparisonOperator() {
     assertTypeError(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS,
-        "line 1:12 Type mismatch. Operator '==' cannot take 'text' and 'number'."
+        "line 1:21 Type mismatch. Operator '==' cannot take 'text' and 'number'."
             + " Its right operand must be 'text'.",
         "'a' == 1");
   }
@@ -5476,7 +5476,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ArithmeticOperator_GivesEveryTypeThePositionTakes() {
     assertTypeError(TypeMismatchException.ErrorCode.INCOMPATIBLE_OPERANDS,
-        "line 1:12 Type mismatch. Operator '+' cannot take 'text' and 'number'."
+        "line 1:21 Type mismatch. Operator '+' cannot take 'text' and 'number'."
             + " Its left operand must be 'number', 'duration' or 'date'.",
         "'a' + 1");
   }
@@ -5484,7 +5484,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Function() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Function 'number' cannot take 'date'."
+        "line 1:21 Type mismatch. Function 'number' cannot take 'date'."
             + " Its argument must be 'text' or 'indicator'.",
         "number(2020-01-01Z)");
   }
@@ -5492,7 +5492,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Function_Sequence() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Function 'upper-case' cannot take 'text*'."
+        "line 1:21 Type mismatch. Function 'upper-case' cannot take 'text*'."
             + " Its argument must be 'text'.",
         "upper-case(['a'])");
   }
@@ -5500,7 +5500,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Function_NamedAsWritten() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Function 'string' cannot take 'text'."
+        "line 1:21 Type mismatch. Function 'string' cannot take 'text'."
             + " Its argument must be 'number', 'indicator', 'date', 'time' or 'duration'.",
         "string('a')");
   }
@@ -5508,7 +5508,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ConditionOperator() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Operator 'is present' cannot take 'text'."
+        "line 1:21 Type mismatch. Operator 'is present' cannot take 'text'."
             + " Its operand must be a field or node reference.",
         "'a' is present");
   }
@@ -5516,7 +5516,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Conditional() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:15 Type mismatch. Conditional 'if' cannot take 'text', 'number' and 'number'."
+        "line 1:24 Type mismatch. Conditional 'if' cannot take 'text', 'number' and 'number'."
             + " Its condition must be 'indicator'.",
         "if 'a' then 1 else 2");
   }
@@ -5524,7 +5524,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ConditionalBranches() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:34 Type mismatch. Conditional 'if' cannot take 'indicator', 'number*' and 'text*'."
+        "line 1:43 Type mismatch. Conditional 'if' cannot take 'indicator', 'number*' and 'text*'."
             + " Its else branch must be 'number' or 'number*'.",
         "if TRUE then [1] else ['a']");
   }
@@ -5532,7 +5532,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ListWithASequenceFirst_IsReportedAtTheItem() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:13 Type mismatch. List cannot take 'number*' and 'number'."
+        "line 1:22 Type mismatch. List cannot take 'number*' and 'number'."
             + " Its 1st item must be 'number'.",
         "[[1, 2], 1]");
   }
@@ -5540,7 +5540,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_ListWithANodeFirst_IsReportedAtTheList() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. List cannot take 'node' and 'number'."
+        "line 1:21 Type mismatch. List cannot take 'node' and 'number'."
             + " Its 1st item must be a value.",
         "[ND-SubNode, 1]");
   }
@@ -5548,7 +5548,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_List() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:16 Type mismatch. List cannot take 'number' and 'text'."
+        "line 1:25 Type mismatch. List cannot take 'number' and 'text'."
             + " Its 2nd item must be 'number'.",
         "[1, 'a']");
   }
@@ -5556,7 +5556,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Iterator() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:29 Type mismatch. Iterator 'number:$n' cannot take 'text*'."
+        "line 1:38 Type mismatch. Iterator 'number:$n' cannot take 'text*'."
             + " Its sequence must be 'number*'.",
         "for number:$n in ['a'] return $n");
   }
@@ -5564,7 +5564,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Predicate() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:34 Type mismatch. Predicate cannot take 'text*' and 'text'."
+        "line 1:43 Type mismatch. Predicate cannot take 'text*' and 'text'."
             + " Its condition must be 'indicator'.",
         "BT-00-Repeatable-Text[BT-00-Text]");
   }
@@ -5572,7 +5572,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_PredicateWithNumber_SuggestsTheIndex() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:34 Type mismatch. Predicate cannot take 'text*' and 'number'."
+        "line 1:43 Type mismatch. Predicate cannot take 'text*' and 'number'."
             + " Its condition must be 'indicator'. To select by position, write [at n].",
         "BT-00-Repeatable-Text[1]");
   }
@@ -5580,7 +5580,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_PredicateOnValue() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Predicate cannot take 'text*' and 'text'."
+        "line 1:21 Type mismatch. Predicate cannot take 'text*' and 'text'."
             + " Its sequence must be a field or node reference.",
         "['a', 'b']['x']");
   }
@@ -5588,7 +5588,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_PredicateOnValueWithNumber_SuggestsTheIndex() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Predicate cannot take 'text*' and 'number'."
+        "line 1:21 Type mismatch. Predicate cannot take 'text*' and 'number'."
             + " Its sequence must be a field or node reference. To select by position, write"
             + " [at n].",
         "['a', 'b'][1]");
@@ -5597,7 +5597,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Index() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:37 Type mismatch. Index cannot take 'text*' and 'text'."
+        "line 1:46 Type mismatch. Index cannot take 'text*' and 'text'."
             + " Its position must be 'number'.",
         "BT-00-Repeatable-Text[at 'x']");
   }
@@ -5605,7 +5605,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_IndexAfterASingleValuedField_NamesItsType() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:26 Type mismatch. Index cannot take 'text' and 'indicator'."
+        "line 1:35 Type mismatch. Index cannot take 'text' and 'indicator'."
             + " Its position must be 'number'.",
         "BT-00-Text[at TRUE]");
   }
@@ -5613,7 +5613,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_IndexAfterANode_NamesItsType() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:26 Type mismatch. Index cannot take 'node' and 'indicator'."
+        "line 1:35 Type mismatch. Index cannot take 'node' and 'indicator'."
             + " Its position must be 'number'.",
         "ND-SubNode[at TRUE] is present");
   }
@@ -5621,7 +5621,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_IndexReadingARepeatableField() {
     assertTypeError(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT,
-        "line 1:33 Type mismatch. Index cannot take 'node*' and 'number*'."
+        "line 1:42 Type mismatch. Index cannot take 'node*' and 'number*'."
             + " Its position must be 'number'. Field 'BT-00-Number-In-Repeatable-Node' may return"
             + " multiple values from context 'ND-Root': use a sequence expression or change the"
             + " context.",
@@ -5631,7 +5631,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_Parentheses() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Parenthesised expression cannot take 'node'."
+        "line 1:21 Type mismatch. Parenthesised expression cannot take 'node'."
             + " Its content must be a value or a sequence of values.",
         "(ND-SubNode)");
   }
@@ -5639,7 +5639,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_StepOfAField() {
     assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Operator ':rawValue' cannot take 'text'."
+        "line 1:21 Type mismatch. Operator ':rawValue' cannot take 'text'."
             + " Its operand must be a field reference.",
         "'a':rawValue");
   }
@@ -5647,7 +5647,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_FieldMayRepeat() {
     assertTypeError(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT,
-        "line 1:12 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
+        "line 1:21 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
             + " Its left operand must be 'text'. Field 'BT-00-Repeatable-Text' may return"
             + " multiple values from context 'ND-Root': use a sequence expression or change the"
             + " context.",
@@ -5657,7 +5657,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_FieldMayRepeat_AbsoluteReference_NamesTheRoot() {
     assertTypeError(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT,
-        "line 1:12 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
+        "line 1:21 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
             + " Its left operand must be 'text'. Field 'BT-00-Repeatable-Text' may return"
             + " multiple values from the root: use a sequence expression or change the context.",
         "/BT-00-Repeatable-Text == 'x'");
@@ -5666,7 +5666,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_FieldIsMultilingual() {
     assertTypeError(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL,
-        "line 1:12 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
+        "line 1:21 Type mismatch. Operator '==' cannot take 'text*' and 'text'."
             + " Its left operand must be 'text'. Field 'BT-00-Text-Multilingual' is multilingual"
             + " and has one value per language: use :preferredLanguageText to select the"
             + " preferred language, or an index [at n] to select a specific value.",
@@ -5676,7 +5676,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTypeErrorMessage_NodeContextVariable() {
     assertTypeError(TypeMismatchException.ErrorCode.NODE_CONTEXT_AS_VALUE,
-        "line 1:48 Type mismatch. Operator '==' cannot take 'node' and 'text'."
+        "line 1:57 Type mismatch. Operator '==' cannot take 'node' and 'text'."
             + " Its left operand must be a value. Variable '$n' refers to node"
             + " 'ND-SubNode', which has no value: only field context variables can be used as"
             + " values.",
@@ -6714,15 +6714,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         translateExpression("WITH ND-Root SELECT BT-00-Integer") + "/number()");
     assertEquals(translateExpression("WITH ND-SubNode COMPUTE BT-00-Text"),
         translateExpression("WITH ND-SubNode SELECT BT-00-Text") + "/normalize-space(text())");
-  }
-
-  /** Both spellings of the selector must produce the same result. */
-  @Test
-  void testSelector_BothSpellingsAgree() {
-    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text"),
-        translateExpression("{ND-Root} &{/BT-00-Text}"));
-    assertEquals(translateExpression("WITH ND-Root SELECT /BT-00-Text[BT-00-Code == 'x']"),
-        translateExpression("{ND-Root} &{/BT-00-Text[BT-00-Code == 'x']}"));
   }
 
   @Test
