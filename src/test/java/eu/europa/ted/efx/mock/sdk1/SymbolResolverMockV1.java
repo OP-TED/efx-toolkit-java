@@ -46,10 +46,8 @@ public class SymbolResolverMockV1 extends SdkSymbolResolver {
   private void loadTestData() throws InstantiationException {
     // Load nodes and fields using SDK repositories
     this.nodeById = new SdkNodeRepository(SDK_VERSION, JSON_PATH);
-    this.nodeByAlias = new HashMap<>();  // SDK1 doesn't support aliases
 
     this.fieldById = new SdkFieldRepository(SDK_VERSION, JSON_PATH, this.nodeById);
-    this.fieldByAlias = new HashMap<>();  // SDK1 doesn't support aliases
 
     // Mock codelists
     this.codelistById = createMockCodelists();
@@ -69,16 +67,6 @@ public class SymbolResolverMockV1 extends SdkSymbolResolver {
         buildCodelistMock("accessibility", Optional.empty()),
         buildCodelistMock("authority-activity", Optional.of("main-activity")),
         buildCodelistMock("main-activity", Optional.empty())));
-  }
-
-  @Override
-  public String getFieldIdFromAlias(String alias) {
-    throw new UnsupportedOperationException("Alias resolution is not supported in SDK-1.");
-  }
-
-  @Override
-  public String getNodeIdFromAlias(String alias) {
-    throw new UnsupportedOperationException("Alias resolution is not supported in SDK-1.");
   }
 
   @Override

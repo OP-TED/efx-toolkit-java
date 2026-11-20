@@ -418,7 +418,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testFieldValueComparison_UsingTextFields_ThrowsBecauseMultilingual() {
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("Root", "textField == textMultilingualField"));
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text == BT-00-Text-Multilingual"));
     assertEquals(TypeMismatchException.ErrorCode.FIELD_IS_MULTILINGUAL, exception.getErrorCode());
   }
 
@@ -426,7 +426,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFieldValueComparison_UsingNumericFields() {
     testExpressionTranslationWithContext(
         "PathNode/NumberField/number() <= PathNode/IntegerField/number()", "ND-Root",
-        "BT-00-Number <= integerField");
+        "BT-00-Number <= BT-00-Integer");
   }
 
   @Test
@@ -466,7 +466,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFieldValueComparison_WithNumericLiteral() {
     testExpressionTranslationWithContext(
         "PathNode/IntegerField/number() - PathNode/NumberField/number() > 0", "ND-Root",
-        "integerField - BT-00-Number > 0");
+        "BT-00-Integer - BT-00-Number > 0");
   }
 
   @Test
@@ -1977,14 +1977,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testMultilingualTextFieldReference_FromOwnContextByAlias_InScalarContext() {
-    testExpressionTranslationWithContext(
-        "string-length(./normalize-space(text())) <= 400",
-        "BT-00-Text-Multilingual",
-        "string-length(textMultilingualField) <= 400");
-  }
-
-  @Test
   void testMultilingualTextFieldReference_AbsoluteFromOwnContext_InScalarContext_Throws() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateExpressionWithContext("BT-00-Text-Multilingual",
@@ -2046,7 +2038,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testFieldReferenceWithVariableContextOverride_FromAPredicatedNode() {
     testExpressionTranslationWithContext(
         "for $c in .[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()] return $c/PathNode/IntegerField/number()",
-        "ND-Root", "for context:$c in ND-Root[BT-00-Indicator == TRUE] return $c::integerField");
+        "ND-Root", "for context:$c in ND-Root[BT-00-Indicator == TRUE] return $c::BT-00-Integer");
   }
 
   @Test
@@ -2136,6 +2128,16 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testAlias_IsASyntaxError() {
+    for (final String expression : List.of("WITH ND-Root COMPUTE textField == 'a'",
+        "WITH textField COMPUTE 1", "WITH Root COMPUTE 1", "{ND-Root} ${textField}",
+        "WITH ND-Root COMPUTE textField:publicationDate is present",
+        "WITH ND-Root COMPUTE textField:isWithheld")) {
+      assertSyntaxError(() -> translateExpression(expression));
+    }
+  }
+
+  @Test
   void testFieldNextToAnotherField_IsWrittenWithAPredicate() {
     testExpressionTranslationWithContext("PathNode/NumberField[exists(../TextField)]/number()",
         "ND-Root", "BT-00-Number[BT-00-Text is present]");
@@ -2145,8 +2147,8 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUnknownFieldAfterContextOverride_OnTheNextLine_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
         () -> translateExpression(
-            "WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\nBT-NONEXISTENT == 'a'"));
-    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+            "WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\nBT-99-Nonexistent == 'a'"));
+    assertEquals("line 2:0 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   @Test
@@ -2161,8 +2163,8 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUnknownLinkedFieldAfterContextOverride_OnTheNextLine_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
         () -> translateExpression("WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\n"
-            + "BT-NONEXISTENT:publicationDate is present"));
-    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+            + "BT-99-Nonexistent:publicationDate is present"));
+    assertEquals("line 2:0 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   // #endregion: References
@@ -5336,8 +5338,8 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testUnknownField_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateComputeExpressionWithContext("ND-Root", "BT-NONEXISTENT == 'a'"));
-    assertEquals("line 1:21 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+        () -> translateComputeExpressionWithContext("ND-Root", "BT-99-Nonexistent == 'a'"));
+    assertEquals("line 1:21 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   @Test
@@ -5366,22 +5368,15 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testUnknownFieldAsContext_IsPlacedAtTheExpression() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression("WITH BT-NONEXISTENT COMPUTE 1"));
-    assertEquals("line 1:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
-  }
-
-  @Test
-  void testUnknownAliasAsContext_IsPlacedAtTheExpression() {
-    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression("WITH nonexistent COMPUTE 1"));
-    assertEquals("line 1:0 Unknown symbol 'nonexistent'.", ex.getMessage());
+        () -> translateExpression("WITH BT-99-Nonexistent COMPUTE 1"));
+    assertEquals("line 1:0 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   @Test
   void testUnknownAbsoluteField_OnTheNextLine_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression("WITH ND-Root COMPUTE /\nBT-NONEXISTENT is present"));
-    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+        () -> translateExpression("WITH ND-Root COMPUTE /\nBT-99-Nonexistent is present"));
+    assertEquals("line 2:0 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   @Test

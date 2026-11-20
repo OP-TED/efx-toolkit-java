@@ -51,8 +51,6 @@ class XPathSymbolResolverTest extends SymbolResolverContractTest {
     private final Map<String, SdkField> fields = new LinkedHashMap<>();
     private final Map<String, SdkNode> nodes = new LinkedHashMap<>();
     private final Map<String, SdkCodelist> codelists = new LinkedHashMap<>();
-    private final Map<String, SdkField> fieldAliases = new LinkedHashMap<>();
-    private final Map<String, SdkNode> nodeAliases = new LinkedHashMap<>();
     private final List<SdkNoticeSubtype> noticeSubtypes = new ArrayList<>();
     private final SdkDataTypeRepository dataTypes = new SdkDataTypeRepository();
 
@@ -71,34 +69,16 @@ class XPathSymbolResolverTest extends SymbolResolverContractTest {
           new SdkCodelistV2(id, "0.0.1", List.of(codes), Optional.ofNullable(parentId)));
     }
 
-    void addFieldAlias(String alias, String fieldId) {
-      this.fieldAliases.put(alias, this.fields.get(fieldId));
-    }
-
-    void addNodeAlias(String alias, String nodeId) {
-      this.nodeAliases.put(alias, this.nodes.get(nodeId));
-    }
-
     void loadFixture() throws IOException {
       final JsonNode json = new ObjectMapper().readTree(FIXTURE_JSON.toFile());
 
       StreamSupport.stream(json.get("xmlStructure").spliterator(), false)
           .map(SdkNodeV2::new)
-          .forEach(node -> {
-            this.nodes.put(node.getId(), node);
-            if (node.getAlias() != null) {
-              this.nodeAliases.putIfAbsent(node.getAlias(), node);
-            }
-          });
+          .forEach(node -> this.nodes.put(node.getId(), node));
 
       StreamSupport.stream(json.get("fields").spliterator(), false)
           .map(SdkFieldV2::new)
-          .forEach(field -> {
-            this.fields.put(field.getId(), field);
-            if (field.getAlias() != null) {
-              this.fieldAliases.putIfAbsent(field.getAlias(), field);
-            }
-          });
+          .forEach(field -> this.fields.put(field.getId(), field));
 
       // Link each field to its attribute fields, as the SDK field repository does.
       for (SdkField field : this.fields.values()) {
@@ -128,17 +108,6 @@ class XPathSymbolResolverTest extends SymbolResolverContractTest {
     @Override
     protected SdkDataType dataTypeById(String dataTypeId) {
       return this.dataTypes.get(dataTypeId);
-    }
-
-    @Override
-    protected SdkField fieldByAlias(String alias) {
-      // The contract is to return null for an unknown alias, not to throw.
-      return this.fieldAliases.get(alias);
-    }
-
-    @Override
-    protected SdkNode nodeByAlias(String alias) {
-      return this.nodeAliases.get(alias);
     }
 
     @Override

@@ -16,7 +16,6 @@ package eu.europa.ted.eforms.sdk;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkDataType;
@@ -97,22 +96,6 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   protected abstract SdkDataType dataTypeById(final String dataTypeId);
 
   /**
-   * Looks up a field by its alias.
-   *
-   * @param alias The alias to look for.
-   * @return The field, or null if the alias is not a known field alias.
-   */
-  protected abstract SdkField fieldByAlias(final String alias);
-
-  /**
-   * Looks up a node by its alias.
-   *
-   * @param alias The alias to look for.
-   * @return The node, or null if the alias is not a known node alias.
-   */
-  protected abstract SdkNode nodeByAlias(final String alias);
-
-  /**
    * All nodes known to this resolver, in any order.
    *
    * @return The complete node collection.
@@ -178,33 +161,29 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   // #region Identifier resolution -------------------------------------------
 
   /**
-   * Resolves a field identifier, falling back to an alias lookup.
+   * Resolves a field identifier.
    * <p>
-   * First calls {@link #fieldById(String)} and falls back to {@link #fieldByAlias(String)}.
-   * Override this method (together with {@link #resolveNode(String)}) to customize
-   * symbol resolution.
+   * Calls {@link #fieldById(String)}. Override this method (together with
+   * {@link #resolveNode(String)}) to customize symbol resolution.
    *
-   * @param fieldId The identifier or alias of the field to look for.
+   * @param fieldId The identifier of the field to look for.
    * @return The field, or null if the symbol is not a known field.
    */
   protected SdkField resolveField(final String fieldId) {
-    return Optional.ofNullable(this.fieldById(fieldId))
-        .orElseGet(() -> this.fieldByAlias(fieldId));
+    return this.fieldById(fieldId);
   }
 
   /**
-   * Resolves a node identifier, falling back to an alias lookup.
+   * Resolves a node identifier.
    * <p>
-   * First calls {@link #nodeById(String)} and falls back to {@link #nodeByAlias(String)}.
-   * Override this method (together with {@link #resolveField(String)}) to customize
-   * symbol resolution.
+   * Calls {@link #nodeById(String)}. Override this method (together with
+   * {@link #resolveField(String)}) to customize symbol resolution.
    *
-   * @param nodeId The identifier or alias of the node to look for.
+   * @param nodeId The identifier of the node to look for.
    * @return The node, or null if the symbol is not a known node.
    */
   protected SdkNode resolveNode(final String nodeId) {
-    return Optional.ofNullable(this.nodeById(nodeId))
-        .orElseGet(() -> this.nodeByAlias(nodeId));
+    return this.nodeById(nodeId);
   }
 
   private SdkEntity resolveSymbol(final String symbol) {
@@ -548,24 +527,6 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
     } else {
       return ScalarPath.instantiate(pathToElement, fieldType);
     }
-  }
-
-  @Override
-  public String getFieldIdFromAlias(String alias) {
-    final SdkField sdkField = this.fieldByAlias(alias);
-    if (sdkField != null) {
-      return sdkField.getId();
-    }
-    return null;
-  }
-
-  @Override
-  public String getNodeIdFromAlias(String alias) {
-    final SdkNode sdkNode = this.nodeByAlias(alias);
-    if (sdkNode != null) {
-      return sdkNode.getId();
-    }
-    return null;
   }
 
   @Override

@@ -5,96 +5,84 @@
       "parentId": null,
       "xpathAbsolute": "/*",
       "xpathRelative": "/*",
-      "repeatable": false,
-      "alias": "Root"
+      "repeatable": false
     },
     {
       "id": "ND-SubNode",
       "parentId": "ND-Root",
       "xpathAbsolute": "/*/SubNode",
       "xpathRelative": "SubNode",
-      "repeatable": false,
-      "alias": "SubNode"
+      "repeatable": false
     },
     {
       "id": "ND-SubSubNode",
       "parentId": "ND-SubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode",
       "xpathRelative": "SubSubNode",
-      "repeatable": false,
-      "alias": "SubSubNode"
+      "repeatable": false
     },
     {
       "id": "ND-SubSubNode2",
       "parentId": "ND-SubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode2",
       "xpathRelative": "SubSubNode2",
-      "repeatable": false,
-      "alias": "SubSubNode2"
+      "repeatable": false
     },
     {
       "id": "ND-RepeatableInSubNode",
       "parentId": "ND-SubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode",
       "xpathRelative": "RepeatableInSubNode",
-      "repeatable": true,
-      "alias": "RepeatableInSubNode"
+      "repeatable": true
     },
     {
       "id": "ND-RepeatableInSubNode2",
       "parentId": "ND-SubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2",
       "xpathRelative": "RepeatableInSubNode2",
-      "repeatable": true,
-      "alias": "RepeatableInSubNode2"
+      "repeatable": true
     },
     {
       "id": "ND-RepeatableNode",
       "parentId": "ND-Root",
       "xpathAbsolute": "/*/RepeatableNode",
       "xpathRelative": "RepeatableNode",
-      "repeatable": true,
-      "alias": "RepeatableNode"
+      "repeatable": true
     },
     {
       "id": "ND-NonRepeatableSubNode",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode",
       "xpathRelative": "NonRepeatableSubNode",
-      "repeatable": false,
-      "alias": "NonRepeatableSubNode"
+      "repeatable": false
     },
     {
       "id": "ND-NonRepeatableSubNode2",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2",
       "xpathRelative": "NonRepeatableSubNode2",
-      "repeatable": false,
-      "alias": "NonRepeatableSubNode2"
+      "repeatable": false
     },
     {
       "id": "ND-RepeatableSubSubNode",
       "parentId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode",
       "xpathRelative": "RepeatableSubSubNode",
-      "repeatable": true,
-      "alias": "RepeatableSubSubNode"
+      "repeatable": true
     },
     {
       "id": "ND-RepeatableInRepeatableNode",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode",
       "xpathRelative": "RepeatableInRepeatableNode",
-      "repeatable": true,
-      "alias": "RepeatableInRepeatableNode"
+      "repeatable": true
     },
     {
       "id": "ND-RepeatableInRepeatableNode2",
       "parentId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2",
       "xpathRelative": "RepeatableInRepeatableNode2",
-      "repeatable": true,
-      "alias": "RepeatableInRepeatableNode2"
+      "repeatable": true
     },
     {
       "id": "ND-PrivacyForRepeatableText",
@@ -128,7 +116,6 @@
   "fields": [
     {
       "id": "BT-00-Text",
-      "alias": "textField",
       "type": "text",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/TextField",
@@ -136,7 +123,6 @@
     },
     {
       "id": "BT-00-Attribute",
-      "alias": "attributeField",
       "type": "text",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/TextField/@Attribute",
@@ -144,7 +130,6 @@
     },
     {
       "id": "BT-00-Indicator",
-      "alias": "indicatorField",
       "type": "indicator",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/IndicatorField",
@@ -152,7 +137,6 @@
     },
     {
       "id": "BT-00-Code",
-      "alias": "codeField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/CodeField",
@@ -170,7 +154,6 @@
     },
     {
       "id": "BT-00-Internal-Code",
-      "alias": "internalCodeField",
       "type": "internal-code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/InternalCodeField",
@@ -185,7 +168,6 @@
     },
     {
       "id": "BT-00-CodeAttribute",
-      "alias": "codeAttributeField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/CodeField/@attribute",
@@ -202,7 +184,6 @@
     },
     {
       "id": "BT-00-Text-Multilingual",
-      "alias": "textMultilingualField",
       "type": "text-multilingual",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/TextMultilingualField",
@@ -217,7 +198,6 @@
     },
     {
       "id": "BT-00-StartDate",
-      "alias": "startDateField",
       "type": "date",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/StartDateField",
@@ -225,7 +205,6 @@
     },
     {
       "id": "BT-00-EndDate",
-      "alias": "endDateField",
       "type": "date",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/EndDateField",
@@ -233,7 +212,6 @@
     },
     {
       "id": "BT-00-StartTime",
-      "alias": "startTimeField",
       "type": "time",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/StartTimeField",
@@ -241,7 +219,6 @@
     },
     {
       "id": "BT-00-EndTime",
-      "alias": "endTimeField",
       "type": "time",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/EndTimeField",
@@ -249,7 +226,6 @@
     },
     {
       "id": "BT-00-Duration",
-      "alias": "durationField",
       "type": "duration",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/DurationField",
@@ -260,7 +236,6 @@
     },
     {
       "id": "BT-00-Duration-Unit",
-      "alias": "durationUnitField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/DurationField/@unitCode",
@@ -277,7 +252,6 @@
     },
     {
       "id": "BT-00-Integer",
-      "alias": "integerField",
       "type": "integer",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/IntegerField",
@@ -285,7 +259,6 @@
     },
     {
       "id": "BT-00-Amount",
-      "alias": "amountField",
       "type": "amount",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/AmountField",
@@ -296,7 +269,6 @@
     },
     {
       "id": "BT-00-Amount-Currency",
-      "alias": "amountCurrencyField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/AmountField/@currencyID",
@@ -312,7 +284,6 @@
     },
     {
       "id": "BT-00-Measure",
-      "alias": "measureField",
       "type": "measure",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/MeasureField",
@@ -323,7 +294,6 @@
     },
     {
       "id": "BT-00-Measure-Unit",
-      "alias": "measureUnitField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/MeasureField/@unitCode",
@@ -339,7 +309,6 @@
     },
     {
       "id": "BT-00-Url",
-      "alias": "urlField",
       "type": "url",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/UrlField",
@@ -347,7 +316,6 @@
     },
     {
       "id": "BT-00-Zoned-Date",
-      "alias": "zonedDateField",
       "type": "zoned-date",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/ZonedDateField",
@@ -355,7 +323,6 @@
     },
     {
       "id": "BT-00-Zoned-Time",
-      "alias": "zonedTimeField",
       "type": "zoned-time",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/ZonedTimeField",
@@ -363,7 +330,6 @@
     },
     {
       "id": "BT-00-Identifier",
-      "alias": "identifierField",
       "type": "id",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/IdField",
@@ -371,7 +337,6 @@
     },
     {
       "id": "BT-00-Id-Ref",
-      "alias": "idRefField",
       "type": "id-ref",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/IdRefField",
@@ -379,7 +344,6 @@
     },
     {
       "id": "BT-00-Number",
-      "alias": "numberField",
       "type": "number",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/NumberField",
@@ -387,7 +351,6 @@
     },
     {
       "id": "BT-00-Phone",
-      "alias": "phoneField",
       "type": "phone",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/PhoneField",
@@ -395,7 +358,6 @@
     },
     {
       "id": "BT-00-Email",
-      "alias": "emailField",
       "type": "email",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/EmailField",
@@ -403,7 +365,6 @@
     },
     {
       "id": "BT-01-SubLevel-Text",
-      "alias": "subLevel_textField",
       "type": "text",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/ChildNode/SubLevelTextField",
@@ -411,7 +372,6 @@
     },
     {
       "id": "BT-01-SubNode-Text",
-      "alias": "subNode_textField",
       "type": "text",
       "parentNodeId": "ND-SubNode",
       "xpathAbsolute": "/*/SubNode/SubTextField",
@@ -419,7 +379,6 @@
     },
     {
       "id": "BT-01-SubSubNode-Text",
-      "alias": "subSubNode_textField",
       "type": "text",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/SubTextField[0 = 0]",
@@ -427,7 +386,6 @@
     },
     {
       "id": "BT-00(a)-Text",
-      "alias": "textFieldWithParens",
       "type": "text",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/TextFieldA",
@@ -435,7 +393,6 @@
     },
     {
       "id": "BT-00-Repeatable-Text",
-      "alias": "repeatableTextField",
       "type": "text",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableTextField",
@@ -453,7 +410,6 @@
     },
     {
       "id": "BT-00-Repeatable-Number",
-      "alias": "repeatableNumberField",
       "type": "number",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableNumberField",
@@ -464,7 +420,6 @@
     },
     {
       "id": "BT-00-Repeatable-Indicator",
-      "alias": "repeatableIndicatorField",
       "type": "indicator",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableIndicatorField",
@@ -475,7 +430,6 @@
     },
     {
       "id": "BT-00-Repeatable-Date",
-      "alias": "repeatableDateField",
       "type": "date",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableDateField",
@@ -486,7 +440,6 @@
     },
     {
       "id": "BT-00-Repeatable-Time",
-      "alias": "repeatableTimeField",
       "type": "time",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableTimeField",
@@ -497,7 +450,6 @@
     },
     {
       "id": "BT-00-Repeatable-Duration",
-      "alias": "repeatableDurationField",
       "type": "duration",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableDurationField",
@@ -511,7 +463,6 @@
     },
     {
       "id": "BT-00-Repeatable-Duration-Unit",
-      "alias": "repeatableDurationUnitField",
       "type": "code",
       "parentNodeId": "ND-Root",
       "xpathAbsolute": "/*/PathNode/RepeatableDurationField/@unitCode",
@@ -531,7 +482,6 @@
     },
     {
       "id": "BT-00-Text-In-Repeatable-Node",
-      "alias": "textInRepeatableNode",
       "type": "text",
       "parentNodeId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/TextField",
@@ -546,7 +496,6 @@
     },
     {
       "id": "BT-00-Attribute-In-Repeatable-Node",
-      "alias": "attributeInRepeatableNode",
       "type": "text",
       "parentNodeId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/TextField/@attribute",
@@ -554,7 +503,6 @@
     },
     {
       "id": "BT-00-Date-In-Repeatable-Node",
-      "alias": "dateInRepeatableNode",
       "type": "date",
       "parentNodeId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/DateField",
@@ -569,7 +517,6 @@
     },
     {
       "id": "BT-00-Text-In-NonRepeatableSubNode",
-      "alias": "textInNonRepeatableSubNode",
       "type": "text",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/TextField",
@@ -577,7 +524,6 @@
     },
     {
       "id": "BT-00-Text-In-RepeatableSubSubNode",
-      "alias": "textInRepeatableSubSubNode",
       "type": "text",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/TextField",
@@ -585,7 +531,6 @@
     },
     {
       "id": "BT-11-TextMultilingual",
-      "alias": "bt11TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/TextMultilingual",
@@ -593,7 +538,6 @@
     },
     {
       "id": "BT-11-Indicator",
-      "alias": "bt11Indicator",
       "type": "indicator",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/Indicator",
@@ -601,7 +545,6 @@
     },
     {
       "id": "BT-11-Number",
-      "alias": "bt11Number",
       "type": "number",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/Number",
@@ -609,7 +552,6 @@
     },
     {
       "id": "BT-11-Date",
-      "alias": "bt11Date",
       "type": "date",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/Date",
@@ -617,7 +559,6 @@
     },
     {
       "id": "BT-11-Time",
-      "alias": "bt11Time",
       "type": "time",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/Time",
@@ -625,7 +566,6 @@
     },
     {
       "id": "BT-11-Duration",
-      "alias": "bt11Duration",
       "type": "duration",
       "parentNodeId": "ND-SubSubNode",
       "xpathAbsolute": "/*/SubNode/SubSubNode/Duration",
@@ -633,7 +573,6 @@
     },
     {
       "id": "BT-12-Text",
-      "alias": "bt12Text",
       "type": "text",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Text",
@@ -641,7 +580,6 @@
     },
     {
       "id": "BT-12-TextMultilingual",
-      "alias": "bt12TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/TextMultilingual",
@@ -649,7 +587,6 @@
     },
     {
       "id": "BT-12-Indicator",
-      "alias": "bt12Indicator",
       "type": "indicator",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Indicator",
@@ -657,7 +594,6 @@
     },
     {
       "id": "BT-12-Number",
-      "alias": "bt12Number",
       "type": "number",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Number",
@@ -665,7 +601,6 @@
     },
     {
       "id": "BT-12-Date",
-      "alias": "bt12Date",
       "type": "date",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Date",
@@ -673,7 +608,6 @@
     },
     {
       "id": "BT-12-Time",
-      "alias": "bt12Time",
       "type": "time",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Time",
@@ -681,7 +615,6 @@
     },
     {
       "id": "BT-12-Duration",
-      "alias": "bt12Duration",
       "type": "duration",
       "parentNodeId": "ND-SubSubNode2",
       "xpathAbsolute": "/*/SubNode/SubSubNode2/Duration",
@@ -689,7 +622,6 @@
     },
     {
       "id": "BT-13-Text",
-      "alias": "bt13Text",
       "type": "text",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Text",
@@ -697,7 +629,6 @@
     },
     {
       "id": "BT-13-TextMultilingual",
-      "alias": "bt13TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/TextMultilingual",
@@ -705,7 +636,6 @@
     },
     {
       "id": "BT-13-Indicator",
-      "alias": "bt13Indicator",
       "type": "indicator",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Indicator",
@@ -713,7 +643,6 @@
     },
     {
       "id": "BT-13-Number",
-      "alias": "bt13Number",
       "type": "number",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Number",
@@ -721,7 +650,6 @@
     },
     {
       "id": "BT-13-Date",
-      "alias": "bt13Date",
       "type": "date",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Date",
@@ -729,7 +657,6 @@
     },
     {
       "id": "BT-13-Time",
-      "alias": "bt13Time",
       "type": "time",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Time",
@@ -737,7 +664,6 @@
     },
     {
       "id": "BT-13-Duration",
-      "alias": "bt13Duration",
       "type": "duration",
       "parentNodeId": "ND-RepeatableInSubNode",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode/Duration",
@@ -745,7 +671,6 @@
     },
     {
       "id": "BT-14-Text",
-      "alias": "bt14Text",
       "type": "text",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Text",
@@ -753,7 +678,6 @@
     },
     {
       "id": "BT-14-TextMultilingual",
-      "alias": "bt14TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/TextMultilingual",
@@ -761,7 +685,6 @@
     },
     {
       "id": "BT-14-Indicator",
-      "alias": "bt14Indicator",
       "type": "indicator",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Indicator",
@@ -769,7 +692,6 @@
     },
     {
       "id": "BT-14-Number",
-      "alias": "bt14Number",
       "type": "number",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Number",
@@ -777,7 +699,6 @@
     },
     {
       "id": "BT-14-Date",
-      "alias": "bt14Date",
       "type": "date",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Date",
@@ -785,7 +706,6 @@
     },
     {
       "id": "BT-14-Time",
-      "alias": "bt14Time",
       "type": "time",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Time",
@@ -793,7 +713,6 @@
     },
     {
       "id": "BT-14-Duration",
-      "alias": "bt14Duration",
       "type": "duration",
       "parentNodeId": "ND-RepeatableInSubNode2",
       "xpathAbsolute": "/*/SubNode/RepeatableInSubNode2/Duration",
@@ -801,7 +720,6 @@
     },
     {
       "id": "BT-21-TextMultilingual",
-      "alias": "bt21TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/TextMultilingual",
@@ -809,7 +727,6 @@
     },
     {
       "id": "BT-21-Indicator",
-      "alias": "bt21Indicator",
       "type": "indicator",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Indicator",
@@ -817,7 +734,6 @@
     },
     {
       "id": "BT-21-Number",
-      "alias": "bt21Number",
       "type": "number",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Number",
@@ -825,7 +741,6 @@
     },
     {
       "id": "BT-21-Date",
-      "alias": "bt21Date",
       "type": "date",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Date",
@@ -833,7 +748,6 @@
     },
     {
       "id": "BT-21-Time",
-      "alias": "bt21Time",
       "type": "time",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Time",
@@ -841,7 +755,6 @@
     },
     {
       "id": "BT-21-Duration",
-      "alias": "bt21Duration",
       "type": "duration",
       "parentNodeId": "ND-NonRepeatableSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/Duration",
@@ -849,7 +762,6 @@
     },
     {
       "id": "BT-22-Text",
-      "alias": "bt22Text",
       "type": "text",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Text",
@@ -857,7 +769,6 @@
     },
     {
       "id": "BT-22-TextMultilingual",
-      "alias": "bt22TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/TextMultilingual",
@@ -865,7 +776,6 @@
     },
     {
       "id": "BT-22-Indicator",
-      "alias": "bt22Indicator",
       "type": "indicator",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Indicator",
@@ -873,7 +783,6 @@
     },
     {
       "id": "BT-22-Number",
-      "alias": "bt22Number",
       "type": "number",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Number",
@@ -881,7 +790,6 @@
     },
     {
       "id": "BT-22-Date",
-      "alias": "bt22Date",
       "type": "date",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Date",
@@ -889,7 +797,6 @@
     },
     {
       "id": "BT-22-Time",
-      "alias": "bt22Time",
       "type": "time",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Time",
@@ -897,7 +804,6 @@
     },
     {
       "id": "BT-22-Duration",
-      "alias": "bt22Duration",
       "type": "duration",
       "parentNodeId": "ND-NonRepeatableSubNode2",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode2/Duration",
@@ -905,7 +811,6 @@
     },
     {
       "id": "BT-23-Text",
-      "alias": "bt23Text",
       "type": "text",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Text",
@@ -913,7 +818,6 @@
     },
     {
       "id": "BT-23-TextMultilingual",
-      "alias": "bt23TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/TextMultilingual",
@@ -921,7 +825,6 @@
     },
     {
       "id": "BT-23-Indicator",
-      "alias": "bt23Indicator",
       "type": "indicator",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Indicator",
@@ -929,7 +832,6 @@
     },
     {
       "id": "BT-23-Number",
-      "alias": "bt23Number",
       "type": "number",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Number",
@@ -937,7 +839,6 @@
     },
     {
       "id": "BT-23-Date",
-      "alias": "bt23Date",
       "type": "date",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Date",
@@ -945,7 +846,6 @@
     },
     {
       "id": "BT-23-Time",
-      "alias": "bt23Time",
       "type": "time",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Time",
@@ -953,7 +853,6 @@
     },
     {
       "id": "BT-23-Duration",
-      "alias": "bt23Duration",
       "type": "duration",
       "parentNodeId": "ND-RepeatableInRepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode/Duration",
@@ -961,7 +860,6 @@
     },
     {
       "id": "BT-24-Text",
-      "alias": "bt24Text",
       "type": "text",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Text",
@@ -969,7 +867,6 @@
     },
     {
       "id": "BT-24-TextMultilingual",
-      "alias": "bt24TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/TextMultilingual",
@@ -977,7 +874,6 @@
     },
     {
       "id": "BT-24-Indicator",
-      "alias": "bt24Indicator",
       "type": "indicator",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Indicator",
@@ -985,7 +881,6 @@
     },
     {
       "id": "BT-24-Number",
-      "alias": "bt24Number",
       "type": "number",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Number",
@@ -993,7 +888,6 @@
     },
     {
       "id": "BT-24-Date",
-      "alias": "bt24Date",
       "type": "date",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Date",
@@ -1001,7 +895,6 @@
     },
     {
       "id": "BT-24-Time",
-      "alias": "bt24Time",
       "type": "time",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Time",
@@ -1009,7 +902,6 @@
     },
     {
       "id": "BT-24-Duration",
-      "alias": "bt24Duration",
       "type": "duration",
       "parentNodeId": "ND-RepeatableInRepeatableNode2",
       "xpathAbsolute": "/*/RepeatableNode/RepeatableInRepeatableNode2/Duration",
@@ -1017,7 +909,6 @@
     },
     {
       "id": "BT-25-TextMultilingual",
-      "alias": "bt25TextMultilingual",
       "type": "text-multilingual",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/TextMultilingual",
@@ -1025,7 +916,6 @@
     },
     {
       "id": "BT-25-Indicator",
-      "alias": "bt25Indicator",
       "type": "indicator",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Indicator",
@@ -1033,7 +923,6 @@
     },
     {
       "id": "BT-25-Number",
-      "alias": "bt25Number",
       "type": "number",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Number",
@@ -1041,7 +930,6 @@
     },
     {
       "id": "BT-25-Date",
-      "alias": "bt25Date",
       "type": "date",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Date",
@@ -1049,7 +937,6 @@
     },
     {
       "id": "BT-25-Time",
-      "alias": "bt25Time",
       "type": "time",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Time",
@@ -1057,7 +944,6 @@
     },
     {
       "id": "BT-25-Duration",
-      "alias": "bt25Duration",
       "type": "duration",
       "parentNodeId": "ND-RepeatableSubSubNode",
       "xpathAbsolute": "/*/RepeatableNode/NonRepeatableSubNode/RepeatableSubSubNode/Duration",
@@ -1065,7 +951,6 @@
     },
     {
       "id": "BT-00-Number-In-Repeatable-Node",
-      "alias": "numberInRepeatableNode",
       "type": "number",
       "parentNodeId": "ND-RepeatableNode",
       "xpathAbsolute": "/*/RepeatableNode/NumberField",
