@@ -15,11 +15,8 @@ package eu.europa.ted.eforms.sdk;
 
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
@@ -28,8 +25,6 @@ import eu.europa.ted.eforms.sdk.entity.SdkDataType;
 import eu.europa.ted.eforms.sdk.entity.SdkField;
 import eu.europa.ted.eforms.sdk.entity.SdkNode;
 import eu.europa.ted.eforms.sdk.entity.SdkNoticeSubtype;
-import eu.europa.ted.eforms.sdk.entity.v2.SdkFieldV2;
-import eu.europa.ted.eforms.sdk.entity.v2.SdkNodeV2;
 import eu.europa.ted.eforms.sdk.repository.SdkCodelistRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkDataTypeRepository;
 import eu.europa.ted.eforms.sdk.repository.SdkFieldRepository;
@@ -42,18 +37,13 @@ import eu.europa.ted.eforms.sdk.resource.SdkResourceLoader;
  * filesystem.
  * <p>
  * All symbol resolution logic lives in {@link XPathSymbolResolver}. What this class adds is the
- * loading strategy: the SDK repositories, the eager wiring of the entity graph, and the alias
- * indexes.
+ * loading strategy: the SDK repositories and the eager wiring of the entity graph.
  */
 @SdkComponent(versions = { "1", "2" }, componentType = SdkComponentType.SYMBOL_RESOLVER)
 public class SdkSymbolResolver extends XPathSymbolResolver {
   protected SdkFieldRepository fieldById;
 
-  protected Map<String, SdkField> fieldByAlias;
-
   protected SdkNodeRepository nodeById;
-
-  protected Map<String, SdkNode> nodeByAlias;
 
   protected Map<String, SdkCodelist> codelistById;
 
@@ -91,11 +81,9 @@ public class SdkSymbolResolver extends XPathSymbolResolver {
 
     // Load nodes first (fields depend on nodes for parent wiring)
     this.nodeById = new SdkNodeRepository(sdkVersion, jsonPath);
-    this.nodeByAlias = indexNodesByAlias();
 
     // Load fields with parent node wiring
     this.fieldById = new SdkFieldRepository(sdkVersion, jsonPath, this.nodeById);
-    this.fieldByAlias = indexFieldsByAlias();
 
     this.codelistById = new SdkCodelistRepository(sdkVersion, codelistsPath);
     this.noticeTypesById = new SdkNoticeTypeRepository(sdkVersion, noticeTypesPath);
@@ -123,16 +111,6 @@ public class SdkSymbolResolver extends XPathSymbolResolver {
   }
 
   @Override
-  protected SdkField fieldByAlias(final String alias) {
-    return this.fieldByAlias.get(alias);
-  }
-
-  @Override
-  protected SdkNode nodeByAlias(final String alias) {
-    return this.nodeByAlias.get(alias);
-  }
-
-  @Override
   protected Collection<SdkNode> allNodes() {
     return this.nodeById.values();
   }
@@ -140,31 +118,5 @@ public class SdkSymbolResolver extends XPathSymbolResolver {
   @Override
   public List<SdkNoticeSubtype> getAllNoticeSubtypes() {
     return List.copyOf(this.noticeTypesById.values());
-  }
-
-  protected HashMap<String, SdkField> indexFieldsByAlias() {
-    return this.fieldById.values().stream()
-      .filter(SdkFieldV2.class::isInstance)
-      .map(SdkFieldV2.class::cast)
-      .filter(field -> field.getAlias() != null)
-      .collect(Collectors.toMap(
-        SdkFieldV2::getAlias,
-        Function.identity(),
-        (existing, replacement) -> existing,
-        HashMap::new
-      ));
-  }
-
-  protected HashMap<String, SdkNode> indexNodesByAlias() {
-    return this.nodeById.values().stream()
-      .filter(SdkNodeV2.class::isInstance)
-      .map(SdkNodeV2.class::cast)
-      .filter(node -> node.getAlias() != null)
-      .collect(Collectors.toMap(
-        SdkNodeV2::getAlias,
-        Function.identity(),
-        (existing, replacement) -> existing,
-        HashMap::new
-      ));
   }
 }

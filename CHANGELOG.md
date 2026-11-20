@@ -21,7 +21,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 - Write `::` only after a context variable, as in `for context:$c in ND-1 return $c::BT-1`. Where you wrote `BT-1::BT-2` to read the BT-2 next to a BT-1, write `BT-2[BT-1 is present]`.
 - Validate the generated Schematron with an XSLT 3.0 processor, such as Saxon 12.
 - If you wrote your own `efx:call-api`, it now receives the whole query string.
-- If you wrote your own `SymbolResolver`, implement its three new methods.
+- If you wrote your own `SymbolResolver`, implement its three new methods, and remove `getFieldIdFromAlias` and `getNodeIdFromAlias`: aliases are no longer part of EFX. If you extend `XPathSymbolResolver`, also remove `fieldByAlias` and `nodeByAlias`.
 - If your code extends the EFX-2 translators or uses the toolkit's model or exception classes, see the javadoc: many of them changed. The public constructors of the translators did not change.
 - The dependency graph writes `codelists`, where it wrote `codeLists`.
 

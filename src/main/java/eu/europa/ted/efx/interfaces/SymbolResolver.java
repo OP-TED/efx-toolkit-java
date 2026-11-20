@@ -226,30 +226,6 @@ public interface SymbolResolver {
   public List<SdkNoticeSubtype> getAllNoticeSubtypes();
 
   /**
-   * Resolves a field alias to its canonical field identifier.
-   *
-   * Returns null if the alias is not recognized as a field alias. This allows callers to implement
-   * fallback logic (e.g., trying {@link #getNodeIdFromAlias} next). The translator throws
-   * {@code SymbolResolutionException.unknownAlias()} only when both field and node lookups fail.
-   *
-   * @param alias The alias to resolve.
-   * @return The canonical field ID, or null if the alias is not a known field alias.
-   */
-  public String getFieldIdFromAlias(final String alias);
-
-  /**
-   * Resolves a node alias to its canonical node identifier.
-   *
-   * Returns null if the alias is not recognized as a node alias. This allows callers to implement
-   * fallback logic. The translator throws {@code SymbolResolutionException.unknownAlias()} only
-   * when both field and node lookups fail.
-   *
-   * @param alias The alias to resolve.
-   * @return The canonical node ID, or null if the alias is not a known node alias.
-   */
-  public String getNodeIdFromAlias(final String alias);
-
-  /**
    * Determines if a field reference would return multiple values when evaluated from a given
    * context.
    *

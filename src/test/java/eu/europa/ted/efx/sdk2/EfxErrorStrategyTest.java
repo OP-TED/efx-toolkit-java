@@ -74,7 +74,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testExpression_ContextThatIsNotAnIdentifier() {
     final String expected = "line 1:5 Syntax error: unexpected '1' in expression;"
-        + " expected a field identifier or a node identifier or an identifier.";
+        + " expected a field identifier or a node identifier.";
     assertSyntaxErrorMessage(expected, () -> translateExpression("WITH 1 COMPUTE 1"));
     assertSyntaxErrorMessage(expected, () -> translateExpression("WITH 1 SELECT ND-Root"));
   }
@@ -83,7 +83,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   void testExpression_ContextBlockThatIsNotAnIdentifier() {
     assertSyntaxErrorMessage(
         "line 1:5 Syntax error: unexpected '1' in expression;"
-            + " expected a field identifier or a node identifier or an identifier.",
+            + " expected a field identifier or a node identifier.",
         () -> translateExpression("WITH 1 COMPUTE 1"));
   }
 

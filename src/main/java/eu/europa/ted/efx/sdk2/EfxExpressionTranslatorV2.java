@@ -26,7 +26,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidArgumentException;
-import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.EfxExpressionTranslator;
 import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
@@ -166,21 +165,6 @@ public class EfxExpressionTranslatorV2 extends TranslatorListener
       final TerminalNode nodeContext = ctx.NodeId();
       if (nodeContext != null) {
         this.translation.efxContext().pushNodeContext(nodeContext.getText());
-      } else {
-        final TerminalNode alias = ctx.Identifier();
-        if (alias != null) {
-          String fieldId = this.translation.symbols().getFieldIdFromAlias(alias.getText());
-          if (fieldId != null) {
-            this.translation.efxContext().pushFieldContext(fieldId);
-          } else {
-            String nodeId = this.translation.symbols().getNodeIdFromAlias(alias.getText());
-            if (nodeId != null) {
-              this.translation.efxContext().pushNodeContext(nodeId);
-            } else {
-              throw SymbolResolutionException.unknownSymbol(alias.getText());
-            }
-          }
-        }
       }
     }
   }

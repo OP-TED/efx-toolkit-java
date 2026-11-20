@@ -3811,11 +3811,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   // #region Errors raised with no position ------------------------------------
 
   @Test
-  void testUnknownAliasInExpressionBlock_IsPlacedAtTheAlias() {
+  void testUnknownFieldInExpressionBlock_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
         () -> translateTemplate(
-            lines("WITH ND-Root DISPLAY a;", "WITH ND-Root DISPLAY b;", "WITH ND-Root DISPLAY ${BT-NONEXISTENT};")));
-    assertEquals("line 3:23 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+            lines("WITH ND-Root DISPLAY a;", "WITH ND-Root DISPLAY b;", "WITH ND-Root DISPLAY ${BT-99-Nonexistent};")));
+    assertEquals("line 3:23 Unknown symbol 'BT-99-Nonexistent'.", ex.getMessage());
   }
 
   @Test

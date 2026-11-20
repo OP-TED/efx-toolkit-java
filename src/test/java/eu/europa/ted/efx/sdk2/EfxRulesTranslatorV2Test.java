@@ -496,12 +496,12 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "---- STAGE 1a ----",
         "",
         "WITH ND-Root",
-        "    ASSERT BT-NONEXISTENT == 'a'",
+        "    ASSERT BT-99-Nonexistent == 'a'",
         "    AS ERROR R-K7P-M2Q",
         "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
-    assertEquals("line 4:11 Unknown symbol 'BT-NONEXISTENT'.", exception.getMessage());
+    assertEquals("line 4:11 Unknown symbol 'BT-99-Nonexistent'.", exception.getMessage());
   }
 
   @Test
@@ -509,13 +509,13 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     String rules = lines(
         "---- STAGE 1a ----",
         "",
-        "WITH BT-NONEXISTENT",
+        "WITH BT-99-Nonexistent",
         "    ASSERT TRUE",
         "    AS ERROR R-K7P-M2Q",
         "    FOR BT-00-Text IN 1;");
     SymbolResolutionException exception = assertThrows(SymbolResolutionException.class,
         () -> translator.translateRules(rules));
-    assertEquals("line 3:5 Unknown symbol 'BT-NONEXISTENT'.", exception.getMessage());
+    assertEquals("line 3:5 Unknown symbol 'BT-99-Nonexistent'.", exception.getMessage());
   }
 
   @Test
