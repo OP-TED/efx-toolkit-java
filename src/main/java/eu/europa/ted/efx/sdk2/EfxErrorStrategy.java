@@ -317,6 +317,10 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      * @return the hint, after a space, or nothing
      */
     private static String hintFor(final Parser recognizer, final Token found) {
+        if (found.getType() == HashPrefix) {
+            return inAnExpression(recognizer) ? codelistHintFor(recognizer.getTokenStream(), found)
+                    : "";
+        }
         if (found.getType() != ColonColon) {
             return "";
         }
@@ -326,6 +330,37 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
                 context = context.parent) {
             if (endsAnExpression((ParserRuleContext) context, before)) {
                 return " " + CONTEXT_OVERRIDE_HINT;
+            }
+        }
+        return "";
+    }
+
+    /**
+     * @return whether the parser is reading an expression, where a {@code #} can only be meant as
+     *         the old form of a codelist reference, and not, as after {@code SCOPE}, a flag
+     */
+    private static boolean inAnExpression(final Parser recognizer) {
+        for (RuleContext context = recognizer.getContext(); context != null;
+                context = context.parent) {
+            if (context instanceof ExpressionContext) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Gives a hint for a codelist written {@code #name}, a form that EFX 2 no longer takes.
+     *
+     * @return the hint, after a space, or nothing when no name follows the {@code #}
+     */
+    private static String codelistHintFor(final TokenStream tokens, final Token found) {
+        for (int i = found.getTokenIndex() + 1; i < tokens.size(); i++) {
+            final Token next = tokens.get(i);
+            if (next.getChannel() == Token.DEFAULT_CHANNEL) {
+                return next.getType() == Identifier
+                        ? " Write a codelist as '[..." + next.getText() + "]'."
+                        : "";
             }
         }
         return "";

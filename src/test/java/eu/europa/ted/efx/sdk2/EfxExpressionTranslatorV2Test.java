@@ -5353,7 +5353,7 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   void testUnknownCodelist_IsPlacedAtTheCodelist() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
         () -> translateComputeExpressionWithContext("ND-Root",
-            "BT-00-Text in #nonexistent-codelist"));
+            "BT-00-Text in [...nonexistent-codelist]"));
     assertEquals("line 1:35 Unknown codelist 'nonexistent-codelist'.", ex.getMessage());
   }
 
