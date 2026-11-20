@@ -145,7 +145,8 @@ class ResolverPathClassesTest {
       final String expression) {
     try {
       final String translation = EfxTranslator.translateExpression(OwnPathsDependencies.INSTANCE,
-          sdkVersion, String.format("{ND-Root} ${%s}", expression), EfxTestsBase.DEFAULT_OPTIONS);
+          sdkVersion, String.format(SDK_1.equals(sdkVersion) ? "{ND-Root} ${%s}"
+              : "WITH ND-Root COMPUTE %s", expression), EfxTestsBase.DEFAULT_OPTIONS);
       EfxTestsBase.assertValidXPath(translation);
       assertEquals(expected, translation);
     } catch (final InstantiationException e) {
@@ -167,7 +168,7 @@ class ResolverPathClassesTest {
           "let body01(string:ctx) -> { eval(" + expected + ") }", "MAIN:",
           "for-each(/*/PathNode/TextField).call(body01(string:ctx=.))"),
           EfxTranslator.translateTemplate(OwnPathsDependencies.INSTANCE, SDK_2,
-              "{context:$ctx = BT-00-Text} ${" + expression + "}\n",
+              "WITH context:$ctx = BT-00-Text DISPLAY ${" + expression + "};\n",
               EfxTestsBase.DEFAULT_OPTIONS));
     } catch (final InstantiationException e) {
       throw new IllegalStateException(e);
