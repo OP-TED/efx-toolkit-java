@@ -99,6 +99,7 @@ import eu.europa.ted.efx.model.templates.LabelContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromExpressionContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromKeyContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LineBreakContentTemplateFragment;
+import eu.europa.ted.efx.model.templates.LineStyle;
 import eu.europa.ted.efx.model.templates.TextContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
@@ -529,8 +530,9 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       final ContentBlock templates = this.viewTemplate.getTemplateDeclarations();
       templates.removeChild(declaredTemplate);
       final String name = ctx.templateName.getText();
+      // The template displays its line, at the level of the line.
       final TemplateDefinition template = templates.addChild(name, line.getContentTemplates(),
-          this.translation.stack().getTemplate(name).parameters);
+          this.translation.stack().getTemplate(name).parameters, line.getLevel());
       template.adoptChildrenOf(line);
     }
   }
@@ -1684,6 +1686,8 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     }
     final Variables variables = this.translation.stack().pop(Variables.class);
     final int outlineNumber = this.outlineNumberOf(ctx);
+    // A line with an outline marker is a heading.
+    final LineStyle style = hasOutlineMarker(ctx) ? LineStyle.HEADING : LineStyle.NORMAL;
     assert this.translation.stack().empty() : "Stack should be empty at this point.";
 
     if (indentLevel > this.sectionLevels && this.hasNoLineAbove()) {
@@ -1691,16 +1695,16 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      this.blockStack.pushChild(outlineNumber, lineContext, variables, contentTemplates);
+      this.blockStack.pushChild(outlineNumber, style, lineContext, variables, contentTemplates);
     } else if (indentLevel == 0) {
       // A top-level line is a new block of the current section, also when it follows a declared
       // template and its lines.
       this.blockStack.clear();
       final ContentBlock sectionRoot = this.viewTemplate.getSection(this.translatorContext.getCurrentSection()).getRoot();
-      this.blockStack.push(sectionRoot.addChild(outlineNumber, lineContext, variables,
+      this.blockStack.push(sectionRoot.addChild(outlineNumber, style, lineContext, variables,
           contentTemplates));
     } else {
-      this.blockStack.pushSibling(outlineNumber, lineContext, variables, contentTemplates);
+      this.blockStack.pushSibling(outlineNumber, style, lineContext, variables, contentTemplates);
     }
   }
 

@@ -27,6 +27,12 @@ public class ContentBlock {
   protected final String id;
   protected final Integer indentationLevel;
 
+  // How the line is displayed, and its level: 1 for a line at the top of its section, 2 for a line
+  // nested in it, and so on. The root block, and a template section that only holds lines, are at
+  // level 0.
+  protected final LineStyle style;
+  protected final int level;
+
   // What the block displays, in order: one content template for each WHEN alternative, then the one
   // displayed otherwise. A block without WHEN alternatives has a single content template.
   protected final List<ContentTemplate> contentTemplates;
@@ -40,6 +46,8 @@ public class ContentBlock {
     this.parent = null;
     this.id = id;
     this.indentationLevel = -1;
+    this.style = LineStyle.NORMAL;
+    this.level = 0;
     this.contentTemplates = List.of();
     this.context = null;
     this.number = 0;
@@ -50,9 +58,23 @@ public class ContentBlock {
   public ContentBlock(final ContentBlock parent, final String id, final int number,
       final List<ContentTemplate> contentTemplates, Context contextPath, ParsedParameters parameters,
       Arguments<ParsedParameter> arguments) {
+    this(parent, id, number, LineStyle.NORMAL, parent.level + 1, contentTemplates, contextPath,
+        parameters, arguments);
+  }
+
+  /**
+   * @param style how the line is displayed
+   * @param level the level of the line: 1 at the top of its section, one more for each line it is
+   *        nested in
+   */
+  protected ContentBlock(final ContentBlock parent, final String id, final int number,
+      final LineStyle style, final int level, final List<ContentTemplate> contentTemplates,
+      Context contextPath, ParsedParameters parameters, Arguments<ParsedParameter> arguments) {
     this.parent = parent;
     this.id = id;
     this.indentationLevel = parent.indentationLevel + 1;
+    this.style = style;
+    this.level = level;
     this.contentTemplates = contentTemplates;
     this.context = contextPath;
     this.number = number;
@@ -62,8 +84,14 @@ public class ContentBlock {
 
   public ContentBlock(final ContentBlock parent, final String id, final int number,
       final List<ContentTemplate> contentTemplates, Context contextPath, Variables variables) {
-    this(parent, id, number, contentTemplates, contextPath, new ParsedParameters(variables),
-        variables.toArguments());
+    this(parent, id, number, LineStyle.NORMAL, contentTemplates, contextPath, variables);
+  }
+
+  public ContentBlock(final ContentBlock parent, final String id, final int number,
+      final LineStyle style, final List<ContentTemplate> contentTemplates, Context contextPath,
+      Variables variables) {
+    this(parent, id, number, style, parent.level + 1, contentTemplates, contextPath,
+        new ParsedParameters(variables), variables.toArguments());
   }
 
   public static ContentBlock newRootBlock(String id) {
@@ -74,13 +102,29 @@ public class ContentBlock {
 
   public TemplateDefinition addChild(final String blockId, final List<ContentTemplate> contentTemplates,
       final ParsedParameters parameters) {
-    TemplateDefinition newBlock = new TemplateDefinition(this, blockId, contentTemplates, parameters);
+    return this.addChild(blockId, contentTemplates, parameters, 0);
+  }
+
+  /**
+   * Adds a template definition.
+   *
+   * @param level 0 for a template that only holds lines, or the level of the line it displays
+   */
+  public TemplateDefinition addChild(final String blockId, final List<ContentTemplate> contentTemplates,
+      final ParsedParameters parameters, final int level) {
+    TemplateDefinition newBlock = new TemplateDefinition(this, blockId, contentTemplates, parameters, level);
     this.children.add(newBlock);
     return newBlock;
   }
 
   public ContentBlock addChild(final String blockId, final int number, final Context context,
       final Variables variables, final List<ContentTemplate> contentTemplates) {
+    return this.addChild(blockId, number, LineStyle.NORMAL, context, variables, contentTemplates);
+  }
+
+  public ContentBlock addChild(final String blockId, final int number, final LineStyle style,
+      final Context context, final Variables variables,
+      final List<ContentTemplate> contentTemplates) {
     // number < 0 means "autogenerate", number == 0 means "no number", number > 0
     // means "use this number"
     final int actualNumber = number >= 0 ? number
@@ -90,15 +134,20 @@ public class ContentBlock {
             .max(Comparator.naturalOrder())
             .orElse(0) + 1;
 
-    ContentBlock newBlock = new ContentBlock(this, blockId, actualNumber, contentTemplates, context, variables);
+    ContentBlock newBlock = new ContentBlock(this, blockId, actualNumber, style, contentTemplates, context, variables);
     this.children.add(newBlock);
     return newBlock;
   }
 
   public ContentBlock addChild(final int number, final Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
+    return this.addChild(number, LineStyle.NORMAL, context, variables, contentTemplates);
+  }
+
+  public ContentBlock addChild(final int number, final LineStyle style, final Context context,
+      final Variables variables, final List<ContentTemplate> contentTemplates) {
     String newBlockId = String.format(Locale.ROOT, "%s%02d", this.id, this.children.size() + 1);
-    return this.addChild(newBlockId, number, context, variables, contentTemplates);
+    return this.addChild(newBlockId, number, style, context, variables, contentTemplates);
   }
 
   /**
@@ -110,8 +159,8 @@ public class ContentBlock {
   public void adoptChildrenOf(final ContentBlock other) {
     for (ContentBlock child : other.children) {
       final String childId = String.format(Locale.ROOT, "%s%02d", this.id, this.children.size() + 1);
-      final ContentBlock copy = new ContentBlock(this, childId, child.number, child.contentTemplates,
-          child.context, child.parameters, child.arguments);
+      final ContentBlock copy = new ContentBlock(this, childId, child.number, child.style,
+          this.level + 1, child.contentTemplates, child.context, child.parameters, child.arguments);
       this.children.add(copy);
       copy.adoptChildrenOf(child);
     }
@@ -132,7 +181,12 @@ public class ContentBlock {
 
   public ContentBlock addSibling(final int number, final Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
-    return this.parent.addChild(number, context, variables, contentTemplates);
+    return this.addSibling(number, LineStyle.NORMAL, context, variables, contentTemplates);
+  }
+
+  public ContentBlock addSibling(final int number, final LineStyle style, final Context context,
+      final Variables variables, final List<ContentTemplate> contentTemplates) {
+    return this.parent.addChild(number, style, context, variables, contentTemplates);
   }
 
   // #endregion Add Siblings
@@ -203,6 +257,21 @@ public class ContentBlock {
   }
 
   /**
+   * @return how the line is displayed: as a heading or as a normal line
+   */
+  public LineStyle getStyle() {
+    return this.style;
+  }
+
+  /**
+   * @return the level of the line: 1 at the top of its section, one more for each line it is nested
+   *         in; 0 for the root block and for a template section that only holds lines
+   */
+  public int getLevel() {
+    return this.level;
+  }
+
+  /**
    * @return what the block displays: a content template for each WHEN alternative, then the one
    *         displayed otherwise
    */
@@ -269,7 +338,7 @@ public class ContentBlock {
       }
     }
     List<Markup> templates = new ArrayList<>();
-    templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(), conditionals, content,
+    templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutlineNumber(), this.style, this.level, conditionals, content,
         this.renderChildren(markupGenerator, translatorContext), params, translatorContext));
     for (ContentBlock child : this.children) {
       templates.addAll(child.renderDefinition(markupGenerator, translatorContext));

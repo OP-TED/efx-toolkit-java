@@ -30,7 +30,23 @@ public class TemplateDefinition extends ContentBlock {
    */
   public TemplateDefinition(final ContentBlock parent, final String name,
       final List<ContentTemplate> contentTemplates, ParsedParameters parameters) {
-    super(parent, name, 0, contentTemplates, null, parameters, parameters.toArguments());
+    this(parent, name, contentTemplates, parameters, 0);
+  }
+
+  /**
+   * Constructs a new TemplateDefinition instance.
+   *
+   * @param parent       The parent ContentBlock to which this template is attached.
+   * @param name         The name with which we will call the template.
+   * @param contentTemplates What the template displays.
+   * @param parameters   The parameters that this template expects to be passed when invoked.
+   * @param level        0 for a template that only holds lines, or the level of the line it
+   *                     displays.
+   */
+  public TemplateDefinition(final ContentBlock parent, final String name,
+      final List<ContentTemplate> contentTemplates, ParsedParameters parameters, final int level) {
+    super(parent, name, 0, LineStyle.NORMAL, level, contentTemplates, null, parameters,
+        parameters.toArguments());
   }
   
 

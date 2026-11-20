@@ -23,6 +23,20 @@ public class ContentBlockStack extends Stack<ContentBlock> {
   }
 
   /**
+   * Adds a new child block to the top of the stack, displayed in the given style.
+   *
+   * @param number         the outline number of the child block.
+   * @param style          how the child block is displayed.
+   * @param context        the context of the child block.
+   * @param variables      the variables of the child block.
+   * @param contentTemplates what the child block displays.
+   */
+  public void pushChild(final int number, final LineStyle style, final Context context,
+      final Variables variables, final List<ContentTemplate> contentTemplates) {
+    this.push(this.peek().addChild(number, style, context, variables, contentTemplates));
+  }
+
+  /**
    * Removes the block at the top of the stack and replaces it by a new sibling block. When the last
    * sibling is later removed, their parent block will return to the top of the stack again.
    * 
@@ -34,6 +48,20 @@ public class ContentBlockStack extends Stack<ContentBlock> {
   public void pushSibling(final int number, Context context, final Variables variables,
       final List<ContentTemplate> contentTemplates) {
     this.push(this.pop().addSibling(number, context, variables, contentTemplates));
+  }
+
+  /**
+   * Replaces the block at the top of the stack by a new sibling block, displayed in the given style.
+   *
+   * @param number the outline number of the sibling block.
+   * @param style how the sibling block is displayed.
+   * @param context the context of the sibling block.
+   * @param variables the variables of the sibling block.
+   * @param contentTemplates what the sibling block displays.
+   */
+  public void pushSibling(final int number, final LineStyle style, Context context,
+      final Variables variables, final List<ContentTemplate> contentTemplates) {
+    this.push(this.pop().addSibling(number, style, context, variables, contentTemplates));
   }
 
   /**
