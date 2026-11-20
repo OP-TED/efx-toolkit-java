@@ -5,11 +5,13 @@ import java.util.List;
 import eu.europa.ted.efx.model.identifiers.ParsedParameters;
 
 /**
- * Represents a template definition line in the content block stack.
+ * Represents the declaration of a callable template in the content block stack.
  * 
- * A template definition is defined using the syntax:
+ * A template is declared by a template section:
  * <pre>
- * LET template-name (param1, ...) DISPLAY content;
+ * --- TEMPLATE template-name ---
+ * PARAMETERS text:$param1, ...;
+ * template-lines
  * </pre>
  * 
  * This class extends {@link ContentBlock} and provides functionality specific

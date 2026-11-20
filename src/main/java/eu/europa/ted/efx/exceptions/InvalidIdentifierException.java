@@ -27,6 +27,8 @@ public class InvalidIdentifierException extends EfxCompilationException {
         NOT_A_CONTEXT_VARIABLE,
         UNDECLARED_ENDPOINT,
         IDENTIFIER_IS_RESERVED,
+        IDENTIFIER_IS_KEYWORD,
+        NAME_IS_GENERATED,
         DICTIONARY_WITHOUT_KEY
     }
 
@@ -36,6 +38,8 @@ public class InvalidIdentifierException extends EfxCompilationException {
     private static final String NOT_A_CONTEXT_VARIABLE = "%s is not a context variable.";
     private static final String UNDECLARED_ENDPOINT = "%s references undeclared API endpoint '%s'.";
     private static final String IDENTIFIER_IS_RESERVED = "%s is reserved: the translator generates the names that start with '%s'.";
+    private static final String IDENTIFIER_IS_KEYWORD = "%s cannot be declared: its name is a keyword of EFX expressions, so it could not be invoked.";
+    private static final String NAME_IS_GENERATED = "%s cannot be declared: the translator would give the same name to two of the templates and template lines it translates.";
     private static final String DICTIONARY_WITHOUT_KEY = "Dictionary '$%1$s' has no value of its own: look up a key in it, as in $%1$s['key'].";
 
     private final ErrorCode errorCode;
@@ -122,6 +126,35 @@ public class InvalidIdentifierException extends EfxCompilationException {
             String identifier, String reservedPrefix) {
         return new InvalidIdentifierException(ErrorCode.IDENTIFIER_IS_RESERVED, ctx,
                 IDENTIFIER_IS_RESERVED, identifier, reservedPrefix);
+    }
+
+    /**
+     * A declaration of a name that EFX expressions read as a keyword, as a template named
+     * {@code date}, which no invocation could name.
+     *
+     * @param ctx the declaration
+     * @param identifier the identifier as an error names it, such as "Template 'date'"
+     * @return the exception
+     */
+    public static InvalidIdentifierException identifierIsKeyword(ParserRuleContext ctx,
+            String identifier) {
+        return new InvalidIdentifierException(ErrorCode.IDENTIFIER_IS_KEYWORD, ctx,
+                IDENTIFIER_IS_KEYWORD, identifier);
+    }
+
+    /**
+     * A declaration of a template that the translator would name as another template or template
+     * line, or whose lines it would name so: as a template named {@code t01} in a file where the
+     * first line of the template {@code t} is named so.
+     *
+     * @param ctx the declaration
+     * @param identifier the identifier as an error names it, such as "Template 't01'"
+     * @return the exception
+     */
+    public static InvalidIdentifierException nameIsGenerated(ParserRuleContext ctx,
+            String identifier) {
+        return new InvalidIdentifierException(ErrorCode.NAME_IS_GENERATED, ctx,
+                NAME_IS_GENERATED, identifier);
     }
 
     /**

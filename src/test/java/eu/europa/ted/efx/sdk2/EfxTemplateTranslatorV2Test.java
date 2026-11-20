@@ -59,8 +59,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTranslatorReused_WithTheSameDeclarations() throws InstantiationException {
     final EfxTemplateTranslator translator = EfxTranslatorFactory
         .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
-    final String template = lines("LET text:$t = 'test';", "LET template:greeting() DISPLAY Hello;",
-        "DISPLAY this is a ${$t};", "INVOKE greeting();");
+    final String template = lines("LET text:$t = 'test';", "--- TEMPLATE greeting ---", "DISPLAY Hello;",
+        "--- MAIN ---", "DISPLAY this is a ${$t};", "INVOKE greeting();");
     translator.renderTemplate(template + "\n", DEFAULT_OPTIONS);
     assertEquals(translateTemplate(template), translator.renderTemplate(template + "\n", DEFAULT_OPTIONS));
   }
@@ -69,14 +69,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTranslatorReused_DoesNotKeepThePreviousDeclarations() throws InstantiationException {
     final EfxTemplateTranslator translator = EfxTranslatorFactory
         .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
-    translator.renderTemplate(lines("LET template:greeting() DISPLAY Hello;", "INVOKE greeting();") + "\n",
+    translator.renderTemplate(lines("--- TEMPLATE greeting ---", "DISPLAY Hello;", "--- MAIN ---", "INVOKE greeting();") + "\n",
         DEFAULT_OPTIONS);
     assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate("INVOKE greeting();\n", DEFAULT_OPTIONS));
   }
 
   // #region Core Template Structure -------------------------------------------
 
-  // #region templateDefinition ------------------------------------------------
+  // #region templateSection ---------------------------------------------------
 
   @Test
   void testTemplateDefinition_InvokeTemplate() {
@@ -88,8 +88,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:some-template(text:$content) DISPLAY Content: ${$content};",
-            "INVOKE some-template('test');")));
+            "--- TEMPLATE some-template ---", "PARAMETERS text:$content;", "DISPLAY Content: ${$content};",
+            "--- MAIN ---", "INVOKE some-template('test');")));
   }
 
   @Test
@@ -103,9 +103,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:other-template(text:$value) DISPLAY Value: ${$value};",
-            "LET template:invoke-template(text:$param) INVOKE other-template($param);",
-            "INVOKE invoke-template('test');")));
+            "--- TEMPLATE other-template ---", "PARAMETERS text:$value;", "DISPLAY Value: ${$value};",
+            "--- TEMPLATE invoke-template ---", "PARAMETERS text:$param;", "INVOKE other-template($param);",
+            "--- MAIN ---", "INVOKE invoke-template('test');")));
   }
 
   @Test
@@ -118,11 +118,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:conditional-template(indicator:$condition, text:$value)",
+            "--- TEMPLATE conditional-template ---", "PARAMETERS indicator:$condition, text:$value;",
             "WHEN $condition DISPLAY Condition met: ${$value}",
             "WHEN $condition == FALSE DISPLAY Condition not met",
             "OTHERWISE DISPLAY Unknown condition: ${$condition};",
-            "INVOKE conditional-template(TRUE, 'test');")));
+            "--- MAIN ---", "INVOKE conditional-template(TRUE, 'test');")));
   }
 
   @Test
@@ -135,13 +135,13 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:param-validation-template(text:$param1, number:$param2) DISPLAY Valid parameters;",
-            "INVOKE param-validation-template('test', 42);")));
+            "--- TEMPLATE param-validation-template ---", "PARAMETERS text:$param1, number:$param2;", "DISPLAY Valid parameters;",
+            "--- MAIN ---", "INVOKE param-validation-template('test', 42);")));
   }
 
-  // #endregion templateDefinition ---------------------------------------------
+  // #endregion templateSection ------------------------------------------------
 
-  // #region templateDeclaration -----------------------------------------------
+  // #region parametersDeclaration ---------------------------------------------
 
   @Test
   void testTemplateDeclaration_NoParameters() {
@@ -153,8 +153,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:simple-template() DISPLAY Hello World;",
-            "INVOKE simple-template();")));
+            "--- TEMPLATE simple-template ---", "DISPLAY Hello World;",
+            "--- MAIN ---", "INVOKE simple-template();")));
   }
 
   @Test
@@ -167,8 +167,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:greeting-template(text:$name) DISPLAY Hello ${$name};",
-            "INVOKE greeting-template('World');")));
+            "--- TEMPLATE greeting-template ---", "PARAMETERS text:$name;", "DISPLAY Hello ${$name};",
+            "--- MAIN ---", "INVOKE greeting-template('World');")));
   }
 
   @Test
@@ -181,8 +181,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:complex-template(text:$first, number:$second, indicator:$third) DISPLAY Values: ${$first}, ${$second}, ${$third};",
-            "INVOKE complex-template('test', 42, TRUE);")));
+            "--- TEMPLATE complex-template ---", "PARAMETERS text:$first, number:$second, indicator:$third;", "DISPLAY Values: ${$first}, ${$second}, ${$third};",
+            "--- MAIN ---", "INVOKE complex-template('test', 42, TRUE);")));
   }
 
   @Test
@@ -195,8 +195,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:all-types-template(text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur) DISPLAY Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
-            "INVOKE all-types-template('text', 123, TRUE, date('2023-01-01'), time('12:00:00'), day-time-duration('P1D'));")));
+            "--- TEMPLATE all-types-template ---", "PARAMETERS text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur;", "DISPLAY Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
+            "--- MAIN ---", "INVOKE all-types-template('text', 123, TRUE, date('2023-01-01'), time('12:00:00'), day-time-duration('P1D'));")));
   }
 
   @Test
@@ -209,11 +209,276 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:template-with-dashes(text:$param) DISPLAY Template: ${$param};",
-            "INVOKE template-with-dashes('test');")));
+            "--- TEMPLATE template-with-dashes ---", "PARAMETERS text:$param;", "DISPLAY Template: ${$param};",
+            "--- MAIN ---", "INVOKE template-with-dashes('test');")));
   }
 
-  // #endregion templateDeclaration --------------------------------------------
+  // #endregion parametersDeclaration ------------------------------------------
+
+  // #region Template sections with several lines ------------------------------
+
+  @Test
+  void testTemplateSection_SeveralLines() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let two-lines(string:name) -> { ",
+            "call(two-lines01(string:name=$name))",
+            "call(two-lines02(string:name=$name)) }",
+            "let two-lines01(string:name) -> { text('Hello ')eval($name) }",
+            "let two-lines02(string:name) -> { text('Goodbye ')eval($name) }",
+            "let body01() -> { call(two-lines(string:name='World')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE two-lines ---",
+            "PARAMETERS text:$name;",
+            "DISPLAY Hello ${$name};",
+            "DISPLAY Goodbye ${$name};",
+            "--- MAIN ---",
+            "INVOKE two-lines('World');")));
+  }
+
+  @Test
+  void testTemplateSection_LineWithContext() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let texts(string:prefix) -> { ",
+            "for-each(/*/PathNode/TextField).call(texts01(string:prefix=$prefix)) }",
+            "let texts01(string:prefix) -> { eval($prefix)text(' ')eval(./normalize-space(text())) }",
+            "let body01() -> { call(texts(string:prefix='Text:')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE texts ---",
+            "PARAMETERS text:$prefix;",
+            "WITH BT-00-Text DISPLAY ${$prefix} ${BT-00-Text};",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE texts('Text:');")));
+  }
+
+  @Test
+  void testTemplateSection_NestedLines_ReadTheParameters() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let nested(string:p) -> { text('Top ')eval($p)",
+            "for-each(/*/PathNode/TextField).call(nested01(string:p=$p)) }",
+            "let nested01(string:p) -> { text('Nested ')eval($p) }",
+            "let body01() -> { call(nested(string:p='x')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE nested ---",
+            "PARAMETERS text:$p;",
+            "DISPLAY Top ${$p};",
+            "  WITH BT-00-Text DISPLAY Nested ${$p};",
+            "--- MAIN ---",
+            "INVOKE nested('x');")));
+  }
+
+  @Test
+  void testTemplateSection_OutlineNumber() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let numbered() -> { ",
+            "call(numbered01()) }",
+            "let numbered01() -> { text('Numbered') }",
+            "let body01() -> { call(numbered()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE numbered ---",
+            "3 DISPLAY Numbered;",
+            "--- MAIN ---",
+            "INVOKE numbered();")));
+  }
+
+  @Test
+  void testTemplateSection_InvokesAnotherTemplate() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let inner(string:v) -> { eval($v) }",
+            "let outer() -> { ",
+            "call(outer01())",
+            "call(outer02()) }",
+            "let outer01() -> { call(inner(string:v='a')) }",
+            "let outer02() -> { call(inner(string:v='b')) }",
+            "let body01() -> { call(outer()) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE inner ---",
+            "PARAMETERS text:$v;",
+            "DISPLAY ${$v};",
+            "--- TEMPLATE outer ---",
+            "INVOKE inner('a');",
+            "INVOKE inner('b');",
+            "--- MAIN ---",
+            "INVOKE outer();")));
+  }
+
+  @Test
+  void testTemplateSection_ParametersAreNotVisibleOutside() {
+    assertThrows(InvalidIdentifierException.class, () -> translateTemplate(lines(
+        "--- TEMPLATE t ---",
+        "PARAMETERS text:$p;",
+        "DISPLAY ${$p};",
+        "--- MAIN ---",
+        "DISPLAY ${$p};")));
+  }
+
+  @Test
+  void testTemplateSection_FirstLineIndented_Throws() {
+    InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---",
+            "  DISPLAY x;",
+            "--- MAIN ---",
+            "INVOKE t();")));
+    assertEquals(InvalidIndentationException.ErrorCode.START_INDENT_AT_ZERO,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testTemplateSection_WithoutMainSectionHeader_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- TEMPLATE t ---",
+        "DISPLAY x;",
+        "INVOKE t();")));
+  }
+
+  @Test
+  void testTemplateSection_WithoutLines_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- TEMPLATE t ---",
+        "PARAMETERS text:$p;",
+        "--- MAIN ---",
+        "DISPLAY x;")));
+  }
+
+  @Test
+  void testTemplateSection_ParametersAfterALine_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- TEMPLATE t ---",
+        "DISPLAY x;",
+        "PARAMETERS text:$p;",
+        "--- MAIN ---",
+        "INVOKE t();")));
+  }
+
+  @Test
+  void testTemplateSection_AfterMainSection_IsSyntaxError() {
+    assertSyntaxError(() -> translateTemplate(lines(
+        "--- MAIN ---",
+        "DISPLAY x;",
+        "--- TEMPLATE t ---",
+        "DISPLAY y;")));
+  }
+
+  @Test
+  void testTemplateSection_KeywordAsName_Throws() {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE date ---",
+            "DISPLAY x;",
+            "--- MAIN ---",
+            "DISPLAY y;")));
+    assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_IS_KEYWORD,
+        exception.getErrorCode());
+    assertEquals("line 1:0 Template 'date' cannot be declared: its name is a keyword of EFX"
+        + " expressions, so it could not be invoked.", exception.getMessage());
+  }
+
+  @Test
+  void testTemplateSection_NameStartingWithAKeyword_CanBeInvoked() {
+    assertEquals(
+        translateTemplate(lines(
+            "--- TEMPLATE a ---",
+            "DISPLAY x;",
+            "--- MAIN ---",
+            "INVOKE a();")).replace("a(", "date-value("),
+        translateTemplate(lines(
+            "--- TEMPLATE date-value ---",
+            "DISPLAY x;",
+            "--- MAIN ---",
+            "INVOKE date-value();")));
+  }
+
+  @Test
+  void testTemplateSection_NameOfALineOfAnotherTemplate_Throws() {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---",
+            "DISPLAY one;",
+            "DISPLAY two;",
+            "--- TEMPLATE t01 ---",
+            "DISPLAY three;",
+            "--- MAIN ---",
+            "INVOKE t();",
+            "INVOKE t01();")));
+    assertEquals(InvalidIdentifierException.ErrorCode.NAME_IS_GENERATED, exception.getErrorCode());
+    assertEquals("line 4:0 Template 't01' cannot be declared: the translator would give the same"
+        + " name to two of the templates and template lines it translates.", exception.getMessage());
+  }
+
+  @Test
+  void testTemplateSection_NameOfAMainLine_Throws() {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE body01 ---",
+            "DISPLAY x;",
+            "--- MAIN ---",
+            "INVOKE body01();")));
+    assertEquals(InvalidIdentifierException.ErrorCode.NAME_IS_GENERATED, exception.getErrorCode());
+  }
+
+  @Test
+  void testTemplateSection_LinesNamedAsMainLines_Throws() {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE body ---",
+            "DISPLAY one;",
+            "DISPLAY two;",
+            "--- MAIN ---",
+            "INVOKE body();")));
+    assertEquals(InvalidIdentifierException.ErrorCode.NAME_IS_GENERATED, exception.getErrorCode());
+  }
+
+  @Test
+  void testTranslatorReused_AfterAnErrorInATemplateSection() throws InstantiationException {
+    final EfxTemplateTranslator translator = EfxTranslatorFactory
+        .getEfxTemplateTranslator(this.getSdkVersion(), DependencyFactoryMock.INSTANCE, DEFAULT_OPTIONS);
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate(
+        lines("--- TEMPLATE t ---", "PARAMETERS text:$p, text:$p;", "DISPLAY x;", "--- MAIN ---",
+            "INVOKE t('a', 'b');") + "\n",
+        DEFAULT_OPTIONS));
+    assertEquals(translateTemplate("DISPLAY ok;"),
+        translator.renderTemplate("DISPLAY ok;\n", DEFAULT_OPTIONS));
+    // A failure after a line of the section leaves blocks behind.
+    assertThrows(InvalidIdentifierException.class, () -> translator.renderTemplate(
+        lines("--- TEMPLATE t ---", "DISPLAY x;", "  DISPLAY ${$missing};", "--- MAIN ---",
+            "INVOKE t();") + "\n",
+        DEFAULT_OPTIONS));
+    assertEquals(translateTemplate("DISPLAY ok;"),
+        translator.renderTemplate("DISPLAY ok;\n", DEFAULT_OPTIONS));
+  }
+
+  @Test
+  void testTemplateSection_SameNameTwice_Throws() {
+    assertThrows(InvalidIdentifierException.class, () -> translateTemplate(lines(
+        "--- TEMPLATE t ---",
+        "DISPLAY x;",
+        "--- TEMPLATE t ---",
+        "DISPLAY y;",
+        "--- MAIN ---",
+        "INVOKE t();")));
+  }
+
+  // #endregion Template sections with several lines ---------------------------
 
   // #region templateFragment --------------------------------------------------
 
@@ -413,8 +678,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:complex-template(text:$field) DISPLAY name ${$field} label #{field|name|${$field}};",
-            "INVOKE complex-template('BT-00-Text');")));
+            "--- TEMPLATE complex-template ---", "PARAMETERS text:$field;", "DISPLAY name ${$field} label #{field|name|${$field}};",
+            "--- MAIN ---", "INVOKE complex-template('BT-00-Text');")));
   }
 
   // The last line of a file may be a comment or blanks with no line end after it.
@@ -500,9 +765,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "LET text:?test(text:$p1, number:$p2) = concat($p1, $t1);",
             "LET number:$n2 = $n1 + 1;",
             "LET text:$t4= ?test($t3, 22);",
-            "LET template:some-template(text:$text1, text:$text2) DISPLAY ${BT-00-Text} dokimi&#59; ${$text2} &#59;;",
+            "--- TEMPLATE some-template ---", "PARAMETERS text:$text1, text:$text2;", "DISPLAY ${BT-00-Text} dokimi&#59; ${$text2} &#59;;",
             "  {BT-00-Number} ${BT-00-Text}",
-            "2 {context:$ctx2=BT-00-Text} ${BT-00-Text} lala",
+            "--- MAIN ---", "2 {context:$ctx2=BT-00-Text} ${BT-00-Text} lala",
             "  3 WITH context:$ctx3=BT-00-Number DISPLAY ${BT-00-Text};",
             "  4 WITH context:$ctx = BT-00-Text, text:$t2 = ?test($t3, 99) INVOKE some-template($ctx, $t2);",
             "  WITH context:$ctx4 = BT-00-Text, text:$t5 = ?test($t3, 99) DISPLAY ${BT-00-Text};")));
@@ -520,8 +785,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:ctx1=., string:tx='++'))"), //
         translateTemplate(lines(
-            "LET template:some-template(text:$t) DISPLAY --${$t}--;",
-            "WITH context:$ctx1 = BT-00-Text, text:$tx='++' INVOKE some-template($tx);",
+            "--- TEMPLATE some-template ---", "PARAMETERS text:$t;", "DISPLAY --${$t}--;",
+            "--- MAIN ---", "WITH context:$ctx1 = BT-00-Text, text:$tx='++' INVOKE some-template($tx);",
             "  {BT-00-StartDate} Nested content allowed")));
   }
 
@@ -856,7 +1121,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines("LET text:?a(text:$x) = $x;",
-            "LET template:t(text:$x) DISPLAY ${$x};", "INVOKE t('c');")));
+            "--- TEMPLATE t ---", "PARAMETERS text:$x;", "DISPLAY ${$x};", "--- MAIN ---", "INVOKE t('c');")));
   }
 
   @Test
@@ -1413,17 +1678,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
     assertEquals(
         translateTemplate(lines(
             "LET text:$t = 'x';",
-            "LET template:show(text:$v) DISPLAY ${$v};",
             "{BT-00-Text} ${BT-00-Text}",
-            "    WITH ND-Root INVOKE show($t);",
+            "    WITH ND-Root DISPLAY ${$t};",
             "--- SUMMARY ---",
             "{BT-00-Text} Summary: ${BT-00-Text}")),
         translateTemplate(lines(
             "LET text:$t = 'x';",
-            "LET template:show(text:$v) DISPLAY ${$v};",
             "--- MAIN ---",
             "{BT-00-Text} ${BT-00-Text}",
-            "    WITH ND-Root INVOKE show($t);",
+            "    WITH ND-Root DISPLAY ${$t};",
             "--- SUMMARY ---",
             "{BT-00-Text} Summary: ${BT-00-Text}")));
   }
@@ -2875,12 +3138,12 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:multi-when-template(text:$status)",
+            "--- TEMPLATE multi-when-template ---", "PARAMETERS text:$status;",
             "WHEN $status == 'active' DISPLAY Status: Active",
             "WHEN $status == 'inactive' DISPLAY Status: Inactive",
             "WHEN $status == 'pending' DISPLAY Status: Pending",
             "OTHERWISE DISPLAY Status: Unknown;",
-            "INVOKE multi-when-template('active');")));
+            "--- MAIN ---", "INVOKE multi-when-template('active');")));
   }
 
   @Test
@@ -2893,11 +3156,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:complex-when-template(number:$value)",
+            "--- TEMPLATE complex-when-template ---", "PARAMETERS number:$value;",
             "WHEN $value > 0 and $value < 100 DISPLAY In range",
             "WHEN $value <= 0 DISPLAY Too low",
             "OTHERWISE DISPLAY Too high;",
-            "INVOKE complex-when-template(50);")));
+            "--- MAIN ---", "INVOKE complex-when-template(50);")));
   }
 
   @Test
@@ -2911,11 +3174,11 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:fallback-template(text:$reason) DISPLAY Fallback: ${$reason};",
-            "LET template:otherwise-invoke-template(indicator:$condition, text:$reason)",
+            "--- TEMPLATE fallback-template ---", "PARAMETERS text:$reason;", "DISPLAY Fallback: ${$reason};",
+            "--- TEMPLATE otherwise-invoke-template ---", "PARAMETERS indicator:$condition, text:$reason;",
             "WHEN $condition DISPLAY Condition met",
             "OTHERWISE INVOKE fallback-template($reason);",
-            "INVOKE otherwise-invoke-template(FALSE, 'default');")));
+            "--- MAIN ---", "INVOKE otherwise-invoke-template(FALSE, 'default');")));
   }
 
   @Test
@@ -2931,8 +3194,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*/PathNode/TextField).call(body02(string:t='test'))"),
         translateTemplate(lines(
             "// test",
-            "LET template:some-template(text:$txt) DISPLAY >${$txt}<;",
-            "WITH BT-00-Text, text:$t='test'",
+            "--- TEMPLATE some-template ---", "PARAMETERS text:$txt;", "DISPLAY >${$txt}<;",
+            "--- MAIN ---", "WITH BT-00-Text, text:$t='test'",
             "WHEN 1 > 2 DISPLAY foo",
             "WHEN 2 < 3 DISPLAY bar",
             "WHEN 3 > 3 INVOKE some-template('1')",
@@ -3081,28 +3344,6 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testTemplateDeclaration_InvalidNestedDeclaration() {
-    var template = lines(
-        "LET template:tem-plate1(text:$t) DISPLAY --${$t}--;",
-        "  LET template:tem-plate2(text:$t) DISPLAY --${$t}--;",
-        "WITH context:$ctx1 = BT-00-Text, text:$t='++' INVOKE tem-plate2($t);");
-    InvalidIndentationException exception =
-        assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
-    assertEquals(InvalidIndentationException.ErrorCode.NO_INDENT_ON_TEMPLATE_DECLARATIONS,
-        exception.getErrorCode());
-    assertEquals("line 2:0 A template declaration cannot be indented.", exception.getMessage());
-  }
-
-  @Test
-  void testTemplateDeclaration_InvalidNestedStructure() {
-    var template = lines(
-        "LET template:outer-template(text:$param) DISPLAY Outer template;",
-        "  LET template:nested-template(text:$inner) DISPLAY Nested template;",
-        "");
-    assertThrows(InvalidIndentationException.class, () -> translateTemplate(template));
-  }
-
-  @Test
   void testTemplateLine_InvalidIndentation_InconsistentSpaces() {
     InvalidIndentationException exception = assertThrows(InvalidIndentationException.class,
         () -> translateTemplate(
@@ -3121,8 +3362,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateDefinition_InvalidParameters() {
     var template = lines(
-        "LET template:param-validation-template(text:$param1, number:$param2) DISPLAY Valid parameters;",
-        "INVOKE param-validation-template('test', 'test');");
+        "--- TEMPLATE param-validation-template ---", "PARAMETERS text:$param1, number:$param2;", "DISPLAY Valid parameters;",
+        "--- MAIN ---", "INVOKE param-validation-template('test', 'test');");
     assertThrows(TypeMismatchException.class, () -> translateTemplate(template));
   }
 
@@ -3211,9 +3452,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateParameterReference_Sequence_NamesItAsWritten() {
     TypeMismatchException exception = assertThrows(TypeMismatchException.class,
-        () -> translateTemplate("LET template:t(text*:$items) DISPLAY ${upper-case($items)};"));
+        () -> translateTemplate(lines("--- TEMPLATE t ---", "PARAMETERS text*:$items;",
+            "DISPLAY ${upper-case($items)};", "--- MAIN ---")));
     assertEquals(TypeMismatchException.ErrorCode.IDENTIFIER_IS_SEQUENCE, exception.getErrorCode());
-    assertEquals("line 1:50 Type mismatch. Function 'upper-case' cannot take 'text*'."
+    assertEquals("line 3:21 Type mismatch. Function 'upper-case' cannot take 'text*'."
         + " Its argument must be 'text'. Parameter '$items' is declared as a sequence.",
         exception.getMessage());
   }
@@ -3275,8 +3517,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateDeclaration_ReservedName_Throws() {
     var template = lines(
-        "LET template:__greeting() DISPLAY Hello;",
-        "INVOKE __greeting();");
+        "--- TEMPLATE __greeting ---", "DISPLAY Hello;",
+        "--- MAIN ---", "INVOKE __greeting();");
     InvalidIdentifierException exception =
         assertThrows(InvalidIdentifierException.class, () -> translateTemplate(template));
     assertEquals(InvalidIdentifierException.ErrorCode.IDENTIFIER_IS_RESERVED,
@@ -3292,8 +3534,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateInvocation_NodeArgument_Throws() {
     var template = lines(
-        "LET template:greeting(text:$name) DISPLAY Hello ${$name};",
-        "INVOKE greeting(ND-SubNode);");
+        "--- TEMPLATE greeting ---", "PARAMETERS text:$name;", "DISPLAY Hello ${$name};",
+        "--- MAIN ---", "INVOKE greeting(ND-SubNode);");
     assertThrows(TypeMismatchException.class, () -> translateTemplate(template));
   }
 
@@ -3447,10 +3689,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   void testTypeErrorMessage_TemplateInvocation() {
     TypeMismatchException ex = assertThrows(TypeMismatchException.class,
         () -> translateTemplate(lines(
-            "LET template:greeting(text:$name) DISPLAY Hello ${$name};",
-            "INVOKE greeting(ND-SubNode);")));
+            "--- TEMPLATE greeting ---", "PARAMETERS text:$name;", "DISPLAY Hello ${$name};",
+            "--- MAIN ---", "INVOKE greeting(ND-SubNode);")));
     assertEquals(TypeMismatchException.ErrorCode.CANNOT_CONVERT, ex.getErrorCode());
-    assertEquals("line 2:0 Type mismatch. Template 'greeting' cannot take 'node'."
+    assertEquals("line 5:0 Type mismatch. Template 'greeting' cannot take 'node'."
         + " Its argument must be 'text'.", ex.getMessage());
   }
 
@@ -3634,29 +3876,29 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @Test
   void testTemplateDefinition_InvalidTooManyParameters() {
     var template = lines(
-        "LET template:param-validation-template(text:$param1, number:$param2) DISPLAY Valid parameters;",
-        "INVOKE param-validation-template('test', 42, 43);");
+        "--- TEMPLATE param-validation-template ---", "PARAMETERS text:$param1, number:$param2;", "DISPLAY Valid parameters;",
+        "--- MAIN ---", "INVOKE param-validation-template('test', 42, 43);");
     assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
   }
 
   @Test
   void testTemplateDefinition_InvalidTooFewParameters() {
     var template = lines(
-        "LET template:param-validation-template(text:$param1, number:$param2) DISPLAY Valid parameters;",
-        "INVOKE param-validation-template('test');");
+        "--- TEMPLATE param-validation-template ---", "PARAMETERS text:$param1, number:$param2;", "DISPLAY Valid parameters;",
+        "--- MAIN ---", "INVOKE param-validation-template('test');");
     assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
   }
 
   @Test
   void testTemplateDefinition_InvalidNoArguments() {
     var template = lines(
-        "LET template:greeting(text:$name) DISPLAY Hello ${$name};",
-        "INVOKE greeting();");
+        "--- TEMPLATE greeting ---", "PARAMETERS text:$name;", "DISPLAY Hello ${$name};",
+        "--- MAIN ---", "INVOKE greeting();");
     InvalidArgumentException ex =
         assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
     assertEquals(InvalidArgumentException.ErrorCode.ARGUMENT_NUMBER_MISMATCH, ex.getErrorCode());
     assertEquals(
-        "line 2:0 Argument number mismatch. Template 'greeting' takes 1 argument but got 0.",
+        "line 5:0 Argument number mismatch. Template 'greeting' takes 1 argument but got 0.",
         ex.getMessage());
   }
 
@@ -3664,15 +3906,15 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   @ResourceLock(Resources.LOCALE)
   void testTemplateDefinition_InvalidNoArguments_AsciiDigitsWhateverTheDefaultLocale() {
     var template = lines(
-        "LET template:greeting(text:$name) DISPLAY Hello ${$name};",
-        "INVOKE greeting();");
+        "--- TEMPLATE greeting ---", "PARAMETERS text:$name;", "DISPLAY Hello ${$name};",
+        "--- MAIN ---", "INVOKE greeting();");
     Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
     try {
       Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
       InvalidArgumentException ex =
           assertThrows(InvalidArgumentException.class, () -> translateTemplate(template));
       assertEquals(
-          "line 2:0 Argument number mismatch. Template 'greeting' takes 1 argument but got 0.",
+          "line 5:0 Argument number mismatch. Template 'greeting' takes 1 argument but got 0.",
           ex.getMessage());
     } finally {
       Locale.setDefault(Locale.Category.FORMAT, formatLocale);
@@ -4178,10 +4420,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "LET template:t() DISPLAY x;",
+            "--- TEMPLATE t ---", "DISPLAY x;",
             "  {ND-RepeatableNode} a",
             "    {ND-RepeatableInRepeatableNode[at 2]} b",
-            "{ND-Root} c")));
+            "--- MAIN ---", "{ND-Root} c")));
   }
 
   @Test
