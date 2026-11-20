@@ -61,8 +61,15 @@ public abstract class EfxTestsBase {
     assertEquals(expectedTranslation, translateExpression(expression, params));
   }
 
+  /**
+   * Translates an expression in a context: written {context} ${expression} in EFX 1, and
+   * WITH context COMPUTE expression in EFX 2.
+   */
   protected String translateExpressionWithContext(final String context, final String expression) {
-    return translateExpression(String.format("{%s} ${%s}", context, expression));
+    if (getSdkVersion().startsWith("eforms-sdk-1")) {
+      return translateExpression(String.format("{%s} ${%s}", context, expression));
+    }
+    return translateComputeExpressionWithContext(context, expression);
   }
 
   protected void testComputeExpressionWithContext(final String expectedTranslation,

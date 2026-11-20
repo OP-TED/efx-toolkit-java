@@ -70,7 +70,7 @@ class EfxInvalidOperationV2Test extends EfxTestsBase {
   @ParameterizedTest(name = "{0}")
   @MethodSource("invalidTemplateOperations")
   void testInvalidTemplateOperation_IsRejected(final String expression, final Outcome outcome) {
-    outcome.assertRaisedBy(() -> translateTemplate("{ND-Root} ${" + expression + "}"));
+    outcome.assertRaisedBy(() -> translateTemplate("WITH ND-Root DISPLAY ${" + expression + "};"));
   }
 
   @ParameterizedTest(name = "{0}")
@@ -807,11 +807,11 @@ class EfxInvalidOperationV2Test extends EfxTestsBase {
 
         // A node has no value, so an expression cannot give one, nor an iteration return one
         typeError("ND-SubNode", CANNOT_CONVERT,
-            "Expression block cannot take 'node'"),
+            "Clause 'COMPUTE' cannot take 'node'"),
         typeError("ND-RepeatableNode", CANNOT_CONVERT,
-            "Expression block cannot take 'node*'"),
+            "Clause 'COMPUTE' cannot take 'node*'"),
         typeError("/ND-SubNode", CANNOT_CONVERT,
-            "Expression block cannot take 'node'"),
+            "Clause 'COMPUTE' cannot take 'node'"),
         typeError("for context:$c in ND-Root return $c::ND-SubNode", CANNOT_CONVERT,
             "Iteration 'for' cannot take 'node'"),
         typeError("for text:$x in ['a'] return ND-SubNode", CANNOT_CONVERT,

@@ -27,13 +27,13 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testFieldContext() {
-    Set<String> deps = extract("{BT-00-Text} ${ALWAYS}");
+    Set<String> deps = extract("WITH BT-00-Text COMPUTE ALWAYS");
     assertTrue(deps.contains("BT-00-Text"));
   }
 
   @Test
   void testNodeContext() {
-    Set<String> deps = extract("{ND-Root} ${ALWAYS}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE ALWAYS");
     assertTrue(deps.contains("ND-Root"));
   }
 
@@ -55,25 +55,25 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testFieldReferenceInExpression() {
-    Set<String> deps = extract("{ND-Root} ${BT-00-Text is present}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE BT-00-Text is present");
     assertEquals(Set.of("ND-Root", "BT-00-Text"), deps);
   }
 
   @Test
   void testMultipleFieldReferences() {
-    Set<String> deps = extract("{ND-Root} ${BT-00-Text == BT-00-Number}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE BT-00-Text == BT-00-Number");
     assertEquals(Set.of("ND-Root", "BT-00-Text", "BT-00-Number"), deps);
   }
 
   @Test
   void testAbsoluteFieldReference() {
-    Set<String> deps = extract("{ND-Root} ${/BT-00-Text is present}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE /BT-00-Text is present");
     assertEquals(Set.of("ND-Root", "BT-00-Text"), deps);
   }
 
   @Test
   void testFieldReferenceWithContextOverride() {
-    Set<String> deps = extract("{ND-Root} ${for context:$c in ND-Root return $c::BT-00-Text is present}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE for context:$c in ND-Root return $c::BT-00-Text is present");
     assertTrue(deps.contains("ND-Root"));
     assertTrue(deps.contains("BT-00-Text"));
   }
@@ -84,7 +84,7 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testNodeReferenceInExpression() {
-    Set<String> deps = extract("{ND-Root} ${for context:$c in ND-Root return $c::BT-00-Text is present}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE for context:$c in ND-Root return $c::BT-00-Text is present");
     assertTrue(deps.contains("ND-Root"));
     assertTrue(deps.contains("BT-00-Text"));
   }
@@ -95,13 +95,13 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testLiteralExpression_NoDependencies() {
-    Set<String> deps = extract("{BT-00-Text} ${1 + 2}");
+    Set<String> deps = extract("WITH BT-00-Text COMPUTE 1 + 2");
     assertEquals(Set.of("BT-00-Text"), deps);
   }
 
   @Test
   void testBooleanLiteral_NoDependencies() {
-    Set<String> deps = extract("{BT-00-Text} ${ALWAYS and TRUE}");
+    Set<String> deps = extract("WITH BT-00-Text COMPUTE ALWAYS and TRUE");
     assertEquals(Set.of("BT-00-Text"), deps);
   }
 
@@ -127,7 +127,7 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testDuplicateFieldReferences() {
-    Set<String> deps = extract("{ND-Root} ${BT-00-Text == BT-00-Text}");
+    Set<String> deps = extract("WITH ND-Root COMPUTE BT-00-Text == BT-00-Text");
     assertEquals(Set.of("ND-Root", "BT-00-Text"), deps);
   }
 
@@ -160,12 +160,6 @@ class EfxComputeDependencyExtractorTest {
     Set<String> deps = extract("WITH ND-Root SELECT ND-SubNode");
     assertTrue(deps.contains("ND-SubNode"));
     assertTrue(deps.contains("ND-Root"));
-  }
-
-  @Test
-  void testSelector_BraceSpellingBehavesTheSame() {
-    assertEquals(extract("WITH ND-Root SELECT /BT-00-Text"),
-        extract("{ND-Root} &{/BT-00-Text}"));
   }
 
   // #endregion: Selectors ----------------------------------------------------
