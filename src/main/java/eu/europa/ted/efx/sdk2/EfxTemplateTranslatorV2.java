@@ -22,14 +22,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.runtime.atn.ParseInfo;
 import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
@@ -40,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
+import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.InvalidIndentationException;
 import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.EfxTemplateTranslator;
@@ -95,6 +102,7 @@ import eu.europa.ted.efx.model.templates.LineBreakContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.TextContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
+import eu.europa.ted.efx.model.templates.TemplateDefinition;
 import eu.europa.ted.efx.model.templates.ViewTemplate;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.FieldTypes;
@@ -201,6 +209,28 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
    * first line.
    */
   private ContentBlock blockAbove;
+
+  /**
+   * How many levels the lines of the section being translated are nested in: one in a template
+   * section, whose lines are nested in the template they declare, and none in the other sections.
+   */
+  private int sectionLevels = 0;
+
+  /**
+   * The template section being translated, until its first line declares the template.
+   */
+  private TemplateSectionContext undeclaredTemplateSection;
+
+  /**
+   * Whether the template section being translated has a single line at its top, which declares no
+   * context and no outline number.
+   */
+  private boolean singleLineWithoutContext;
+
+  /**
+   * The template sections of the file, by the name of the template they declare.
+   */
+  private final Map<String, TemplateSectionContext> templateSections = new LinkedHashMap<>();
 
   @SuppressWarnings("unused")
   private EfxTemplateTranslatorV2() {
@@ -362,45 +392,150 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     this.viewTemplate.addFunction(function);
   }
 
-  @Override
-  public void exitTemplateDefinition(TemplateDefinitionContext ctx) {
-    var parameters = this.translation.stack().pop(ParsedParameters.class);
-    var template = new Template(ctx.templateName.getText(), parameters);
-    this.translation.stack().declareTemplate(template);
-    this.translation.stack().push(template);
-  }
-
-  @Override
-  public void enterTemplateDefinition(TemplateDefinitionContext ctx) {
-    this.translation.stack().push(new ParsedParameters());
-  }
-
   // #endregion Global declarationExpressions ------------------------------------
 
   // #region Template File ----------------------------------------------------
 
   @Override
   public void enterTemplateFile(TemplateFileContext ctx) {
-    assert this.blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+    // A translation that failed may have left blocks and the state of a template section.
+    this.blockStack.clear();
     this.viewTemplate = new ViewTemplate();
     this.translatorContext = new TranslatorContext();
     this.indentWith = Indent.UNDETERMINED;
     this.indentSpaces = -1;
+    this.templateSections.clear();
+    this.sectionLevels = 0;
+    this.undeclaredTemplateSection = null;
+    this.singleLineWithoutContext = false;
   }
 
   @Override
   public void exitTemplateFile(TemplateFileContext ctx) {
-    // The end of the file closes the levels still open, as a line back at level 0 would: the block of
-    // each nested level and its stack frame.
+    this.closeOpenBlocks();
+    this.checkTemplateNamesAreNotGenerated();
+  }
+
+  /**
+   * Checks that the translator gives a name of its own to every template and template line. A line
+   * is named after the section or the template it is in, followed by its number, as {@code t01}
+   * for the first line of the template {@code t}, so a template could be named as a line, or its
+   * lines as the lines of a section or of another template.
+   *
+   * @throws InvalidIdentifierException for the first template whose name, or the name of one of its
+   *         lines, is given to a template or line before it
+   */
+  private void checkTemplateNamesAreNotGenerated() {
+    // The template that each name is given to, or to one of whose lines it is given, or "" for the
+    // lines of the main, summary and navigation sections.
+    final Map<String, String> owners = new HashMap<>();
+    for (TemplateSection section : TemplateSection.values()) {
+      final Set<String> ids = new LinkedHashSet<>();
+      this.viewTemplate.getSection(section).getRoot().collectDescendantIds(ids);
+      ids.forEach(id -> owners.put(id, ""));
+    }
+    for (ContentBlock template : this.viewTemplate.getTemplateDeclarations().getChildren()) {
+      final Set<String> ids = new LinkedHashSet<>();
+      ids.add(template.getId());
+      template.collectDescendantIds(ids);
+      for (String id : ids) {
+        final String owner = owners.putIfAbsent(id, template.getId());
+        if (owner != null) {
+          throw InvalidIdentifierException.nameIsGenerated(
+              this.templateSections.get(template.getId()),
+              Template.spellingOf(template.getId()).describe());
+        }
+      }
+    }
+  }
+
+  /**
+   * Closes the levels still open, as a line back at level 0 would: the block of each nested level
+   * and its stack frame. The block at level 0, if any, is removed too.
+   */
+  private void closeOpenBlocks() {
     while (this.blockStack.currentIndentationLevel() > 0) {
       this.blockStack.pop();
       this.translation.stack().popStackFrame();
     }
-    // If there are template lines, the top-level block of the last one is left; so we remove it here.
     if (!this.blockStack.isEmpty()) {
       this.blockStack.pop();
     }
   }
+
+  // #region Template sections ------------------------------------------------
+
+  /**
+   * Opens the scope of a template section: its parameters are declared in a stack frame of its own,
+   * which its lines can read.
+   */
+  @Override
+  public void enterTemplateSection(TemplateSectionContext ctx) {
+    final String name = ctx.templateName.getText();
+    if (!isIdentifierInExpressions(name)) {
+      throw InvalidIdentifierException.identifierIsKeyword(ctx, Template.spellingOf(name).describe());
+    }
+    this.closeOpenBlocks();
+    this.templateSections.putIfAbsent(name, ctx);
+    this.translation.stack().pushStackFrame();
+    this.translation.stack().push(new ParsedParameters());
+    this.undeclaredTemplateSection = ctx;
+    this.sectionLevels = 1;
+    this.singleLineWithoutContext = true;
+  }
+
+  /**
+   * @param name the name of a template, as its section heading writes it
+   * @return whether an expression reads the name as a name, and not as a keyword, so that an
+   *         invocation can name the template
+   */
+  private static boolean isIdentifierInExpressions(final String name) {
+    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(name));
+    lexer.removeErrorListeners();
+    lexer.pushMode(EfxLexer.EXPRESSION);
+    return lexer.nextToken().getType() == EfxLexer.Identifier
+        && lexer.nextToken().getType() == Token.EOF;
+  }
+
+  /**
+   * Declares the template of a template section, with the parameters of its PARAMETERS line, before
+   * its first line, so that its lines can invoke it. Its lines are nested in it.
+   */
+  private void declareTemplateOfSection() {
+    final TemplateSectionContext ctx = this.undeclaredTemplateSection;
+    this.undeclaredTemplateSection = null;
+    final ParsedParameters parameters = this.translation.stack().pop(ParsedParameters.class);
+    final Template template = new Template(ctx.templateName.getText(), parameters);
+    this.translation.stack().declareTemplate(template);
+    this.blockStack.clear();
+    this.blockStack.push(this.viewTemplate.getTemplateDeclarations().addChild(template.name,
+        List.of(), template.parameters));
+  }
+
+  /**
+   * Closes a template section. When it has a single line at its top, which declares no context and
+   * no outline number, the template displays what that line displays, and the lines nested in it,
+   * without a block of its own for the line.
+   */
+  @Override
+  public void exitTemplateSection(TemplateSectionContext ctx) {
+    final ContentBlock declaredTemplate = this.blockStack.firstElement();
+    this.closeOpenBlocks();
+    this.translation.stack().popStackFrame();
+    this.sectionLevels = 0;
+
+    if (this.singleLineWithoutContext && declaredTemplate.getChildren().size() == 1) {
+      final ContentBlock line = declaredTemplate.getChildren().peek();
+      final ContentBlock templates = this.viewTemplate.getTemplateDeclarations();
+      templates.removeChild(declaredTemplate);
+      final String name = ctx.templateName.getText();
+      final TemplateDefinition template = templates.addChild(name, line.getContentTemplates(),
+          this.translation.stack().getTemplate(name).parameters);
+      template.adoptChildrenOf(line);
+    }
+  }
+
+  // #endregion Template sections ---------------------------------------------
 
   // #endregion Template File -------------------------------------------------
   
@@ -1464,23 +1599,46 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   @Override
   public void enterTemplateLine(TemplateLineContext ctx) {
+    if (this.undeclaredTemplateSection != null) {
+      this.declareTemplateOfSection();
+    }
     final int indentLevel = this.getIndentLevel(ctx.indentation());
+    final boolean atSectionTop = this.sectionLevels > 0 && indentLevel == this.sectionLevels;
+    if (atSectionTop && (!this.isFirstLineOfSection() || ctx.contextDeclarationBlock() != null
+        || ctx.OutlineNumber() != null)) {
+      this.singleLineWithoutContext = false;
+    }
     this.enterTemplateLine(ctx, indentLevel);
     this.blockAbove = this.blockStack.blockAtLevel(indentLevel - 1);
     if (ctx.contextDeclarationBlock() == null) {
-      this.declareRootLineContext();
+      if (atSectionTop) {
+        // At the top of a template section, a line that declares no context is displayed in the
+        // context the template is invoked in.
+        this.translation.efxContext().push(null);
+      } else {
+        this.declareRootLineContext();
+      }
       this.translation.stack().push(new Variables());
     }
   }
 
-  @Override
-  public void enterTemplateDeclaration(TemplateDeclarationContext ctx) {
-    this.enterTemplateLine(ctx, 0);
+  /**
+   * @return whether no line of the template section being translated is translated yet
+   */
+  private boolean isFirstLineOfSection() {
+    return this.blockStack.size() == 1 && this.blockStack.peek().getChildren().isEmpty();
+  }
+
+  /**
+   * @return whether no line is above the line being translated, in its section, to nest it under
+   */
+  private boolean hasNoLineAbove() {
+    return this.blockStack.size() <= this.sectionLevels;
   }
 
   private void enterTemplateLine(ParserRuleContext ctx, final int indentLevel) {
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    if (indentChange > 0 && this.blockStack.isEmpty()) {
+    if (indentLevel > this.sectionLevels && this.hasNoLineAbove()) {
       throw InvalidIndentationException.startIndentAtZero(ctx);
     } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
@@ -1528,7 +1686,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     final int outlineNumber = this.outlineNumberOf(ctx);
     assert this.translation.stack().empty() : "Stack should be empty at this point.";
 
-    if (indentChange > 0 && this.blockStack.isEmpty()) {
+    if (indentLevel > this.sectionLevels && this.hasNoLineAbove()) {
       throw InvalidIndentationException.startIndentAtZero(ctx);
     } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
@@ -1544,25 +1702,6 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     } else {
       this.blockStack.pushSibling(outlineNumber, lineContext, variables, contentTemplates);
     }
-  }
-
-  @Override
-  public void exitTemplateDeclaration(TemplateDeclarationContext ctx) {
-    // What the line displays is on the stack in order: a content template for each WHEN alternative,
-    // then the one displayed otherwise.
-    final LinkedList<ContentTemplate> contentTemplates = new LinkedList<>();
-    while (this.translation.stack().peek() instanceof ContentTemplate) {
-      contentTemplates.addFirst(this.translation.stack().pop(ContentTemplate.class));
-    }
-    final Template template = this.translation.stack().pop(Template.class);
-    assert this.translation.stack().empty() : "Stack should be empty at this point.";
-
-    if (this.getIndentLevel(ctx.indentation()) != 0) {
-      throw InvalidIndentationException.noIndentOnTemplateDeclarations(ctx);
-    }
-
-    this.blockStack.clear();
-    this.blockStack.push(this.viewTemplate.getTemplateDeclarations().addChild(template.name, contentTemplates, template.parameters));
   }
 
   /**
@@ -1642,7 +1781,15 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     }
   }
 
+    /**
+     * @return the level of a line in its section: the levels its indentation gives, plus the levels
+     *         that the lines of its section are nested in
+     */
     private int getIndentLevel(IndentationContext ctx) {
+      return this.sectionLevels + this.getIndentation(ctx);
+    }
+
+    private int getIndentation(IndentationContext ctx) {
 
       if (ctx == null) {
         return 0; // No indentation, default to 0.
