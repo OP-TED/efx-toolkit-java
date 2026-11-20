@@ -65,6 +65,13 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   }
 
   @Test
+  void testExpression_HashCodelist_IsSyntaxError() {
+    assertSyntaxErrorMessage("line 1:35 Syntax error: unexpected '#' in expression."
+        + " Write a codelist as '[...accessibility]'.",
+        () -> translateExpression("WITH ND-Root COMPUTE BT-00-Code in #accessibility"));
+  }
+
+  @Test
   void testExpression_WithoutWith() {
     assertSyntaxErrorMessage(
         "line 1:0 Syntax error: unexpected '1' in expression; expected 'WITH'.",
@@ -386,6 +393,21 @@ class EfxErrorStrategyTest extends EfxTestsBase {
     assertSyntaxErrorMessage(
         "line 5:4 Syntax error: unexpected 'FOR' in as clause; expected 'AS'.",
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    FOR BT-00-Text IN 1;")));
+  }
+
+  @Test
+  void testRule_FlagWithoutScope_GetsNoCodelistHint() {
+    assertSyntaxErrorMessage(
+        "line 6:24 Syntax error: unexpected '#' in rule; expected ';' or 'SCOPE'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1 #LAWFULNESS;")));
+  }
+
+  @Test
+  void testRule_SecondFlag_GetsNoCodelistHint() {
+    assertSyntaxErrorMessage("line 6:42 Syntax error: unexpected '#' in rule; expected ';'.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1 SCOPE #LAWFULNESS #OTHER;")));
   }
 
   @Test
