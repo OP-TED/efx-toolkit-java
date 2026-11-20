@@ -1605,7 +1605,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     final int indentLevel = this.getIndentLevel(ctx.indentation());
     final boolean atSectionTop = this.sectionLevels > 0 && indentLevel == this.sectionLevels;
     if (atSectionTop && (!this.isFirstLineOfSection() || ctx.contextDeclarationBlock() != null
-        || ctx.OutlineNumber() != null)) {
+        || hasOutlineMarker(ctx))) {
       this.singleLineWithoutContext = false;
     }
     this.enterTemplateLine(ctx, indentLevel);
@@ -1766,12 +1766,27 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * @return the outline number written at the start of the line, or -1 when there is none
+   * @return whether the line starts with a marker of its outline number: a number, '?' or '#'
+   */
+  private static boolean hasOutlineMarker(TemplateLineContext ctx) {
+    return ctx.OutlineNumber() != null || ctx.AutoOutlineNumber() != null
+        || ctx.NoOutlineNumber() != null;
+  }
+
+  /**
+   * Reads the marker written at the start of the line, in the form {@link ContentBlock} takes the
+   * outline number: the number written, -1 for '?' (the next number among the lines at its level),
+   * and 0 for '#' or no marker (no number).
+   *
+   * @return the outline number of the line
    * @throws InvalidUsageException if the number is larger than the largest {@code int}
    */
   private int outlineNumberOf(TemplateLineContext ctx) {
-    if (ctx.OutlineNumber() == null) {
+    if (ctx.AutoOutlineNumber() != null) {
       return -1;
+    }
+    if (ctx.OutlineNumber() == null) {
+      return 0;
     }
     final String number = ctx.OutlineNumber().getText().trim();
     try {
