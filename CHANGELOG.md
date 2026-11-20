@@ -17,6 +17,7 @@ These changes are on the `develop` branch and will be part of the next pre-relea
 
 - Build with the SDK pre-release that follows 2.0.0-alpha.5. Its EFX-2 grammar no longer types expressions, and this version does not build with an earlier one.
 - Write EFX-2 indexes as `[at n]`, and statement keywords, such as `WITH` and `LET`, in upper case. The SDK changelog lists the other language changes.
+- Mark the outline number of an EFX-2 template line with `?` where the line relied on an automatic number, and remove the `0` written for a line without a number: a line without a number, `?` or `#` now has no number.
 - Replace the context shortcuts `.`, `..` and `/` with the node or field they stand for, for example `ND-Root` instead of `/`. They are no longer accepted as the context of a template line, a `WITH` clause or a context variable.
 - Write `::` only after a context variable, as in `for context:$c in ND-1 return $c::BT-1`. Where you wrote `BT-1::BT-2` to read the BT-2 next to a BT-1, write `BT-2[BT-1 is present]`.
 - Validate the generated Schematron with an XSLT 3.0 processor, such as Saxon 12.

@@ -175,6 +175,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.Spaces, "spaces"),
             Map.entry(EfxLexer.MixedIndent, "tabs and spaces"),
             Map.entry(EfxLexer.OutlineNumber, "an outline number"),
+            Map.entry(EfxLexer.AutoOutlineNumber, "'?'"),
+            Map.entry(EfxLexer.NoOutlineNumber, "'#'"),
 
             // Headers and directives
             Map.entry(EfxLexer.TemplateSectionHeaderStart, "a template section header"),
@@ -233,6 +235,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.VariablePrefix, "'$'"),
             Map.entry(EfxLexer.AtPrefix, "'@'"),
             Map.entry(EfxLexer.HashPrefix, "'#'"),
+            Map.entry(EfxLexer.FunctionPrefix, "'?'"),
 
             // Literals and operators
             Map.entry(EfxLexer.StringLiteral, "a text literal"),
