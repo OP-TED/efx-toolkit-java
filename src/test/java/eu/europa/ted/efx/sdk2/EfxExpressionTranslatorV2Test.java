@@ -24,6 +24,7 @@ import java.util.Locale;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
@@ -1907,73 +1908,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
 
   @Test
-  void testFieldReferenceWithFieldContextOverride() {
-    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../TextField/normalize-space(text())", "BT-00-Code",
-        "BT-01-SubLevel-Text::BT-00-Text");
-  }
-
-  @Test
-  void testFieldReferenceWithFieldContextOverride_WithIntegerField() {
-    testExpressionTranslationWithContext("../ChildNode/SubLevelTextField/../../IntegerField/number()", "BT-00-Code",
-        "BT-01-SubLevel-Text::integerField");
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride() {
-    testExpressionTranslationWithContext("../../PathNode/IntegerField/number()", "BT-00-Text",
-        "ND-Root::integerField");
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_AbsoluteAnchor() {
-    testExpressionTranslationWithContext("exists(/*/PathNode/TextField)", "BT-00-Text",
-        "/ND-Root::BT-00-Text is present");
-  }
-
-  @Test
-  void testFieldReferenceWithFieldContextOverride_AbsoluteAnchor() {
-    testExpressionTranslationWithContext(
-        "exists(/*/PathNode/ChildNode/SubLevelTextField/../../TextField)", "BT-00-Code",
-        "/BT-01-SubLevel-Text::BT-00-Text is present");
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_WithPredicateFromTheSdk() {
-    // The anchor's path carries a predicate that comes from the SDK rather than from the
-    // expression. It has to survive for the same reason a written one does.
-    testExpressionTranslationWithContext(
-        "exists(../FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv']/ReasonCode)",
-        "BT-00-Text",
-        "ND-PrivacyForRepeatableText::BT-197(BT-00)-Repeatable-Text is present");
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_WithPredicate() {
-    testExpressionTranslationWithContext("../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/IntegerField/number()", "BT-00-Text",
-        "ND-Root[BT-00-Indicator == TRUE]::integerField");
-  }
-
-  @Test
-  void testFieldReferenceWithFieldAndNodeContextOverrides() {
-    // Each override is read in the context of the one before it
-    testExpressionTranslationWithContext(
-        "PathNode/TextField/../../SubNode/SubTextField/normalize-space(text())", "ND-Root",
-        "BT-00-Text::ND-SubNode::BT-01-SubNode-Text");
-  }
-
-  @Test
-  void testNodeReferenceWithNodeContextOverride_InCount() {
-    testExpressionTranslationWithContext("count(RepeatableNode/NonRepeatableSubNode)", "ND-Root",
-        "count(ND-RepeatableNode::ND-NonRepeatableSubNode)");
-  }
-
-  @Test
-  void testNodeReferenceWithNodeContextOverride_InPresenceCondition() {
-    testExpressionTranslationWithContext("exists(RepeatableNode/NonRepeatableSubNode)", "ND-Root",
-        "ND-RepeatableNode::ND-NonRepeatableSubNode is present");
-  }
-
-  @Test
   void testAbsoluteFieldReference() {
     testExpressionTranslationWithContext("/*/PathNode/IndicatorField/(normalize-space(text()) = ('true', '1'))", "BT-00-Text",
         "/BT-00-Indicator");
@@ -2086,49 +2020,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testFieldReferenceWithNodeContextOverride_IntoRepeatableNode_InScalarContext_Throws() {
-    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("ND-Root",
-            "ND-RepeatableNode::BT-00-Text-In-Repeatable-Node == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_IntoRepeatableNode_InSequenceContext() {
-    testExpressionTranslationWithContext("count(RepeatableNode/TextField/normalize-space(text()))",
-        "ND-Root", "count(ND-RepeatableNode::BT-00-Text-In-Repeatable-Node)");
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_OutOfRepeatableNode_InScalarContext_Throws() {
-    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("ND-RepeatableNode",
-            "ND-Root::BT-00-Text-In-Repeatable-Node == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
-  }
-
-  @Test
-  void testFieldReferenceWithNodeContextOverride_OutOfRepeatableNode_InSequenceContext() {
-    testExpressionTranslationWithContext("count(../RepeatableNode/TextField/normalize-space(text()))",
-        "ND-RepeatableNode", "count(ND-Root::BT-00-Text-In-Repeatable-Node)");
-  }
-
-  @Test
-  void testFieldReferenceWithFieldContextOverride_ThroughRepeatableField_InScalarContext_Throws() {
-    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
-        () -> translateExpressionWithContext("ND-Root",
-            "BT-00-Repeatable-Text::BT-00-Text == 'test'"));
-    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
-  }
-
-  @Test
-  void testFieldReferenceWithFieldContextOverride_ThroughRepeatableField_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "count(PathNode/RepeatableTextField/../TextField/normalize-space(text()))",
-        "ND-Root", "count(BT-00-Repeatable-Text::BT-00-Text)");
-  }
-
-  @Test
   void testFieldReferenceWithVariableContextOverride_InScalarContext() {
     testExpressionTranslationWithContext(
         "some $c in RepeatableNode satisfies $c/TextField/normalize-space(text()) = 'test'",
@@ -2142,6 +2033,136 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "for $c in RepeatableNode return $c/TextField/normalize-space(text())",
         "ND-Root",
         "for context:$c in ND-RepeatableNode return $c::BT-00-Text-In-Repeatable-Node");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_FromAFieldContextVariable() {
+    testExpressionTranslationWithContext(
+        "for $c in PathNode/ChildNode/SubLevelTextField return $c/../../TextField/normalize-space(text())",
+        "ND-Root", "for context:$c in BT-01-SubLevel-Text return $c::BT-00-Text");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_FromAPredicatedNode() {
+    testExpressionTranslationWithContext(
+        "for $c in .[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()] return $c/PathNode/IntegerField/number()",
+        "ND-Root", "for context:$c in ND-Root[BT-00-Indicator == TRUE] return $c::integerField");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_FromAnIndexedField() {
+    testExpressionTranslationWithContext(
+        "for $c in (PathNode/ChildNode/SubLevelTextField)[1] return $c/../../TextField/normalize-space(text())",
+        "ND-Root", "for context:$c in BT-01-SubLevel-Text[at 1] return $c::BT-00-Text");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_FromANodeWithAPredicateFromTheSdk() {
+    // The variable's path carries a predicate that comes from the SDK rather than from the
+    // expression. It has to survive for the same reason a written one does.
+    testExpressionTranslationWithContext(
+        "for $c in PathNode/FieldsPrivacy[FieldIdentifierCode/text()='rep-text-priv'] return exists($c/ReasonCode)",
+        "ND-Root",
+        "for context:$c in ND-PrivacyForRepeatableText return $c::BT-197(BT-00)-Repeatable-Text is present");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_WithAnIndex() {
+    testExpressionTranslationWithContext(
+        "for $c in RepeatableNode return ($c/TextField)[1]/normalize-space(text())",
+        "ND-Root",
+        "for context:$c in ND-RepeatableNode return $c::BT-00-Text-In-Repeatable-Node[at 1]");
+  }
+
+  @Test
+  void testFieldReferenceWithVariableContextOverride_IntoRepeatableNode_InScalarContext_Throws() {
+    TypeMismatchException ex = assertThrows(TypeMismatchException.class,
+        () -> translateExpressionWithContext("ND-Root",
+            "for context:$c in ND-Root return $c::BT-00-Text-In-Repeatable-Node == 'test'"));
+    assertEquals(TypeMismatchException.ErrorCode.FIELD_MAY_REPEAT, ex.getErrorCode());
+  }
+
+  @Test
+  void testContextOverride_AfterAVariableThatHoldsNoContext_Throws() {
+    InvalidIdentifierException ex = assertThrows(InvalidIdentifierException.class,
+        () -> translateExpressionWithContext("ND-Root", "for text:$t in ['a'] return $t::BT-00-Text"));
+    assertEquals("line 1:40 Variable '$t' is not a context variable.", ex.getMessage());
+  }
+
+  @Test
+  void testContextOverride_AfterAnythingButAContextVariable_IsASyntaxError() {
+    for (final String expression : List.of("ND-Root::BT-00-Text", "BT-00-Text::BT-00-Number",
+        "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text", "BT-01-SubLevel-Text[at 1]::BT-00-Text",
+        "/ND-Root::BT-00-Text", "'a'::BT-00-Text", "(BT-00-Text)::BT-00-Number",
+        "count(ND-Root::BT-00-Text)",
+        "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Text")) {
+      assertSyntaxError(() -> translateExpressionWithContext("ND-Root", expression));
+    }
+  }
+
+  @Test
+  void testContextOverride_AfterAField_SuggestsAContextVariableOrAPredicate() {
+    final ParseCancellationException error = assertThrows(ParseCancellationException.class,
+        () -> translateExpressionWithContext("ND-Root", "BT-00-Text::BT-00-Number"));
+    assertEquals("line 1:22 Syntax error: unexpected '::' in expression block; expected '}'."
+        + " Only a context variable can stand before '::', as in"
+        + " 'for context:$c in ND-1 return $c::BT-1'. To keep the BT-2 next to a BT-1,"
+        + " write 'BT-2[BT-1 is present]'.", error.getMessage());
+  }
+
+  @Test
+  void testContextOverride_AfterAnExpressionInsideAnotherConstruct_SuggestsAContextVariable() {
+    for (final String expression : List.of(
+        "WITH ND-Root COMPUTE for text:$t in ND-Root::BT-00-Text return $t",
+        "WITH ND-Root COMPUTE every text:$t in ND-Root::BT-00-Text satisfies $t == 'a'",
+        "WITH ND-Root COMPUTE BT-00-Text[ND-Root::BT-00-Text == 'a']",
+        "WITH ND-Root COMPUTE upper-case(ND-Root::BT-00-Text)")) {
+      final ParseCancellationException error = assertThrows(ParseCancellationException.class,
+          () -> translateExpression(expression));
+      assertTrue(error.getMessage().endsWith(" write 'BT-2[BT-1 is present]'."),
+          error::getMessage);
+    }
+  }
+
+  @Test
+  void testDoubleColon_OutsideAnExpression_GetsNoContextOverrideHint() {
+    for (final String expression : List.of("WITH ND-Root::BT-00-Text COMPUTE TRUE",
+        "WITH ND-Root, text::$t COMPUTE TRUE")) {
+      final ParseCancellationException error = assertThrows(ParseCancellationException.class,
+          () -> translateExpression(expression));
+      assertTrue(error.getMessage().endsWith("."), error::getMessage);
+      assertTrue(!error.getMessage().contains("context variable"), error::getMessage);
+    }
+  }
+
+  @Test
+  void testFieldNextToAnotherField_IsWrittenWithAPredicate() {
+    testExpressionTranslationWithContext("PathNode/NumberField[exists(../TextField)]/number()",
+        "ND-Root", "BT-00-Number[BT-00-Text is present]");
+  }
+
+  @Test
+  void testUnknownFieldAfterContextOverride_OnTheNextLine_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateExpression(
+            "WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\nBT-NONEXISTENT == 'a'"));
+    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
+  }
+
+  @Test
+  void testUnknownNodeAfterContextOverride_OnTheNextLine_IsPlacedAtTheNode() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateExpression(
+            "WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\nND-NONEXISTENT is present"));
+    assertEquals("line 2:0 Unknown symbol 'ND-NONEXISTENT'.", ex.getMessage());
+  }
+
+  @Test
+  void testUnknownLinkedFieldAfterContextOverride_OnTheNextLine_IsPlacedAtTheField() {
+    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
+        () -> translateExpression("WITH ND-Root COMPUTE for context:$c in ND-Root return $c::\n"
+            + "BT-NONEXISTENT:publicationDate is present"));
+    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
   }
 
   // #endregion: References
@@ -5357,35 +5378,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testUnknownFieldAfterContextOverride_IsPlacedAtTheField() {
-    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateComputeExpressionWithContext("ND-Root", "ND-Root::BT-NONEXISTENT == 'a'"));
-    assertEquals("line 1:30 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
-  }
-
-  @Test
-  void testUnknownFieldAfterContextOverride_OnTheNextLine_IsPlacedAtTheField() {
-    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression("WITH ND-Root COMPUTE ND-Root::\nBT-NONEXISTENT == 'a'"));
-    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
-  }
-
-  @Test
-  void testUnknownNodeAfterContextOverride_IsPlacedAtTheNode() {
-    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression("WITH ND-Root COMPUTE ND-Root::\nND-NONEXISTENT is present"));
-    assertEquals("line 2:0 Unknown symbol 'ND-NONEXISTENT'.", ex.getMessage());
-  }
-
-  @Test
-  void testUnknownLinkedFieldAfterContextOverride_IsPlacedAtTheField() {
-    SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
-        () -> translateExpression(
-            "WITH ND-Root COMPUTE ND-Root::\nBT-NONEXISTENT:publicationDate is present"));
-    assertEquals("line 2:0 Unknown symbol 'BT-NONEXISTENT'.", ex.getMessage());
-  }
-
-  @Test
   void testUnknownAbsoluteField_OnTheNextLine_IsPlacedAtTheField() {
     SymbolResolutionException ex = assertThrows(SymbolResolutionException.class,
         () -> translateExpression("WITH ND-Root COMPUTE /\nBT-NONEXISTENT is present"));
@@ -5647,14 +5639,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "line 1:12 Type mismatch. Parenthesised expression cannot take 'node'."
             + " Its content must be a value or a sequence of values.",
         "(ND-SubNode)");
-  }
-
-  @Test
-  void testTypeErrorMessage_ContextOverride() {
-    assertTypeError(TypeMismatchException.ErrorCode.CANNOT_CONVERT,
-        "line 1:12 Type mismatch. Operator '::' cannot take 'text'."
-            + " Its left operand must be a field or node reference.",
-        "'a'::BT-00-Text");
   }
 
   @Test
@@ -6000,170 +5984,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
 
   // #region: Context override combinations (field::, node::, $var::, stacked)
 
-  @Test
-  void testFieldContextOverride_WithPredicateOnContext() {
-    // The walk to the context is kept: the override says the value is reached by a path that
-    // starts at the context, so where no SubLevelTextField satisfies the predicate there is
-    // nothing to start from and nothing is selected.
-    testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField['a' = 'a']/../../TextField/normalize-space(text())",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
-  }
-
-  @Test
-  void testFieldContextOverride_WithIndexerOnContext() {
-    // An indexed context is kept for the same reason as a predicated one: without a first
-    // SubLevelTextField there is no starting point.
-    testExpressionTranslationWithContext(
-        "(../ChildNode/SubLevelTextField)[1]/../../TextField/normalize-space(text())",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text[at 1]::BT-00-Text");
-  }
-
-  @Test
-  void testFieldContextOverride_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = ../ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
-        "BT-00-Code",
-        "'test' in BT-01-SubLevel-Text::BT-00-Text");
-  }
-
-  @Test
-  void testNodeContextOverride_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = ../../PathNode/TextField/normalize-space(text())",
-        "BT-00-Text",
-        "'test' in ND-Root::BT-00-Text");
-  }
-
-  @Test
-  void testStackedOverride_NodeAndField() {
-    // The walk to the context is kept even with nothing written on it, so the override
-    // selects nothing where the context is absent.
-    testExpressionTranslationWithContext(
-        "../../PathNode/ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
-        "BT-00-Text",
-        "ND-Root::BT-01-SubLevel-Text::BT-00-Text");
-  }
-
-  // Row 6 PRES
-  @Test
-  void testFieldContextOverride_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists(../ChildNode/SubLevelTextField/../../TextField)",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text::BT-00-Text is present");
-  }
-
-  // Row 6 ATTR
-  @Test
-  void testFieldContextOverride_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField/../../CodeField/@listName",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text::BT-00-Code/@listName");
-  }
-
-  // Row 7 SEQ
-  @Test
-  void testFieldContextOverride_WithPredicate_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = ../ChildNode/SubLevelTextField['a' = 'a']/../../TextField/normalize-space(text())",
-        "BT-00-Code",
-        "'test' in BT-01-SubLevel-Text['a' == 'a']::BT-00-Text");
-  }
-
-  // Row 7 PRES
-  @Test
-  void testFieldContextOverride_WithPredicate_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists(../ChildNode/SubLevelTextField['a' = 'a']/../../TextField)",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Text is present");
-  }
-
-  // Row 7 ATTR
-  @Test
-  void testFieldContextOverride_WithPredicate_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "../ChildNode/SubLevelTextField['a' = 'a']/../../CodeField/@listName",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text['a' == 'a']::BT-00-Code/@listName");
-  }
-
-  // Row 8 SEQ
-  @Test
-  void testFieldContextOverride_WithIndexer_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = (../ChildNode/SubLevelTextField)[1]/../../TextField/normalize-space(text())",
-        "BT-00-Code",
-        "'test' in BT-01-SubLevel-Text[at 1]::BT-00-Text");
-  }
-
-  // Row 8 PRES
-  @Test
-  void testFieldContextOverride_WithIndexer_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists((../ChildNode/SubLevelTextField)[1]/../../TextField)",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text[at 1]::BT-00-Text is present");
-  }
-
-  // Row 8 ATTR
-  @Test
-  void testFieldContextOverride_WithIndexer_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "(../ChildNode/SubLevelTextField)[1]/../../CodeField/@listName",
-        "BT-00-Code",
-        "BT-01-SubLevel-Text[at 1]::BT-00-Code/@listName");
-  }
-
-  // Row 9 PRES
-  @Test
-  void testNodeContextOverride_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists(../../PathNode/TextField)",
-        "BT-00-Text",
-        "ND-Root::BT-00-Text is present");
-  }
-
-  // Row 9 ATTR
-  @Test
-  void testNodeContextOverride_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "../../PathNode/CodeField/@listName",
-        "BT-00-Text",
-        "ND-Root::BT-00-Code/@listName");
-  }
-
-  // Row 10 SEQ
-  @Test
-  void testNodeContextOverride_WithPredicate_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = ../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField/normalize-space(text())",
-        "BT-00-Text",
-        "'test' in ND-Root[BT-00-Indicator == TRUE]::BT-00-Text");
-  }
-
-  // Row 10 PRES
-  @Test
-  void testNodeContextOverride_WithPredicate_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists(../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/TextField)",
-        "BT-00-Text",
-        "ND-Root[BT-00-Indicator == TRUE]::BT-00-Text is present");
-  }
-
-  // Row 10 ATTR
-  @Test
-  void testNodeContextOverride_WithPredicate_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "../..[PathNode/IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/PathNode/CodeField/@listName",
-        "BT-00-Text",
-        "ND-Root[BT-00-Indicator == TRUE]::BT-00-Code/@listName");
-  }
-
   // Row 11 SEQ
   @Test
   void testVariableContextOverride_InSequenceContext() {
@@ -6189,69 +6009,6 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "for $n in . return $n/PathNode/CodeField/@listName",
         "ND-Root",
         "for context:$n in ND-Root return $n::BT-00-Code/@listName");
-  }
-
-  // Row 13 SEQ
-  @Test
-  void testStackedOverride_NodeAndField_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "'test' = ../../PathNode/ChildNode/SubLevelTextField/../../TextField/normalize-space(text())",
-        "BT-00-Text",
-        "'test' in ND-Root::BT-01-SubLevel-Text::BT-00-Text");
-  }
-
-  // Row 13 PRES
-  @Test
-  void testStackedOverride_NodeAndField_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "exists(../../PathNode/ChildNode/SubLevelTextField/../../TextField)",
-        "BT-00-Text",
-        "ND-Root::BT-01-SubLevel-Text::BT-00-Text is present");
-  }
-
-  // Row 13 ATTR
-  @Test
-  void testStackedOverride_NodeAndField_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "../../PathNode/ChildNode/SubLevelTextField/../../CodeField/@listName",
-        "BT-00-Text",
-        "ND-Root::BT-01-SubLevel-Text::BT-00-Code/@listName");
-  }
-
-  // Row 14 SC
-  @Test
-  void testVariableAndNodeContextOverride_InScalarContext() {
-    testExpressionTranslationWithContext(
-        "for $n in SubNode return $n/../PathNode/IntegerField/number()",
-        "ND-Root",
-        "for context:$n in ND-SubNode return $n::ND-Root::integerField");
-  }
-
-  // Row 14 SEQ
-  @Test
-  void testVariableAndNodeContextOverride_InSequenceContext() {
-    testExpressionTranslationWithContext(
-        "for $n in SubNode return 'test' = $n/../PathNode/TextField/normalize-space(text())",
-        "ND-Root",
-        "for context:$n in ND-SubNode return 'test' in $n::ND-Root::BT-00-Text");
-  }
-
-  // Row 14 PRES
-  @Test
-  void testVariableAndNodeContextOverride_InPresenceCondition() {
-    testExpressionTranslationWithContext(
-        "for $n in SubNode return exists($n/../PathNode/TextField)",
-        "ND-Root",
-        "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Text is present");
-  }
-
-  // Row 14 ATTR
-  @Test
-  void testVariableAndNodeContextOverride_InAttributeContext() {
-    testExpressionTranslationWithContext(
-        "for $n in SubNode return $n/../PathNode/CodeField/@listName",
-        "ND-Root",
-        "for context:$n in ND-SubNode return $n::ND-Root::BT-00-Code/@listName");
   }
 
   @Test

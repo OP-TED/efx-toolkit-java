@@ -791,12 +791,6 @@ class EfxInvalidOperationV2Test extends EfxTestsBase {
 
   static Stream<Arguments> invalidReferences() {
     return Stream.of(
-        // The left side of :: is a context: a field, a node or a context variable
-        typeError("'a'::BT-00-Text", CANNOT_CONVERT,
-            "Operator '::' cannot take 'text'"),
-        typeError("(BT-00-Text)::BT-00-Number", CANNOT_CONVERT,
-            "Operator '::' cannot take 'text'"),
-
         // An attribute and the language properties are read from a field
         typeError("ND-SubNode/@listName", CANNOT_CONVERT,
             "Operator '/@listName' cannot take 'node'"),
@@ -818,8 +812,8 @@ class EfxInvalidOperationV2Test extends EfxTestsBase {
             "Expression block cannot take 'node*'"),
         typeError("/ND-SubNode", CANNOT_CONVERT,
             "Expression block cannot take 'node'"),
-        typeError("ND-Root::ND-SubNode", CANNOT_CONVERT,
-            "Expression block cannot take 'node'"),
+        typeError("for context:$c in ND-Root return $c::ND-SubNode", CANNOT_CONVERT,
+            "Iteration 'for' cannot take 'node'"),
         typeError("for text:$x in ['a'] return ND-SubNode", CANNOT_CONVERT,
             "Iteration 'for' cannot take 'node'"));
   }

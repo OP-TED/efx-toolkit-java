@@ -25,8 +25,10 @@ import org.antlr.v4.runtime.InputMismatchException;
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.misc.IntervalSet;
 
 /**
@@ -43,6 +45,11 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     private static final int MOST_EXPECTED = 3;
 
     private static final String END_OF_INPUT = "end of input";
+
+    private static final String CONTEXT_OVERRIDE_HINT =
+            "Only a context variable can stand before '::', as in "
+                    + "'for context:$c in ND-1 return $c::BT-1'. To keep the BT-2 next to a BT-1, "
+                    + "write 'BT-2[BT-1 is present]'.";
 
     private static final Map<Integer, String> RULE_NAMES = Map.ofEntries(
             // Expression entry points
@@ -300,7 +307,64 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     private void reportUnexpected(final Parser recognizer, final Token found,
             final InputMismatchException e) {
         recognizer.notifyErrorListeners(found,
-                message(nameOf(found), recognizer, expected(recognizer)), e);
+                message(nameOf(found), recognizer, expected(recognizer))
+                        + hintFor(recognizer, found), e);
+    }
+
+    /**
+     * Gives a hint for {@code ::} written right after an expression, as in {@code ND-1::BT-1}, which
+     * is a context override that the grammar no longer takes. Elsewhere, as in a context declaration
+     * or after the type of a parameter, {@code ::} is a mistake of another kind, so it gets no hint.
+     *
+     * @return the hint, after a space, or nothing
+     */
+    private static String hintFor(final Parser recognizer, final Token found) {
+        if (found.getType() != ColonColon) {
+            return "";
+        }
+        final int before = tokenBefore(recognizer.getTokenStream(), found.getTokenIndex());
+        // A rule being read is not yet a child of the rule it is read in, so each one is searched.
+        for (RuleContext context = recognizer.getContext(); before >= 0 && context != null;
+                context = context.parent) {
+            if (endsAnExpression((ParserRuleContext) context, before)) {
+                return " " + CONTEXT_OVERRIDE_HINT;
+            }
+        }
+        return "";
+    }
+
+    /**
+     * @return the index of the last token before the given one that the parser reads, or -1
+     */
+    private static int tokenBefore(final TokenStream tokens, final int index) {
+        for (int i = index - 1; i >= 0; i--) {
+            if (tokens.get(i).getChannel() == Token.DEFAULT_CHANNEL) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return whether the rule, or a rule it has read, is an expression that ends at the given
+     *         token
+     */
+    private static boolean endsAnExpression(final ParserRuleContext context, final int tokenIndex) {
+        if (context instanceof ExpressionContext && context.getStop() != null
+                && context.getStop().getTokenIndex() == tokenIndex) {
+            return true;
+        }
+        if (context.getStart() != null && context.getStart().getTokenIndex() > tokenIndex
+                || context.getStop() != null && context.getStop().getTokenIndex() < tokenIndex) {
+            return false;
+        }
+        for (int i = context.getChildCount() - 1; i >= 0; i--) {
+            if (context.getChild(i) instanceof ParserRuleContext
+                    && endsAnExpression((ParserRuleContext) context.getChild(i), tokenIndex)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String message(final String found, final Parser recognizer,

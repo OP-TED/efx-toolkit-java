@@ -194,6 +194,16 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         translatorWith(ThrowingErrorListener.INSTANCE).translateRules(lines(rules, lastLine)));
   }
 
+  @Test
+  void testContextOverride_InAnAssertion_SuggestsAContextVariable() {
+    final ParseCancellationException error = assertThrows(ParseCancellationException.class,
+        () -> translator.translateRules(lines("---- STAGE 1a ----", "WITH ND-Root",
+            "    ASSERT ND-Root::BT-00-Text is present AS ERROR R-K7P-M2Q FOR BT-00-Text IN 1;",
+            "")));
+    assertTrue(error.getMessage().endsWith(" write 'BT-2[BT-1 is present]'."),
+        error::getMessage);
+  }
+
   //#endregion STAGE tests
 
   //#region WITH clause tests

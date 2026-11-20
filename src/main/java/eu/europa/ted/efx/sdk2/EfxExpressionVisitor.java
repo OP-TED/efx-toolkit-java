@@ -663,13 +663,13 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   /**
-   * A field read in the context its left side names: {@code ND-1::BT-1}, {@code BT-1::BT-2},
-   * {@code $context::BT-1}. The path of the field from that context continues the path to it.
+   * A field read from the element that a context variable holds: {@code $context::BT-1}. The path
+   * of the field from that context continues the path to it.
    */
   @Override
   public Subexpression<?> visitFieldFromContextExpression(
       final FieldFromContextExpressionContext ctx) {
-    final Context context = this.contextBefore(ctx.expression());
+    final Context context = this.contextBefore(ctx.variableReference());
     final String fieldId = this.fieldIdOf(ctx.linkedFieldReference());
     final PathExpression field = this.translate(ctx.linkedFieldReference(),
         () -> this.translation.symbols().getRelativePathOfField(fieldId, context.symbol()));
@@ -678,12 +678,12 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   /**
-   * A node read in the context its left side names: {@code ND-1::ND-2}, {@code $context::ND-1}.
+   * A node read from the element that a context variable holds: {@code $context::ND-1}.
    */
   @Override
   public Subexpression<?> visitNodeFromContextExpression(
       final NodeFromContextExpressionContext ctx) {
-    final Context context = this.contextBefore(ctx.expression());
+    final Context context = this.contextBefore(ctx.variableReference());
     final String nodeId = ctx.simpleNodeReference().NodeId().getText();
     final PathExpression node = this.translate(ctx.simpleNodeReference(),
         () -> this.translation.symbols().getRelativePathOfNode(nodeId, context.symbol()));
@@ -691,18 +691,21 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
         new NodeOrigin(this, nodeId));
   }
 
-  private Context contextBefore(final ExpressionContext left) {
-    final Subexpression<?> operand = this.visit(left);
+  /**
+   * @param variable the variable before {@code ::}
+   * @return the context it holds; a variable that holds no context is an error
+   */
+  private Context contextBefore(final VariableReferenceContext variable) {
+    final Subexpression<?> operand = this.visit(variable);
     return operand.context().orElseThrow(() -> this.unreadable(
         ExpressionConstruct.CONTEXT_OVERRIDE, List.of(operand), List.of(operand.expression()), 0,
-        left));
+        variable));
   }
 
   /**
    * Joins the path to the context of a context override with the path of the reference from that
-   * context, which the override composes. The joined reference may give several values if either
-   * path may select several nodes, so the override is given the reference as it continues from
-   * the context. A context variable holds one node, so its own path never does.
+   * context, which the override composes. The context is a context variable, which holds one
+   * element, so the joined reference gives as many values as the reference gives from there.
    *
    * @param context the path to the context, from the context the override is written in
    * @param reference the path of the reference, from the context of the override
@@ -711,7 +714,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   private PathExpression joinReference(final PathExpression context,
       final PathExpression reference) {
     return PathExpression.class.cast(ExpressionConstruct.CONTEXT_OVERRIDE
-        .resolve(List.of(context, continuing(context, reference))).orElseThrow()
+        .resolve(List.of(context, reference)).orElseThrow()
         .compose(this.translation.script()));
   }
 

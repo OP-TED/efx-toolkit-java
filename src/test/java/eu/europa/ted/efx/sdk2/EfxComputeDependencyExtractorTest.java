@@ -73,7 +73,7 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testFieldReferenceWithContextOverride() {
-    Set<String> deps = extract("{ND-Root} ${ND-Root::BT-00-Text is present}");
+    Set<String> deps = extract("{ND-Root} ${for context:$c in ND-Root return $c::BT-00-Text is present}");
     assertTrue(deps.contains("ND-Root"));
     assertTrue(deps.contains("BT-00-Text"));
   }
@@ -84,7 +84,7 @@ class EfxComputeDependencyExtractorTest {
 
   @Test
   void testNodeReferenceInExpression() {
-    Set<String> deps = extract("{ND-Root} ${ND-Root::BT-00-Text is present}");
+    Set<String> deps = extract("{ND-Root} ${for context:$c in ND-Root return $c::BT-00-Text is present}");
     assertTrue(deps.contains("ND-Root"));
     assertTrue(deps.contains("BT-00-Text"));
   }

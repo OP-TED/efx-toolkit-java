@@ -452,9 +452,9 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
 
   @Test
   void testOperandOrigin_ContextOverride() {
-    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:12", "BT-00-Text-In-Repeatable-Node",
+    assertSequenceError(ErrorCode.FIELD_MAY_REPEAT, "1:45", "BT-00-Text-In-Repeatable-Node",
         () -> translateExpressionWithContext("ND-Root",
-            "ND-RepeatableNode::BT-00-Text-In-Repeatable-Node == 'test'"));
+            "for context:$c in ND-Root return $c::BT-00-Text-In-Repeatable-Node == 'test'"));
   }
 
   @Test

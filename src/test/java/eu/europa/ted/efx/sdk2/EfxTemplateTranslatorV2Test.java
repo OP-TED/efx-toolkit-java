@@ -17,7 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 import java.util.Locale;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
@@ -4262,7 +4264,19 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
-  void testContextDeclaration_NestedInRepeatingNode_ContextOverrideInIndex() {
+  void testContextOverride_InAFunctionArgumentOrAVariable_SuggestsAContextVariable() {
+    for (final String template : List.of(
+        lines("LET text:?f(text:$p) = $p;", "DISPLAY ${?f(ND-Root::BT-00-Text)};"),
+        lines("LET text:$v = ND-Root::BT-00-Text;", "DISPLAY ${$v};"))) {
+      final ParseCancellationException error = assertThrows(ParseCancellationException.class,
+          () -> translateTemplate(template));
+      assertTrue(error.getMessage().endsWith(" write 'BT-2[BT-1 is present]'."),
+          error::getMessage);
+    }
+  }
+
+  @Test
+  void testContextDeclaration_NestedInRepeatingNode_FieldOfTheParentLineInIndex() {
     assertEquals(
         lines(
             "TEMPLATES:",
@@ -4273,7 +4287,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*/RepeatableNode).call(body01())"),
         translateTemplate(lines(
             "{ND-RepeatableNode} a",
-            "  {ND-RepeatableInRepeatableNode[at count(ND-Root::BT-00-Repeatable-Text)]} b")));
+            "  {ND-RepeatableInRepeatableNode[at count(BT-00-Repeatable-Text)]} b")));
   }
 
   @Test

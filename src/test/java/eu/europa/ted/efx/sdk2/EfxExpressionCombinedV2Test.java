@@ -26,8 +26,9 @@ class EfxExpressionCombinedV2Test extends EfxTestsBase {
 
   @Test
   void testCountWithNodeContextOverride() {
-    testExpressionTranslationWithContext("count(../../PathNode/CodeField/normalize-space(text())) = 1", "BT-00-Text",
-        "count(ND-Root::BT-00-Code) == 1");
+    testExpressionTranslationWithContext(
+        "for $c in ../.. return count($c/PathNode/CodeField/normalize-space(text())) = 1",
+        "BT-00-Text", "for context:$c in ND-Root return count($c::BT-00-Code) == 1");
   }
 
   @Test
