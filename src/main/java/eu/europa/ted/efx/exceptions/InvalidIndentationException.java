@@ -24,15 +24,13 @@ public class InvalidIndentationException extends EfxCompilationException {
         INCONSISTENT_INDENTATION_SPACES,
         INDENTATION_LEVEL_SKIPPED,
         START_INDENT_AT_ZERO,
-        MIXED_INDENTATION,
-        NO_INDENT_ON_TEMPLATE_DECLARATIONS
+        MIXED_INDENTATION
     }
 
     private static final String INCONSISTENT_INDENTATION_SPACES = "This line is indented with %d spaces, not a multiple of %d, the indentation of the first indented line.";
     private static final String INDENTATION_LEVEL_SKIPPED = "This line is indented more than one level deeper than the line above it.";
     private static final String START_INDENT_AT_ZERO = "This line cannot be indented: there is no line above it to nest under.";
     private static final String MIXED_INDENTATION = "Indentation mixes tabs and spaces: a template is indented with tabs only or with spaces only.";
-    private static final String NO_INDENT_ON_TEMPLATE_DECLARATIONS = "A template declaration cannot be indented.";
 
     private final ErrorCode errorCode;
 
@@ -66,9 +64,5 @@ public class InvalidIndentationException extends EfxCompilationException {
 
     public static InvalidIndentationException mixedIndentation(ParserRuleContext ctx) {
         return new InvalidIndentationException(ErrorCode.MIXED_INDENTATION, ctx, MIXED_INDENTATION);
-    }
-
-    public static InvalidIndentationException noIndentOnTemplateDeclarations(ParserRuleContext ctx) {
-        return new InvalidIndentationException(ErrorCode.NO_INDENT_ON_TEMPLATE_DECLARATIONS, ctx, NO_INDENT_ON_TEMPLATE_DECLARATIONS);
     }
 }

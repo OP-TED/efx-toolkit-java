@@ -101,6 +101,31 @@ public class ContentBlock {
     return this.addChild(newBlockId, number, context, variables, contentTemplates);
   }
 
+  /**
+   * Adds copies of the children of another block, and of their own children, under this block,
+   * named and numbered as they would be if they had been added to this block.
+   *
+   * @param other the block whose children are copied
+   */
+  public void adoptChildrenOf(final ContentBlock other) {
+    for (ContentBlock child : other.children) {
+      final String childId = String.format(Locale.ROOT, "%s%02d", this.id, this.children.size() + 1);
+      final ContentBlock copy = new ContentBlock(this, childId, child.number, child.contentTemplates,
+          child.context, child.parameters, child.arguments);
+      this.children.add(copy);
+      copy.adoptChildrenOf(child);
+    }
+  }
+
+  /**
+   * Removes a child of this block.
+   *
+   * @param child the child to remove
+   */
+  public void removeChild(final ContentBlock child) {
+    this.children.remove(child);
+  }
+
   // #endregion Add Children
 
   // #region Add Siblings
@@ -111,6 +136,22 @@ public class ContentBlock {
   }
 
   // #endregion Add Siblings
+
+  public String getId() {
+    return this.id;
+  }
+
+  /**
+   * Adds the ids of the children of this block, and of their own children, to a set.
+   *
+   * @param ids the set to add them to
+   */
+  public void collectDescendantIds(final Set<String> ids) {
+    for (ContentBlock child : this.children) {
+      ids.add(child.id);
+      child.collectDescendantIds(ids);
+    }
+  }
 
   public int getNumber() {
     return this.number;
@@ -159,6 +200,14 @@ public class ContentBlock {
 
   public Integer getIndentationLevel() {
     return this.indentationLevel;
+  }
+
+  /**
+   * @return what the block displays: a content template for each WHEN alternative, then the one
+   *         displayed otherwise
+   */
+  public List<ContentTemplate> getContentTemplates() {
+    return this.contentTemplates;
   }
 
   public Context getContext() {
@@ -242,6 +291,11 @@ public class ContentBlock {
             markupGenerator.getEfxDataTypeEquivalent(a.parameter.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new)));
     var invocation = markupGenerator.renderFragmentInvocation(this.id, args, translatorContext);
+    if (this.context == null) {
+      // A line that declares no context, at the top of a template section, is displayed in the
+      // context the template is invoked in.
+      return invocation;
+    }
     return markupGenerator.renderContextLoop(this.context.relativePath(), invocation, args);
   }
 

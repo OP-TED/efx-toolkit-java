@@ -102,8 +102,12 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             // Template structure
             Map.entry(RULE_templateFile, "template"),
             Map.entry(RULE_templateLine, "template line"),
-            Map.entry(RULE_templateDeclaration, "template declaration"),
-            Map.entry(RULE_templateDefinition, "template definition"),
+            Map.entry(RULE_templateBody, "template"),
+            Map.entry(RULE_templateSection, "template section"),
+            Map.entry(RULE_parametersDeclaration, "parameters declaration"),
+            Map.entry(RULE_mainSectionWithHeader, "main section"),
+            Map.entry(RULE_mainSection, "main section"),
+            Map.entry(RULE_mainSectionLines, "main section"),
             Map.entry(RULE_template, "template content"),
             Map.entry(RULE_templateFragment, "template content"),
             Map.entry(RULE_indentation, "indentation"),
@@ -166,6 +170,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.OutlineNumber, "an outline number"),
 
             // Headers and directives
+            Map.entry(EfxLexer.TemplateSectionHeaderStart, "a template section header"),
+            Map.entry(EfxLexer.TemplateSectionHeaderEnd, "'---'"),
             Map.entry(EfxLexer.MainSectionHeader, "a main section header"),
             Map.entry(EfxLexer.SummarySectionHeader, "a summary section header"),
             Map.entry(EfxLexer.NavigationSectionHeader, "a navigation section header"),
@@ -183,7 +189,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.Otherwise, "'OTHERWISE'"),
             Map.entry(EfxLexer.Display, "'DISPLAY'"),
             Map.entry(EfxLexer.Invoke, "'INVOKE'"),
-            Map.entry(EfxLexer.Template, "'template'"),
+            Map.entry(EfxLexer.Parameters, "'PARAMETERS'"),
             Map.entry(EfxLexer.Index, "'INDEX'"),
             Map.entry(EfxLexer.By, "'BY'"),
             Map.entry(EfxLexer.Assert, "'ASSERT'"),
