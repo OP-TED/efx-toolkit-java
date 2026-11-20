@@ -14,19 +14,19 @@ WITH BT-00-Text
     WHEN BT-00-Indicator is present
     ASSERT ?check(BT-00-Identifier)
     AS ERROR R-S1A-001
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
     WHEN ?check(BT-00-Code)
     ASSERT BT-00-Text is present
     AS ERROR R-S1A-002
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
     WHEN ?confirm(?check(BT-00-Code))
     ASSERT ?check(BT-00-Identifier)
     AS ERROR R-S1A-003
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
     WHEN BT-00-Indicator is present
     REPORT ?check(BT-00-Identifier)
     AS WARNING R-S1A-004
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

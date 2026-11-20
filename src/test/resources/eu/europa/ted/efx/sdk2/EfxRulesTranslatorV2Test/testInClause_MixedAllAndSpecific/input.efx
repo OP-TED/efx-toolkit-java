@@ -6,8 +6,8 @@
 WITH BT-00-Text
     ASSERT BT-00-Text is present
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN *
+    FOR BT-00-Text IN *;
 
     ASSERT not(empty(BT-00-Text))
     AS WARNING R-X3F-N8W
-    FOR BT-00-Text IN 1, 2
+    FOR BT-00-Text IN 1, 2;

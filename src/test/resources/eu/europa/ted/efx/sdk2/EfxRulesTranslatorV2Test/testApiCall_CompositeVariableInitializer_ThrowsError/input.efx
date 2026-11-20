@@ -11,4 +11,4 @@ LET dynamic : ?check(text : $id) CALL API;
 WITH dynamic : $ok = ?check(BT-00-Identifier) and BT-00-Indicator is present, BT-00-Text
     ASSERT $ok
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

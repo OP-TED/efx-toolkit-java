@@ -7,4 +7,4 @@
 WITH context : $ctx = ND-Root
     ASSERT not(empty($ctx::BT-00-Text))
     AS ERROR R-CTX-001
-    FOR BT-00-Text IN 1, 2
+    FOR BT-00-Text IN 1, 2;

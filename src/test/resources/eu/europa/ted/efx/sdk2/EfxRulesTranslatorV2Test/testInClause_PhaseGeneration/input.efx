@@ -22,30 +22,30 @@
 WITH BT-00-Text
     ASSERT BT-00-Text is present
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1, 2
+    FOR BT-00-Text IN 1, 2;
 
     ASSERT not(empty(BT-00-Text))
     AS WARNING R-X3F-N8W
-    FOR BT-00-Text IN 1, 3
+    FOR BT-00-Text IN 1, 3;
 
 ---- STAGE 2 ----
 
 WITH BT-00-Text
     ASSERT BT-00-Number is present
     AS ERROR R-Y2N-G7S
-    FOR BT-00-Text IN 1, 3
+    FOR BT-00-Text IN 1, 3;
 
     REPORT BT-00-Number > 0
     AS INFO R-D4K-P9M
-    FOR BT-00-Text IN 2
+    FOR BT-00-Text IN 2;
 
 ---- STAGE 3 ----
 
 WITH BT-00-Text
     ASSERT BT-00-Indicator is present
     AS ERROR R-F5V-T6B
-    FOR BT-00-Text IN 1, 3
+    FOR BT-00-Text IN 1, 3;
 
     REPORT BT-00-Indicator == TRUE
     AS INFO R-W1D-J2Y
-    FOR BT-00-Text IN 3
+    FOR BT-00-Text IN 3;

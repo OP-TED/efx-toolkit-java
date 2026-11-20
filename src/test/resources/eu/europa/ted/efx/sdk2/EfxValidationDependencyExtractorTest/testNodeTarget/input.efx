@@ -5,4 +5,4 @@
 WITH ND-Root
     ASSERT BT-00-Text is present
     AS ERROR R-T05-001
-    FOR ND-SubNode IN *
+    FOR ND-SubNode IN *;
