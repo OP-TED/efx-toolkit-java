@@ -13,6 +13,9 @@
  */
 package eu.europa.ted.efx.sdk2;
 
+import static eu.europa.ted.efx.model.constructs.Parameter.Impl.parameter;
+import static eu.europa.ted.efx.model.constructs.ParameterType.INDICATOR;
+
 import java.util.ArrayList;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,9 +29,10 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,44 +44,33 @@ import eu.europa.ted.efx.interfaces.ScriptGenerator;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.interfaces.ValidatorGenerator;
+import eu.europa.ted.efx.exceptions.EfxCompilationException;
 import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
-import eu.europa.ted.efx.model.CallStack;
+import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DynamicExpression;
-import eu.europa.ted.efx.model.expressions.scalar.DateExpression;
-import eu.europa.ted.efx.model.expressions.scalar.DurationExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
-import eu.europa.ted.efx.model.expressions.scalar.ScalarExpression;
-import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
-import eu.europa.ted.efx.model.expressions.scalar.TimeExpression;
-import eu.europa.ted.efx.model.expressions.sequence.BooleanSequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.DateSequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.DurationSequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.NumericSequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.SequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.StringSequenceExpression;
-import eu.europa.ted.efx.model.expressions.sequence.TimeSequenceExpression;
 import eu.europa.ted.efx.model.rules.AssertRule;
 import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.efx.model.rules.ReportRule;
 import eu.europa.ted.efx.model.rules.RuleSet;
+import eu.europa.ted.efx.xpath.XPathContextualizer;
 import eu.europa.ted.efx.model.rules.RuleScope;
 import eu.europa.ted.efx.model.rules.RuleSeverity;
 import eu.europa.ted.efx.model.rules.RuleStack;
 import eu.europa.ted.efx.model.rules.ValidationRule;
 import eu.europa.ted.efx.model.rules.ValidationStage;
-import eu.europa.ted.efx.model.variables.DynamicFunction;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
-import eu.europa.ted.efx.model.variables.ParsedParameter;
-import eu.europa.ted.efx.model.variables.ParsedArguments;
-import eu.europa.ted.efx.model.variables.ParsedParameters;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.DynamicFunction;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.Function;
+import eu.europa.ted.efx.model.identifiers.ParsedParameters;
+import eu.europa.ted.efx.model.identifiers.Variable;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
@@ -87,14 +80,27 @@ import eu.europa.ted.efx.sdk2.EfxParser.*;
  * (List of ValidationStage) which is then passed to a ValidatorGenerator
  * for output generation.
  *
- * It extends EfxExpressionTranslatorV2 to reuse XPath expression generation and
+ * It listens to the rules of a rules file that are not expressions, asks an
+ * {@link EfxExpressionVisitor} for each expression, field context and node context they hold, and
  * implements EfxRulesTranslator to provide the rules translation API.
  */
 @SdkComponent(versions = {"2"}, componentType = SdkComponentType.EFX_RULES_TRANSLATOR)
-public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
+public class EfxRulesTranslatorV2 extends TranslatorListener
     implements EfxRulesTranslator {
 
   private static final Logger logger = LoggerFactory.getLogger(EfxRulesTranslatorV2.class);
+
+  /** The clauses of a rule that take a condition, as a type error names them. */
+  private static final Clause WHEN = Clause.of(Clause.describe("WHEN"),
+      parameter("condition", INDICATOR));
+  private static final Clause ASSERT = Clause.of(Clause.describe("ASSERT"),
+      parameter("condition", INDICATOR));
+  private static final Clause REPORT = Clause.of(Clause.describe("REPORT"),
+      parameter("condition", INDICATOR));
+  private static final Clause OTHERWISE_ASSERT =
+      Clause.of(Clause.describe("OTHERWISE ASSERT"), parameter("condition", INDICATOR));
+  private static final Clause OTHERWISE_REPORT =
+      Clause.of(Clause.describe("OTHERWISE REPORT"), parameter("condition", INDICATOR));
 
   /**
    * The ValidatorGenerator is used to generate validation output from the intermediate model.
@@ -130,6 +136,21 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
       final BaseErrorListener errorListener) {
     super(symbolResolver, scriptGenerator, errorListener);
     this.validatorGenerator = validatorGenerator;
+  }
+
+  @Override
+  EfxExpressionVisitor visitorOf(final Translation translation) {
+    return new RulesExpressionVisitor(translation);
+  }
+
+  /**
+   * Translates a single expression, as {@link EfxExpressionTranslatorV2} does.
+   */
+  @Override
+  public String translateExpression(final String expression, final String... arguments) {
+    return new EfxExpressionTranslatorV2(this.translation.symbols(), this.translation.script(),
+        this.errorListener)
+        .translateExpression(expression, arguments);
   }
 
   @Override
@@ -182,31 +203,18 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     final CharStream resolvedInput =
         new IncludeProcessor(options.getIncludedFileResolver()).resolve(input);
 
-    EfxLexer lexer = new EfxLexer(resolvedInput);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(this.errorListener);
-
-    CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-    EfxParser parser = new EfxParser(tokens);
-    parser.setErrorHandler(new EfxErrorStrategy());
-    parser.removeErrorListeners();
-    parser.addErrorListener(this.errorListener);
-
     // Parse the rules file
-    ParseTree tree = parser.rulesFile();
+    ParseTree tree = this.parserOf(resolvedInput).rulesFile();
 
     logger.debug("Walking parse tree to build intermediate model");
 
     // Initialize per-translation state
     this.validationPlan = new ValidationPlan();
     this.apiCallCounter = 0;
-    this.stack = new CallStack();
     this.ruleStack.clear();
 
     // Walk the parse tree - this translator IS the listener
-    ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(this, tree);
+    this.translate(tree);
 
     if (this.validationPlan.getStages().isEmpty()) {
       throw InvalidUsageException.emptyRulesFile();
@@ -220,11 +228,12 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #region Variable Initializers
 
-  @Override
-  protected void resolveAndPushVariableReference(VariableReferenceContext ctx) {
+  /**
+   * Records a variable that an initializer reads, if it is a dynamic variable or depends on one.
+   */
+  private void trackDynamicDependenciesOf(final String variableName) {
     if (this.currentDynamicDependencies != null) {
-      String variableName = ctx.variableName.getText();
-      this.stack.getVariable(variableName).ifPresent(var -> {
+      this.translation.stack().getVariable(variableName).ifPresent(var -> {
         if (var instanceof DynamicVariable) {
           this.currentDynamicDependencies.add((DynamicVariable) var);
         } else if (var.hasDynamicDependencies()) {
@@ -232,7 +241,6 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
         }
       });
     }
-    super.resolveAndPushVariableReference(ctx);
   }
 
   private void beginTrackingDynamicDependencies() {
@@ -250,206 +258,65 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
   /**
-   * Helper method to handle variable initializers.
-   * Pops the expression, creates a Variable, and pushes it back.
-   * This allows the variable to be declared in the stack for later reference.
+   * A variable is initialized with a value of its declared type. The dynamic variables its
+   * initializer reads become its dynamic dependencies.
    */
-  private void exitVariableInitializer(String variableName,
-      Class<? extends ScalarExpression> expressionType) {
-    var expression = this.stack.pop(expressionType);
-    var variable = new Variable(variableName,
-        this.script.composeVariableDeclaration(variableName, expression.getClass()),
-        expression,
-        this.script.composeVariableReference(variableName, expression.getClass()));
-    this.attachDynamicDependencies(variable);
-    this.stack.push(variable);
-  }
-
   @Override
-  public void enterStringVariableInitializer(StringVariableInitializerContext ctx) {
+  public void exitTypedVariableInitializer(TypedVariableInitializerContext ctx) {
+    var variableName = ctx.variableName.getText();
     this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitStringVariableInitializer(
-      StringVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), StringExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterBooleanVariableInitializer(BooleanVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitBooleanVariableInitializer(
-      BooleanVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), BooleanExpression.class);
-    this.endTrackingDynamicDependencies();
+    try {
+      var expression = this.expressions.initialValueOf(ctx);
+      var variable = new Variable(variableName,
+          this.translation.script().composeVariableDeclaration(variableName, expression.getClass()),
+          expression,
+          this.translation.script().composeVariableReference(variableName, expression.getClass()));
+      this.attachDynamicDependencies(variable);
+      this.exitVariableInitializer(ctx, variable);
+    } finally {
+      this.endTrackingDynamicDependencies();
+    }
   }
 
   @Override
   public void exitDynamicFunctionInvocation(DynamicFunctionInvocationContext ctx) {
-    String funcName = ctx.functionInvocation().functionName.getText();
-    var func = this.stack.getFunction(funcName);
-    if (!(func instanceof DynamicFunction)) {
-      throw InvalidUsageException.notADynamicFunction(ctx, funcName);
-    }
-    DynamicFunction apiFunc = (DynamicFunction) func;
-    List<? extends TypedExpression> args = this.stack.pop(ParsedArguments.class).getArgumentValues();
-    var rawCall = this.script.composeDynamicFunction(apiFunc.endpointName, funcName, args);
-    this.stack.push(new DynamicExpression(rawCall.getScript()));
-    this.stack.push(apiFunc);
+    FunctionInvocationContext invocation = ctx.functionInvocation();
+    String funcName = invocation.functionName.getText();
+    var func = this.translation.stack().getFunction(funcName);
+    var call = this.expressions.invocationOf(invocation, func);
+    this.translation.stack().push(call.compose(this.translation.script()));
+    this.translation.stack().push(func);
   }
 
   @Override
   public void exitDynamicVariableInitializer(DynamicVariableInitializerContext ctx) {
     String variableName = ctx.variableName.getText();
-    var apiFunc = this.stack.pop(DynamicFunction.class);
-    var rawCall = this.stack.pop(DynamicExpression.class);
-    var declaration = this.script.composeVariableDeclaration(variableName, DynamicExpression.class);
-    var varRef = this.script.composeVariableReference(variableName, NumericExpression.class);
-    var one = this.script.getNumericLiteralEquivalent("1");
-    var referenceExpression = this.script.composeComparisonOperation(varRef, "==", one);
+    var apiFunc = this.translation.stack().pop(DynamicFunction.class);
+    var rawCall = this.translation.stack().pop(DynamicExpression.class);
+    var declaration = this.translation.script().composeVariableDeclaration(variableName,
+        DynamicExpression.class);
+    var varRef = this.translation.script().composeVariableReference(variableName,
+        NumericExpression.class);
+    var one = this.translation.script().getNumericLiteralEquivalent("1");
+    var referenceExpression = this.translation.script().composeComparisonOperation(varRef, "==",
+        one);
     var variable = new DynamicVariable(variableName, declaration, rawCall, referenceExpression,
         apiFunc.endpointName, apiFunc.errorSeverity, apiFunc.errorLabel);
-    this.stack.push(variable);
-  }
-
-  @Override
-  public void enterNumericVariableInitializer(NumericVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitNumericVariableInitializer(
-      NumericVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), NumericExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterDateVariableInitializer(DateVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitDateVariableInitializer(
-      DateVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), DateExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterTimeVariableInitializer(TimeVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitTimeVariableInitializer(
-      TimeVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), TimeExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterDurationVariableInitializer(DurationVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitDurationVariableInitializer(
-      DurationVariableInitializerContext ctx) {
-    this.exitVariableInitializer(ctx.variableName.getText(), DurationExpression.class);
-    this.endTrackingDynamicDependencies();
+    this.exitVariableInitializer(ctx, variable);
   }
 
   /**
-   * Helper method to handle sequence variable initializers.
-   * Pops the expression from the stack and creates a Variable object.
+   * A variable of a WITH clause is declared at once, so that the initializers after it can read
+   * it, and belongs to the rule set. The variable of a global or stage declaration is declared
+   * when the declaration exits.
    */
-  private void exitSequenceVariableInitializer(String variableName,
-      Class<? extends SequenceExpression> expressionType) {
-    var expression = this.stack.pop(expressionType);
-    var variable = new Variable(variableName,
-        this.script.composeVariableDeclaration(variableName, expression.getClass()),
-        expression,
-        this.script.composeVariableReference(variableName, expression.getClass()));
-    this.attachDynamicDependencies(variable);
-    this.stack.push(variable);
-  }
-
-  @Override
-  public void enterStringSequenceVariableInitializer(StringSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitStringSequenceVariableInitializer(
-      StringSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), StringSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterBooleanSequenceVariableInitializer(BooleanSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitBooleanSequenceVariableInitializer(
-      BooleanSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), BooleanSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterNumericSequenceVariableInitializer(NumericSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitNumericSequenceVariableInitializer(
-      NumericSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), NumericSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterDateSequenceVariableInitializer(DateSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitDateSequenceVariableInitializer(
-      DateSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), DateSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterTimeSequenceVariableInitializer(TimeSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitTimeSequenceVariableInitializer(
-      TimeSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), TimeSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void enterDurationSequenceVariableInitializer(DurationSequenceVariableInitializerContext ctx) {
-    this.beginTrackingDynamicDependencies();
-  }
-
-  @Override
-  public void exitDurationSequenceVariableInitializer(
-      DurationSequenceVariableInitializerContext ctx) {
-    this.exitSequenceVariableInitializer(ctx.variableName.getText(), DurationSequenceExpression.class);
-    this.endTrackingDynamicDependencies();
+  private void exitVariableInitializer(VariableInitializerContext initializer, Variable variable) {
+    if (initializer.getParent() instanceof VariableListContext) {
+      this.translation.stack().declareIdentifier(variable);
+      this.ruleStack.peek(RuleSet.class).addVariable(variable);
+    } else {
+      this.translation.stack().push(variable);
+    }
   }
 
   // #endregion Variable Initializers
@@ -467,12 +334,12 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
     // The variable initializer exit methods above should have created a Variable
     // object and pushed it onto the stack. Pop it and declare it as global.
-    if (!this.stack.empty()) {
-      Variable variable = this.stack.pop(Variable.class);
+    if (!this.translation.stack().empty()) {
+      Variable variable = this.translation.stack().pop(Variable.class);
 
       // Declare the variable in the stack so it can be referenced later
       // and retrieved via stack.getGlobals() for the validator generator
-      this.stack.declareGlobalIdentifier(variable);
+      this.translation.stack().declareGlobalIdentifier(variable);
       this.validationPlan.addVariable(variable);
       logger.debug("Declared global variable: {}", variable.name);
     }
@@ -486,7 +353,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   @Override
   public void enterValidationStage(ValidationStageContext ctx) {
 
-    this.stack.pushStackFrame();
+    this.translation.stack().pushStackFrame();
     this.ruleStack.push(new ValidationStage(ctx.StageIdentifier().getText(), this.validationPlan));
   }
 
@@ -500,7 +367,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
     var stage = this.ruleStack.pop(ValidationStage.class);
     this.validationPlan.addStage(stage);
-    this.stack.popStackFrame();
+    this.translation.stack().popStackFrame();
   }
 
   /**
@@ -513,11 +380,11 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     logger.debug("Processing pattern-level variable declaration");
 
     // The variable initializer should have created a Variable object
-    if (!this.stack.empty()) {
-      Variable variable = this.stack.pop(Variable.class);
+    if (!this.translation.stack().empty()) {
+      Variable variable = this.translation.stack().pop(Variable.class);
 
       // Declare the variable in the stack so it can be referenced within this stage
-      this.stack.declareIdentifier(variable);
+      this.translation.stack().declareIdentifier(variable);
 
       this.ruleStack.peek(ValidationStage.class).addVariable(variable);
     }
@@ -530,7 +397,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public void enterRuleSet(RuleSetContext ctx) {
-    this.stack.pushStackFrame();
+    this.translation.stack().pushStackFrame();
     this.ruleStack.push(new RuleSet(this.ruleStack.peek(ValidationStage.class)));
   }
 
@@ -544,95 +411,62 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     logger.debug("Exiting rule block");
 
     var ruleSet = this.ruleStack.pop(RuleSet.class);
-    this.stack.popStackFrame();
+    this.translation.stack().popStackFrame();
     var stage = this.ruleStack.peek(ValidationStage.class);
     stage.addRuleSet(ruleSet);
-    assert !this.efxContext.isEmpty() : "Expected context to be set in rule block (WITH clause should have pushed it)";
-    this.efxContext.pop();
+    assert !this.translation.efxContext().isEmpty() : "Expected context to be set in rule block (WITH clause should have pushed it)";
+    this.translation.efxContext().pop();
   }
 
-  @Override
-  public void exitVariableInitializer(VariableInitializerContext ctx) {
-    var variable = this.stack.pop(Variable.class);
-    this.stack.declareIdentifier(variable);
-    this.ruleStack.peek(RuleSet.class).addVariable(variable);
-  }
 
   @Override
   public void exitContextDeclaration(ContextDeclarationContext ctx) {
-    String shortcut = ctx.shortcut != null ? ctx.shortcut.getText() : "none";
-    switch (shortcut) {
-      case ".":
-        throw new UnsupportedOperationException("Same context (.) is not supported in EFX Rules.");
-      case "..":
-        throw new UnsupportedOperationException("Parent context (..) is not supported in EFX Rules.");
-      case "/":
-        this.exitRootContextDeclaration();
-        break;
-      default:
-        PathExpression contextPath = this.stack.pop(PathExpression.class);
-        if (ctx.fieldContext() != null) {
-          String fieldId = getFieldId(ctx.fieldContext());
-          assert fieldId != null : "We should have been able to locate the FieldId declared as context.";
-          this.exitFieldContextDeclaration(fieldId, contextPath, null);
-        } else if (ctx.contextVariableInitializer() != null) {
-          Variable contextVariable = this.getContextVariable(ctx.contextVariableInitializer(), contextPath);
-          assert contextVariable != null : "We should have been able to locate the ContextVariable declared as context.";
-          if (ctx.contextVariableInitializer().fieldContext() != null) {
-            String fieldId = getFieldId(ctx.contextVariableInitializer().fieldContext());
-            this.exitFieldContextDeclaration(fieldId, contextPath, contextVariable);
-          } else if (ctx.contextVariableInitializer().nodeContext() != null) {
-            String nodeId = getNodeId(ctx.contextVariableInitializer().nodeContext());
-            assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
-            this.exitNodeContextDeclaration(nodeId, contextPath, contextVariable);
-          }
-        } else if (ctx.nodeContext() != null) {
-          String nodeId = getNodeId(ctx.nodeContext());
-          assert nodeId != null : "We should have been able to locate the NodeId declared as context.";
-          this.exitNodeContextDeclaration(nodeId, contextPath, null);
-        }
-        break;
+    if (ctx.contextVariableInitializer() != null) {
+      Context declared = this.expressions.contextAssignedBy(ctx.contextVariableInitializer());
+      Variable contextVariable =
+          this.getContextVariable(ctx.contextVariableInitializer(), declared.relativePath());
+      this.exitContextDeclaration(declared, contextVariable);
+    } else {
+      this.exitContextDeclaration(
+          this.expressions.contextOf(ctx.getRuleContext(ParserRuleContext.class, 0)), null);
+    }
+    if (isEveryContext(ctx)) {
+      this.setEveryRuleContextPath();
     }
   }
 
-  private void exitRootContextDeclaration() {
-    this.exitNodeContextDeclaration(this.symbols.getRootNodeId(), this.symbols.getRootPath(), null);
-  }
 
-  private void exitFieldContextDeclaration(String fieldId, PathExpression contextPath, Variable contextVariable) {
-    var context = new FieldContext(fieldId, contextPath, contextVariable);
+  /**
+   * The context declared is also the context of the rule set.
+   */
+  @Override
+  void declareContext(final Context context, final Variable contextVariable) {
     this.ruleStack.peek(RuleSet.class).setContext(context, contextVariable);
-    this.efxContext.push(context);
-    if (contextVariable != null) {
-      this.stack.declareIdentifier(contextVariable);
-      this.efxContext.declareContextVariable(contextVariable.name, context);
-    }
+    super.declareContext(context, contextVariable);
   }
 
-  private void exitNodeContextDeclaration(String nodeId, PathExpression contextPath, Variable contextVariable) {
-    var context = new NodeContext(nodeId, contextPath, contextVariable);
-    this.ruleStack.peek(RuleSet.class).setContext(context, contextVariable);
-    this.efxContext.push(context);
-    if (contextVariable != null) {
-      this.stack.declareIdentifier(contextVariable);
-      this.efxContext.declareContextVariable(contextVariable.name, context);
-    }
+  /**
+   * True when the context is declared with WITH EVERY.
+   */
+  private static boolean isEveryContext(ContextDeclarationContext ctx) {
+    return ctx.getParent() instanceof ContextDeclarationBlockContext
+        && ctx.getParent().getParent() instanceof WithClauseContext
+        && ((WithClauseContext) ctx.getParent().getParent()).EVERY() != null;
   }
 
-  private Variable getContextVariable(ContextVariableInitializerContext ctx,
-      PathExpression contextPath) {
-    if (ctx == null) {
-      return null;
-    }
-
-    final String variableName = ctx.variableName.getText();
-    final Class<? extends TypedExpression> variableType = contextPath.asScalar().getClass();
-
-    return new Variable(variableName,
-        this.script.composeVariableDeclaration(variableName, variableType),
-        this.script.contextualizePath(contextPath, contextPath),
-        this.script.composeVariableReference(variableName, variableType));
-
+  /**
+   * For WITH EVERY, sets the context of the Schematron rule to the path of the context without
+   * the declared predicates on its last step. The EFX context keeps the full path, so everything
+   * inside the rule set is read as for WITH without EVERY.
+   */
+  private void setEveryRuleContextPath() {
+    final RuleSet ruleSet = this.ruleStack.peek(RuleSet.class);
+    final Context context = ruleSet.getContext();
+    final PathExpression declaredPath = context.isFieldContext()
+        ? this.translation.symbols().getAbsolutePathOfField(context.symbol())
+        : this.translation.symbols().getAbsolutePathOfNode(context.symbol());
+    ruleSet.setRuleContextPath(
+        XPathContextualizer.removeDeclaredPredicatesOfLastStep(context.absolutePath(), declaredPath));
   }
 
 
@@ -647,6 +481,14 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   }
 
 
+  /** True while the condition of a WHEN clause is being translated. */
+  private boolean translatingCondition = false;
+
+  @Override
+  public void enterWhenClause(WhenClauseContext ctx) {
+    this.translatingCondition = true;
+  }
+
   /**
    * Called when exiting a WHEN clause.
    * The WHEN clause provides conditional application of the rule.
@@ -654,9 +496,10 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public void exitWhenClause(WhenClauseContext ctx) {
-    var condition = this.stack.pop(BooleanExpression.class);
+    var condition = this.expressions.valueOf(ctx.expression(), WHEN).booleanAt(0);
+    this.translatingCondition = false;
     var rule = this.ruleStack.peek(ValidationRule.class);
-    var invertedCondition = this.script.composeLogicalNot(condition);
+    var invertedCondition = this.translation.script().composeLogicalNot(condition);
     rule.setCondition(condition, invertedCondition, this.combineWithOrParenthesized(rule.getExpression(), invertedCondition));
   }
 
@@ -670,20 +513,23 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   /**
    * Called when exiting a FOR clause.
    * The FOR clause specifies the subject (field or node) that the rule validates.
-   * Pushes the subject Context to the stack.
+   * Pushes the subject Context to the stack. An error in the subject is placed at it.
    */
   @Override
   public void exitForClause(ForClauseContext ctx) {
-    this.stack.pop(PathExpression.class); // Remove path expression pushed by base class
-
-    if (ctx.simpleFieldReference() != null) {
-      var fieldId = ctx.simpleFieldReference().FieldId().getText();
-      this.ruleStack.peek(ValidationRule.class).setSubject(new FieldContext(fieldId, this.symbols.getAbsolutePathOfField(fieldId)));
-    } else if (ctx.simpleNodeReference() != null) {
-      var nodeId = ctx.simpleNodeReference().NodeId().getText();
-      this.ruleStack.peek(ValidationRule.class).setSubject(new NodeContext(nodeId, this.symbols.getAbsolutePathOfNode(nodeId)));
-    } else {
-      assert false : "The grammar should prevent reaching this point without a field or node reference";
+    final ParserRuleContext subject = ctx.simpleFieldReference() != null ? ctx.simpleFieldReference() : ctx.simpleNodeReference();
+    try {
+      if (ctx.simpleFieldReference() != null) {
+        var fieldId = ctx.simpleFieldReference().FieldId().getText();
+        this.ruleStack.peek(ValidationRule.class).setSubject(new FieldContext(fieldId, this.translation.symbols().getAbsolutePathOfField(fieldId)));
+      } else if (ctx.simpleNodeReference() != null) {
+        var nodeId = ctx.simpleNodeReference().NodeId().getText();
+        this.ruleStack.peek(ValidationRule.class).setSubject(new NodeContext(nodeId, this.translation.symbols().getAbsolutePathOfNode(nodeId)));
+      } else {
+        assert false : "The grammar should prevent reaching this point without a field or node reference";
+      }
+    } catch (final EfxCompilationException e) {
+      throw e.at(subject);
     }
   }
 
@@ -695,16 +541,85 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
   public void exitInClause(InClauseContext ctx) {
     logger.debug("Processing IN clause");
 
-    String compressedList = ctx.noticeTypeList() instanceof AnyNoticeTypesContext ? "*" : ctx.noticeTypeList().getText();
+    var noticeSubtypes = this.noticeSubtypesOf(ctx.noticeTypeList());
+    this.ruleStack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
+    this.validationPlan.addNoticeSubtypes(noticeSubtypes.asList());
+  }
+
+  /**
+   * Reads the notice subtypes of an IN clause from the names that the parser matched in it. After a
+   * syntax error, the parser can keep in a range a token that it skipped, which is not read, or
+   * leave a range without one of its names; such a range adds no notice subtype, and the syntax
+   * error says what is missing.
+   */
+  private NoticeSubtypeRange noticeSubtypesOf(NoticeTypeListContext list) {
     if (this.cachedSortedNoticeSubtypeIds == null) {
-      this.cachedSortedNoticeSubtypeIds = this.symbols.getAllNoticeSubtypes().stream()
+      this.cachedSortedNoticeSubtypeIds = this.translation.symbols().getAllNoticeSubtypes().stream()
           .sorted()
           .map(SdkNoticeSubtype::getId)
           .collect(Collectors.toUnmodifiableList());
     }
-    var noticeSubtypes = new NoticeSubtypeRange(compressedList, this.cachedSortedNoticeSubtypeIds);
-    this.ruleStack.peek(ValidationRule.class).setNoticeSubtypeRange(noticeSubtypes);
-    this.validationPlan.addNoticeSubtypes(noticeSubtypes.asList());
+    if (list instanceof AnyNoticeTypesContext) {
+      return NoticeSubtypeRange.all(this.cachedSortedNoticeSubtypeIds);
+    }
+    final NoticeSubtypeRange.Builder noticeSubtypes =
+        new NoticeSubtypeRange.Builder(this.cachedSortedNoticeSubtypeIds);
+    // After a syntax error the list can be neither of its two alternatives
+    if (list instanceof ExplicitNoticeTypesContext) {
+      for (final NoticeTypeRangeContext range : ((ExplicitNoticeTypesContext) list).noticeTypeRange()) {
+        addNoticeSubtypes(range, noticeSubtypes);
+      }
+    }
+    return noticeSubtypes.build();
+  }
+
+  /**
+   * Adds the notice subtypes of a range of an IN list, as in {@code 1}, {@code 1-3} or
+   * {@code E3 - E6}. The lexer reads {@code E3-E6}, written without spaces, as a single name, since a
+   * name can hold dashes; the dashes in a name therefore separate the ends of a range, as a minus
+   * does.
+   */
+  private static void addNoticeSubtypes(final NoticeTypeRangeContext range,
+      final NoticeSubtypeRange.Builder noticeSubtypes) {
+    final List<Token> names = new ArrayList<>();
+    for (final NoticeTypeContext noticeType : range.noticeType()) {
+      final Token name = matchedName(noticeType);
+      if (name == null) {
+        return;
+      }
+      names.add(name);
+    }
+    // One notice subtype, or the first and the last of the range
+    final List<String> ends = new ArrayList<>();
+    for (final Token name : names) {
+      ends.addAll(List.of(name.getText().split("-")));
+    }
+    if (ends.size() > 2) {
+      throw InvalidUsageException.invalidNoticeSubtypeToken(String.join("-", ends)).at(names.get(0));
+    }
+    try {
+      if (ends.size() == 1) {
+        noticeSubtypes.add(ends.get(0));
+      } else {
+        noticeSubtypes.add(ends.get(0), ends.get(1));
+      }
+    } catch (final EfxCompilationException e) {
+      throw e.at(names.get(0));
+    }
+  }
+
+  /**
+   * @return the integer or identifier that the parser matched as the given notice subtype, or null
+   *         if a syntax error left it without one; a token that the parser skipped is not a match
+   */
+  private static Token matchedName(final NoticeTypeContext noticeType) {
+    for (int i = 0; i < noticeType.getChildCount(); i++) {
+      final ParseTree child = noticeType.getChild(i);
+      if (child instanceof TerminalNode && !(child instanceof ErrorNode)) {
+        return ((TerminalNode) child).getSymbol();
+      }
+    }
+    return null;
   }
 
   @Override
@@ -728,7 +643,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public void exitAssertClause(AssertClauseContext ctx) {
-    var test = this.stack.pop(BooleanExpression.class);
+    var test = this.expressions.valueOf(ctx.expression(), ASSERT).booleanAt(0);
     var rule = this.ruleStack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
     rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
@@ -737,7 +652,7 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitReportClause(ReportClauseContext ctx) {
-    var test = this.stack.pop(BooleanExpression.class);
+    var test = this.expressions.valueOf(ctx.expression(), REPORT).booleanAt(0);
     var rule = this.ruleStack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
     rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
@@ -750,7 +665,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
    */
   @Override
   public void exitOtherwiseAssertClause(OtherwiseAssertClauseContext ctx) {
-    var test = this.stack.pop(BooleanExpression.class);
+    var test =
+        this.expressions.valueOf(ctx.expression(), OTHERWISE_ASSERT).booleanAt(0);
     var rule = this.ruleStack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
     rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
@@ -759,7 +675,8 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void exitOtherwiseReportClause(OtherwiseReportClauseContext ctx) {
-    var test = this.stack.pop(BooleanExpression.class);
+    var test =
+        this.expressions.valueOf(ctx.expression(), OTHERWISE_REPORT).booleanAt(0);
     var rule = this.ruleStack.pop(ValidationRule.class);
     var invertedCondition = rule.getInvertedCondition();
     rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
@@ -774,9 +691,9 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     if (right == null) {
       return left;
     }
-    return this.script.composeLogicalOr(
-        this.script.composeParenthesizedExpression(left, BooleanExpression.class),
-        this.script.composeParenthesizedExpression(right, BooleanExpression.class));
+    return this.translation.script().composeLogicalOr(
+        this.translation.script().composeParenthesizedExpression(left, BooleanExpression.class),
+        this.translation.script().composeParenthesizedExpression(right, BooleanExpression.class));
   }
 
   @Override
@@ -814,9 +731,9 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
     BooleanExpression combined = null;
     for (ValidationRule rule : ruleSet) {
       assert rule != null &&  rule.getCondition() != null : "The EFX grammar should have prevented this. All rules in a RuleSet should have conditions if a fallback is defined.";
-      combined = (combined == null) ? rule.getInvertedCondition() : this.script.composeLogicalAnd(combined, rule.getInvertedCondition());
+      combined = (combined == null) ? rule.getInvertedCondition() : this.translation.script().composeLogicalAnd(combined, rule.getInvertedCondition());
     }
-    var invertedCombined = this.script.composeLogicalNot(combined);
+    var invertedCombined = this.translation.script().composeLogicalNot(combined);
 
     fallbackRule.setCondition(combined, invertedCombined, this.combineWithOrParenthesized(fallbackRule.getExpression(), invertedCombined));
 
@@ -840,93 +757,68 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   @Override
   public void enterDynamicFunctionDeclaration(DynamicFunctionDeclarationContext ctx) {
-    this.stack.pushStackFrame();
-    this.stack.push(new ParsedParameters());
+    this.translation.stack().pushStackFrame();
+    this.translation.stack().push(new ParsedParameters());
   }
 
+  /**
+   * Declares a dynamic function. The function is declared before the scope of its parameters
+   * closes, so it cannot take the name of one of its parameters.
+   */
   @Override
   public void exitDynamicFunctionDeclaration(DynamicFunctionDeclarationContext ctx) {
-    ParsedParameters params = this.stack.pop(ParsedParameters.class);
-    this.stack.popStackFrame();
+    ParsedParameters params = this.translation.stack().pop(ParsedParameters.class);
     String apiName = ctx.functionName.getText();
     String endpointName = ctx.endpointName != null ? unquote(ctx.endpointName.getText()) : "default";
     if (!this.validationPlan.getEndpoints().containsKey(endpointName)) {
-      throw InvalidIdentifierException.undeclaredEndpoint(ctx, apiName, endpointName);
+      throw InvalidIdentifierException.undeclaredEndpoint(ctx,
+          Function.spellingOf(apiName).describe(), endpointName);
     }
     RuleSeverity errorSeverity = ctx.onErrorClause() != null && ctx.onErrorClause().Warn() != null
         ? RuleSeverity.WARNING : RuleSeverity.ERROR;
     String errorLabel = ctx.onErrorClause() != null && ctx.onErrorClause().errorLabel != null
         ? unquote(ctx.onErrorClause().errorLabel.getText()) : null;
-    this.stack.declareFunction(new DynamicFunction(apiName, params, endpointName, errorSeverity, errorLabel));
-  }
-
-  @Override
-  public void exitBooleanFunctionInvocation(BooleanFunctionInvocationContext ctx) {
-    if (this.isApiFunction(ctx.functionInvocation())) {
-      this.composeAutoGeneratedDynamicVariable(ctx.functionInvocation());
-    } else {
-      super.exitBooleanFunctionInvocation(ctx);
-    }
-  }
-
-  @Override
-  public void exitScalarFromFunctionInvocation(ScalarFromFunctionInvocationContext ctx) {
-    if (this.isApiFunction(ctx.functionInvocation())) {
-      this.composeAutoGeneratedDynamicVariable(ctx.functionInvocation());
-    } else {
-      super.exitScalarFromFunctionInvocation(ctx);
-    }
-  }
-
-  private boolean isApiFunction(FunctionInvocationContext ctx) {
-    return this.stack.getFunction(ctx.functionName.getText()) instanceof DynamicFunction;
+    this.translation.stack().declareFunction(new DynamicFunction(apiName, params, endpointName, errorSeverity, errorLabel));
+    this.translation.stack().popStackFrame();
   }
 
   private int apiCallCounter = 0;
 
   /**
    * Handles an inline dynamic function call in a rule expression.
-   * Creates an auto-generated dynamic variable on the current ValidationRule and pushes
-   * a boolean reference expression ($varName = 1) onto the stack.
+   * Creates an auto-generated dynamic variable on the current ValidationRule and returns
+   * a boolean reference expression ($varName = 1).
    */
-  private void composeAutoGeneratedDynamicVariable(FunctionInvocationContext ctx) {
-    String funcName = ctx.functionName.getText();
+  private BooleanExpression composeAutoGeneratedDynamicVariable(FunctionInvocationContext ctx,
+      DynamicFunction apiFunc) {
+    // Compose the raw dynamic function call.
+    var call = this.expressions.invocationOf(ctx, apiFunc);
     if (!this.ruleStack.contains(ValidationRule.class)) {
-      throw InvalidUsageException.dynamicFunctionOutsideRule(ctx, funcName);
+      throw InvalidUsageException.dynamicFunctionOutsideRule(ctx, apiFunc);
     }
 
-    // Resolve the dynamic function and compose the raw dynamic function call.
-    DynamicFunction apiFunc = (DynamicFunction) this.stack.getFunction(funcName);
-    List<? extends TypedExpression> args = this.stack.pop(ParsedArguments.class).getArgumentValues();
-    var rawCall = this.script.composeDynamicFunction(apiFunc.endpointName, funcName, args);
-
     // Compose the variable's expressions: declaration, initialization, and success check ($var == 1).
-    String varName = "__apiResult" + (++this.apiCallCounter);
-    var declaration = this.script.composeVariableDeclaration(varName, DynamicExpression.class);
-    var initExpression = new DynamicExpression(rawCall.getScript());
-    var varRef = this.script.composeVariableReference(varName, NumericExpression.class);
-    var one = this.script.getNumericLiteralEquivalent("1");
-    var referenceExpression = this.script.composeComparisonOperation(varRef, "==", one);
+    String varName = Translation.RESERVED_PREFIX + "apiResult" + (++this.apiCallCounter);
+    var declaration = this.translation.script().composeVariableDeclaration(varName,
+        DynamicExpression.class);
+    var initExpression = TypedExpression.from(call.compose(this.translation.script()),
+        DynamicExpression.class);
+    var varRef = this.translation.script().composeVariableReference(varName,
+        NumericExpression.class);
+    var one = this.translation.script().getNumericLiteralEquivalent("1");
+    var referenceExpression = this.translation.script().composeComparisonOperation(varRef, "==",
+        one);
 
     // Create the auto-generated variable and register it on the current rule.
     var rule = this.ruleStack.peek(ValidationRule.class);
     int index = rule.getAutoGeneratedVariables().size() + 1;
     var variable = new DynamicVariable.AutoGenerated(index, varName, declaration,
         initExpression, referenceExpression, apiFunc.endpointName, apiFunc.errorSeverity,
-        apiFunc.errorLabel);
+        apiFunc.errorLabel, this.translatingCondition);
     rule.addAutoGeneratedVariable(variable);
 
-    // Push the success check so it can be used in the rule's condition.
-    this.stack.push(referenceExpression);
-  }
-
-  @Override
-  protected void exitParameterDeclaration(ParserRuleContext ctx, String parameterName,
-      Class<? extends TypedExpression> parameterType) {
-    ParsedParameter parameter = new ParsedParameter(parameterName,
-        this.script.composeParameterReference(parameterName, parameterType));
-    this.stack.declareIdentifier(parameter);
-    this.stack.peek(ParsedParameters.class).add(parameter);
+    // Return the success check so it can be used in the rule's condition.
+    return referenceExpression;
   }
 
   private static String unquote(String literal) {
@@ -942,4 +834,34 @@ public class EfxRulesTranslatorV2 extends EfxExpressionTranslatorV2
 
   // #endregion ANTLR Listener Methods
 
+
+  /**
+   * Translates the expressions of a rules file. A call of an API function inside a rule becomes an
+   * auto-generated dynamic variable of the rule, and a variable that a variable initializer reads
+   * is recorded among the dynamic dependencies of the variable it initializes.
+   */
+  private final class RulesExpressionVisitor extends EfxExpressionVisitor {
+
+    RulesExpressionVisitor(final Translation translation) {
+      super(translation);
+    }
+
+    /**
+     * Translates a call of a function as a call of an API function, since a rules file declares no
+     * other kind of function.
+     */
+    @Override
+    public Subexpression<?> visitFunctionInvocation(final FunctionInvocationContext ctx) {
+      final DynamicFunction function = (DynamicFunction) EfxRulesTranslatorV2.this.translation
+          .stack().getFunction(ctx.functionName.getText());
+      return this.subexpression(
+          EfxRulesTranslatorV2.this.composeAutoGeneratedDynamicVariable(ctx, function));
+    }
+
+    @Override
+    public Subexpression<?> visitVariableReference(final VariableReferenceContext ctx) {
+      EfxRulesTranslatorV2.this.trackDynamicDependenciesOf(ctx.variableName.getText());
+      return super.visitVariableReference(ctx);
+    }
+  }
 }

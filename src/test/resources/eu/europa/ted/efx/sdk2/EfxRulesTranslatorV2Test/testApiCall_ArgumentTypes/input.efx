@@ -1,0 +1,50 @@
+// Test: each type of argument of a dynamic function, converted to the text form fixed by the
+// dynamic rules API: text as is, true or false, canonical decimal numbers, dates, times and
+// durations in ISO 8601. Every argument keeps its position (arg1, arg2...), an absent value is
+// sent empty, and a list is sent as the same argument repeated once per item.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?text(text : $value) CALL API;
+LET dynamic : ?indicator(indicator : $value) CALL API;
+LET dynamic : ?number(number : $value) CALL API;
+LET dynamic : ?date(date : $value) CALL API;
+LET dynamic : ?time(time : $value) CALL API;
+LET dynamic : ?duration(duration : $value) CALL API;
+LET dynamic : ?texts(text* : $values) CALL API;
+LET dynamic : ?numbers(number* : $values) CALL API;
+LET dynamic : ?mixed(text : $first, text* : $list, number : $last) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    ASSERT ?text(BT-00-Identifier)
+    AS ERROR R-TYP-001
+    FOR BT-00-Text IN 1;
+    ASSERT ?indicator(BT-00-Indicator)
+    AS ERROR R-TYP-002
+    FOR BT-00-Text IN 1;
+    ASSERT ?indicator(BT-00-Code is present)
+    AS ERROR R-TYP-003
+    FOR BT-00-Text IN 1;
+    ASSERT ?number(BT-00-Number)
+    AS ERROR R-TYP-004
+    FOR BT-00-Text IN 1;
+    ASSERT ?date(BT-00-StartDate)
+    AS ERROR R-TYP-005
+    FOR BT-00-Text IN 1;
+    ASSERT ?time(BT-00-StartTime)
+    AS ERROR R-TYP-006
+    FOR BT-00-Text IN 1;
+    ASSERT ?duration(BT-00-Duration)
+    AS ERROR R-TYP-007
+    FOR BT-00-Text IN 1;
+    ASSERT ?texts(BT-00-Repeatable-Text)
+    AS ERROR R-TYP-008
+    FOR BT-00-Text IN 1;
+    ASSERT ?numbers(BT-00-Repeatable-Number)
+    AS ERROR R-TYP-009
+    FOR BT-00-Text IN 1;
+    ASSERT ?mixed(BT-00-Identifier, BT-00-Repeatable-Text, BT-00-Number)
+    AS ERROR R-TYP-010
+    FOR BT-00-Text IN 1;

@@ -3,4 +3,4 @@
 WITH context : $ctx = BT-13-Number
 ASSERT $ctx + 1 > 0
 AS ERROR R-CTX-001
-FOR BT-13-Number IN 1, 2
+FOR BT-13-Number IN 1, 2;

@@ -63,8 +63,8 @@ import eu.europa.ted.efx.model.templates.LabelFromKeyContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.TextContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.ViewTemplateSection;
 import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.variables.Variable;
-import eu.europa.ted.efx.model.variables.Variables;
+import eu.europa.ted.efx.model.identifiers.Variable;
+import eu.europa.ted.efx.model.identifiers.Variables;
 import eu.europa.ted.efx.sdk1.EfxParser.*;
 
 /**
@@ -200,14 +200,32 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     return sb.toString().trim();
   }
 
-  // #region Template File ----------------------------------------------------
-
+  /**
+   * Starts a translation with no declarations, no context, no parameter values, no content blocks,
+   * an empty section and no indentation yet.
+   */
   @Override
-  public void enterTemplateFile(TemplateFileContext ctx) {
-    assert blockStack.isEmpty() : UNEXPECTED_INDENTATION;
+  void startTranslation() {
+    super.startTranslation();
+    this.blockStack = new ContentBlockStack();
     this.section = new ViewTemplateSection(TemplateSection.DEFAULT, "block");
     this.indentWith = Indent.UNDETERMINED;
     this.indentSpaces = -1;
+  }
+
+  // #region Template File ----------------------------------------------------
+
+  /**
+   * Starts the translation where the walk enters the template file, before the file is recorded as
+   * the first parser context of the call stack: every walk of a template file is a translation of
+   * its own, whether {@code renderTemplate} or another caller walks it.
+   */
+  @Override
+  public void enterEveryRule(final ParserRuleContext ctx) {
+    if (ctx instanceof TemplateFileContext) {
+      this.startTranslation();
+    }
+    super.enterEveryRule(ctx);
   }
 
   @Override
@@ -332,7 +350,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                 this.script.getStringLiteralFromUnquotedString("|"),
                 labelType,
                 this.script.getStringLiteralFromUnquotedString("|"),
-                new StringExpression(loopVariable.referenceExpression.getScript()))),
+                Expression.from(loopVariable.referenceExpression, StringExpression.class))),
             StringSequenceExpression.class),
         StringSequenceExpression.class);
     this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
@@ -351,22 +369,22 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
+  /**
+   * Renders the label of #{labelType|BT-00-Text}. The field is looked up first, so that a field
+   * that does not exist is reported, as in #{BT-00-Code}.
+   */
   @Override
   public void exitShorthandFieldLabelReference(ShorthandFieldLabelReferenceContext ctx) {
     final String fieldId = ctx.FieldId().getText();
+    this.symbols.getTypeOfField(fieldId);
     StringExpression labelType = ctx.labelType() != null ? this.stack.pop(StringExpression.class)
         : this.script.getStringLiteralFromUnquotedString("");
-
-    if (labelType.getScript().equals("value")) {
-      this.shorthandIndirectLabelReference(fieldId);
-    } else {
-      StringExpression key = this.script.composeStringConcatenation(
-          List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
-              this.script.getStringLiteralFromUnquotedString("|"), labelType,
-              this.script.getStringLiteralFromUnquotedString("|"),
-              this.script.getStringLiteralFromUnquotedString(fieldId)));
-      this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
-    }
+    StringExpression key = this.script.composeStringConcatenation(
+        List.of(this.script.getStringLiteralFromUnquotedString(ASSET_TYPE_FIELD),
+            this.script.getStringLiteralFromUnquotedString("|"), labelType,
+            this.script.getStringLiteralFromUnquotedString("|"),
+            this.script.getStringLiteralFromUnquotedString(fieldId)));
+    this.stack.push(new LabelFromKeyContentTemplateFragment(key, NumericExpression.empty()));
   }
 
   @Override
@@ -398,7 +416,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                         this.script.getStringLiteralFromUnquotedString("|"),
                         this.script.getStringLiteralFromUnquotedString(LABEL_TYPE_WHEN),
                         this.script.getStringLiteralFromUnquotedString("-"),
-                        new StringExpression(loopVariable.referenceExpression.getScript()),
+                        Expression.from(loopVariable.referenceExpression, StringExpression.class),
                         this.script.getStringLiteralFromUnquotedString("|"),
                         this.script.getStringLiteralFromUnquotedString(fieldId))),
                 StringSequenceExpression.class),
@@ -421,7 +439,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
                     this.script.getStringLiteralFromUnquotedString(
                         this.symbols.getRootCodelistOfField(fieldId)),
                     this.script.getStringLiteralFromUnquotedString("."),
-                    new StringExpression(loopVariable.referenceExpression.getScript()))),
+                    Expression.from(loopVariable.referenceExpression, StringExpression.class))),
                 StringSequenceExpression.class),
             StringSequenceExpression.class);
         this.stack.push(new LabelFromExpressionContentTemplateFragment(keys, NumericExpression.empty()));
@@ -527,7 +545,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         expression = this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new DateSequenceExpression(expression.getScript())))),
+                    Expression.from(expression, DateSequenceExpression.class)))),
             new StringExpression("format-date($item, '[D01]/[M01]/[Y0001]')"),
             StringSequenceExpression.class);
       } else if (EfxDataType.Time.class.isAssignableFrom(((TypedExpression) expression).getDataType())) {
@@ -539,7 +557,7 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
         expression = this.script.composeForExpression(
             this.script.composeIteratorList(
                 List.of(this.script.composeIteratorExpression(loopVariable.declarationExpression,
-                    new TimeSequenceExpression(expression.getScript())))),
+                    Expression.from(expression, TimeSequenceExpression.class)))),
             new StringExpression("format-time($item, '[H01]:[m01] [Z]')"),
             StringSequenceExpression.class);
       }
@@ -643,12 +661,11 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   public void enterTemplateLine(TemplateLineContext ctx) {
     final int indentLevel = this.getIndentLevel(ctx);
     final int indentChange = indentLevel - this.blockStack.currentIndentationLevel();
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.stack.pushStackFrame(); // Create a stack frame for the new template line.
     } else if (indentChange < 0) {
       for (int i = indentChange; i < 0; i++) {
@@ -676,17 +693,15 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
     final List<ContentTemplate> contentTemplates =
         ctx.template() != null ? List.of(this.stack.pop(ContentTemplate.class)) : List.of();
     final Variables variables = new Variables(); // template variables not supported in EFX-1
-    final Integer outlineNumber =
-        ctx.OutlineNumber() != null ? Integer.parseInt(ctx.OutlineNumber().getText().trim()) : -1;
+    final int outlineNumber = this.outlineNumberOf(ctx);
     assert this.stack.empty() : "Stack should be empty at this point.";
     this.stack.clear(); // Variable scope boundary. Clear declared variables
 
-    if (indentChange > 1) {
+    if (indentChange > 0 && this.blockStack.isEmpty()) {
+      throw InvalidIndentationException.startIndentAtZero(ctx);
+    } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      if (this.blockStack.isEmpty()) {
-          throw InvalidIndentationException.startIndentAtZero(ctx);
-      }
       this.blockStack.pushChild(outlineNumber, this.relativizeContext(lineContext, this.blockStack.currentContext()), variables,
           contentTemplates);
     } else if (indentChange < 0) {
@@ -729,6 +744,22 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
   
   // #region Helpers ----------------------------------------------------------
 
+  /**
+   * @return the outline number written at the start of the line, or -1 when there is none
+   * @throws InvalidUsageException if the number is larger than the largest {@code int}
+   */
+  private int outlineNumberOf(TemplateLineContext ctx) {
+    if (ctx.OutlineNumber() == null) {
+      return -1;
+    }
+    final String number = ctx.OutlineNumber().getText().trim();
+    try {
+      return Integer.parseInt(number);
+    } catch (NumberFormatException e) {
+      throw InvalidUsageException.outlineNumberTooLarge(ctx.OutlineNumber().getSymbol(), number);
+    }
+  }
+
   private int getIndentLevel(TemplateLineContext ctx) {
     if (ctx.MixedIndent() != null) {
           throw InvalidIndentationException.mixedIndentation(ctx);
@@ -743,7 +774,8 @@ public class EfxTemplateTranslatorV1 extends EfxExpressionTranslatorV1
       }
 
       if (ctx.Spaces().getText().length() % this.indentSpaces != 0) {
-          throw InvalidIndentationException.inconsistentSpaces(ctx, this.indentSpaces);
+          throw InvalidIndentationException.inconsistentSpaces(ctx, ctx.Spaces().getText().length(),
+              this.indentSpaces);
       }
       return ctx.Spaces().getText().length() / this.indentSpaces;
     } else if (ctx.Tabs() != null) {

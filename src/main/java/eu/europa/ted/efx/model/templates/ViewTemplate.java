@@ -20,10 +20,10 @@ import java.util.List;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.TemplateSection;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
-import eu.europa.ted.efx.model.variables.Dictionary;
-import eu.europa.ted.efx.model.variables.Function;
-import eu.europa.ted.efx.model.variables.Identifier;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.Dictionary;
+import eu.europa.ted.efx.model.identifiers.Function;
+import eu.europa.ted.efx.model.identifiers.Identifier;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 /**
  * A view template, as described by the templateFile rule of the grammar: its global declarations and

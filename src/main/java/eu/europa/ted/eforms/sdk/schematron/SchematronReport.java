@@ -16,9 +16,9 @@ package eu.europa.ted.eforms.sdk.schematron;
 import java.util.List;
 
 import eu.europa.ted.efx.model.Context;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
 import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ValidationRule;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
 
 /**
  * Represents a Schematron &lt;report&gt; element.
@@ -48,9 +48,22 @@ public class SchematronReport extends SchematronTest {
     return "report";
   }
 
+  /**
+   * A report fires when its test is true, so a report with a WHEN condition is tested as
+   * "condition and expression". (An assert, which fires when its test is false, is tested as
+   * "expression or not(condition)".)
+   */
+  private String getBaseTest() {
+    if (this.rule.getCondition() == null) {
+      return super.getTest();
+    }
+    return "(" + this.rule.getCondition().getScript() + ") and ("
+        + this.rule.getExpression().getScript() + ")";
+  }
+
   @Override
   public String getTest() {
-    String baseTest = super.getTest();
+    String baseTest = this.getBaseTest();
     if (this.getRuleNature() != RuleNature.DYNAMIC) {
       return baseTest;
     }

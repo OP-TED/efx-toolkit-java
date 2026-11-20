@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 public class ValidationRule implements ParsedEntity {
 

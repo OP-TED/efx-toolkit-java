@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<schema xmlns="http://purl.oclc.org/dsdl/schematron" xmlns:efx="http://eforms.ted.europa.eu/efx" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" queryBinding="xslt2">
+<schema xmlns="http://purl.oclc.org/dsdl/schematron" xmlns:efx="http://eforms.ted.europa.eu/efx" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" queryBinding="xslt3">
 
     <title>eForms schematron rules</title>
 
@@ -22,7 +22,7 @@
     <xsl:function name="efx:call-api" as="xs:integer">
         <xsl:param name="endpoint-name" as="xs:string"/>
         <xsl:param name="function" as="xs:string"/>
-        <xsl:param name="args" as="xs:string*"/>
+        <xsl:param name="query" as="xs:string"/>
         <xsl:variable name="endpoint-url" as="xs:string">
             <xsl:choose>
                 <xsl:when test="$endpoint-name = 'staging'"><xsl:value-of select="$apiUrl-staging"/></xsl:when>
@@ -32,15 +32,12 @@
         <xsl:variable name="base-url" select="concat(
             if (ends-with($endpoint-url, '/')) then $endpoint-url else concat($endpoint-url, '/'),
             $function)"/>
-        <xsl:variable name="query-params" select="string-join(
-            for $i in 1 to count($args)
-            return concat('arg', $i, '=', encode-for-uri(string($args[$i]))),
-            '&amp;')"/>
-        <xsl:variable name="url" select="if ($query-params != '') then concat($base-url, '?', $query-params) else $base-url"/>
-        <xsl:variable name="response" select="
-            if ($endpoint-url = '' or not(unparsed-text-available($url)))
-            then '-1'
-            else unparsed-text($url)"/>
+        <xsl:variable name="url" select="if ($query != '') then concat($base-url, '?', $query) else $base-url"/>
+        <xsl:variable name="response" as="xs:string">
+            <xsl:try select="if ($endpoint-url = '') then '-1' else unparsed-text($url)">
+                <xsl:catch select="'-1'"/>
+            </xsl:try>
+        </xsl:variable>
         <xsl:value-of select="if ($response castable as xs:integer) then xs:integer($response) else -1"/>
     </xsl:function>
 

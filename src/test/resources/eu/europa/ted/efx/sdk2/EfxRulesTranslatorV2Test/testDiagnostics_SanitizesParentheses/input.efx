@@ -7,4 +7,4 @@
 WITH ND-Root
     ASSERT BT-00(a)-Text is present
     AS ERROR R-K7P-M2Q
-    FOR BT-00(a)-Text IN 1, 2
+    FOR BT-00(a)-Text IN 1, 2;

@@ -1,0 +1,11 @@
+// Test: WITH EVERY on a node whose path has a predicate on its last step.
+// The rule context drops that predicate, so the rule fires on every FieldsPrivacy element
+// of a RepeatableNode. The test is translated relative to the full path of the node, so the
+// field comes out without the predicate: exists(ReasonCode).
+
+---- STAGE 1a ----
+
+WITH EVERY ND-PrivacyInRepeatableNode
+    ASSERT BT-197(BT-00)-Text-In-Repeatable-Node is present
+    AS ERROR R-EVR-001
+    FOR BT-197(BT-00)-Text-In-Repeatable-Node IN 1;

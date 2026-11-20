@@ -18,9 +18,15 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import eu.europa.ted.efx.model.ParsedEntity;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
+import eu.europa.ted.efx.model.types.EfxDataTypeAssociation;
 
 /**
  * Exception thrown when type mismatches are detected in EFX templates.
+ *
+ * <p>An EFX-2 type error gives a {@link Diagnosis}: what the construct was given, and what the
+ * operand at fault must be. Where the reference the operand is written as explains the mistake,
+ * such as a field that may repeat, the error adds that reason, and has the code of the
+ * reference.</p>
  */
 public class TypeMismatchException extends EfxCompilationException {
 
@@ -32,19 +38,22 @@ public class TypeMismatchException extends EfxCompilationException {
         FIELD_IS_MULTILINGUAL,
         NODE_CONTEXT_AS_VALUE,
         IDENTIFIER_IS_SEQUENCE,
-        IDENTIFIER_IS_SCALAR,
         DICTIONARY_IS_SEQUENCE
     }
 
     private static final String CANNOT_CONVERT = "Type mismatch. Expected %s instead of %s.";
     private static final String CANNOT_COMPARE = "Type mismatch. Cannot compare values of different types: %s and %s.";
-    private static final String INCOMPATIBLE_OPERANDS = "Type mismatch. Operator '%s' cannot be applied to %s and %s.";
-    private static final String FIELD_MAY_REPEAT = "Type mismatch. Field '%s' may return multiple values from context '%s', but is used as a scalar. Use a sequence expression or change the context.";
-    private static final String FIELD_IS_MULTILINGUAL = "Type mismatch. Field '%s' is multilingual and has multiple values (one per language), but is used as a scalar. Use :preferredLanguageText to select the preferred language, or an indexer [n] to select a specific element.";
-    private static final String NODE_CONTEXT_AS_VALUE = "Type mismatch. Context variable '$%s' refers to node '%s', but is used as a value. Only field context variables can be used in value expressions.";
-    private static final String IDENTIFIER_IS_SEQUENCE = "Type mismatch. Variable '$%s' is declared as a sequence, but is used as a scalar.";
-    private static final String IDENTIFIER_IS_SCALAR = "Type mismatch. Variable '$%s' is declared as a scalar, but is used where a sequence is expected. To use it as a single-element sequence, wrap it in square brackets: [$%s].";
-    private static final String DICTIONARY_IS_SEQUENCE = "Type mismatch. Dictionary lookup '$%s' returns a sequence, but is used where a scalar is expected. Use an index to select a single value: $%s['key'][1].";
+
+    /** A diagnosis: its two sentences, the reason the operand gives, if any, and its suggestion. */
+    private static final String DIAGNOSED = "Type mismatch. %s";
+
+    private static final String FIELD_MAY_REPEAT = "Field '%s' may return multiple values from %s: use a sequence expression or change the context.";
+    private static final String FROM_CONTEXT = "context '%s'";
+    private static final String FROM_ROOT = "the root";
+    private static final String FIELD_IS_MULTILINGUAL = "Field '%s' is multilingual and has one value per language: use :preferredLanguageText to select the preferred language, or an index [at n] to select a specific value.";
+    private static final String NODE_CONTEXT_AS_VALUE = "%s refers to node '%s', which has no value: only field context variables can be used as values.";
+    private static final String IDENTIFIER_IS_SEQUENCE = "%s is declared as a sequence.";
+    private static final String DICTIONARY_IS_SEQUENCE = "Dictionary lookup '$%s' returns a sequence: use an index to select a single value, as in $%s['key'][at 1].";
 
     private final ErrorCode errorCode;
 
@@ -57,53 +66,156 @@ public class TypeMismatchException extends EfxCompilationException {
         return this.errorCode;
     }
 
+    /**
+     * A value of one class where another is expected, as EFX-1 and the call stack report it.
+     *
+     * @param ctx where the value is taken
+     * @param expectedType the class expected
+     * @param actualType the class of the value
+     * @return the exception, whose message names both classes
+     */
     public static TypeMismatchException cannotConvert(ParserRuleContext ctx,
             Class<? extends ParsedEntity> expectedType,
             Class<? extends ParsedEntity> actualType) {
         if (TypedExpression.class.isAssignableFrom(actualType)
                 && TypedExpression.class.isAssignableFrom(expectedType)) {
-            var actual = actualType.asSubclass(TypedExpression.class);
-            var expected = expectedType.asSubclass(TypedExpression.class);
             return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, ctx, CANNOT_CONVERT,
-                    TypedExpression.getEfxDataType(expected).getSimpleName(),
-                    TypedExpression.getEfxDataType(actual).getSimpleName());
+                    nameOf(expectedType), nameOf(actualType));
         }
         return new TypeMismatchException(ErrorCode.CANNOT_CONVERT, ctx, CANNOT_CONVERT,
                 expectedType.getSimpleName(), actualType.getSimpleName());
     }
 
+    /**
+     * Names the class of an expression by the EFX data type it is associated with. A class that
+     * stands for several data types, such as a path or a sequence of any primitive, has no
+     * association, and is named by its own name.
+     */
+    private static String nameOf(Class<? extends ParsedEntity> expressionType) {
+        final EfxDataTypeAssociation association =
+                expressionType.getAnnotation(EfxDataTypeAssociation.class);
+        return association != null ? association.dataType().getSimpleName()
+                : expressionType.getSimpleName();
+    }
+
+    /**
+     * Two values of different types compared, as EFX-1 reports it.
+     *
+     * @param ctx the comparison
+     * @param left the left operand
+     * @param right the right operand
+     * @return the exception, whose message names the classes of both operands
+     */
     public static TypeMismatchException cannotCompare(ParserRuleContext ctx, Expression left, Expression right) {
         return new TypeMismatchException(ErrorCode.CANNOT_COMPARE, ctx, CANNOT_COMPARE,
                 left.getClass().getSimpleName(), right.getClass().getSimpleName());
     }
 
-    public static TypeMismatchException incompatibleOperands(ParserRuleContext ctx, String operator, Expression left, Expression right) {
-        return new TypeMismatchException(ErrorCode.INCOMPATIBLE_OPERANDS, ctx, INCOMPATIBLE_OPERANDS,
-                operator, left.getClass().getSimpleName(), right.getClass().getSimpleName());
+    /**
+     * An operand that the construct taking it cannot convert to what its position takes.
+     *
+     * @param ctx where the construct is written
+     * @param diagnosis what the construct was given, and what the operand must be
+     * @return the exception, whose message gives the diagnosis
+     */
+    public static TypeMismatchException cannotConvert(ParserRuleContext ctx, Diagnosis diagnosis) {
+        return diagnosed(ErrorCode.CANNOT_CONVERT, ctx, diagnosis);
     }
 
-    public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, String fieldId, String contextSymbol) {
-        return new TypeMismatchException(ErrorCode.FIELD_MAY_REPEAT, ctx, FIELD_MAY_REPEAT, fieldId,
-                contextSymbol != null ? contextSymbol : "root");
+    /**
+     * Operands of an infix operator that no overload of the operator takes.
+     *
+     * @param ctx the operation
+     * @param diagnosis what the operator was given, and what the operand at fault must be
+     * @return the exception, whose message gives the diagnosis
+     */
+    public static TypeMismatchException incompatibleOperands(ParserRuleContext ctx, Diagnosis diagnosis) {
+        return diagnosed(ErrorCode.INCOMPATIBLE_OPERANDS, ctx, diagnosis);
     }
 
-    public static TypeMismatchException fieldIsMultilingual(ParserRuleContext ctx, String fieldId) {
-        return new TypeMismatchException(ErrorCode.FIELD_IS_MULTILINGUAL, ctx, FIELD_IS_MULTILINGUAL, fieldId);
+    /**
+     * A field that may give several values, where a single value is required.
+     *
+     * @param ctx the reference to the field
+     * @param diagnosis what the construct taking the field was given, and what it requires
+     * @param fieldId the field
+     * @param contextSymbol the context the field is read from, or {@code null} if it is read from
+     *        the root
+     * @return the exception, whose message gives the diagnosis and the reason
+     */
+    public static TypeMismatchException fieldMayRepeat(ParserRuleContext ctx, Diagnosis diagnosis,
+            String fieldId, String contextSymbol) {
+        return diagnosed(ErrorCode.FIELD_MAY_REPEAT, ctx, diagnosis, String.format(FIELD_MAY_REPEAT,
+                fieldId, contextSymbol != null ? String.format(FROM_CONTEXT, contextSymbol) : FROM_ROOT));
     }
 
-    public static TypeMismatchException nodeContextUsedAsValue(ParserRuleContext ctx, String variableName, String nodeId) {
-        return new TypeMismatchException(ErrorCode.NODE_CONTEXT_AS_VALUE, ctx, NODE_CONTEXT_AS_VALUE, variableName, nodeId);
+    /**
+     * A multilingual field, which has a value for each language, where a single value is required.
+     *
+     * @param ctx the reference to the field
+     * @param diagnosis what the construct taking the field was given, and what it requires
+     * @param fieldId the field
+     * @return the exception, whose message gives the diagnosis and the reason
+     */
+    public static TypeMismatchException fieldIsMultilingual(ParserRuleContext ctx, Diagnosis diagnosis,
+            String fieldId) {
+        return diagnosed(ErrorCode.FIELD_IS_MULTILINGUAL, ctx, diagnosis,
+                String.format(FIELD_IS_MULTILINGUAL, fieldId));
     }
 
-    public static TypeMismatchException identifierIsSequence(ParserRuleContext ctx, String variableName) {
-        return new TypeMismatchException(ErrorCode.IDENTIFIER_IS_SEQUENCE, ctx, IDENTIFIER_IS_SEQUENCE, variableName);
+    /**
+     * A context variable that holds a node, which has no value, where a value is required.
+     *
+     * @param ctx the reference to the variable
+     * @param diagnosis what the construct taking the variable was given, and what it requires
+     * @param variable the variable as an error names it, such as "Variable '$x'": see
+     *        {@link eu.europa.ted.efx.model.identifiers.Identifier#describe()}
+     * @param nodeId the node it holds
+     * @return the exception, whose message gives the diagnosis and the reason
+     */
+    public static TypeMismatchException nodeContextUsedAsValue(ParserRuleContext ctx, Diagnosis diagnosis,
+            String variable, String nodeId) {
+        return diagnosed(ErrorCode.NODE_CONTEXT_AS_VALUE, ctx, diagnosis,
+                String.format(NODE_CONTEXT_AS_VALUE, variable, nodeId));
     }
 
-    public static TypeMismatchException identifierIsScalar(ParserRuleContext ctx, String variableName) {
-        return new TypeMismatchException(ErrorCode.IDENTIFIER_IS_SCALAR, ctx, IDENTIFIER_IS_SCALAR, variableName, variableName);
+    /**
+     * A variable, a parameter or a function declared as a sequence, where a single value is
+     * required.
+     *
+     * @param ctx the reference to the identifier
+     * @param diagnosis what the construct taking the identifier was given, and what it requires
+     * @param identifier the identifier as an error names it, such as "Variable '$x'" or
+     *        "Function '?f'": see {@link eu.europa.ted.efx.model.identifiers.Identifier#describe()}
+     * @return the exception, whose message gives the diagnosis and the reason
+     */
+    public static TypeMismatchException identifierIsSequence(ParserRuleContext ctx, Diagnosis diagnosis,
+            String identifier) {
+        return diagnosed(ErrorCode.IDENTIFIER_IS_SEQUENCE, ctx, diagnosis,
+                String.format(IDENTIFIER_IS_SEQUENCE, identifier));
     }
 
-    public static TypeMismatchException dictionaryIsSequence(ParserRuleContext ctx, String dictionaryName) {
-        return new TypeMismatchException(ErrorCode.DICTIONARY_IS_SEQUENCE, ctx, DICTIONARY_IS_SEQUENCE, dictionaryName, dictionaryName);
+    /**
+     * A lookup in a dictionary, which gives a sequence, where a single value is required.
+     *
+     * @param ctx the reference to the dictionary
+     * @param diagnosis what the construct taking the lookup was given, and what it requires
+     * @param dictionaryName the name of the dictionary
+     * @return the exception, whose message gives the diagnosis and the reason
+     */
+    public static TypeMismatchException dictionaryIsSequence(ParserRuleContext ctx, Diagnosis diagnosis,
+            String dictionaryName) {
+        return diagnosed(ErrorCode.DICTIONARY_IS_SEQUENCE, ctx, diagnosis,
+                String.format(DICTIONARY_IS_SEQUENCE, dictionaryName, dictionaryName));
+    }
+
+    private static TypeMismatchException diagnosed(ErrorCode errorCode, ParserRuleContext ctx,
+            Diagnosis diagnosis) {
+        return new TypeMismatchException(errorCode, ctx, DIAGNOSED, diagnosis.describe());
+    }
+
+    private static TypeMismatchException diagnosed(ErrorCode errorCode, ParserRuleContext ctx,
+            Diagnosis diagnosis, String reason) {
+        return new TypeMismatchException(errorCode, ctx, DIAGNOSED, diagnosis.describe(reason));
     }
 }

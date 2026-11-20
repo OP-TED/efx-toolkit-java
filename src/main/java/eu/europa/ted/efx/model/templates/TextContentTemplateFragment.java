@@ -27,6 +27,16 @@ public class TextContentTemplateFragment extends ContentTemplateFragment {
     this.text = text;
   }
 
+  /**
+   * Joins this text with the text that follows it.
+   *
+   * @param next the text that follows this one
+   * @return one text made of this text and the next
+   */
+  public TextContentTemplateFragment followedBy(final TextContentTemplateFragment next) {
+    return new TextContentTemplateFragment(this.text + next.text);
+  }
+
   @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     return markupGenerator.renderFreeText(markupGenerator.escapeSpecialCharacters(this.text), translatorContext);

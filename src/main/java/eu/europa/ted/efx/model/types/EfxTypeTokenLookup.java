@@ -16,6 +16,7 @@ package eu.europa.ted.efx.model.types;
 import static java.util.Map.entry;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import eu.europa.ted.efx.exceptions.TranslatorConfigurationException;
 import eu.europa.ted.efx.sdk2.EfxLexer;
@@ -33,6 +34,12 @@ public final class EfxTypeTokenLookup {
   public static final String DATE = getLexerSymbol(EfxLexer.Date);
   public static final String TIME = getLexerSymbol(EfxLexer.Time);
   public static final String DURATION = getLexerSymbol(EfxLexer.Duration);
+
+  /** The name of a node in error messages: no type keyword names one. */
+  private static final String NODE = "node";
+
+  /** The mark of a sequence type in a type declaration. */
+  private static final String SEQUENCE_MARK = getLexerSymbol(EfxLexer.Star);
 
   private static final Map<String, String> FROM_EFORMS_TYPE = Map.ofEntries(
       entry(FieldTypes.ID.getName(), TEXT),
@@ -64,6 +71,13 @@ public final class EfxTypeTokenLookup {
       entry(EfxDataType.Time.class, TIME));
 
   /**
+   * The inverse of {@link #FROM_JAVA_TYPE}, whose types are all primitives.
+   */
+  private static final Map<String, Class<? extends EfxDataType.Primitive>> TO_JAVA_TYPE =
+      FROM_JAVA_TYPE.entrySet().stream().collect(Collectors.toUnmodifiableMap(Map.Entry::getValue,
+          javaType -> javaType.getKey().asSubclass(EfxDataType.Primitive.class)));
+
+  /**
    * Resolves an eForms SDK field type name to the corresponding EFX type name.
    *
    * @throws TranslatorConfigurationException if the type is not mapped
@@ -85,6 +99,41 @@ public final class EfxTypeTokenLookup {
     String result = FROM_JAVA_TYPE.get(javaType);
     if (result == null) {
       throw TranslatorConfigurationException.missingTypeMapping(javaType, "EfxTypeTokenLookup.FROM_JAVA_TYPE");
+    }
+    return result;
+  }
+
+  /**
+   * Names the type of values of an EFX data type as a type declaration writes it, with a star for
+   * a sequence: {@code text}, {@code number*}. A node has no type keyword, since no declaration
+   * holds one, and is named {@code node}.
+   *
+   * @param dataType an EFX data type, scalar or sequence
+   * @return its name in error messages
+   * @throws TranslatorConfigurationException if its primitive is not mapped
+   */
+  public static String nameOf(Class<? extends EfxDataType> dataType) {
+    final Class<? extends EfxDataType.Primitive> primitive = EfxTypeLattice.toPrimitive(dataType);
+    final String name = EfxDataType.Node.class.equals(primitive) ? NODE
+        : FROM_JAVA_TYPE.entrySet().stream()
+            .filter(entry -> entry.getKey().isAssignableFrom(primitive))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElseThrow(() -> TranslatorConfigurationException.missingTypeMapping(primitive,
+                "EfxTypeTokenLookup.FROM_JAVA_TYPE"));
+    return EfxTypeLattice.isSequence(dataType) ? name + SEQUENCE_MARK : name;
+  }
+
+  /**
+   * Resolves an EFX type name, as a type declaration writes it, to the corresponding primitive
+   * EfxDataType class.
+   *
+   * @throws TranslatorConfigurationException if the type name is not mapped
+   */
+  public static Class<? extends EfxDataType.Primitive> toJavaType(String typeName) {
+    Class<? extends EfxDataType.Primitive> result = TO_JAVA_TYPE.get(typeName);
+    if (result == null) {
+      throw TranslatorConfigurationException.missingTypeMapping(typeName, "EfxTypeTokenLookup.TO_JAVA_TYPE");
     }
     return result;
   }

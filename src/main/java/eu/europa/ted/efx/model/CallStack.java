@@ -31,15 +31,14 @@ import eu.europa.ted.efx.exceptions.InvalidIdentifierException;
 import eu.europa.ted.efx.exceptions.TypeMismatchException;
 import eu.europa.ted.efx.interfaces.TypeChecker;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
-import eu.europa.ted.efx.model.types.EfxDataType;
-import eu.europa.ted.efx.model.variables.ParsedParameter;
-import eu.europa.ted.efx.model.variables.Dictionary;
-import eu.europa.ted.efx.model.variables.Function;
-import eu.europa.ted.efx.model.variables.Identifier;
-import eu.europa.ted.efx.model.variables.Identifiers;
-import eu.europa.ted.efx.model.variables.ParsedParameters;
-import eu.europa.ted.efx.model.variables.Template;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.ParsedParameter;
+import eu.europa.ted.efx.model.identifiers.Dictionary;
+import eu.europa.ted.efx.model.identifiers.Function;
+import eu.europa.ted.efx.model.identifiers.Identifier;
+import eu.europa.ted.efx.model.identifiers.Identifiers;
+import eu.europa.ted.efx.model.identifiers.ParsedParameters;
+import eu.europa.ted.efx.model.identifiers.Template;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 /**
  * The call stack is a stack of stack frames. Each stack frame represents a
@@ -54,6 +53,13 @@ public class CallStack {
    * The type checker used for type conversion checks.
    */
   private final TypeChecker typeChecker;
+
+  /**
+   * What the names that the translator generates start with, which no declaration may give, so
+   * that no declaration can hide a generated name or be hidden by one; {@code null} when the
+   * translator keeps no name for itself.
+   */
+  private final String reservedPrefix;
 
   /**
    * Tracks the current parser rule context for error reporting.
@@ -156,7 +162,19 @@ public class CallStack {
    * @param typeChecker The type checker to use for type conversion checks.
    */
   public CallStack(TypeChecker typeChecker) {
+    this(typeChecker, null);
+  }
+
+  /**
+   * Creates a CallStack with a specific type checker that rejects the declaration of any name
+   * starting with the given prefix, which the translator keeps for the names it generates.
+   *
+   * @param typeChecker The type checker to use for type conversion checks.
+   * @param reservedPrefix What the names that the translator generates start with.
+   */
+  public CallStack(TypeChecker typeChecker, String reservedPrefix) {
     this.typeChecker = typeChecker;
+    this.reservedPrefix = reservedPrefix;
     this.frames = new Stack<>();
     this.frames.push(new StackFrame()); // The global scope
   }
@@ -232,9 +250,7 @@ public class CallStack {
    * @param identifier The identifier to declare.
    */
   public void declareIdentifier(Identifier identifier) {
-    if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), identifier.name);
-    }
+    this.checkDeclarable(identifier);
     this.frames.peek().declareIdentifier(identifier);
   }
 
@@ -244,35 +260,36 @@ public class CallStack {
    * @param identifier The identifier to declare.
    */
   public void declareGlobalIdentifier(Identifier identifier) {
-    if (this.inScope(identifier.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), identifier.name);
-    }
+    this.checkDeclarable(identifier);
     this.globalIdentifierRegistry.put(identifier.name, identifier);
   }
 
   public void declareFunction(Function function) {
-    if (this.inScope(function.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), function.name);
-    }
+    this.checkDeclarable(function);
     this.globalIdentifierRegistry.put(function.name, function);
   }
 
   public void declareTemplate(Template template) {
-    if (this.inScope(template.name)) {
-      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(), template.name);
-    }
+    this.checkDeclarable(template);
     this.globalIdentifierRegistry.put(template.name, template);
   }
 
   /**
-   * Checks if an identifier is declared in the current scope.
-   * 
-   * @param identifier The identifier to check.
-   * @return True if the identifier is declared in the current scope.
+   * Checks that a name can be declared.
+   *
+   * @param identifier The identifier being declared.
+   * @throws InvalidIdentifierException if the translator keeps the name for itself, or if the name
+   *         is already declared in scope, by an identifier of the same kind or of another.
    */
-  boolean inScope(String identifier) {
-    return this.globalIdentifierRegistry.containsKey(identifier)
-        || this.frames.stream().anyMatch(f -> f.identifierRegistry.containsKey(identifier));
+  private void checkDeclarable(Identifier identifier) {
+    if (this.reservedPrefix != null && identifier.name.startsWith(this.reservedPrefix)) {
+      throw InvalidIdentifierException.identifierIsReserved(this.peekParserContext(),
+          identifier.describe(), this.reservedPrefix);
+    }
+    this.getIdentifier(identifier.name).ifPresent(declared -> {
+      throw InvalidIdentifierException.alreadyDeclared(this.peekParserContext(),
+          identifier.describe(), declared.describe());
+    });
   }
 
   /**
@@ -358,7 +375,8 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
         .filter(Function.class::isInstance)
         .map(Function.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), functionName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(),
+            Function.spellingOf(functionName).describe()));
   }
 
   /**
@@ -373,22 +391,20 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(templateName))
         .filter(Template.class::isInstance)
         .map(Template.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), templateName));
+        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(),
+            Template.spellingOf(templateName).describe()));
   }
 
   /**
    * Retrieves a dictionary from the global identifier registry by its name.
    *
    * @param dictionaryName the name of the dictionary to retrieve
-   * @return the {@link Dictionary} associated with the given name
-   * @throws InvalidIdentifierException if the dictionary name is not found in the registry,
-   *         with a message indicating the undeclared identifier
+   * @return the {@link Dictionary} declared with the given name, or nothing if none is
    */
-  public Dictionary getDictionary(String dictionaryName) {
+  public Optional<Dictionary> getDictionary(String dictionaryName) {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(dictionaryName))
         .filter(Dictionary.class::isInstance)
-        .map(Dictionary.class::cast)
-        .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), dictionaryName));
+        .map(Dictionary.class::cast);
   }
 
   /**
@@ -402,28 +418,8 @@ public class CallStack {
     return Optional.ofNullable(this.globalIdentifierRegistry.get(functionName))
       .filter(Function.class::isInstance)
       .map(identifier -> ((Function) identifier).parameters)
-      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), functionName));
-  }
-
-  /**
-   * Retrieves the data type of a given identifier by its name.
-   * <p>
-   * This method first attempts to find the identifier using the {@code getIdentifier} method.
-   * If not found, it tries to resolve it as a function using the {@code getFunction} method.
-   * If the identifier is still not found, a {@link ParseCancellationException} is thrown.
-   * </p>
-   *
-   * @param identifierName the name of the identifier to look up
-   * @return the class type of the identifier's data type
-   * @throws ParseCancellationException if the identifier is not declared
-   */
-  public Class<? extends EfxDataType> getTypeOfIdentifier(String identifierName) {
-    Optional<Identifier> identifier = this.getIdentifier(identifierName)
-        .or(() -> Optional.ofNullable((Identifier) this.getFunction(identifierName)));
-    if (!identifier.isPresent()) {
-      throw InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), identifierName);
-    }
-    return identifier.get().dataType;
+      .orElseThrow(() -> InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(),
+          Function.spellingOf(functionName).describe()));
   }
 
   /**
@@ -440,7 +436,8 @@ public class CallStack {
         () -> getVariable(identifierName).ifPresentOrElse(
             variable -> this.push(variable.referenceExpression),
             () -> {
-              throw InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(), identifierName);
+              throw InvalidIdentifierException.undeclaredIdentifier(this.peekParserContext(),
+                  Variable.describe(identifierName));
             }));
   }
 

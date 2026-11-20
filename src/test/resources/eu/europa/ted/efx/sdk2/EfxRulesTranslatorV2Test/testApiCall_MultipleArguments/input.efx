@@ -11,9 +11,9 @@ LET dynamic : ?check-multi(text : $buyerId, text : $code) CALL API;
 WITH BT-00-Text
     ASSERT BT-00-Text is present
     AS ERROR R-S1A-001
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;
 
 WITH BT-00-Text
     ASSERT ?check-multi(BT-00-Identifier, BT-00-Code)
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

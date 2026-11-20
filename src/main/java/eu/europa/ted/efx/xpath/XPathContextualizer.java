@@ -14,9 +14,14 @@
 package eu.europa.ted.efx.xpath;
 
 import eu.europa.ted.eforms.xpath.XPathProcessor.Simplification;
+import eu.europa.ted.eforms.xpath.XPathInfo;
 import eu.europa.ted.eforms.xpath.XPathProcessor;
+import eu.europa.ted.eforms.xpath.XPathStep;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class XPathContextualizer {
 
@@ -51,5 +56,72 @@ public class XPathContextualizer {
         XPathProcessor.join(first.getScript(), second.getScript(), simplification);
 
     return Expression.instantiate(joinedXPath, second.getClass());
+  }
+
+  /**
+   * Removes from the last step of a path the predicates that the last step of a declared path
+   * carries. Predicates written in addition to the declared ones are kept.
+   *
+   * <p>
+   * WITH EVERY uses it to build the context of a Schematron rule that applies to every element of
+   * a node's or field's kind: for a node declared as
+   * {@code /*}{@code /A/B[C='x']}, the path {@code /*}{@code /A/B[C='x'][D]} becomes
+   * {@code /*}{@code /A/B[D]}. An index selects from the whole sequence, which it puts in
+   * parentheses, so the predicates are removed inside them: {@code (/*}{@code /A/B[C='x'])[1]}
+   * becomes {@code (/*}{@code /A/B)[1]}.
+   *
+   * @param path the path to remove the predicates from
+   * @param declaredPath the declared path of the node or field the path was built from
+   * @return the path without the declared predicates of its last step
+   */
+  public static PathExpression removeDeclaredPredicatesOfLastStep(final PathExpression path,
+      final PathExpression declaredPath) {
+    final XPathInfo declaredInfo = XPathProcessor.parse(declaredPath.getScript());
+    if (declaredInfo.getSteps().isEmpty()) {
+      return path;
+    }
+    return Expression.instantiate(
+        removePredicatesOfLastStep(path.getScript(), declaredInfo.getLastStep().getPredicates()),
+        path.getPrecedence(), path.getClass());
+  }
+
+  /**
+   * @param path a path, or an index on a path: {@code (path)[n]}
+   * @param declaredPredicates the predicates declared on the last step
+   * @return the path without the declared predicates at the start of its last step
+   */
+  private static String removePredicatesOfLastStep(final String path,
+      final List<String> declaredPredicates) {
+    final XPathInfo pathInfo = XPathProcessor.parse(path);
+    if (pathInfo.getSteps().isEmpty()) {
+      return path;
+    }
+
+    final List<XPathStep> steps = new ArrayList<>(pathInfo.getSteps());
+    final XPathStep lastStep = steps.get(steps.size() - 1);
+    final String stepText = lastStep.getStepText();
+    final List<String> predicates = lastStep.getPredicates();
+    final XPathStep newLastStep;
+    if (stepText.startsWith("(") && stepText.endsWith(")") && !predicates.isEmpty()) {
+      // An index: (path)[n]
+      newLastStep = new XPathStep(
+          "(" + removePredicatesOfLastStep(stepText.substring(1, stepText.length() - 1),
+              declaredPredicates) + ")",
+          predicates);
+    } else {
+      // The declared predicates come first on the last step, followed by any written after the
+      // reference. Only that leading run is removed, so a written predicate stays even when it is
+      // identical to a declared one.
+      if (declaredPredicates.isEmpty() || predicates.size() < declaredPredicates.size()
+          || !predicates.subList(0, declaredPredicates.size()).equals(declaredPredicates)) {
+        return path;
+      }
+      newLastStep = new XPathStep(stepText,
+          new ArrayList<>(predicates.subList(declaredPredicates.size(), predicates.size())));
+    }
+
+    steps.set(steps.size() - 1, newLastStep);
+    return pathInfo.getAnchor().getSeparator()
+        + steps.stream().map(XPathStep::toString).collect(Collectors.joining("/"));
   }
 }

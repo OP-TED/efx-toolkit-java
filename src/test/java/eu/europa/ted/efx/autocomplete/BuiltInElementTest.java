@@ -13,15 +13,21 @@
  */
 package eu.europa.ted.efx.autocomplete;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import eu.europa.ted.efx.EfxAutocomplete;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BuiltInElementTest {
     @Test
     public void testFunctionLabels() {
-        assertEquals("count", EfxBuiltInFunction.COUNT_TEXT.getLabel());
-        assertEquals("substring-before", EfxBuiltInFunction.SUBSTRING_BEFORE.getLabel());
-        assertEquals("not", EfxBuiltInFunction.NOT.getLabel());
+        Set<String> labels = EfxAutocomplete.getEfxCompletions("2.0.0").stream()
+            .filter(item -> item.getKind() == CompletionKind.FUNCTION)
+            .map(CompletionItem::getLabel)
+            .collect(Collectors.toSet());
+        assertTrue(labels.containsAll(List.of("count", "substring-before", "not")));
     }
 
     @Test

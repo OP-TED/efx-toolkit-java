@@ -1,8 +1,8 @@
-// Test: Context override with ND-xxx::BT-xxx
+// Test: Context override after a context variable, $x::BT-xxx
 
 ---- STAGE test ----
 
 WITH ND-Root
-    ASSERT ND-SubNode::BT-01-SubNode-Text is present
+    ASSERT every context:$s in ND-SubNode satisfies $s::BT-01-SubNode-Text is present
     AS ERROR R-O01-001
-    FOR BT-00-Text IN *
+    FOR BT-00-Text IN *;

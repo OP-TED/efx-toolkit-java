@@ -13,6 +13,7 @@
  */
 package eu.europa.ted.efx.model.rules;
 
+import eu.europa.ted.efx.model.expressions.PathExpression;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,13 +22,14 @@ import java.util.stream.Stream;
 
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.ParsedEntity;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 
 public class RuleSet implements ParsedEntity, Iterable<ValidationRule> {
 
     ValidationStage validationStage;
     Context context;
+    PathExpression ruleContextPath;
     List<ValidationRule> rules;
     ValidationRule fallbackRule;
 
@@ -81,6 +83,23 @@ public class RuleSet implements ParsedEntity, Iterable<ValidationRule> {
 
     public Context getContext() {
         return this.context;
+    }
+
+    /**
+     * Sets the path written as the context of the Schematron rule, when it differs from the path
+     * of the EFX context. WITH EVERY uses it: the rule fires on every element of the context's
+     * kind, while everything inside the rule set is still read relative to the EFX context.
+     */
+    public void setRuleContextPath(PathExpression ruleContextPath) {
+        this.ruleContextPath = ruleContextPath;
+    }
+
+    /**
+     * The path written as the context of the Schematron rule: the one set with
+     * {@link #setRuleContextPath(PathExpression)}, or else the path of the EFX context.
+     */
+    public PathExpression getRuleContextPath() {
+        return this.ruleContextPath != null ? this.ruleContextPath : this.context.absolutePath();
     }
 
     public List<Variable> getPromotedVariables() {

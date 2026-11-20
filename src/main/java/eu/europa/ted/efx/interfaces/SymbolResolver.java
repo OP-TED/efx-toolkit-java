@@ -27,6 +27,16 @@ import eu.europa.ted.efx.model.expressions.PathExpression;
  * {@link SymbolResolver} is to provide further information on these referenced entities by looking
  * them up in a symbol dictionary (or repository). This symbol repository is typically the eForms
  * SDK itself.
+ *
+ * <p>Every class of the paths a resolver returns, the toolkit's own or a subclass of them, must have
+ * a public constructor that takes the path's script alone. The translators and their script
+ * generator build expressions of the class of a path with that constructor, around the scripts
+ * they compose.</p>
+ *
+ * <p>A resolver raises a new exception for each error. The translators write the position of an
+ * error in the EFX source into the exception (see
+ * {@link eu.europa.ted.efx.exceptions.EfxCompilationException}), so an exception raised again would
+ * give the position of the first error.</p>
  */
 public interface SymbolResolver {
 
@@ -214,30 +224,6 @@ public interface SymbolResolver {
    * @return List of notice subtypes
    */
   public List<SdkNoticeSubtype> getAllNoticeSubtypes();
-
-  /**
-   * Resolves a field alias to its canonical field identifier.
-   *
-   * Returns null if the alias is not recognized as a field alias. This allows callers to implement
-   * fallback logic (e.g., trying {@link #getNodeIdFromAlias} next). The translator throws
-   * {@code SymbolResolutionException.unknownAlias()} only when both field and node lookups fail.
-   *
-   * @param alias The alias to resolve.
-   * @return The canonical field ID, or null if the alias is not a known field alias.
-   */
-  public String getFieldIdFromAlias(final String alias);
-
-  /**
-   * Resolves a node alias to its canonical node identifier.
-   *
-   * Returns null if the alias is not recognized as a node alias. This allows callers to implement
-   * fallback logic. The translator throws {@code SymbolResolutionException.unknownAlias()} only
-   * when both field and node lookups fail.
-   *
-   * @param alias The alias to resolve.
-   * @return The canonical node ID, or null if the alias is not a known node alias.
-   */
-  public String getNodeIdFromAlias(final String alias);
 
   /**
    * Determines if a field reference would return multiple values when evaluated from a given

@@ -1,82 +1,34 @@
-# EFX Toolkit 2.0.0-alpha.9 Release Notes
+# Changes since 2.0.0-alpha.9
 
-_The EFX Toolkit for Java developers is a library that enables the transpilation of [EFX](https://docs.ted.europa.eu/eforms/latest/efx) expressions and templates to different target languages. It also includes an implementation of an EFX-to-XPath transpiler._
+These changes are on the `develop` branch and will be part of the next pre-release.
 
----
+## Improvements
 
-## In this release
+- **Clearer error messages**: an error in an EFX-2 expression, template or rule says where it is, with its line and column, also in a file included with `#include`, but not an error found while a file is included, such as a circular include. It says what is wrong and, where it can, how to fix it.
+- **Faster translation**: in our measurements, the view templates and the validation rules of the SDK translate about five times faster.
+- **Formatted values in templates**: numbers, dates, times, amounts, measures and durations are displayed formatted, with the label of their unit in the right plural. A template can choose the format, as in `${BT-00-Number|2}`.
+- **Dynamic rules**: each call of the API is made once, and every validation engine sends the same request.
+- **`WITH EVERY` in rules**: a rule set can apply to every element of a node or a field.
+- **Completions for editors**: the jar now includes the EFX-2 completions (functions, keywords and properties) in `eu/europa/ted/efx/autocomplete/sdk2-completions.json`, for editors written in other languages.
+- **The EFX-2 language changes of the SDK**: see the SDK changelog.
+- **EFX-1** works as before, with clearer error messages and a few corrections.
 
-This is an incremental update over 2.0.0-alpha.8.
+## What you need to change
 
-### Changes since 2.0.0-alpha.8
+- Build and run with Java 21 or later: the toolkit now targets Java 21.
+- Build with the SDK pre-release that follows 2.0.0-alpha.5. Its EFX-2 grammar no longer types expressions, and this version does not build with an earlier one.
+- Write EFX-2 indexes as `[at n]`, and statement keywords, such as `WITH` and `LET`, in upper case. The SDK changelog lists the other language changes.
+- Replace the context shortcuts `.`, `..` and `/` with the node or field they stand for, for example `ND-Root` instead of `/`. They are no longer accepted as the context of a template line, a `WITH` clause or a context variable.
+- Write `::` only after a context variable, as in `for context:$c in ND-1 return $c::BT-1`. Where you wrote `BT-1::BT-2` to read the BT-2 next to a BT-1, write `BT-2[BT-1 is present]`.
+- Validate the generated Schematron with an XSLT 3.0 processor, such as Saxon 12.
+- If you wrote your own `efx:call-api`, it now receives the whole query string.
+- If you wrote your own `SymbolResolver`, implement its three new methods, and remove `getFieldIdFromAlias` and `getNodeIdFromAlias`: aliases are no longer part of EFX. If you extend `XPathSymbolResolver`, also remove `fieldByAlias` and `nodeByAlias`.
+- If your code extends the EFX-2 translators or uses the toolkit's model or exception classes, see the javadoc: many of them changed. The public constructors of the translators did not change.
+- The dependency graph writes `codelists`, where it wrote `codeLists`.
 
-- **Java 21 required**: the toolkit now targets Java 21. Applications using it must build and run on Java 21 or later.
-- **Symbol resolution**: applications can now use their own metadata-loading mechanism while reusing the toolkit’s XPath symbol-resolution logic. This logic has been extracted into the abstract `XPathSymbolResolver` class. The existing `SdkSymbolResolver` extends it and continues to load metadata from SDK files using the eForms Core Library.
-
-The following sections describe the features of the 2.0.0 line. For the changes introduced in the preceding release, see the [2.0.0-alpha.8 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.8).
-
-### EFX-2 language support
-
-- Implemented all new EFX-2 language features introduced in SDK 2.0.0-alpha.2. See the [SDK changelog](https://github.com/OP-TED/eForms-SDK/blob/release/2.0.0-alpha.2/CHANGELOG.md) for the full list.
-
-### EFX Rules translator
-
-- Added a new EFX Rules to Schematron translator, enabling business rules authored in EFX to be transpiled into Schematron validation schemas.
-- Rules that apply to all notice subtypes are deduplicated into a shared Schematron pattern.
-- New `ValidatorGenerator` interface for Schematron output generation.
-
-### Dependency analysis
-
-- Added dependency extractors for EFX rules, producing dependency graphs that track field, codelist, and variable references.
-
-### Template translator
-
-- Dictionary lookups are now translated using XSL keys for better performance.
-- Profiling and timing support for template translation via new `TranslatorOptions` methods.
-
-### EFX autocomplete API
-
-- Added an autocomplete API for code editors, providing completion items for EFX keywords, built-in functions, and field properties.
-
-### New interfaces and classes
-
-- `ValidatorGenerator`: Interface for generating validation output (Schematron).
-- `TranslatorContext`: Interface providing translation context to `MarkupGenerator` methods.
-- `TypeChecker`: Interface for SDK-specific type validation.
-- `IncludedFileResolver`: Interface for resolving `#include` directives in EFX files.
-- New typed exception hierarchy: `EfxCompilationException`, `InvalidArgumentException`, `InvalidIdentifierException`, `InvalidIndentationException`, `InvalidUsageException`, `SdkInconsistencyException`, `SymbolResolutionException`, `TranslatorConfigurationException`, `TypeMismatchException`.
-
-### Bug fixes
-
-- Fixed invalid XPath in typed uniqueness conditions.
-- Fixed quote escaping in string literals.
-
-## EFX-1 Support
-
-Although this is a pre-release version of the EFX Toolkit, it provides production-level support for EFX-1 transpilation. EFX-1 is the current version of EFX released with SDK 1.
-
-NOTE: Transpilation of EFX-1 to XPath and XSL in this version of the EFX Toolkit is **better than** what is provided by **EFX Toolkit 1.3.0**.
-
-## Breaking changes
-
-Since 2.0.0-alpha.8, `XPathContextualizer.join` takes a third argument, which says how far the joined path may be shortened; the two-argument form has been removed. For the breaking changes introduced earlier in the 2.0.0 line, see the [2.0.0-alpha.6 release notes](https://github.com/OP-TED/efx-toolkit-java/releases/tag/2.0.0-alpha.6).
-
-## Future development
-
-Further alpha and beta releases of SDK 2 and EFX Toolkit 2 will be issued. While in "alpha" development stage, further breaking changes may be introduced.
-
----
+## Download
 
 You can download the latest EFX Toolkit from Maven Central.
 [![Maven Central](https://img.shields.io/maven-central/v/eu.europa.ted.eforms/efx-toolkit-java?label=Download%20&style=flat-square)](https://central.sonatype.com/artifact/eu.europa.ted.eforms/efx-toolkit-java)
 
 Documentation for the EFX Toolkit is available at: <https://docs.ted.europa.eu/eforms/latest/efx-toolkit>
-
----
-
-This version of the EFX Toolkit has a compile-time dependency on the following eForms SDK versions and uses the EFX grammar that each version provides:
-
-- eForms SDK 1.16.0-beta.3
-- eForms SDK 2.0.0-alpha.4
-
-It also depends on the [eForms Core Java library](https://github.com/OP-TED/eforms-core-java) version 1.9.1.

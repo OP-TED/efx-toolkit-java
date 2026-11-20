@@ -14,11 +14,16 @@
 package eu.europa.ted.efx.util;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import eu.europa.ted.efx.exceptions.InvalidUsageException;
 
@@ -307,6 +312,22 @@ class EfxRegexValidatorTest {
         }
 
         @Test
+        void testUnsupportedEscapeSequence_QuotesWholeCharacter() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\\\uD83D\uDE00'"));
+            assertEquals("Invalid regex pattern '\\\uD83D\uDE00' at position 1: "
+                    + "escape sequence '\\\uD83D\uDE00' is not allowed in EFX regex", ex.getMessage());
+        }
+
+        @Test
+        void testExtendedGroupSyntax_QuotesWholeCharacter() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'(?\uD83D\uDE00)'"));
+            assertEquals("Invalid regex pattern '(?\uD83D\uDE00)' at position 1: "
+                    + "extended group syntax '(?\uD83D\uDE00...)' is not allowed in EFX regex", ex.getMessage());
+        }
+
+        @Test
         void testUnclosedCharacterClass() {
             InvalidUsageException ex = assertThrows(InvalidUsageException.class,
                     () -> EfxRegexValidator.validate("'[abc'"));
@@ -332,6 +353,41 @@ class EfxRegexValidatorTest {
             InvalidUsageException ex = assertThrows(InvalidUsageException.class,
                     () -> EfxRegexValidator.validate("'abc\\'"));
             assertTrue(ex.getMessage().contains("trailing backslash"));
+        }
+    }
+
+    @Nested
+    class Positions {
+
+        @Test
+        void testPosition_CountsUnicodeCharacters() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'\uD83D\uDE00)'"));
+            assertEquals("Invalid regex pattern '\uD83D\uDE00)' at position 2: unmatched closing parenthesis",
+                    ex.getMessage());
+        }
+
+        @Test
+        void testPosition_OfUnclosedGroup_CountsUnicodeCharacters() {
+            InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                    () -> EfxRegexValidator.validate("'(\uD83D\uDE00'"));
+            assertEquals("Invalid regex pattern '(\uD83D\uDE00' at position 2: unclosed group — missing ')'",
+                    ex.getMessage());
+        }
+
+        @Test
+        @ResourceLock(Resources.LOCALE)
+        void testPosition_WrittenInAsciiDigitsWhateverTheDefaultLocale() {
+            Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
+            try {
+                Locale.setDefault(Locale.Category.FORMAT, new Locale("ar", "EG"));
+                InvalidUsageException ex = assertThrows(InvalidUsageException.class,
+                        () -> EfxRegexValidator.validate("'abc)'"));
+                assertEquals("Invalid regex pattern 'abc)' at position 4: unmatched closing parenthesis",
+                        ex.getMessage());
+            } finally {
+                Locale.setDefault(Locale.Category.FORMAT, formatLocale);
+            }
         }
     }
 }

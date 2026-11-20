@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DynamicExpression;
-import eu.europa.ted.efx.model.variables.DynamicVariable;
+import eu.europa.ted.efx.model.identifiers.DynamicVariable;
 
 class ValidationRuleTest {
 

@@ -20,11 +20,13 @@ import eu.europa.ted.eforms.xpath.XPathProcessor;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.model.expressions.Expression;
 import eu.europa.ted.efx.model.expressions.PathExpression;
+import eu.europa.ted.efx.model.expressions.Precedence;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NodePath;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringLiteral;
+import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.xpath.XPathScriptGenerator;
 
 @SdkComponent(versions = {"1"}, componentType = SdkComponentType.SCRIPT_GENERATOR)
@@ -32,6 +34,27 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
 
     public XPathScriptGeneratorV1(TranslatorOptions translatorOptions) {
         super(translatorOptions);
+    }
+
+    /**
+     * SDK 1 keeps using an indicator field's element as its value, as before TEDEFO-5328, so that
+     * its generated output does not change.
+     */
+    @Override
+    public PathExpression composeFieldValueReference(final PathExpression fieldReference) {
+        if (fieldReference.is(EfxDataType.Boolean.class)) {
+            return fieldReference;
+        }
+        return super.composeFieldValueReference(fieldReference);
+    }
+
+    /**
+     * SDK 1 keeps translating a presence condition as the path alone, so that its generated output
+     * does not change.
+     */
+    @Override
+    public BooleanExpression composeExistsCondition(final PathExpression reference) {
+        return Expression.from(reference, BooleanExpression.class);
     }
 
     @Override
@@ -103,6 +126,6 @@ public class XPathScriptGeneratorV1 extends XPathScriptGenerator {
     @Override
     public PathExpression composeFieldInExternalReference(PathExpression externalReference,
         PathExpression fieldReference) {
-        return Expression.instantiate(externalReference.getScript() + fieldReference.getScript(), fieldReference.getClass());
+        return Expression.instantiate(operand(externalReference, Precedence.PRIMARY) + fieldReference.getScript(), fieldReference.getClass());
     }
 }

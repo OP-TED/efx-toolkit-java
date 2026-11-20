@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
-import eu.europa.ted.efx.model.variables.ParsedArguments;
+import eu.europa.ted.efx.model.constructs.Arguments;
+import eu.europa.ted.efx.model.identifiers.ParsedParameter;
 
 /**
  * A content template that calls a declared template, as described by the invokeTemplate rule of the
@@ -29,9 +30,9 @@ import eu.europa.ted.efx.model.variables.ParsedArguments;
 public class InvokeContentTemplate extends ContentTemplate {
 
   private final String templateName;
-  private final ParsedArguments arguments;
+  private final Arguments<ParsedParameter> arguments;
 
-  public InvokeContentTemplate(String templateName, ParsedArguments arguments) {
+  public InvokeContentTemplate(String templateName, Arguments<ParsedParameter> arguments) {
     this.templateName = templateName;
     this.arguments = arguments;
   }
@@ -39,7 +40,8 @@ public class InvokeContentTemplate extends ContentTemplate {
   @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     Set<Argument> args = this.arguments.stream()
-        .map(a -> new Argument.Impl(a.name, markupGenerator.getEfxDataTypeEquivalent(a.dataType), a.value))
+        .map(a -> new Argument.Impl(a.parameter.name,
+            markupGenerator.getEfxDataTypeEquivalent(a.parameter.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new));
     return markupGenerator.renderFragmentInvocation(this.templateName, args, translatorContext);
   }

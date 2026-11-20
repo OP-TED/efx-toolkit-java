@@ -479,6 +479,17 @@ public abstract class SymbolResolverContractTest {
     assertEquals("../Number", path.getScript());
   }
 
+  @Test
+  @DisplayName("Multilingual field relative to itself returns ScalarPath")
+  protected void fieldToField_multilingualFieldItself_shouldReturnScalarPath() {
+    // Inside its own context the multilingual field is the one element being tested
+    PathExpression path = resolver.getRelativePathOfField("BT-00-Text-Multilingual", "BT-00-Text-Multilingual");
+
+    assertTrue(path instanceof ScalarPath,
+        "Multilingual field relative to itself should return ScalarPath, got: " + path.getClass().getSimpleName());
+    assertEquals(".", path.getScript());
+  }
+
   // Basic lookups
 
   @Test
@@ -596,39 +607,6 @@ public abstract class SymbolResolverContractTest {
   @DisplayName("getFieldIdOfAttributeField returns null for a field that is not an attribute of another field")
   protected void getFieldIdOfAttributeField_otherField_returnsNull() {
     assertNull(resolver.getFieldIdOfAttributeField("BT-00-Duration"));
-  }
-
-  // Alias resolution
-
-  @Test
-  @DisplayName("getFieldIdFromAlias returns field ID for valid alias")
-  protected void getFieldIdFromAlias_validAlias_returnsFieldId() {
-    String fieldId = resolver.getFieldIdFromAlias("textField");
-    assertEquals("BT-00-Text", fieldId, "Should return field ID for alias 'textField'");
-    assertEquals("text", resolver.getTypeOfField("textField"));
-    assertEquals("/*/PathNode/TextField", resolver.getAbsolutePathOfField("textField").getScript());
-  }
-
-  @Test
-  @DisplayName("getNodeIdFromAlias returns node ID for valid alias")
-  protected void getNodeIdFromAlias_validAlias_returnsNodeId() {
-    String nodeId = resolver.getNodeIdFromAlias("Root");
-    assertEquals("ND-Root", nodeId, "Should return node ID for alias 'Root'");
-    assertEquals("/*", resolver.getAbsolutePathOfNode("Root").getScript());
-  }
-
-  @Test
-  @DisplayName("getNodeIdFromAlias returns null for unknown alias")
-  protected void getNodeIdFromAlias_unknownAlias_returnsNull() {
-    assertNull(resolver.getNodeIdFromAlias("nonexistent-alias"),
-        "Unknown alias should return null");
-  }
-
-  @Test
-  @DisplayName("getFieldIdFromAlias returns null for unknown alias")
-  protected void getFieldIdFromAlias_unknownAlias_returnsNull() {
-    assertNull(resolver.getFieldIdFromAlias("nonexistent-alias"),
-        "Unknown alias should return null to enable fallback");
   }
 
   // Root and notice subtypes

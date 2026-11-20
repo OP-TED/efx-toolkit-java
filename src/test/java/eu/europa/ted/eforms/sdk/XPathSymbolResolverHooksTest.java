@@ -136,6 +136,18 @@ class XPathSymbolResolverHooksTest {
     }
 
     @Test
+    @DisplayName("a field whose parent node is missing repeats only if it is itself repeatable")
+    void fieldWithMissingParentNode() {
+      minimalResolver.addField("BT-NoParent", "text", null, "/*/cbc:Note", false);
+      minimalResolver.addField("BT-UnknownParent", "text", "ND-Unknown", "/*/cbc:Note", false);
+      minimalResolver.addField("BT-RepeatableNoParent", "text", null, "/*/cbc:Note", true);
+
+      assertFalse(minimalResolver.isFieldRepeatableFromContext("BT-NoParent", null));
+      assertFalse(minimalResolver.isFieldRepeatableFromContext("BT-UnknownParent", LOT));
+      assertTrue(minimalResolver.isFieldRepeatableFromContext("BT-RepeatableNoParent", null));
+    }
+
+    @Test
     @DisplayName("resolveField is an overridable hook for all field resolution")
     void resolveFieldHookIsOverridable() {
       MapBackedSymbolResolver prefixing = new MapBackedSymbolResolver() {
@@ -193,58 +205,6 @@ class XPathSymbolResolverHooksTest {
       assertSame(node, fresh.parentNode("BT-12-Text"));
       assertEquals(List.of("ND-SubSubNode2", "ND-SubNode", "ND-Root"),
           fresh.ancestry("ND-SubSubNode2"));
-    }
-  }
-
-  @Nested
-  @DisplayName("Alias fallback hooks")
-  class AliasFallbackTests {
-
-    @BeforeEach
-    void registerAliases() {
-      minimalResolver.addFieldAlias("rootText", "BT-Root");
-      minimalResolver.addNodeAlias("lot", LOT);
-    }
-
-    @Test
-    @DisplayName("resolveField falls back to the fieldByAlias hook")
-    void resolveField_fallsBackToAlias() {
-      assertEquals("text", minimalResolver.getTypeOfField("rootText"));
-      assertEquals("/*/cbc:ID", minimalResolver.getAbsolutePathOfField("rootText").getScript());
-    }
-
-    @Test
-    @DisplayName("resolveNode falls back to the nodeByAlias hook")
-    void resolveNode_fallsBackToAlias() {
-      assertEquals("/*/cac:ProcurementProjectLot",
-          minimalResolver.getAbsolutePathOfNode("lot").getScript());
-      assertTrue(minimalResolver.isNodeRepeatableFromContext("lot", null));
-    }
-
-    @Test
-    @DisplayName("An identifier wins over an alias of the same name")
-    void identifierWinsOverAlias() {
-      // "BT-Root" is a real id; registering it as an alias of another field must not shadow it.
-      minimalResolver.addFieldAlias("BT-Root", "BT-Repeatable");
-
-      assertEquals("/*/cbc:ID", minimalResolver.getAbsolutePathOfField("BT-Root").getScript(),
-          "fieldById is consulted before fieldByAlias");
-    }
-
-    @Test
-    @DisplayName("getFieldIdFromAlias returns the field ID, or null when unknown")
-    void getFieldIdFromAlias_returnsIdOrNull() {
-      assertEquals("BT-Root", minimalResolver.getFieldIdFromAlias("rootText"));
-      assertNull(minimalResolver.getFieldIdFromAlias("nonexistent-alias"),
-          "Unknown alias should return null to enable fallback");
-    }
-
-    @Test
-    @DisplayName("getNodeIdFromAlias returns the node ID, or null when unknown")
-    void getNodeIdFromAlias_returnsIdOrNull() {
-      assertEquals(LOT, minimalResolver.getNodeIdFromAlias("lot"));
-      assertNull(minimalResolver.getNodeIdFromAlias("nonexistent-alias"),
-          "Unknown alias should return null");
     }
   }
 }

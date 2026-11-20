@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import eu.europa.ted.eforms.sdk.component.SdkComponent;
 import eu.europa.ted.eforms.sdk.component.SdkComponentType;
-import eu.europa.ted.efx.exceptions.SymbolResolutionException;
 import eu.europa.ted.efx.interfaces.SymbolResolver;
 import eu.europa.ted.efx.model.dependencies.DependencySet;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
@@ -21,8 +20,7 @@ import eu.europa.ted.efx.sdk2.EfxParser.*;
  * Extracts field and node identifiers referenced in an EFX single expression.
  *
  * This listener walks the parse tree and collects every field and node identifier it encounters
- * into a stack of {@link DependencySet} frames. Identifiers used as aliases are resolved through
- * the {@link SymbolResolver}.
+ * into a stack of {@link DependencySet} frames.
  *
  * Subclasses push and pop frames at the appropriate boundaries to group dependencies by scope.
  */
@@ -30,13 +28,16 @@ import eu.europa.ted.efx.sdk2.EfxParser.*;
 public class EfxComputeDependencyExtractor extends EfxBaseListener
     implements eu.europa.ted.efx.interfaces.EfxComputeDependencyExtractor {
 
-  protected final SymbolResolver symbols;
   protected final BaseErrorListener errorListener;
   protected final Deque<DependencySet> stack = new ArrayDeque<>();
 
+  /**
+   * @param symbolResolver not used: identifiers are collected as written; the component factory
+   *        passes it to every EFX component
+   * @param errorListener the listener told of syntax errors, or {@code null}
+   */
   public EfxComputeDependencyExtractor(final SymbolResolver symbolResolver,
       final BaseErrorListener errorListener) {
-    this.symbols = symbolResolver;
     this.errorListener = errorListener;
   }
 
@@ -45,7 +46,7 @@ public class EfxComputeDependencyExtractor extends EfxBaseListener
     this.stack.clear();
     this.stack.push(new DependencySet());
 
-    final EfxLexer lexer = new EfxLexer(CharStreams.fromString(expression));
+    final EfxLexer lexer = new EfxErrorReportingLexer(CharStreams.fromString(expression));
     final CommonTokenStream tokens = new CommonTokenStream(lexer);
     final EfxParser parser = new EfxParser(tokens);
     parser.setErrorHandler(new EfxErrorStrategy());
@@ -76,41 +77,17 @@ public class EfxComputeDependencyExtractor extends EfxBaseListener
     final TerminalNode nodeId = ctx.NodeId();
     if (nodeId != null) {
       this.stack.peek().addNode(nodeId.getText());
-      return;
-    }
-
-    final TerminalNode alias = ctx.Identifier();
-    if (alias != null) {
-      this.resolveAlias(alias.getText());
     }
   }
 
   @Override
   public void enterSimpleFieldReference(final SimpleFieldReferenceContext ctx) {
-    final TerminalNode fieldId = ctx.FieldId();
-    if (fieldId != null) {
-      this.stack.peek().addField(fieldId.getText());
-      return;
-    }
-
-    final TerminalNode alias = ctx.Identifier();
-    if (alias != null) {
-      this.resolveAlias(alias.getText());
-    }
+    this.stack.peek().addField(ctx.FieldId().getText());
   }
 
   @Override
   public void enterFieldMention(final FieldMentionContext ctx) {
-    final TerminalNode fieldId = ctx.FieldId();
-    if (fieldId != null) {
-      this.stack.peek().addField(fieldId.getText());
-      return;
-    }
-
-    final TerminalNode alias = ctx.Identifier();
-    if (alias != null) {
-      this.resolveAlias(alias.getText());
-    }
+    this.stack.peek().addField(ctx.FieldId().getText());
   }
 
   @Override
@@ -124,20 +101,4 @@ public class EfxComputeDependencyExtractor extends EfxBaseListener
   }
 
   // #endregion Listener methods
-
-  protected void resolveAlias(final String alias) {
-    final String fieldId = this.symbols.getFieldIdFromAlias(alias);
-    if (fieldId != null) {
-      this.stack.peek().addField(fieldId);
-      return;
-    }
-
-    final String nodeId = this.symbols.getNodeIdFromAlias(alias);
-    if (nodeId != null) {
-      this.stack.peek().addNode(nodeId);
-      return;
-    }
-
-    throw SymbolResolutionException.unknownSymbol(alias);
-  }
 }

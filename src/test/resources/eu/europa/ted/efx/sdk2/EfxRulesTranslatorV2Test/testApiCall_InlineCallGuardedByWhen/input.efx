@@ -1,0 +1,32 @@
+// Test: inline API calls in rules with a WHEN condition.
+// A call in the ASSERT or REPORT is made only when the WHEN condition holds: its let is guarded
+// by the condition, and is 0 otherwise. Calls in the WHEN condition itself, including nested
+// ones, are not guarded. A conditional REPORT fires only when its condition holds.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?check(text : $id) CALL API;
+LET dynamic : ?confirm(indicator : $ok) CALL API;
+
+---- STAGE 1a ----
+
+WITH BT-00-Text
+    WHEN BT-00-Indicator is present
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-S1A-001
+    FOR BT-00-Text IN 1;
+
+    WHEN ?check(BT-00-Code)
+    ASSERT BT-00-Text is present
+    AS ERROR R-S1A-002
+    FOR BT-00-Text IN 1;
+
+    WHEN ?confirm(?check(BT-00-Code))
+    ASSERT ?check(BT-00-Identifier)
+    AS ERROR R-S1A-003
+    FOR BT-00-Text IN 1;
+
+    WHEN BT-00-Indicator is present
+    REPORT ?check(BT-00-Identifier)
+    AS WARNING R-S1A-004
+    FOR BT-00-Text IN 1;

@@ -12,4 +12,4 @@ LET dynamic : ?check(text : $id) CALL API 'nonexistent';
 WITH BT-00-Text
     ASSERT ?check(BT-00-Identifier)
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

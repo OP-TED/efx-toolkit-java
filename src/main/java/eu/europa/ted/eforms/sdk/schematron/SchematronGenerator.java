@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ import eu.europa.ted.efx.interfaces.ValidatorGenerator;
 import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.RuleNature;
 import eu.europa.ted.efx.model.rules.ValidationStage;
-import eu.europa.ted.efx.model.variables.Variable;
+import eu.europa.ted.efx.model.identifiers.Variable;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.FileTemplateLoader;
@@ -76,6 +77,13 @@ public class SchematronGenerator implements ValidatorGenerator {
     this.freemarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
     this.freemarkerConfig.setTemplateLoader(this.resolveTemplateLoader(options));
     this.freemarkerConfig.setDefaultEncoding("UTF-8");
+    // A template is read by its name only, never in place of it a file named for a language
+    this.freemarkerConfig.setLocalizedLookup(false);
+    // The root locale, so that what a template writes does not depend on the default locale
+    this.freemarkerConfig.setLocale(Locale.ROOT);
+    // A template is read as its folder holds it when the generator writes, not as it held it up to
+    // five seconds before
+    this.freemarkerConfig.setTemplateUpdateDelayMilliseconds(0);
     this.freemarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.freemarkerConfig.setLogTemplateExceptions(false);
   }
@@ -94,9 +102,12 @@ public class SchematronGenerator implements ValidatorGenerator {
     }
 
     try {
-      return new MultiTemplateLoader(new TemplateLoader[] {
+      final MultiTemplateLoader loader = new MultiTemplateLoader(new TemplateLoader[] {
               new FileTemplateLoader(templatesRoot.toFile()), classpathLoader
       });
+      // The folder before the classpath every time, not first the place a template was found in before
+      loader.setSticky(false);
+      return loader;
     } catch (final IOException e) {
       logger.warn("Failed to load templates from {}, using classpath defaults", templatesRoot);
       return classpathLoader;

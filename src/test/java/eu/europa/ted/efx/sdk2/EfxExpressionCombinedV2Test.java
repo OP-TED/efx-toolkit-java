@@ -20,14 +20,15 @@ class EfxExpressionCombinedV2Test extends EfxTestsBase {
 
   @Test
   void testNotPresentAndNotPresent() {
-    testExpressionTranslationWithContext("not(PathNode/TextField) and not(PathNode/IntegerField)",
+    testExpressionTranslationWithContext("not(exists(PathNode/TextField)) and not(exists(PathNode/IntegerField))",
         "ND-Root", "BT-00-Text is not present and BT-00-Integer is not present");
   }
 
   @Test
   void testCountWithNodeContextOverride() {
-    testExpressionTranslationWithContext("count(../../PathNode/CodeField/normalize-space(text())) = 1", "BT-00-Text",
-        "count(ND-Root::BT-00-Code) == 1");
+    testExpressionTranslationWithContext(
+        "for $c in ../.. return count($c/PathNode/CodeField/normalize-space(text())) = 1",
+        "BT-00-Text", "for context:$c in ND-Root return count($c::BT-00-Code) == 1");
   }
 
   @Test
@@ -39,7 +40,7 @@ class EfxExpressionCombinedV2Test extends EfxTestsBase {
   @Test
   void testCountWithAbsoluteFieldReferenceAndPredicate() {
     testExpressionTranslationWithContext(
-        "count(/*/PathNode/CodeField[../IndicatorField = true()]/normalize-space(text())) = 1", "BT-00-Text",
+        "count(/*/PathNode/CodeField[../IndicatorField/(normalize-space(text()) = ('true', '1')) = true()]/normalize-space(text())) = 1", "BT-00-Text",
         "count(/BT-00-Code[BT-00-Indicator == TRUE]) == 1");
   }
 }

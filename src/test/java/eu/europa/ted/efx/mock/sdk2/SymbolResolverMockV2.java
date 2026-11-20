@@ -47,10 +47,8 @@ public class SymbolResolverMockV2 extends SdkSymbolResolver {
   private void loadTestData() throws InstantiationException {
     // Load nodes and fields using SDK repositories
     this.nodeById = new SdkNodeRepository(SDK_VERSION, JSON_PATH);
-    this.nodeByAlias = indexNodesByAlias();
 
     this.fieldById = new SdkFieldRepository(SDK_VERSION, JSON_PATH, this.nodeById);
-    this.fieldByAlias = indexFieldsByAlias();
 
     // Mock codelists
     this.codelistById = createMockCodelists();

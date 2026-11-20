@@ -35,7 +35,8 @@ public class SymbolResolutionException extends EfxCompilationException {
     private static final String NO_CODELIST_FOR_FIELD = "Field '%s' is not associated with a codelist.";
     private static final String NO_ATTRIBUTE_FOR_FIELD = "Field '%s' has no attribute field for the supplementary component of its data type.";
     private static final String ROOT_NODE_NOT_FOUND = "Could not find the root node. Check that node metadata is loaded correctly.";
-    private static final String UNKNOWN_NOTICE_SUBTYPE = "Unknown notice subtype '%s' in range '%s'.";
+    private static final String UNKNOWN_NOTICE_SUBTYPE = "Unknown notice subtype '%s'.";
+    private static final String UNKNOWN_NOTICE_SUBTYPE_IN_RANGE = "Unknown notice subtype '%s' in range '%s'.";
 
     private final ErrorCode errorCode;
 
@@ -73,7 +74,11 @@ public class SymbolResolutionException extends EfxCompilationException {
         return new SymbolResolutionException(ErrorCode.ROOT_NODE_NOT_FOUND, ROOT_NODE_NOT_FOUND);
     }
 
+    public static SymbolResolutionException unknownNoticeSubtype(String noticeSubtype) {
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, UNKNOWN_NOTICE_SUBTYPE, noticeSubtype);
+    }
+
     public static SymbolResolutionException unknownNoticeSubtype(String noticeSubtype, String rangeString) {
-        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, UNKNOWN_NOTICE_SUBTYPE, noticeSubtype, rangeString);
+        return new SymbolResolutionException(ErrorCode.UNKNOWN_NOTICE_SUBTYPE, UNKNOWN_NOTICE_SUBTYPE_IN_RANGE, noticeSubtype, rangeString);
     }
 }

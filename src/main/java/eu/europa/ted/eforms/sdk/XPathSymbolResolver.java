@@ -16,7 +16,6 @@ package eu.europa.ted.eforms.sdk;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import eu.europa.ted.eforms.sdk.entity.SdkCodelist;
 import eu.europa.ted.eforms.sdk.entity.SdkDataType;
@@ -97,22 +96,6 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   protected abstract SdkDataType dataTypeById(final String dataTypeId);
 
   /**
-   * Looks up a field by its alias.
-   *
-   * @param alias The alias to look for.
-   * @return The field, or null if the alias is not a known field alias.
-   */
-  protected abstract SdkField fieldByAlias(final String alias);
-
-  /**
-   * Looks up a node by its alias.
-   *
-   * @param alias The alias to look for.
-   * @return The node, or null if the alias is not a known node alias.
-   */
-  protected abstract SdkNode nodeByAlias(final String alias);
-
-  /**
    * All nodes known to this resolver, in any order.
    *
    * @return The complete node collection.
@@ -178,33 +161,29 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   // #region Identifier resolution -------------------------------------------
 
   /**
-   * Resolves a field identifier, falling back to an alias lookup.
+   * Resolves a field identifier.
    * <p>
-   * First calls {@link #fieldById(String)} and falls back to {@link #fieldByAlias(String)}.
-   * Override this method (together with {@link #resolveNode(String)}) to customize
-   * symbol resolution.
+   * Calls {@link #fieldById(String)}. Override this method (together with
+   * {@link #resolveNode(String)}) to customize symbol resolution.
    *
-   * @param fieldId The identifier or alias of the field to look for.
+   * @param fieldId The identifier of the field to look for.
    * @return The field, or null if the symbol is not a known field.
    */
   protected SdkField resolveField(final String fieldId) {
-    return Optional.ofNullable(this.fieldById(fieldId))
-        .orElseGet(() -> this.fieldByAlias(fieldId));
+    return this.fieldById(fieldId);
   }
 
   /**
-   * Resolves a node identifier, falling back to an alias lookup.
+   * Resolves a node identifier.
    * <p>
-   * First calls {@link #nodeById(String)} and falls back to {@link #nodeByAlias(String)}.
-   * Override this method (together with {@link #resolveField(String)}) to customize
-   * symbol resolution.
+   * Calls {@link #nodeById(String)}. Override this method (together with
+   * {@link #resolveField(String)}) to customize symbol resolution.
    *
-   * @param nodeId The identifier or alias of the node to look for.
+   * @param nodeId The identifier of the node to look for.
    * @return The node, or null if the symbol is not a known node.
    */
   protected SdkNode resolveNode(final String nodeId) {
-    return Optional.ofNullable(this.nodeById(nodeId))
-        .orElseGet(() -> this.nodeByAlias(nodeId));
+    return this.nodeById(nodeId);
   }
 
   private SdkEntity resolveSymbol(final String symbol) {
@@ -551,24 +530,6 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   @Override
-  public String getFieldIdFromAlias(String alias) {
-    final SdkField sdkField = this.fieldByAlias(alias);
-    if (sdkField != null) {
-      return sdkField.getId();
-    }
-    return null;
-  }
-
-  @Override
-  public String getNodeIdFromAlias(String alias) {
-    final SdkNode sdkNode = this.nodeByAlias(alias);
-    if (sdkNode != null) {
-      return sdkNode.getId();
-    }
-    return null;
-  }
-
-  @Override
   public boolean isFieldRepeatableFromContext(final String fieldId, final String contextNodeId) {
     final SdkField sdkField = this.resolveField(fieldId);
     if (sdkField == null) {
@@ -582,89 +543,22 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   private boolean isFieldRepeatableFromContext(final SdkField sdkField, final SdkField context) {
-    // If the field itself is repeatable, it returns multiple values UNLESS it IS the context
+    // A field that IS the context returns a single value, even if it is repeatable or multilingual
     // (e.g., inside a predicate on this field: BT-Repeatable[BT-Repeatable != ''])
-    if (sdkField.isRepeatable()) {
-      return !sdkField.equals(context);
+    if (sdkField.equals(context)) {
+      return false;
     }
 
-    // Multilingual fields have multiple XML elements (one per language)
-    if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(sdkField.getType())) {
-      return true;
-    }
-
-    // Use cached ancestry from node
-    List<String> contextAncestry = context != null
-        ? this.ancestryOf(this.parentNodeOf(context))
-        : Collections.emptyList();
-
-    // Walk up from the field's parent node toward root, looking for a repeatable
-    // node
-    String currentNodeId = sdkField.getParentNodeId();
-    while (currentNodeId != null) {
-      // Context boundary reached - the context node (even if repeatable) doesn't
-      // count because we're positioned inside one instance of it. No repeatable node exists
-      // between the field and context, so the field doesn't repeat from this context.
-      if (contextAncestry.contains(currentNodeId)) {
-        return false;
-      }
-
-      SdkNode node = this.nodeById(currentNodeId);
-      if (node == null) {
-        break;
-      }
-
-      // If this node is repeatable, the field returns multiple values from context
-      if (node.isRepeatable()) {
-        return true;
-      }
-
-      currentNodeId = node.getParentId();
-    }
-
-    return false;
+    // Any other field repeats from a field context as it does from the parent node of that field
+    return this.isFieldRepeatableFromContext(sdkField, this.parentNodeOf(context));
   }
 
   private boolean isFieldRepeatableFromContext(final SdkField sdkField, final SdkNode context) {
-    // If the field itself is repeatable, it returns multiple values
-    if (sdkField.isRepeatable()) {
-      return true;
-    }
-
-    // Multilingual fields have multiple XML elements (one per language)
-    if (FieldTypes.TEXT_MULTILINGUAL.getName().equals(sdkField.getType())) {
-      return true;
-    }
-
-    // Use cached ancestry from node
-    List<String> contextAncestry = this.ancestryOf(context);
-
-    // Walk up from the field's parent node toward root, looking for a repeatable
-    // node
-    String currentNodeId = sdkField.getParentNodeId();
-    while (currentNodeId != null) {
-      // Context boundary reached - the context node (even if repeatable) doesn't
-      // count
-      // because we're positioned inside one instance of it. No repeatable node exists
-      // between the field and context, so the field doesn't repeat from this context.
-      if (contextAncestry.contains(currentNodeId)) {
-        return false;
-      }
-
-      SdkNode node = this.nodeById(currentNodeId);
-      if (node == null) {
-        break;
-      }
-
-      // If this node is repeatable, the field returns multiple values from context
-      if (node.isRepeatable()) {
-        return true;
-      }
-
-      currentNodeId = node.getParentId();
-    }
-
-    return false;
+    // A repeatable field returns multiple values, and so does a multilingual one (one XML element
+    // per language). Any other field repeats from the context exactly as its parent node does.
+    return sdkField.isRepeatable()
+        || FieldTypes.TEXT_MULTILINGUAL.getName().equals(sdkField.getType())
+        || this.isNodeRepeatableFromContext(this.parentNodeOf(sdkField), context);
   }
 
   @Override
@@ -685,6 +579,11 @@ public abstract class XPathSymbolResolver implements SymbolResolver {
   }
 
   private boolean isNodeRepeatableFromContext(final SdkNode sdkNode, final SdkNode contextNode) {
+    // A node that is not there (the parent of a field whose parent node is unknown) cannot repeat
+    if (sdkNode == null) {
+      return false;
+    }
+
     // Use cached ancestry from node
     List<String> contextAncestry = this.ancestryOf(contextNode);
 
