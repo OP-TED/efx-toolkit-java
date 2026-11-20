@@ -5,4 +5,4 @@
 WITH ND-Root
     ASSERT every context:$s in ND-SubNode satisfies $s::BT-01-SubNode-Text is present
     AS ERROR R-O01-001
-    FOR BT-00-Text IN *
+    FOR BT-00-Text IN *;

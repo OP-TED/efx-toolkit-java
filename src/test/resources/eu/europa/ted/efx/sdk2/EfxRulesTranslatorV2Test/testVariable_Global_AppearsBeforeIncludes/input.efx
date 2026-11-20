@@ -10,4 +10,4 @@ LET text : $noticeType = "16";
 WITH ND-Root
     ASSERT not(empty($sdkVersion))
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1, 2
+    FOR BT-00-Text IN 1, 2;

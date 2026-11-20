@@ -10,4 +10,4 @@ LET dynamic : ?check(text : $id) CALL API;
 WITH BT-00-Text
     ASSERT 1 + ?check(BT-00-Identifier) == 2
     AS ERROR R-K7P-M2Q
-    FOR BT-00-Text IN 1
+    FOR BT-00-Text IN 1;

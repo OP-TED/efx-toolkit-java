@@ -7,4 +7,4 @@
 WITH BT-00-Text
     ASSERT BT-00-Text is present
     AS ERROR R-K7P-M2Q
-    FOR ND-SubNode IN 1, 2
+    FOR ND-SubNode IN 1, 2;

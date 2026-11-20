@@ -5,4 +5,4 @@ LET number* : $numbers = [1, 2, 3];
 WITH BT-00-Text
 ASSERT count($numbers) > 0
 AS ERROR R-SEQ-002
-FOR BT-00-Text IN 1, 2
+FOR BT-00-Text IN 1, 2;

@@ -5,4 +5,4 @@
 WITH text:$label = BT-00-Text, ND-Root
     ASSERT $label != ''
     AS ERROR R-V01-001
-    FOR BT-00-Number IN *
+    FOR BT-00-Number IN *;
