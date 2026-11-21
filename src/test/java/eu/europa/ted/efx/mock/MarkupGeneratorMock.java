@@ -29,6 +29,7 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
+import eu.europa.ted.efx.model.templates.LineStyle;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxTypeLattice;
@@ -141,8 +142,9 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeFragmentDefinition(String name, String number, Set<Conditional> conditionals,
-      Markup content, Markup children, Set<Parameter> parameters, TranslatorContext translatorContext) {
+  public Markup composeFragmentDefinition(String name, String number, LineStyle style, int level,
+      Set<Conditional> conditionals, Markup content, Markup children, Set<Parameter> parameters,
+      TranslatorContext translatorContext) {
     String contents = "";
 
     if (conditionals != null && !conditionals.isEmpty()) {

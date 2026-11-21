@@ -24,6 +24,7 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
+import eu.europa.ted.efx.model.templates.LineStyle;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
@@ -300,8 +301,8 @@ public interface MarkupGenerator {
      * returns the code that encapsulates it in the target template.
      *
      * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeFragmentDefinition(String, String, Set, Markup, Markup, Set,
-     *             TranslatorContext)} instead. We are keeping the method temporarily to prevent
+     *             Use {@link #composeFragmentDefinition(String, String, LineStyle, int, Set, Markup,
+     *             Markup, Set, TranslatorContext)} instead. We are keeping the method temporarily to prevent
      *             build errors. This method is being deprecated as of version 2.0.0-alpha.6 and
      *             will be removed before version 2.0.0 is released. The default implementation
      *             provided here only throws UnsupportedOperationException to prevent accidental
@@ -317,12 +318,18 @@ public interface MarkupGenerator {
     default Markup composeFragmentDefinition(final String name, String number, Markup content,
             Set<String> parameters) {
         throw new UnsupportedOperationException(
-                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, String, Set<Conditional>, Markup, Markup, Set<Parameter>) instead.");
+                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, String, LineStyle, int, Set<Conditional>, Markup, Markup, Set<Parameter>, TranslatorContext) instead.");
     }    
     
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
      * returns the code that encapsulates it in the target template.
+     *
+     * @deprecated Use {@link #composeFragmentDefinition(String, String, LineStyle, int, Set, Markup,
+     *             Markup, Set, TranslatorContext)} instead, which also receives the style and the
+     *             level of the template line. This method will be removed before version 2.0.0 is
+     *             released. The default implementation calls the new method for a normal line at
+     *             level 0. The EfxTemplateTranslator will not call this method.
      *
      * @param name              the name of the fragment.
      * @param number            the outline number of the fragment.
@@ -333,7 +340,34 @@ public interface MarkupGenerator {
      * @param translatorContext additional context information provided by the template translator.
      * @return                  the code that encapsulates the fragment in the target template.
      */
-    Markup composeFragmentDefinition(final String name, final String number, final Set<Conditional> conditionals, final Markup content, final Markup children,
+    @Deprecated(since = "2.0.0-alpha.10", forRemoval = true)
+    default Markup composeFragmentDefinition(final String name, final String number, final Set<Conditional> conditionals, final Markup content, final Markup children,
+            final Set<Parameter> parameters, final TranslatorContext translatorContext) {
+        return this.composeFragmentDefinition(name, number, LineStyle.NORMAL, 0, conditionals, content,
+                children, parameters, translatorContext);
+    }
+
+    /**
+     * Given a fragment name (identifier) and some pre-rendered content, this method
+     * returns the code that encapsulates it in the target template. It also receives how the
+     * template line is displayed and its level, for a markup generator that lays out its output by
+     * them.
+     *
+     * @param name              the name of the fragment.
+     * @param number            the outline number of the fragment.
+     * @param style             how the template line is displayed: as a heading or as a normal line.
+     * @param level             the level of the template line: 1 for a line at the top of its section
+     *                          or template, one more for each line it is nested in, and 0 for a
+     *                          template that only holds lines.
+     * @param conditionals      the conditionals of the fragment.
+     * @param content           the content of the fragment.
+     * @param children          the children of the fragment.
+     * @param parameters        the parameters of the fragment.
+     * @param translatorContext additional context information provided by the template translator.
+     * @return                  the code that encapsulates the fragment in the target template.
+     */
+    Markup composeFragmentDefinition(final String name, final String number, final LineStyle style,
+            final int level, final Set<Conditional> conditionals, final Markup content, final Markup children,
             final Set<Parameter> parameters, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
