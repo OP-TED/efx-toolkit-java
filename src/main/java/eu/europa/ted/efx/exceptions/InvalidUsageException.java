@@ -33,7 +33,6 @@ public class InvalidUsageException extends EfxCompilationException {
         SHORTHAND_REQUIRES_CODE_OR_INDICATOR,
         SHORTHAND_REQUIRES_FIELD_CONTEXT,
         INVALID_NOTICE_SUBTYPE_RANGE_ORDER,
-        INVALID_NOTICE_SUBTYPE_TOKEN,
         FIELD_NOT_WITHHOLDABLE,
         TEMPLATE_ONLY_FUNCTION,
         UNSUPPORTED_REGEX_CONSTRUCT,
@@ -58,7 +57,6 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
     private static final String SHORTHAND_REQUIRES_FIELD_CONTEXT = "'%s' can only be used when the context is a field.";
     private static final String INVALID_NOTICE_SUBTYPE_RANGE_ORDER = "Notice subtype range '%s-%s' is not in ascending order.";
-    private static final String INVALID_NOTICE_SUBTYPE_TOKEN = "Invalid notice subtype token '%s'. Expected format: 'X' or 'X-Y'.";
     private static final String FIELD_NOT_WITHHOLDABLE = "Field '%s' is always published and cannot be withheld from publication.";
     private static final String TEMPLATE_ONLY_FUNCTION = "%s can only be used in templates, not in expressions or validation rules.";
     private static final String UNSUPPORTED_REGEX_CONSTRUCT = "Invalid regex pattern %s at position %d: %s";
@@ -110,10 +108,6 @@ public class InvalidUsageException extends EfxCompilationException {
 
     public static InvalidUsageException invalidNoticeSubtypeRangeOrder(String start, String end) {
         return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_RANGE_ORDER, INVALID_NOTICE_SUBTYPE_RANGE_ORDER, start, end);
-    }
-
-    public static InvalidUsageException invalidNoticeSubtypeToken(String tokenText) {
-        return new InvalidUsageException(ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN, INVALID_NOTICE_SUBTYPE_TOKEN, tokenText);
     }
 
     public static InvalidUsageException fieldNotWithholdable(ParserRuleContext ctx, String fieldId) {

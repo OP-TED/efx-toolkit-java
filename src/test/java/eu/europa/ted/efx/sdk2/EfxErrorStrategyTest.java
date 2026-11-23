@@ -421,7 +421,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testRule_FlagWithoutScope_GetsNoCodelistHint() {
     assertSyntaxErrorMessage(
-        "line 6:24 Syntax error: unexpected '#' in rule; expected ';' or 'SCOPE'.",
+        "line 6:24 Syntax error: unexpected character '#'.",
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
             "    FOR BT-00-Text IN 1 #LAWFULNESS;")));
   }
@@ -449,6 +449,14 @@ class EfxErrorStrategyTest extends EfxTestsBase {
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
             "    FOR BT-00-Text IN 1", "WITH ND-Root", "    ASSERT TRUE", "    AS ERROR R-K7P-M2R",
             "    FOR BT-00-Text IN 1;")));
+  }
+
+  @Test
+  void testRule_WithoutSemicolon_BeforeAStageHeading() {
+    assertSyntaxErrorMessage(
+        "line 7:1 Syntax error: unexpected '-' in notice type; expected a notice subtype.",
+        () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
+            "    FOR BT-00-Text IN 1", "--- STAGE 2a ---")));
   }
 
   @Test

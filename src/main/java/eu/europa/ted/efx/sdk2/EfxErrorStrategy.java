@@ -250,6 +250,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             // Literals and operators
             Map.entry(EfxLexer.StringLiteral, "a text literal"),
             Map.entry(EfxLexer.IntegerLiteral, "an integer"),
+            Map.entry(EfxLexer.NoticeType, "a notice subtype"),
             Map.entry(EfxLexer.DecimalLiteral, "a decimal number"),
             Map.entry(EfxLexer.DateLiteral, "a date"),
             Map.entry(EfxLexer.TimeLiteral, "a time"),
