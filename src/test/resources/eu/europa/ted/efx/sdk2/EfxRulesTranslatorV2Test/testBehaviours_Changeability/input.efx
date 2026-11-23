@@ -1,0 +1,43 @@
+// Test: NOT MODIFIED, NOT ADDED and NOT REMOVED are translated to the test of the expression
+// after VIA, as an ASSERT with that expression is: with its calls of dynamic functions, in the
+// condition and in the check, and in the dynamic output only. The file expressions.efx holds the
+// same rules written with these expressions, and both files must give the same output.
+
+ENDPOINT 'default' AT 'https://api.ted.europa.eu/v1';
+
+LET dynamic : ?applies(text : $noticeRef) CALL API;
+LET dynamic : ?same-text(text : $noticeRef, text : $value) CALL API;
+LET dynamic : ?same-count(text : $noticeRef, number : $count) CALL API;
+
+---- STAGE 6a ----
+
+WITH BT-00-Identifier,
+    dynamic : $ruleApplies = ?applies(BT-00-Identifier),
+    dynamic : $sameText = ?same-text(BT-00-Identifier, BT-00-Text)
+
+    // The check is a dynamic variable of the rule set.
+    WHEN $ruleApplies
+        ASSERT NOT MODIFIED VIA $sameText
+        AS ERROR R-CHG-001
+        FOR BT-00-Text IN 1;
+
+    // The check calls a dynamic function, and so does the condition.
+    WHEN ?applies(BT-00-Code)
+        ASSERT NOT MODIFIED VIA ?same-text(BT-00-Identifier, BT-00-Code)
+        AS ERROR R-CHG-002
+        FOR BT-00-Code IN 1;
+
+    WHEN $ruleApplies and BT-00-Indicator == TRUE
+        ASSERT NOT ADDED VIA ?same-count(BT-00-Identifier, count(BT-00-Repeatable-Text))
+        AS ERROR R-CHG-003
+        FOR BT-00-Repeatable-Text IN 1;
+
+    OTHERWISE ASSERT NOT REMOVED VIA ?same-count(BT-00-Identifier, count(BT-00-Repeatable-Number))
+        AS ERROR R-CHG-004
+        FOR BT-00-Repeatable-Number IN 1;
+
+// The check needs no dynamic function.
+WITH ND-Root
+    ASSERT NOT MODIFIED VIA BT-00-Text == 'fixed'
+    AS ERROR R-CHG-005
+    FOR BT-00-Text IN 1;

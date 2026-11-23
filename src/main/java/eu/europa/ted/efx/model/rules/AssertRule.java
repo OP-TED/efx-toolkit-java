@@ -25,6 +25,7 @@ public class AssertRule extends ValidationRule {
         this.invertedCondition = other.invertedCondition;
         this.expression = other.expression;
         this.invertedConditionOrExpression = other.invertedConditionOrExpression;
+        this.behaviour = other.behaviour;
         this.noticeSubtypeRange = other.noticeSubtypeRange;
         this.flag = other.flag;
         this.scope = other.scope;

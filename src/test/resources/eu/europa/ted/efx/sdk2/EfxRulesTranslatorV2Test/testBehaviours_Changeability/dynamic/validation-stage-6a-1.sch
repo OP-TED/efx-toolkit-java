@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pattern id="EFORMS-validation-stage-6a-1" xmlns="http://purl.oclc.org/dsdl/schematron">
+    <rule context="/*/PathNode/IdField">
+        <let name="ruleApplies" value="number(efx:call-api('default', 'applies', string-join((concat('arg1=', encode-for-uri(((./normalize-space(text())), '')[1]))), '&amp;')))"/>
+        <let name="sameText" value="number(efx:call-api('default', 'same-text', string-join((concat('arg1=', encode-for-uri(((./normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((../TextField/normalize-space(text())), '')[1]))), '&amp;')))"/>
+        <let name="__apiResult1" value="number(efx:call-api('default', 'applies', string-join((concat('arg1=', encode-for-uri(((../CodeField/normalize-space(text())), '')[1]))), '&amp;')))"/>
+        <let name="__apiResult2" value="number(if ($__apiResult1 = 1) then number(efx:call-api('default', 'same-text', string-join((concat('arg1=', encode-for-uri(((./normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((../CodeField/normalize-space(text())), '')[1]))), '&amp;'))) else 0)"/>
+        <let name="__apiResult3" value="number(if ($ruleApplies = 1 and ../IndicatorField/(normalize-space(text()) = ('true', '1')) = true()) then number(efx:call-api('default', 'same-count', string-join((concat('arg1=', encode-for-uri(((./normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((for $__value in (count(../RepeatableTextField/normalize-space(text()))) return if ($__value = $__value and abs($__value) != xs:double('INF')) then (for $__text in string($__value) return if (contains($__text, 'E')) then (for $__exponent in xs:integer(substring-after($__text, 'E')) return string(xs:decimal(substring-before($__text, 'E')) * (if ($__exponent &gt;= 0) then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', ''))) else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1'))))) else string(xs:decimal($__text))) else ''), '')[1]))), '&amp;'))) else 0)"/>
+        <let name="__apiResult4" value="number(if (not($ruleApplies = 1) and not($__apiResult1 = 1) and not($ruleApplies = 1 and ../IndicatorField/(normalize-space(text()) = ('true', '1')) = true())) then number(efx:call-api('default', 'same-count', string-join((concat('arg1=', encode-for-uri(((./normalize-space(text())), '')[1])), concat('arg2=', encode-for-uri(((for $__value in (count(../RepeatableNumberField/number())) return if ($__value = $__value and abs($__value) != xs:double('INF')) then (for $__text in string($__value) return if (contains($__text, 'E')) then (for $__exponent in xs:integer(substring-after($__text, 'E')) return string(xs:decimal(substring-before($__text, 'E')) * (if ($__exponent &gt;= 0) then xs:decimal(concat('1', string-join(for $__i in 1 to $__exponent return '0', ''))) else xs:decimal(concat('0.', string-join(for $__i in 2 to -$__exponent return '0', ''), '1'))))) else string(xs:decimal($__text))) else ''), '')[1]))), '&amp;'))) else 0)"/>
+        <assert id="R-CHG-001-api-error-ruleApplies" role="ERROR" test="not($ruleApplies = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-001-api-error-sameText" role="ERROR" test="not($sameText = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-001" role="ERROR" diagnostics="BT-00-Identifier_BT-00-Text" test="($ruleApplies = -1) or ($sameText = -1) or ($sameText = 1) or (not($ruleApplies = 1))">rule|text|R-CHG-001</assert>
+        <assert id="R-CHG-002-api-error-1" role="ERROR" test="not($__apiResult1 = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-002-api-error-2" role="ERROR" test="not($__apiResult2 = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-002" role="ERROR" diagnostics="BT-00-Identifier_BT-00-Code" test="($__apiResult1 = -1) or ($__apiResult2 = -1) or ($__apiResult2 = 1) or (not($__apiResult1 = 1))">rule|text|R-CHG-002</assert>
+        <assert id="R-CHG-003-api-error-ruleApplies" role="ERROR" test="not($ruleApplies = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-003-api-error-1" role="ERROR" test="not($__apiResult3 = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-003" role="ERROR" diagnostics="BT-00-Identifier_BT-00-Repeatable-Text" test="($ruleApplies = -1) or ($__apiResult3 = -1) or ($__apiResult3 = 1) or (not($ruleApplies = 1 and ../IndicatorField/(normalize-space(text()) = ('true', '1')) = true()))">rule|text|R-CHG-003</assert>
+        <assert id="R-CHG-004-api-error-ruleApplies" role="ERROR" test="not($ruleApplies = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-004-api-error-1" role="ERROR" test="not($__apiResult4 = -1)">auxiliary|text|api-error</assert>
+        <assert id="R-CHG-004" role="ERROR" diagnostics="BT-00-Identifier_BT-00-Repeatable-Number" test="($ruleApplies = -1) or ($__apiResult4 = -1) or ($__apiResult4 = 1) or (not(not($ruleApplies = 1) and not($__apiResult1 = 1) and not($ruleApplies = 1 and ../IndicatorField/(normalize-space(text()) = ('true', '1')) = true())))">rule|text|R-CHG-004</assert>
+    </rule>
+    <rule context="/*">
+        <assert id="R-CHG-005" role="ERROR" diagnostics="ND-Root_BT-00-Text" test="PathNode/TextField/normalize-space(text()) = 'fixed'">rule|text|R-CHG-005</assert>
+    </rule>
+</pattern>

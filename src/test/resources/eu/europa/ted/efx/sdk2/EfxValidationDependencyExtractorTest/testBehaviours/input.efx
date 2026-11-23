@@ -1,0 +1,47 @@
+// Test: a rule written with a behaviour has the dependencies of the rule written with the
+// expression that the behaviour stands for. The file expressions.efx holds the same rules written
+// with these expressions, and both files must give the same dependency graph.
+
+---- STAGE test ----
+
+WITH ND-Root
+    // The target is not a dependency of its own rule.
+    ASSERT IS NOT EMPTY
+    AS ERROR R-T13-001
+    FOR BT-00-Text IN *;
+
+    // The field of the condition is a dependency.
+    WHEN BT-00-Indicator == TRUE
+        ASSERT IS NOT PRESENT
+        AS ERROR R-T13-002
+        FOR BT-00-Number IN *;
+
+    // The codelist is a dependency.
+    ASSERT IN [...accessibility]
+    AS ERROR R-T13-003
+    FOR BT-00-Code IN *;
+
+    // The fields of the expression after VIA are dependencies.
+    ASSERT NOT MODIFIED VIA BT-00-Identifier == BT-00-Url
+    AS ERROR R-T13-004
+    FOR BT-00-Email IN *;
+
+    ASSERT NOT REPEATED
+    AS ERROR R-T13-005
+    FOR BT-00-Repeatable-Text IN *;
+
+    ASSERT OCCURS BETWEEN 2 AND 5
+    AS ERROR R-T13-006
+    FOR BT-00-Repeatable-Number IN *;
+
+    ASSERT LENGTH <= 100
+    AS ERROR R-T13-007
+    FOR BT-00-Phone IN *;
+
+    ASSERT VALUE BETWEEN 0 AND 9999
+    AS ERROR R-T13-008
+    FOR BT-00-Integer IN *;
+
+    ASSERT LIKE '^[0-9]+$'
+    AS ERROR R-T13-009
+    FOR BT-00-Amount IN *;

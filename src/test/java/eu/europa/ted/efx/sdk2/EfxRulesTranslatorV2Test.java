@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,6 +58,10 @@ import eu.europa.ted.efx.interfaces.IncludedFileResolver;
 import eu.europa.ted.efx.interfaces.TranslatorOptions;
 import eu.europa.ted.efx.mock.DependencyFactoryMock;
 import eu.europa.ted.efx.model.DecimalFormat;
+import eu.europa.ted.efx.model.rules.Behaviour;
+import eu.europa.ted.efx.model.rules.RuleSet;
+import eu.europa.ted.efx.model.rules.ValidationRule;
+import eu.europa.ted.efx.model.rules.ValidationStage;
 import eu.europa.ted.eforms.sdk.schematron.SchematronGenerator;
 
 /**
@@ -1577,4 +1582,199 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   //#endregion API call tests
+
+  //#region Behaviour tests
+
+  // A behaviour is written after ASSERT or OTHERWISE ASSERT, in the place of an expression. It is
+  // translated to the test of the expression that it stands for. So each of the two tests below
+  // translates the same rules twice: written with behaviours (input.efx), and written with these
+  // expressions (expressions.efx). Both must give the expected output.
+
+  @Test
+  void testBehaviours_GiveTheTestOfTheirExpressions() throws IOException {
+    assertSameOutputAsExpressions("testBehaviours_GiveTheTestOfTheirExpressions");
+  }
+
+  @Test
+  void testBehaviours_Changeability() throws IOException {
+    assertSameOutputAsExpressions("testBehaviours_Changeability");
+  }
+
+  private void assertSameOutputAsExpressions(String testName) throws IOException {
+    Map<String, String> withBehaviours = translator.translateRules(readInput(testName));
+    Map<String, String> withExpressions =
+        translator.translateRules(readExpected(testName, "expressions.efx"));
+
+    assertEquals(5, withBehaviours.size(), "Should generate exactly 5 files");
+    assertAllOutputs(testName, withBehaviours);
+    assertEquals(withExpressions, withBehaviours,
+        "The rules written with behaviours and with expressions should give the same output");
+  }
+
+  @Test
+  void testBehaviours_AreKeptOnTheRules() throws InstantiationException {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT IS NOT EMPTY AS ERROR R-KND-001 FOR BT-00-Text IN 1;",
+        "    ASSERT IS NOT PRESENT AS ERROR R-KND-002 FOR BT-00-Text IN 1;",
+        "    ASSERT NOT REPEATED AS ERROR R-KND-003 FOR BT-00-Repeatable-Text IN 1;",
+        "    ASSERT NOT MODIFIED VIA BT-00-Text == 'a' AS ERROR R-KND-004 FOR BT-00-Text IN 1;",
+        "    ASSERT NOT ADDED VIA count(BT-00-Repeatable-Text) < 3",
+        "        AS ERROR R-KND-005 FOR BT-00-Repeatable-Text IN 1;",
+        "    ASSERT NOT REMOVED VIA count(BT-00-Repeatable-Text) > 0",
+        "        AS ERROR R-KND-006 FOR BT-00-Repeatable-Text IN 1;",
+        "    ASSERT OCCURS >= 2 AS ERROR R-KND-007 FOR BT-00-Repeatable-Text IN 1;",
+        "    ASSERT OCCURS BETWEEN 2 AND 5 AS ERROR R-KND-008 FOR BT-00-Repeatable-Text IN 1;",
+        "    ASSERT LENGTH <= 100 AS ERROR R-KND-009 FOR BT-00-Text IN 1;",
+        "    ASSERT LENGTH BETWEEN 2 AND 100 AS ERROR R-KND-010 FOR BT-00-Text IN 1;",
+        "    ASSERT VALUE >= -1.5 AS ERROR R-KND-011 FOR BT-00-Number IN 1;",
+        "    ASSERT VALUE BETWEEN 0 AND 9999 AS ERROR R-KND-012 FOR BT-00-Number IN 1;",
+        "    ASSERT IN [...accessibility] AS ERROR R-KND-013 FOR BT-00-Code IN 1;",
+        "    ASSERT LIKE '^[0-9]+$' AS ERROR R-KND-014 FOR BT-00-Text IN 1;",
+        "    ASSERT BT-00-Text is present AS ERROR R-KND-015 FOR BT-00-Text IN 1;",
+        // A quote written with a backslash is kept as the quote. The other escapes stay.
+        "    ASSERT LIKE '^O\\'Neil \\\"x\\\" \\\\ [0-9]{2}\\.$'",
+        "        AS ERROR R-KND-016 FOR BT-00-Text IN 1;",
+        "    ASSERT LIKE \"^a\\\"b'c$\" AS ERROR R-KND-017 FOR BT-00-Text IN 1;",
+        "",
+        "WITH ND-SubNode",
+        "    WHEN BT-00-Indicator == TRUE",
+        "        ASSERT BT-01-SubNode-Text is present",
+        "        AS ERROR R-KND-020 FOR BT-01-SubNode-Text IN 1;",
+        "    OTHERWISE ASSERT IS NOT PRESENT",
+        "        AS ERROR R-KND-021 FOR BT-01-SubNode-Text IN 1;");
+
+    Map<String, String> behaviours = new LinkedHashMap<>();
+    EfxRulesTranslatorV2 translatorOfRules = new EfxRulesTranslatorV2(
+        plan -> {
+          for (ValidationStage stage : plan.getStages()) {
+            for (RuleSet ruleSet : stage.getRuleSets()) {
+              ruleSet.forEach(rule -> behaviours.put(rule.getId(), describe(rule.getBehaviour())));
+              ValidationRule fallback = ruleSet.getFallbackRule();
+              if (fallback != null) {
+                behaviours.put(fallback.getId(), describe(fallback.getBehaviour()));
+              }
+            }
+          }
+          return Map.of();
+        },
+        DependencyFactoryMock.INSTANCE.createSymbolResolver(SDK_VERSION, ""),
+        DependencyFactoryMock.INSTANCE.createScriptGenerator(SDK_VERSION, "",
+            new EfxTranslatorOptions("udf", DecimalFormat.EFX_DEFAULT)),
+        ThrowingErrorListener.INSTANCE);
+    translatorOfRules.translateRules(rules);
+
+    Map<String, String> expected = new LinkedHashMap<>();
+    expected.put("R-KND-001", "MANDATORY");
+    expected.put("R-KND-002", "FORBIDDEN");
+    expected.put("R-KND-003", "NOT_REPEATED");
+    expected.put("R-KND-004", "NOT_MODIFIED");
+    expected.put("R-KND-005", "NOT_ADDED");
+    expected.put("R-KND-006", "NOT_REMOVED");
+    expected.put("R-KND-007", "LIMIT_COUNT >= 2");
+    expected.put("R-KND-008", "LIMIT_COUNT from 2 to 5");
+    expected.put("R-KND-009", "LIMIT_SIZE <= 100");
+    expected.put("R-KND-010", "LIMIT_SIZE from 2 to 100");
+    expected.put("R-KND-011", "LIMIT_RANGE >= -1.5");
+    expected.put("R-KND-012", "LIMIT_RANGE from 0 to 9999");
+    expected.put("R-KND-013", "LIMIT_VALUES accessibility");
+    expected.put("R-KND-014", "MATCH_PATTERN ^[0-9]+$");
+    expected.put("R-KND-015", "no behaviour");
+    expected.put("R-KND-016", "MATCH_PATTERN ^O'Neil \"x\" \\\\ [0-9]{2}\\.$");
+    expected.put("R-KND-017", "MATCH_PATTERN ^a\"b'c$");
+    expected.put("R-KND-020", "no behaviour");
+    expected.put("R-KND-021", "FORBIDDEN");
+    assertEquals(expected, behaviours);
+  }
+
+  /**
+   * Describes the behaviour that a rule keeps: its kind and the arguments that the author wrote.
+   */
+  private static String describe(Behaviour behaviour) {
+    if (behaviour == null) {
+      return "no behaviour";
+    }
+    String kind = behaviour.getKind().name();
+    if (behaviour.getComparison() != null) {
+      return kind + " " + behaviour.getComparison() + " " + behaviour.getNumber();
+    }
+    if (behaviour.getLowerBound() != null) {
+      return kind + " from " + behaviour.getLowerBound() + " to " + behaviour.getUpperBound();
+    }
+    if (behaviour.getCodelist() != null) {
+      return kind + " " + behaviour.getCodelist();
+    }
+    if (behaviour.getPattern() != null) {
+      return kind + " " + behaviour.getPattern();
+    }
+    return kind;
+  }
+
+  @Test
+  void testBehaviour_AfterReport_IsSyntaxError() {
+    assertBehaviourSyntaxError("    REPORT IS NOT EMPTY",
+        "line 4:11 Syntax error: unexpected 'IS' in expression.");
+  }
+
+  @Test
+  void testBehaviour_ChangeabilityWithoutVia_IsSyntaxError() {
+    assertBehaviourSyntaxError("    ASSERT NOT MODIFIED",
+        "line 5:4 Syntax error: unexpected 'AS' in assert clause; expected 'VIA'.");
+  }
+
+  @Test
+  void testBehaviour_CombinedWithAnExpression_IsSyntaxError() {
+    assertBehaviourSyntaxError("    ASSERT IS NOT EMPTY and BT-00-Number > 0",
+        "line 4:24 Syntax error: unexpected 'and' in as clause; expected 'AS'.");
+  }
+
+  private void assertBehaviourSyntaxError(String clause, String expectedMessage) {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        clause,
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN 1;");
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translator.translateRules(rules));
+    assertEquals(expectedMessage, exception.getMessage());
+  }
+
+  @Test
+  void testBehaviour_ViaThatIsNotACondition_Throws() {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT NOT MODIFIED VIA BT-00-Number",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-Text IN 1;");
+    TypeMismatchException exception = assertThrows(TypeMismatchException.class,
+        () -> translator.translateRules(rules));
+    assertEquals("line 4:28 Type mismatch. Clause 'ASSERT' cannot take 'number'."
+        + " Its condition must be 'indicator'.", exception.getMessage());
+  }
+
+  // No check of its own is made for a behaviour: it is valid where the expression that it stands
+  // for is valid, and the error of that expression is reported at the behaviour.
+
+  @Test
+  void testBehaviour_ThatItsTargetDoesNotFit_GivesTheErrorOfItsExpression() {
+    String rules = lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        "    ASSERT LENGTH <= 100",
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR BT-00-StartDate IN 1;");
+    TypeMismatchException exception = assertThrows(TypeMismatchException.class,
+        () -> translator.translateRules(rules));
+    assertEquals("line 4:11 Type mismatch. Function 'string-length' cannot take 'date'."
+        + " Its argument must be 'text'.", exception.getMessage());
+  }
+
+  //#endregion Behaviour tests
 }

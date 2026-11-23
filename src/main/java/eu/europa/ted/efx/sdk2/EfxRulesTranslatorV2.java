@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -50,12 +52,22 @@ import eu.europa.ted.efx.exceptions.InvalidUsageException;
 import eu.europa.ted.efx.model.Context;
 import eu.europa.ted.efx.model.Context.FieldContext;
 import eu.europa.ted.efx.model.Context.NodeContext;
+import eu.europa.ted.efx.model.builtins.BuiltIn;
+import eu.europa.ted.efx.model.builtins.ComparisonOperators;
+import eu.europa.ted.efx.model.builtins.ConditionOperators;
+import eu.europa.ted.efx.model.builtins.ConversionFunctions;
+import eu.europa.ted.efx.model.builtins.LogicalOperators;
+import eu.europa.ted.efx.model.builtins.NumericFunctions;
+import eu.europa.ted.efx.model.builtins.PatternMatch;
+import eu.europa.ted.efx.model.builtins.StringFunctions;
 import eu.europa.ted.efx.model.expressions.PathExpression;
 import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.BooleanExpression;
 import eu.europa.ted.efx.model.expressions.scalar.DynamicExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.rules.AssertRule;
+import eu.europa.ted.efx.model.rules.Behaviour;
+import eu.europa.ted.efx.model.rules.BehaviourKind;
 import eu.europa.ted.efx.model.rules.ValidationPlan;
 import eu.europa.ted.efx.model.rules.NoticeSubtypeRange;
 import eu.europa.ted.efx.model.rules.ReportRule;
@@ -71,6 +83,7 @@ import eu.europa.ted.efx.model.identifiers.DynamicVariable;
 import eu.europa.ted.efx.model.identifiers.Function;
 import eu.europa.ted.efx.model.identifiers.ParsedParameters;
 import eu.europa.ted.efx.model.identifiers.Variable;
+import eu.europa.ted.efx.sdk2.EfxExpressionVisitor.ReadAs;
 import eu.europa.ted.efx.sdk2.EfxParser.*;
 
 /**
@@ -640,14 +653,15 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
   /**
    * Called when exiting an ASSERT clause.
    * Build the ValidationRule and wrap it in an AssertRule.
+   * The clause is written with an expression or with a behaviour. A rule written with a behaviour
+   * has its test already: the listener method of the behaviour gave it to the rule.
    */
   @Override
   public void exitAssertClause(AssertClauseContext ctx) {
-    var test = this.expressions.valueOf(ctx.expression(), ASSERT).booleanAt(0);
-    var rule = this.ruleStack.pop(ValidationRule.class);
-    var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
-    this.ruleStack.push(new AssertRule(rule));
+    if (ctx.behaviour() == null) {
+      this.setTest(this.expressions.valueOf(ctx.expression(), ASSERT).booleanAt(0));
+    }
+    this.ruleStack.push(new AssertRule(this.ruleStack.pop(ValidationRule.class)));
   }
 
   @Override
@@ -665,12 +679,10 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
    */
   @Override
   public void exitOtherwiseAssertClause(OtherwiseAssertClauseContext ctx) {
-    var test =
-        this.expressions.valueOf(ctx.expression(), OTHERWISE_ASSERT).booleanAt(0);
-    var rule = this.ruleStack.pop(ValidationRule.class);
-    var invertedCondition = rule.getInvertedCondition();
-    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
-    this.ruleStack.push(new AssertRule(rule));
+    if (ctx.behaviour() == null) {
+      this.setTest(this.expressions.valueOf(ctx.expression(), OTHERWISE_ASSERT).booleanAt(0));
+    }
+    this.ruleStack.push(new AssertRule(this.ruleStack.pop(ValidationRule.class)));
   }
 
   @Override
@@ -683,6 +695,289 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     this.ruleStack.push(new ReportRule(rule));
   }
 
+
+  /**
+   * Gives the rule that is being translated its test. The rule keeps the test also combined with
+   * the condition of its WHEN clause, if it has one.
+   *
+   * @param test the test
+   * @return the rule
+   */
+  private ValidationRule setTest(final BooleanExpression test) {
+    var rule = this.ruleStack.peek(ValidationRule.class);
+    var invertedCondition = rule.getInvertedCondition();
+    rule.setExpression(test, invertedCondition == null ? test : this.combineWithOrParenthesized(test, invertedCondition));
+    return rule;
+  }
+
+  // #region Behaviours
+
+  // A behaviour is written after ASSERT, or after OTHERWISE ASSERT, in the place of an
+  // expression. It names no field or node: it applies to the subject of its rule, which the FOR
+  // clause names. Each method below gives the rule its behaviour, and the test that checks it.
+  // The test is the one of the expression that the behaviour stands for: it is built with the
+  // same built-ins, in the same order, so that both give exactly the same output. In the
+  // comments, F is the subject of the rule.
+
+  /** {@code IS NOT EMPTY} stands for {@code F is present}. */
+  @Override
+  public void exitMandatoryBehaviour(MandatoryBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.MANDATORY),
+        this.call(ctx, ConditionOperators.IS_PRESENT, ReadAs.PATHS, this.subjectOf(ctx)));
+  }
+
+  /** {@code IS NOT PRESENT} stands for {@code F is not present}. */
+  @Override
+  public void exitForbiddenBehaviour(ForbiddenBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.FORBIDDEN),
+        this.call(ctx, ConditionOperators.IS_NOT_PRESENT, ReadAs.PATHS, this.subjectOf(ctx)));
+  }
+
+  /** {@code NOT REPEATED} stands for {@code count(F) < 2}. */
+  @Override
+  public void exitNotRepeatedBehaviour(NotRepeatedBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.NOT_REPEATED),
+        this.compared(ctx, this.countOf(ctx), ComparisonOperators.LESS, this.numberOf("2")));
+  }
+
+  /** {@code NOT MODIFIED VIA e} stands for {@code e}. */
+  @Override
+  public void exitNotModifiedBehaviour(NotModifiedBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.NOT_MODIFIED), ctx.expression());
+  }
+
+  /** {@code NOT ADDED VIA e} stands for {@code e}. */
+  @Override
+  public void exitNotAddedBehaviour(NotAddedBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.NOT_ADDED), ctx.expression());
+  }
+
+  /** {@code NOT REMOVED VIA e} stands for {@code e}. */
+  @Override
+  public void exitNotRemovedBehaviour(NotRemovedBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.of(BehaviourKind.NOT_REMOVED), ctx.expression());
+  }
+
+  /**
+   * {@code OCCURS >= n} stands for {@code count(F) >= n}, and {@code OCCURS BETWEEN a AND b} for
+   * {@code count(F) >= a and count(F) <= b}.
+   */
+  @Override
+  public void exitLimitCountBehaviour(LimitCountBehaviourContext ctx) {
+    if (ctx.Comparison() != null) {
+      this.setLimit(ctx, BehaviourKind.LIMIT_COUNT, this.countOf(ctx),
+          ctx.Comparison().getSymbol(), ctx.number.getText());
+    } else {
+      this.setLimits(ctx, BehaviourKind.LIMIT_COUNT, () -> this.countOf(ctx),
+          ctx.lower.getText(), ctx.upper.getText());
+    }
+  }
+
+  /**
+   * {@code LENGTH <= n} stands for {@code string-length(F) <= n}, and
+   * {@code LENGTH BETWEEN a AND b} for {@code string-length(F) >= a and string-length(F) <= b}.
+   */
+  @Override
+  public void exitLimitSizeBehaviour(LimitSizeBehaviourContext ctx) {
+    if (ctx.Comparison() != null) {
+      this.setLimit(ctx, BehaviourKind.LIMIT_SIZE, this.lengthOf(ctx),
+          ctx.Comparison().getSymbol(), ctx.number.getText());
+    } else {
+      this.setLimits(ctx, BehaviourKind.LIMIT_SIZE, () -> this.lengthOf(ctx),
+          ctx.lower.getText(), ctx.upper.getText());
+    }
+  }
+
+  /**
+   * {@code VALUE >= n} stands for {@code F >= n}, and {@code VALUE BETWEEN a AND b} for
+   * {@code F >= a and F <= b}.
+   */
+  @Override
+  public void exitLimitRangeBehaviour(LimitRangeBehaviourContext ctx) {
+    if (ctx.Comparison() != null) {
+      this.setLimit(ctx, BehaviourKind.LIMIT_RANGE, this.subjectOf(ctx),
+          ctx.Comparison().getSymbol(), ctx.number.getText());
+    } else {
+      this.setLimits(ctx, BehaviourKind.LIMIT_RANGE, () -> this.subjectOf(ctx),
+          ctx.lower.getText(), ctx.upper.getText());
+    }
+  }
+
+  /**
+   * {@code IN [...c]} stands for {@code F in [...c]} where the value of F is a text, and for
+   * {@code text(F) in [...c]} where it is a number, an indicator, a date, a time or a duration,
+   * which {@code text} converts.
+   */
+  @Override
+  public void exitLimitValuesBehaviour(LimitValuesBehaviourContext ctx) {
+    final Subexpression<?> subject = this.subjectOf(ctx);
+    final Subexpression<?> value =
+        ConversionFunctions.TO_TEXT.resolve(List.of(subject.value())).isPresent()
+            ? this.call(ctx, ConversionFunctions.TO_TEXT, ReadAs.VALUES, subject)
+            : subject;
+    this.setBehaviour(ctx, Behaviour.inCodelist(ctx.codelistReference().codelistName.getText()),
+        this.call(ctx, ConditionOperators.IN, ReadAs.OPERANDS, value,
+            this.expressions.visit(ctx.codelistReference())));
+  }
+
+  /** {@code LIKE 'p'} stands for {@code F:rawValue like 'p'}. */
+  @Override
+  public void exitMatchPatternBehaviour(MatchPatternBehaviourContext ctx) {
+    this.setBehaviour(ctx, Behaviour.matching(patternOf(ctx.pattern.getText())),
+        this.call(ctx, PatternMatch.like(ctx.pattern.getText()), ReadAs.VALUES,
+            this.expressions.rawValueOf(this.subjectOf(ctx), ctx)));
+  }
+
+  /**
+   * Reads the regular expression that a pattern is written as. The quotes around the pattern are
+   * removed, and a quote written with a backslash, as {@code \'} or {@code \"}, becomes the
+   * quote. Any other backslash sequence, such as {@code \.} or {@code \\}, belongs to the
+   * regular expression and stays as it is. The test of the rule matches the same regular
+   * expression.
+   *
+   * @param literal the pattern as it is written, with the quotes around it
+   * @return the regular expression
+   */
+  private static String patternOf(final String literal) {
+    final String content = literal.substring(1, literal.length() - 1);
+    final StringBuilder pattern = new StringBuilder(content.length());
+    for (int i = 0; i < content.length(); i++) {
+      final char c = content.charAt(i);
+      if (c == '\\' && i + 1 < content.length()) {
+        final char escaped = content.charAt(++i);
+        if (escaped != '\'' && escaped != '"') {
+          pattern.append(c);
+        }
+        pattern.append(escaped);
+      } else {
+        pattern.append(c);
+      }
+    }
+    return pattern.toString();
+  }
+
+  /**
+   * Gives the rule that is being translated its behaviour, and the test that checks it.
+   *
+   * @param ctx the behaviour, at which an error of the test is reported
+   * @param behaviour the behaviour, as the rule keeps it
+   * @param test the test, built from the subject of the rule
+   */
+  private void setBehaviour(final ParserRuleContext ctx, final Behaviour behaviour,
+      final Subexpression<?> test) {
+    this.setTest(this.expressions.valueOf(test.value(), clauseOf(ctx), ctx).booleanAt(0))
+        .setBehaviour(behaviour);
+  }
+
+  /**
+   * Gives the rule that is being translated its behaviour, and the test that checks it: the
+   * expression written after VIA, which must be a condition, as the expression of the clause.
+   *
+   * @param ctx the behaviour
+   * @param behaviour the behaviour, as the rule keeps it
+   * @param check the expression after VIA
+   */
+  private void setBehaviour(final ParserRuleContext ctx, final Behaviour behaviour,
+      final ExpressionContext check) {
+    this.setTest(this.expressions.valueOf(check, clauseOf(ctx)).booleanAt(0))
+        .setBehaviour(behaviour);
+  }
+
+  /**
+   * Gives the rule a limit written with a comparison, as in {@code LENGTH <= 100}, and its test:
+   * what is limited, compared with the number.
+   *
+   * @param ctx the behaviour
+   * @param kind the kind of the limit
+   * @param limited what is limited: the count, the length or the value of the subject
+   * @param comparison the comparison operator, as it is written
+   * @param number the number, as it is written
+   */
+  private void setLimit(final ParserRuleContext ctx, final BehaviourKind kind,
+      final Subexpression<?> limited, final Token comparison, final String number) {
+    this.setBehaviour(ctx, Behaviour.compared(kind, comparison.getText(), new BigDecimal(number)),
+        this.compared(ctx, limited, this.expressions.operatorNamed(comparison),
+            this.numberOf(number)));
+  }
+
+  /**
+   * Gives the rule a limit written with a range, as in {@code VALUE BETWEEN 0 AND 9999}, and its
+   * test: what is limited is not below the lower bound and not above the upper bound.
+   *
+   * @param ctx the behaviour
+   * @param kind the kind of the limit
+   * @param limited gives what is limited: the count, the length or the value of the subject. It
+   *        is read twice, as the expression names it twice.
+   * @param lower the lower bound, as it is written
+   * @param upper the upper bound, as it is written
+   */
+  private void setLimits(final ParserRuleContext ctx, final BehaviourKind kind,
+      final Supplier<Subexpression<?>> limited, final String lower, final String upper) {
+    final Subexpression<?> notBelow = this.compared(ctx, limited.get(),
+        ComparisonOperators.GREATER_OR_EQUAL, this.numberOf(lower));
+    final Subexpression<?> notAbove = this.compared(ctx, limited.get(),
+        ComparisonOperators.LESS_OR_EQUAL, this.numberOf(upper));
+    this.setBehaviour(ctx, Behaviour.between(kind, new BigDecimal(lower), new BigDecimal(upper)),
+        this.call(ctx, LogicalOperators.AND, ReadAs.OPERANDS, notBelow, notAbove));
+  }
+
+  /**
+   * @param behaviour a behaviour
+   * @return the clause it is written in, as a type error names it
+   */
+  private static Clause clauseOf(final ParserRuleContext behaviour) {
+    return behaviour.getParent() instanceof OtherwiseAssertClauseContext ? OTHERWISE_ASSERT
+        : ASSERT;
+  }
+
+  /**
+   * @param behaviour a behaviour
+   * @return the subject of its rule, which the FOR clause names, read from the context of the
+   *         rule set as an expression reads a field or a node
+   */
+  private Subexpression<?> subjectOf(final ParserRuleContext behaviour) {
+    final ForClauseContext subject =
+        behaviour.getParent().getParent().getRuleContext(ForClauseContext.class, 0);
+    return this.expressions.visit(subject.simpleFieldReference() != null
+        ? subject.simpleFieldReference()
+        : subject.simpleNodeReference());
+  }
+
+  private Subexpression<?> countOf(final ParserRuleContext behaviour) {
+    return this.call(behaviour, NumericFunctions.COUNT, ReadAs.VALUES, this.subjectOf(behaviour));
+  }
+
+  private Subexpression<?> lengthOf(final ParserRuleContext behaviour) {
+    return this.call(behaviour, StringFunctions.STRING_LENGTH, ReadAs.VALUES,
+        this.subjectOf(behaviour));
+  }
+
+  private Subexpression<?> numberOf(final String number) {
+    return this.expressions
+        .subexpression(this.translation.script().getNumericLiteralEquivalent(number));
+  }
+
+  private Subexpression<?> compared(final ParserRuleContext behaviour,
+      final Subexpression<?> left, final BuiltIn comparison, final Subexpression<?> right) {
+    return this.call(behaviour, comparison, ReadAs.OPERANDS, left, right);
+  }
+
+  /**
+   * Calls a built-in as the expression that a behaviour stands for calls it.
+   *
+   * @param behaviour the behaviour, at which an error of the call is reported
+   * @param builtIn the built-in
+   * @param readAs how the call reads its arguments
+   * @param arguments the arguments of the call
+   * @return the result of the call
+   */
+  private Subexpression<?> call(final ParserRuleContext behaviour, final BuiltIn builtIn,
+      final ReadAs readAs, final Subexpression<?>... arguments) {
+    return this.expressions.builtIn(behaviour, builtIn, builtIn.getSpelling(),
+        List.of(arguments), readAs);
+  }
+
+  // #endregion Behaviours
 
   private BooleanExpression combineWithOrParenthesized(BooleanExpression left, BooleanExpression right) {
     if (left == null) {

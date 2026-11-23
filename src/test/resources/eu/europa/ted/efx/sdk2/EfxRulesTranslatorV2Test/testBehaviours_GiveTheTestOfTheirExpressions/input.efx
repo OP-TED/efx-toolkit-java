@@ -1,0 +1,114 @@
+// Test: each behaviour written after ASSERT or OTHERWISE ASSERT is translated to the test of the
+// expression it stands for. The file expressions.efx holds the same rules written with these
+// expressions, and both files must give the same output.
+
+---- STAGE 1a ----
+
+// The context of the rule set is the parent node of the targets.
+WITH ND-Root
+    ASSERT IS NOT EMPTY
+    AS ERROR R-BHV-001
+    FOR BT-00-Text IN 1;
+
+    ASSERT IS NOT PRESENT
+    AS ERROR R-BHV-002
+    FOR BT-00-Number IN 1;
+
+    ASSERT NOT REPEATED
+    AS ERROR R-BHV-003
+    FOR BT-00-Repeatable-Text IN 1;
+
+    ASSERT VALUE BETWEEN 0 AND 9999
+    AS ERROR R-BHV-004
+    FOR BT-00-Integer IN 1;
+
+    ASSERT VALUE >= -1.5
+    AS ERROR R-BHV-005
+    FOR BT-00-Number IN 1;
+
+    // A pattern on a field that is not a text.
+    ASSERT LIKE '^[0-9]+$'
+    AS ERROR R-BHV-006
+    FOR BT-00-Number IN 1;
+
+    // A pattern with a quote and backslashes.
+    ASSERT LIKE '^O\'Neil [0-9]{2}\.$'
+    AS ERROR R-BHV-007
+    FOR BT-00-Text IN 1;
+
+    ASSERT IN [...accessibility]
+    AS ERROR R-BHV-008
+    FOR BT-00-Code IN 1;
+
+    // A codelist on a field that is not a text: the value is converted to text.
+    ASSERT IN [...indicator]
+    AS ERROR R-BHV-009
+    FOR BT-00-Indicator IN 1;
+
+    ASSERT LENGTH <= 100
+    AS ERROR R-BHV-010
+    FOR BT-00-Text IN 1;
+
+    ASSERT LENGTH BETWEEN 2 AND 100
+    AS ERROR R-BHV-011
+    FOR BT-00-Identifier IN 1;
+
+    ASSERT OCCURS >= 2
+    AS ERROR R-BHV-012
+    FOR BT-00-Repeatable-Text IN 1;
+
+    ASSERT OCCURS BETWEEN 2 AND 5
+    AS ERROR R-BHV-013
+    FOR BT-00-Repeatable-Number IN 1;
+
+    // The target is an attribute.
+    ASSERT IS NOT EMPTY
+    AS ERROR R-BHV-014
+    FOR BT-00-Amount-Currency IN 1;
+
+    // The target is a node.
+    ASSERT OCCURS <= 3
+    AS ERROR R-BHV-015
+    FOR ND-RepeatableNode IN 1;
+
+    ASSERT IS NOT PRESENT
+    AS ERROR R-BHV-016
+    FOR ND-SubNode IN 1;
+
+// The context of the rule set is the target itself.
+WITH BT-00-Integer
+    ASSERT VALUE BETWEEN 0 AND 9999
+    AS ERROR R-BHV-020
+    FOR BT-00-Integer IN 1;
+
+    ASSERT LIKE '^([0-9]+)$'
+    AS ERROR R-BHV-021
+    FOR BT-00-Integer IN 1;
+
+// The length of a multilingual text. In its own context the field has one value.
+WITH BT-00-Text-Multilingual
+    ASSERT LENGTH <= 100
+    AS ERROR R-BHV-022
+    FOR BT-00-Text-Multilingual IN 1;
+
+// The context of the rule set is another node, and the rules have conditions.
+WITH ND-SubNode
+    WHEN BT-00-Indicator == TRUE
+        ASSERT IS NOT EMPTY
+        AS ERROR R-BHV-030
+        FOR BT-01-SubNode-Text IN 1;
+
+    WHEN BT-00-Code == 'x'
+        ASSERT IS NOT PRESENT
+        AS ERROR R-BHV-031
+        FOR BT-01-SubNode-Text IN 1;
+
+    OTHERWISE ASSERT LENGTH <= 10
+        AS ERROR R-BHV-032
+        FOR BT-01-SubNode-Text IN 1;
+
+// The rule set applies to every element of its context.
+WITH EVERY ND-RepeatableNode
+    ASSERT NOT REPEATED
+    AS ERROR R-BHV-040
+    FOR BT-00-Text-In-Repeatable-Node IN 1;

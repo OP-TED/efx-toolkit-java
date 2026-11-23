@@ -1,0 +1,21 @@
+{
+  "schematrons" : [ {
+    "name" : "complete-validation",
+    "type" : "dynamic",
+    "filename" : "dynamic/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-6a-1",
+    "type" : "dynamic",
+    "stage" : "6a",
+    "filename" : "dynamic/validation-stage-6a-1.sch"
+  }, {
+    "name" : "complete-validation",
+    "type" : "static",
+    "filename" : "static/complete-validation.sch"
+  }, {
+    "name" : "validation-stage-6a-1",
+    "type" : "static",
+    "stage" : "6a",
+    "filename" : "static/validation-stage-6a-1.sch"
+  } ]
+}
