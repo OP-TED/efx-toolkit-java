@@ -45,7 +45,14 @@ public class InvalidUsageException extends EfxCompilationException {
         STYLE_NOT_APPLICABLE,
         UNIT_FOR_LIST,
         NO_UNIT_NOT_APPLICABLE,
-        OUTLINE_NUMBER_TOO_LARGE
+        OUTLINE_NUMBER_TOO_LARGE,
+        TAG_RESERVED,
+        NAVIGATION_ADDRESS_GIVEN_TWICE,
+        NAVIGATION_HEADING_WITHOUT_TAG,
+        HYPERLINK_IN_NAVIGATION_HEADING,
+        NAVIGATION_ENTRY_WITHOUT_HEADING,
+        RECURSIVE_TEMPLATE_INVOCATION,
+        LINES_NESTED_IN_INVOCATION
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
@@ -64,6 +71,13 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String UNIT_FOR_LIST = "A unit can only be displayed with a single value. Add no-unit to display the values without their unit.";
     private static final String NO_UNIT_NOT_APPLICABLE = "Format option 'no-unit' cannot format a value of type '%s': it is for an amount, a measure or a duration.";
     private static final String OUTLINE_NUMBER_TOO_LARGE = "Outline number '%s' is too large: the largest is %d.";
+    private static final String TAG_RESERVED = "'%1$s' cannot be a tag: '#%1$s' starts an include directive.";
+    private static final String NAVIGATION_ADDRESS_GIVEN_TWICE = "Another heading displayed for the same element has the navigation address '%s'. Give the two headings different numbers or tags, or place them under different headings.";
+    private static final String NAVIGATION_HEADING_WITHOUT_TAG = "A heading of the navigation section needs an outline number or a tag, as in '#notice-info', to name the heading it links to.";
+    private static final String HYPERLINK_IN_NAVIGATION_HEADING = "A heading of the navigation section cannot display a hyperlink block, because what it displays is the link to its heading in the main section.";
+    private static final String NAVIGATION_ENTRY_WITHOUT_HEADING = "No heading of the main section, or of a template it invokes, has the navigation address '%s' of this navigation entry, so it has no heading to link to.";
+    private static final String LINES_NESTED_IN_INVOCATION = "A line that invokes a template cannot have nested lines.";
+    private static final String RECURSIVE_TEMPLATE_INVOCATION = "Template '%s' invokes itself, directly or through other templates. A template cannot be invoked recursively.";
 
     private final ErrorCode errorCode;
 
@@ -210,5 +224,83 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException outlineNumberTooLarge(Token outlineNumber, String number) {
         return new InvalidUsageException(ErrorCode.OUTLINE_NUMBER_TOO_LARGE, outlineNumber, OUTLINE_NUMBER_TOO_LARGE, number, Integer.MAX_VALUE);
+    }
+
+    /**
+     * A tag that cannot be written after the '#' of a template line, because it would start a
+     * directive, as 'include' does.
+     *
+     * @param marker the token of the tag, where the error is placed
+     * @param tag the tag, without its '#'
+     * @return the exception
+     */
+    /**
+     * A line nested in a line that invokes a template: the template takes the place of that line, so
+     * nothing can be nested in it.
+     */
+    public static InvalidUsageException linesNestedInInvocation(Token line) {
+        return new InvalidUsageException(ErrorCode.LINES_NESTED_IN_INVOCATION, line, LINES_NESTED_IN_INVOCATION);
+    }
+
+    public static InvalidUsageException tagReserved(Token marker, String tag) {
+        return new InvalidUsageException(ErrorCode.TAG_RESERVED, marker, TAG_RESERVED, tag);
+    }
+
+    /**
+     * Two headings that can be displayed for the same element with the same navigation address, so
+     * that a navigation entry with this address cannot tell them apart.
+     *
+     * @param marker the token of the marker of the second heading, where the error is placed
+     * @param address the navigation address, as "1_details"
+     * @return the exception
+     */
+    public static InvalidUsageException navigationAddressGivenTwice(Token marker, String address) {
+        return new InvalidUsageException(ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE, marker, NAVIGATION_ADDRESS_GIVEN_TWICE, address);
+    }
+
+    /**
+     * A heading of the navigation section that starts with a '#' without a tag, so that it names no
+     * heading to link to.
+     *
+     * @param marker the token of the '#', where the error is placed
+     * @return the exception
+     */
+    public static InvalidUsageException navigationHeadingWithoutTag(Token marker) {
+        return new InvalidUsageException(ErrorCode.NAVIGATION_HEADING_WITHOUT_TAG, marker, NAVIGATION_HEADING_WITHOUT_TAG);
+    }
+
+    /**
+     * A hyperlink block in a heading of the navigation section, which is itself the link to its
+     * heading, so that the hyperlink would be a link inside a link; or the invocation of a template
+     * that displays one.
+     *
+     * @param marker the token of the marker of the heading, where the error is placed
+     * @return the exception
+     */
+    public static InvalidUsageException hyperlinkInNavigationHeading(Token marker) {
+        return new InvalidUsageException(ErrorCode.HYPERLINK_IN_NAVIGATION_HEADING, marker, HYPERLINK_IN_NAVIGATION_HEADING);
+    }
+
+    /**
+     * A heading of the navigation section whose navigation address no heading of the main section,
+     * or of a template that the main section invokes, has.
+     *
+     * @param marker the token of the marker of the heading, where the error is placed
+     * @param address the navigation address of the heading, as "1_details"
+     * @return the exception
+     */
+    public static InvalidUsageException navigationEntryWithoutHeading(Token marker, String address) {
+        return new InvalidUsageException(ErrorCode.NAVIGATION_ENTRY_WITHOUT_HEADING, marker, NAVIGATION_ENTRY_WITHOUT_HEADING, address);
+    }
+
+    /**
+     * A template that invokes itself, directly or through other templates.
+     *
+     * @param invocation the token where the invocation that closes the circle starts
+     * @param template the name of the template
+     * @return the exception
+     */
+    public static InvalidUsageException recursiveTemplateInvocation(Token invocation, String template) {
+        return new InvalidUsageException(ErrorCode.RECURSIVE_TEMPLATE_INVOCATION, invocation, RECURSIVE_TEMPLATE_INVOCATION, template);
     }
 }

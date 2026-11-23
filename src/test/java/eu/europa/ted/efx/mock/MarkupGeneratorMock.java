@@ -29,8 +29,9 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
-import eu.europa.ted.efx.model.templates.LineStyle;
+import eu.europa.ted.efx.model.templates.FragmentOutline;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.templates.OutlineOffset;
 import eu.europa.ted.efx.model.types.EfxDataType;
 import eu.europa.ted.efx.model.types.EfxTypeLattice;
 
@@ -142,9 +143,10 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeFragmentDefinition(String name, String number, LineStyle style, int level,
-      Set<Conditional> conditionals, Markup content, Markup children, Set<Parameter> parameters,
-      TranslatorContext translatorContext) {
+  public Markup composeFragmentDefinition(String name, FragmentOutline outline,
+      List<Conditional> conditionals, Markup content, Markup children,
+      Set<Parameter> parameters, TranslatorContext translatorContext) {
+    final String number = outline.getNumber();
     String contents = "";
 
     if (conditionals != null && !conditionals.isEmpty()) {
@@ -182,11 +184,18 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup renderFragmentInvocation(String name, Set<Argument> arguments, TranslatorContext translatorContext) {
-    return new Markup(String.format("call(%s(%s))", name,
+  public Markup renderFragmentInvocation(String name, OutlineOffset offset,
+      Set<Argument> arguments, TranslatorContext translatorContext) {
+    // What the call puts above the fragment is shown when it puts something.
+    final String above = offset.equals(OutlineOffset.NONE)
+        ? ""
+        : String.format(" with nestingLevelOffset %d, headingLevelOffset %d and navIdPrefix '%s'",
+            offset.getNestingLevelOffset(), offset.getHeadingLevelOffset(),
+            offset.getNavIdPrefix());
+    return new Markup(String.format("call(%s(%s)%s)", name,
         arguments.stream()
             .map(arg -> String.format("%s:%s=%s", arg.getType(), arg.getName(), arg.getValue()))
-            .collect(Collectors.joining(", "))));
+            .collect(Collectors.joining(", ")), above));
   }
 
   @Override

@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.IntStream;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.IntervalSet;
@@ -258,7 +259,8 @@ class EfxErrorStrategyTest extends EfxTestsBase {
     // No token of the grammar can stop, at the end of the input, after reading such a character
     // outside a text literal or an #include directive, so the message is checked directly.
     assertEquals("Syntax error: unexpected end of input after '//\\u200B'.",
-        EfxErrorStrategy.unreadable("//\u200B", IntStream.EOF, EfxLexer.DEFAULT_MODE));
+        EfxErrorStrategy.unreadable("//\u200B", IntStream.EOF, EfxLexer.DEFAULT_MODE,
+            Token.INVALID_TYPE));
   }
 
 
@@ -300,6 +302,27 @@ class EfxErrorStrategyTest extends EfxTestsBase {
     assertSyntaxErrorMessage(
         "line 1:21 Syntax error: unexpected '${BT-00-Text|}' in template content.",
         () -> translateTemplate("WITH ND-Root DISPLAY ${BT-00-Text|};"));
+  }
+
+  @Test
+  void testTemplate_TagNotWrittenAsOne() {
+    assertSyntaxErrorMessage(
+        "line 1:1 Syntax error: unexpected 'N' after '#'. A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.",
+        () -> translateTemplate("#Notice WITH ND-Root DISPLAY foo;"));
+    assertSyntaxErrorMessage(
+        "line 1:1 Syntax error: unexpected '5' after '#'. A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.",
+        () -> translateTemplate("#5-a WITH ND-Root DISPLAY foo;"));
+  }
+
+  @Test
+  void testTemplate_TagNotWrittenAsOne_StartsLikeAKeyword() {
+    // The lexer reads 'W' as the start of WITH, and 'L' as the start of LET, before it stops.
+    assertSyntaxErrorMessage(
+        "line 1:1 Syntax error: unexpected 'W' after '#'. A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.",
+        () -> translateTemplate("#Wrong WITH ND-Root DISPLAY foo;"));
+    assertSyntaxErrorMessage(
+        "line 1:1 Syntax error: unexpected 'L' after '#'. A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.",
+        () -> translateTemplate("#Lot WITH ND-Root DISPLAY foo;"));
   }
 
   @Test

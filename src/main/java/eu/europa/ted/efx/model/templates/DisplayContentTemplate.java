@@ -52,6 +52,13 @@ public class DisplayContentTemplate extends ContentTemplate {
     }
   }
 
+  /**
+   * @return whether the template displays a hyperlink block
+   */
+  public boolean displaysHyperlink() {
+    return this.fragments.stream().anyMatch(HyperlinkContentTemplateFragment.class::isInstance);
+  }
+
   @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
     StringBuilder markup = new StringBuilder();

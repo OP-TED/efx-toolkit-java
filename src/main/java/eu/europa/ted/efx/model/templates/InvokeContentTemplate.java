@@ -17,6 +17,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.Token;
+
 import eu.europa.ted.efx.interfaces.Argument;
 import eu.europa.ted.efx.interfaces.MarkupGenerator;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
@@ -31,18 +33,60 @@ public class InvokeContentTemplate extends ContentTemplate {
 
   private final String templateName;
   private final Arguments<ParsedParameter> arguments;
+  private final Token start;
 
-  public InvokeContentTemplate(String templateName, Arguments<ParsedParameter> arguments) {
+  /**
+   * @param start the token where the invocation starts, where an error about it is placed
+   */
+  public InvokeContentTemplate(String templateName, Arguments<ParsedParameter> arguments,
+      Token start) {
     this.templateName = templateName;
     this.arguments = arguments;
+    this.start = start;
   }
 
+  /**
+   * @return the name of the template it invokes
+   */
+  public String getTemplateName() {
+    return this.templateName;
+  }
+
+  /**
+   * @return the arguments of the call, in the order they are written
+   */
+  public Arguments<ParsedParameter> getArguments() {
+    return this.arguments;
+  }
+
+  /**
+   * @return the token where the invocation starts, where an error about it is placed
+   */
+  public Token getStart() {
+    return this.start;
+  }
+
+  /**
+   * Renders the call without anything above the template ({@link OutlineOffset#NONE}).
+   */
   @Override
   public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
+    return this.render(markupGenerator, translatorContext, OutlineOffset.NONE);
+  }
+
+  /**
+   * Renders the call with the arguments written in EFX.
+   *
+   * @param offset what the call puts above the lines of the template: what is above the invoking
+   *        line in its own section or template
+   */
+  public Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext,
+      OutlineOffset offset) {
     Set<Argument> args = this.arguments.stream()
         .map(a -> new Argument.Impl(a.parameter.name,
             markupGenerator.getEfxDataTypeEquivalent(a.parameter.dataType), a.value))
         .collect(Collectors.toCollection(LinkedHashSet::new));
-    return markupGenerator.renderFragmentInvocation(this.templateName, args, translatorContext);
+    return markupGenerator.renderFragmentInvocation(this.templateName, offset, args,
+        translatorContext);
   }
 }

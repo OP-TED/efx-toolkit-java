@@ -13,14 +13,20 @@
  */
 package eu.europa.ted.efx.sdk2;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
 import eu.europa.ted.efx.exceptions.EfxCompilationException;
@@ -775,7 +781,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(.).call(body0102(string:ctx2=$ctx2, string:ctx=., string:t2=udf:test($t3, 99)))",
             "for-each(.).call(body0103(string:ctx2=$ctx2, string:ctx4=., string:t5=udf:test($t3, 99))) }",
             "let body0101(string:ctx2, decimal:ctx3) -> { eval(../TextField/normalize-space(text())) }",
-            "let body0102(string:ctx2, string:ctx, string:t2) -> { call(some-template(string:text1=$ctx/normalize-space(text()), string:text2=$t2)) }",
+            "let body0102(string:ctx2, string:ctx, string:t2) -> { call(some-template(string:text1=$ctx/normalize-space(text()), string:text2=$t2) with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '2') }",
             "let body0103(string:ctx2, string:ctx4, string:t5) -> { eval(./normalize-space(text())) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:ctx2=.))"),
@@ -791,25 +797,118 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "  WITH BT-00-Number DISPLAY ${BT-00-Text};",
             "--- MAIN ---", "2 WITH context:$ctx2=BT-00-Text DISPLAY ${BT-00-Text} lala;",
             "  3 WITH context:$ctx3=BT-00-Number DISPLAY ${BT-00-Text};",
-            "  4 WITH context:$ctx = BT-00-Text, text:$t2 = ?test($t3, 99) INVOKE some-template($ctx, $t2);",
+            "  WITH context:$ctx = BT-00-Text, text:$t2 = ?test($t3, 99) INVOKE some-template($ctx, $t2);",
             "  WITH context:$ctx4 = BT-00-Text, text:$t5 = ?test($t3, 99) DISPLAY ${BT-00-Text};")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"1", "?", "#", "#tag"})
+  void testInvokeTemplate_FromAHeading_IsASyntaxError(final String marker) {
+    // The template takes the place of the line that invokes it, so the line cannot be a heading.
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- MAIN ---", marker + " WITH ND-Root INVOKE t();")));
+    assertTrue(exception.getMessage().endsWith(
+        "A heading cannot invoke a template. Invoke it from a line under the heading."),
+        exception.getMessage());
+  }
+
+  @Test
+  void testInvokeTemplate_FromAHeadingWithAlternatives_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- MAIN ---", "#tag WHEN 1 == 1 INVOKE t();")));
+    assertTrue(exception.getMessage().endsWith(
+        "A heading cannot invoke a template. Invoke it from a line under the heading."),
+        exception.getMessage());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"#tag DISPLAY ${1 INVOKE};", "#tag WHEN (1 == 1 INVOKE) DISPLAY x;"})
+  void testInvokeTemplate_InvokeInAnExpression_KeepsItsOwnMessage(final String line) {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("--- MAIN ---", line)));
+    assertFalse(exception.getMessage().contains("A heading cannot invoke a template"),
+        exception.getMessage());
+  }
+
+  @Test
+  void testInvokeTemplate_ErrorInTheArguments_KeepsItsOwnMessage() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- MAIN ---", "WHEN 1 == 1 INVOKE t(,);")));
+    assertTrue(exception.getMessage().endsWith("Syntax error: unexpected ',' in invoke clause."),
+        exception.getMessage());
+  }
+
+  @Test
+  void testInvokeTemplate_WhenDisplayOtherwiseInvoke_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- MAIN ---", "WITH ND-Root WHEN 1 == 1 DISPLAY x OTHERWISE INVOKE t();")));
+    assertTrue(exception.getMessage().endsWith(
+        "A line cannot both display content and invoke a template. Use DISPLAY in all its alternatives, or INVOKE in all of them."),
+        exception.getMessage());
+  }
+
+  @Test
+  void testInvokeTemplate_WhenInvokeOtherwiseDisplay_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- MAIN ---", "WITH ND-Root WHEN 1 == 1 INVOKE t() OTHERWISE DISPLAY x;")));
+    assertTrue(exception.getMessage().endsWith(
+        "A line cannot both display content and invoke a template. Use DISPLAY in all its alternatives, or INVOKE in all of them."),
+        exception.getMessage());
+  }
+
+  @Test
+  void testInvokeTemplate_LinesNestedInAnInvokingLineOfATemplate() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- TEMPLATE u ---", "WITH ND-Root WHEN 1 == 1 INVOKE t() OTHERWISE INVOKE t();",
+            "\tDISPLAY nested;",
+            "--- MAIN ---", "WITH ND-Root INVOKE u();")));
+    assertEquals(InvalidUsageException.ErrorCode.LINES_NESTED_IN_INVOCATION,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testInvokeTemplate_InEveryAlternative_IsAllowed() {
+    // Both alternatives invoke a template: the line chooses which template takes its place.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let t() -> { text('T') }",
+            "let u() -> { text('U') }",
+            "let body01() -> { #1: text('A')",
+            "for-each(.).call(body0101()) }",
+            "let body0101() -> { choose { when 1 = 1: call(t() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1'), otherwise: call(u() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1') } }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE t ---", "DISPLAY T;",
+            "--- TEMPLATE u ---", "DISPLAY U;",
+            "--- MAIN ---",
+            "1 WITH ND-Root DISPLAY A;",
+            "\tWITH ND-Root WHEN 1 == 1 INVOKE t() OTHERWISE INVOKE u();")));
   }
 
   @Test
   void testInvokeTemplate_Nesting() {
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let some-template(string:t) -> { text('--')eval($t)text('--') }",
-            "let body01(string:ctx1, string:tx) -> { #1: call(some-template(string:t=$tx))",
-            "for-each(../StartDateField).call(body0101(string:ctx1=$ctx1, string:tx=$tx)) }",
-            "let body0101(string:ctx1, string:tx) -> { text('Nested content allowed') }",
-            "MAIN:",
-            "for-each(/*/PathNode/TextField).call(body01(string:ctx1=., string:tx='++'))"), //
-        translateTemplate(lines(
+    // The template takes the place of the line that invokes it, so nothing can be nested in it.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
             "--- TEMPLATE some-template ---", "PARAMETERS text:$t;", "DISPLAY --${$t}--;",
-            "--- MAIN ---", "? WITH context:$ctx1 = BT-00-Text, text:$tx='++' INVOKE some-template($tx);",
-            "  WITH BT-00-StartDate DISPLAY Nested content allowed;")));
+            "--- MAIN ---", "WITH context:$ctx1 = BT-00-Text, text:$tx='++' INVOKE some-template($tx);",
+            "  WITH BT-00-StartDate DISPLAY Nested content;")));
+    assertEquals(InvalidUsageException.ErrorCode.LINES_NESTED_IN_INVOCATION,
+        exception.getErrorCode());
   }
 
   @Test
@@ -1564,6 +1663,747 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
         () -> translateTemplate("2147483648 WITH BT-00-Text DISPLAY foo;"));
     assertEquals(InvalidUsageException.ErrorCode.OUTLINE_NUMBER_TOO_LARGE, exception.getErrorCode());
     assertEquals("line 1:0 Outline number '2147483648' is too large: the largest is 2147483647.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLine_Tag() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('foo') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"), //
+        translateTemplate(lines(
+            "#notice-info WITH BT-00-Text DISPLAY foo;")));
+  }
+
+  @Test
+  void testNavigationAddress_GivenTwiceForTheSameElement() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "#lot WITH BT-00-Text DISPLAY foo;",
+            "#lot WITH BT-00-Text DISPLAY bar;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+    assertEquals(
+        "line 2:0 Another heading displayed for the same element has the navigation address 'lot'. Give the two headings different numbers or tags, or place them under different headings.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testNavigationAddress_GivenTwice_ByAHeadingAndATemplate() {
+    // A heading of the main section and the heading of a template invoked under the same heading.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE lines ---",
+            "#lot DISPLAY foo;",
+            "--- MAIN ---",
+            "1 WITH BT-00-Text DISPLAY bar;",
+            "\t#lot DISPLAY foo;",
+            "\tINVOKE lines();")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_GivenTwice_ByTwoCallsUnderTheSameHeading() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE org ---",
+            "#details DISPLAY foo;",
+            "--- MAIN ---",
+            "1 WITH ND-Root DISPLAY bar;",
+            "\tINVOKE org();",
+            "\tINVOKE org();")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_TheSameTemplateUnderTwoHeadings() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\tINVOKE org();",
+        "2 WITH ND-Root DISPLAY Review body;",
+        "\tINVOKE org();",
+        "--- NAVIGATION ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\t#details DISPLAY foo;",
+        "2 WITH ND-Root DISPLAY Review body;",
+        "\t#details DISPLAY foo;")));
+  }
+
+  @Test
+  void testNavigationAddress_TwoCallsWithArgumentsThatSelectDifferentElements() {
+    // The context uses the parameter, so each call can display the heading for another element.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "PARAMETERS text:$lot;",
+        "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot ${BT-00-Text};",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE info('LOT-0001');",
+        "WITH ND-Root INVOKE info('LOT-0002');")));
+  }
+
+  @Test
+  void testNavigationAddress_TwoCallsWithTheSameArguments() {
+    // Both calls select the same element: the heading is displayed twice with the same address.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE info ---",
+            "PARAMETERS text:$lot;",
+            "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot ${BT-00-Text};",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE info('LOT-0001');",
+            "WITH ND-Root INVOKE info('LOT-0001');")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_TwoCallsWithTheSameParameterInATemplate() {
+    // Both calls of info receive the same value through pair: the collision is found once pair is
+    // called.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE info ---",
+            "PARAMETERS text:$lot;",
+            "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot;",
+            "--- TEMPLATE pair ---",
+            "PARAMETERS text:$id;",
+            "INVOKE info($id);",
+            "INVOKE info($id);",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE pair('A');")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_AnArgumentThatNamesAParameterOfTheCaller() {
+    // $b in the argument is the parameter of outer, not the second parameter of info.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "PARAMETERS text:$a, text:$b;",
+        "#details WITH BT-00-Text[BT-00-Text == $a] DISPLAY Lot;",
+        "--- TEMPLATE outer ---",
+        "PARAMETERS text:$b;",
+        "INVOKE info($b, 'fixed');",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE outer('A');",
+        "WITH ND-Root INVOKE outer('B');")));
+  }
+
+  @Test
+  void testNavigationAddress_AnArgumentThatDependsOnTheElementOfTheCall() {
+    // The same argument is evaluated for different elements, so it can have different values.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "PARAMETERS text:$lot;",
+        "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot;",
+        "--- MAIN ---",
+        "WITH BT-00-Text[BT-00-Text == 'A'] INVOKE info(BT-00-Text);",
+        "WITH BT-00-Text[BT-00-Text == 'B'] INVOKE info(BT-00-Text);")));
+  }
+
+  @Test
+  void testNavigationAddress_CallsWithDifferentArgumentsAreNotEstablishedAsTheSameElement() {
+    // A known miss: the heading does not use the parameter, but the arguments differ.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "PARAMETERS number:$n;",
+        "#details WITH BT-00-Text[BT-00-Text == 'a'] DISPLAY Literal;",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE info(1);",
+        "WITH ND-Root INVOKE info(2);")));
+  }
+
+  @Test
+  void testNavigationAddress_TwoHeadingsWhosePredicatesExcludeEachOther() {
+    // Their contexts differ by their predicates, so they are not taken as the same element.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "1 WITH ND-Root DISPLAY Notice;",
+        "\t#x WITH ND-Root[BT-00-Text == 'a'] DISPLAY A;",
+        "\t#x WITH ND-Root[BT-00-Text != 'a'] DISPLAY B;")));
+  }
+
+  @Test
+  void testNavigationAddress_ALineWithoutContextAndALineThatDeclaresTheSameOne() {
+    // A line without a context is displayed in the context above, as the line that declares it.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "1 WITH ND-Root DISPLAY Notice;",
+            "\t#x WITH ND-Root DISPLAY A;",
+            "\t#x DISPLAY B;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_TheSameContextAfterAParameterIsGivenAnotherValue() {
+    // In select, $x is 'B', so its context selects other elements than the same one in outer.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE select ---",
+        "PARAMETERS text:$x;",
+        "#details WITH BT-00-Text[BT-00-Text == $x] DISPLAY B;",
+        "--- TEMPLATE inherit ---",
+        "PARAMETERS text:$x;",
+        "#details DISPLAY A;",
+        "--- TEMPLATE outer ---",
+        "PARAMETERS text:$x;",
+        "WITH BT-00-Text[BT-00-Text == $x] INVOKE select('B');",
+        "WITH BT-00-Text[BT-00-Text == $x] INVOKE inherit('B');",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE outer('A');")));
+  }
+
+  @Test
+  void testNavigationAddress_TheSameContextWithAConditionOnTheCurrentElement() {
+    // The condition depends on the element it is declared in, so the same context can select
+    // another element at each level.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "WITH ND-RepeatableNode[at 1] DISPLAY Start;",
+        "\t#x WITH /ND-RepeatableNode[at BT-00-Number-In-Repeatable-Node] DISPLAY A;",
+        "\tWITH /ND-RepeatableNode[at BT-00-Number-In-Repeatable-Node] DISPLAY Middle;",
+        "\t\t#x WITH /ND-RepeatableNode[at BT-00-Number-In-Repeatable-Node] DISPLAY B;")));
+  }
+
+  @Test
+  void testNavigationAddress_ANestedContextOnTheSameElementIsAKnownMiss() {
+    // A known miss: the nested WITH ND-Root is a step of its own, so the paths differ.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "WITH ND-Root DISPLAY Notice;",
+        "\t#x WITH ND-Root DISPLAY A;",
+        "#x WITH ND-Root DISPLAY B;")));
+  }
+
+  @Test
+  void testNavigationAddress_TwoHeadingsWhoseContextsHaveDifferentPredicates() {
+    // The predicates can select different elements: the check cannot establish a collision.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "#details WITH BT-00-Text[BT-00-Text == 'a'] DISPLAY A;",
+        "#details WITH BT-00-Text[BT-00-Text == 'b'] DISPLAY B;")));
+  }
+
+  @Test
+  void testNavigationAddress_TwoHeadingsWhoseContextsHaveTheSamePredicate() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "#details WITH BT-00-Text[BT-00-Text == 'a'] DISPLAY A;",
+            "#details WITH BT-00-Text[BT-00-Text == 'a'] DISPLAY B;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_ATemplateThatPassesItsParameterOn() {
+    // The argument of the outer call reaches the inner template through its parameter.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "PARAMETERS text:$lot;",
+        "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot ${BT-00-Text};",
+        "--- TEMPLATE outer ---",
+        "PARAMETERS text:$id;",
+        "WITH ND-Root INVOKE info($id);",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE outer('LOT-0001');",
+        "WITH ND-Root INVOKE outer('LOT-0002');")));
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE info ---",
+            "PARAMETERS text:$lot;",
+            "#details WITH BT-00-Text[BT-00-Text == $lot] DISPLAY Lot ${BT-00-Text};",
+            "--- TEMPLATE outer ---",
+            "PARAMETERS text:$id;",
+            "WITH ND-Root INVOKE info($id);",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE outer('LOT-0001');",
+            "WITH ND-Root INVOKE outer('LOT-0001');")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_TwoCallsUnderOneHeadingForDifferentElements() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY bar;",
+        "\tWITH BT-00-Text INVOKE org();",
+        "\tWITH BT-00-Number INVOKE org();")));
+  }
+
+  @Test
+  void testNavigationAddress_CallsInAlternativesOfOneLine() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY a;",
+        "\tWITH ND-Root WHEN 1 == 2 INVOKE org() OTHERWISE INVOKE org();")));
+  }
+
+  @Test
+  void testNavigationAddress_ThroughNestedTemplates() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "#lala DISPLAY foo;",
+        "--- TEMPLATE outer ---",
+        "#details DISPLAY bar;",
+        "\tINVOKE info();",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY a;",
+        "\t2 WITH ND-Root DISPLAY b;",
+        "\t\tWITH ND-Root INVOKE outer();",
+        "--- NAVIGATION ---",
+        "1 WITH ND-Root DISPLAY a;",
+        "\t2 WITH ND-Root DISPLAY b;",
+        "\t\t#details DISPLAY bar;",
+        "\t\t\t#lala DISPLAY foo;")));
+  }
+
+  @Test
+  void testNavigationSection_ATemplateInvokedByANormalLine() {
+    // Its headings are navigation entries, which need headings in the main section.
+    final String template = String.join("\n",
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "%s",
+        "--- NAVIGATION ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\tINVOKE org();");
+    assertDoesNotThrow(() -> translateTemplate(lines(String.format(template,
+        "1 WITH ND-Root DISPLAY Buyer;\n\tINVOKE org();"))));
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(String.format(template, "1 WITH ND-Root DISPLAY Buyer;"))));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ENTRY_WITHOUT_HEADING,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testTemplate_ManyTemplatesInvokingEachOther_AreCheckedQuickly() {
+    // Each template invokes the one before it twice: the check visits each template once.
+    final List<String> template = new ArrayList<>(List.of("--- TEMPLATE t0 ---", "DISPLAY leaf;"));
+    for (int index = 1; index <= 30; index++) {
+      template.add("--- TEMPLATE t" + index + " ---");
+      template.add("INVOKE t" + (index - 1) + "();");
+      template.add("INVOKE t" + (index - 1) + "();");
+    }
+    template.add("--- MAIN ---");
+    template.add("WITH ND-Root DISPLAY Main;");
+    assertTimeoutPreemptively(Duration.ofSeconds(10),
+        () -> translateTemplate(lines(template.toArray(new String[0]))));
+  }
+
+  @Test
+  void testTemplate_ManyTemplatesInvokingEachOtherInAlternatives_WithAHeading_AreCheckedQuickly() {
+    // The heading reached through both alternatives of each template is counted once.
+    final List<String> template =
+        new ArrayList<>(List.of("--- TEMPLATE t0 ---", "#leaf DISPLAY leaf;"));
+    for (int index = 1; index <= 30; index++) {
+      template.add("--- TEMPLATE t" + index + " ---");
+      template.add("WHEN 1 == 1 INVOKE t" + (index - 1) + "() OTHERWISE INVOKE t" + (index - 1)
+          + "();");
+    }
+    template.add("--- MAIN ---");
+    template.add("WITH ND-Root INVOKE t30();");
+    assertTimeoutPreemptively(Duration.ofSeconds(10),
+        () -> translateTemplate(lines(template.toArray(new String[0]))));
+  }
+
+  @Test
+  void testTemplate_ManyTemplatesInvokingEachOtherTwice_WithAHeading_FailQuickly() {
+    // The heading is displayed twice with the same address, which is found without counting the
+    // ways to reach it.
+    final List<String> template =
+        new ArrayList<>(List.of("--- TEMPLATE t0 ---", "#leaf DISPLAY leaf;"));
+    for (int index = 1; index <= 30; index++) {
+      template.add("--- TEMPLATE t" + index + " ---");
+      template.add("INVOKE t" + (index - 1) + "();");
+      template.add("INVOKE t" + (index - 1) + "();");
+    }
+    template.add("--- MAIN ---");
+    template.add("WITH ND-Root INVOKE t30();");
+    InvalidUsageException exception = assertTimeoutPreemptively(Duration.ofSeconds(10),
+        () -> assertThrows(InvalidUsageException.class,
+            () -> translateTemplate(lines(template.toArray(new String[0])))));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationAddress_GivenTwice_ByATemplateWhoseLinesHaveTheSameContext() {
+    // One line of pair inherits the context of the invocation, the other declares the same one.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE leaf ---",
+            "#leaf DISPLAY Leaf;",
+            "--- TEMPLATE pair ---",
+            "INVOKE leaf();",
+            "WITH ND-Root INVOKE leaf();",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE pair();")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ADDRESS_GIVEN_TWICE,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testNavigationSection_HeadingWithoutTagInAnInvokedTemplate() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE info ---",
+            "# DISPLAY Info;",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE info();",
+            "--- NAVIGATION ---",
+            "WITH ND-Root INVOKE info();")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_HEADING_WITHOUT_TAG,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testMainSection_HeadingWithoutTagInAnInvokedTemplate() {
+    // A bare '#' is allowed in a template that the navigation section does not invoke.
+    translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "# DISPLAY Info;",
+        "--- MAIN ---",
+        "WITH ND-Root INVOKE info();"));
+  }
+
+  @Test
+  void testTemplate_ManyTemplatesInvokingEachOtherInAlternatives_AreCheckedQuickly() {
+    // Each template invokes the one before it in both alternatives: each template is analysed once.
+    final List<String> template = new ArrayList<>(List.of("--- TEMPLATE t0 ---", "DISPLAY leaf;"));
+    for (int index = 1; index <= 30; index++) {
+      template.add("--- TEMPLATE t" + index + " ---");
+      template.add("WHEN 1 == 1 INVOKE t" + (index - 1) + "() OTHERWISE INVOKE t" + (index - 1)
+          + "();");
+    }
+    template.add("--- MAIN ---");
+    template.add("WITH ND-Root INVOKE t30();");
+    assertTimeoutPreemptively(Duration.ofSeconds(10),
+        () -> translateTemplate(lines(template.toArray(new String[0]))));
+  }
+
+  @Test
+  void testInvokeTemplate_UnderTwoHeadings_AddsTheAddressOfEachHeading() {
+    // Each call puts the level and the address of the line it is in above the template; a line puts nothing.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let org() -> { ",
+            "call(org01()) }",
+            "let org01() -> { text('foo') }",
+            "let body01() -> { #1: text('Buyer')",
+            "for-each(.).call(body0101()) }",
+            "let body0101() -> { call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1') }",
+            "let body02() -> { #2: text('Review body')",
+            "for-each(.).call(body0201()) }",
+            "let body0201() -> { call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '2') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "for-each(/*).call(body02())"),
+        translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\tINVOKE org();",
+        "2 WITH ND-Root DISPLAY Review body;",
+        "\tINVOKE org();")));
+  }
+
+  @Test
+  void testInvokeTemplate_InATemplate_AddsTheAddressInThatTemplate() {
+    // The call of outer puts 1_2 above it, and the call of info in outer puts details.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let info() -> { ",
+            "call(info01()) }",
+            "let info01() -> { text('foo') }",
+            "let outer() -> { ",
+            "call(outer01()) }",
+            "let outer01() -> { text('bar')",
+            "for-each(/*).call(outer0101()) }",
+            "let outer0101() -> { call(info() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix 'details') }",
+            "let body01() -> { #1: text('a')",
+            "for-each(.).call(body0101()) }",
+            "let body0101() -> { #1.2: text('b')",
+            "for-each(.).call(body010101()) }",
+            "let body010101() -> { call(outer() with nestingLevelOffset 2, headingLevelOffset 2 and navIdPrefix '1_2') }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+        "--- TEMPLATE info ---",
+        "#lala DISPLAY foo;",
+        "--- TEMPLATE outer ---",
+        "#details DISPLAY bar;",
+        "\tINVOKE info();",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY a;",
+        "\t2 WITH ND-Root DISPLAY b;",
+        "\t\tWITH ND-Root INVOKE outer();")));
+  }
+
+  @Test
+  void testInvokeTemplate_InAlternatives_AddsTheAddressInEachBranch() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let org() -> { ",
+            "call(org01()) }",
+            "let org01() -> { text('foo') }",
+            "let body01() -> { #1: text('a')",
+            "for-each(.).call(body0101()) }",
+            "let body0101() -> { choose { when 1 = 2: call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1'), otherwise: call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1') } }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY a;",
+        "\tWITH ND-Root WHEN 1 == 2 INVOKE org() OTHERWISE INVOKE org();")));
+  }
+
+  @Test
+  void testInvokeTemplate_FromTheNavigationSection_AddsTheAddressAsInTheMainSection() {
+    // The navigation entry is addressed as the heading of the main section that it links to.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let org() -> { ",
+            "call(org01()) }",
+            "let org01() -> { text('foo') }",
+            "let body01() -> { #1: text('Buyer')",
+            "for-each(.).call(body0101()) }",
+            "let body0101() -> { call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1') }",
+            "let nav01() -> { #1: text('Buyer')",
+            "for-each(.).call(nav0101()) }",
+            "let nav0101() -> { call(org() with nestingLevelOffset 1, headingLevelOffset 1 and navIdPrefix '1') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "NAV:",
+            "for-each(/*).call(nav01())"),
+        translateTemplate(lines(
+        "--- TEMPLATE org ---",
+        "#details DISPLAY foo;",
+        "--- MAIN ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\tINVOKE org();",
+        "--- NAVIGATION ---",
+        "1 WITH ND-Root DISPLAY Buyer;",
+        "\tINVOKE org();")));
+  }
+
+  @Test
+  void testTemplate_InvokingItselfThroughAnother() {
+    // A template is declared before the lines that invoke it, so a circle through two templates
+    // cannot be written: the first template invokes one that is not declared yet.
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE first ---",
+            "#lala DISPLAY foo;",
+            "\tINVOKE second();",
+            "--- TEMPLATE second ---",
+            "#lili DISPLAY bar;",
+            "\tINVOKE first();",
+            "--- MAIN ---",
+            "INVOKE first();")));
+    assertEquals("line 3:1 Template 'second' is not declared.", exception.getMessage());
+  }
+
+  @Test
+  void testTemplate_InvokingItself() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE again ---",
+            "#lala DISPLAY foo;",
+            "\tINVOKE again();",
+            "--- MAIN ---",
+            "INVOKE again();")));
+    assertEquals(InvalidUsageException.ErrorCode.RECURSIVE_TEMPLATE_INVOCATION,
+        exception.getErrorCode());
+    assertEquals(
+        "line 3:1 Template 'again' invokes itself, directly or through other templates. A template cannot be invoked recursively.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLine_TagReserved() {
+    // Without a space after it, '#include' is read as a tag, which the translator rejects.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate("#includeWITH BT-00-Text DISPLAY foo;"));
+    assertEquals(InvalidUsageException.ErrorCode.TAG_RESERVED, exception.getErrorCode());
+    assertEquals(
+        "line 1:0 'include' cannot be a tag: '#include' starts an include directive.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testTemplateLine_SameOutlineNumberTwice() {
+    // Alternative headings, displayed for different elements, may have the same number.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "1 WITH BT-00-Text DISPLAY foo;",
+        "1 WITH BT-00-Number DISPLAY bar;")));
+  }
+
+  @Test
+  void testNavigationSection_EntriesLinkToTheirHeadings() {
+    // A tag of a template section, a tag and a number of the main section can be linked to.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE lines ---",
+        "#lot WITH BT-00-Text DISPLAY foo;",
+        "--- MAIN ---",
+        "#notice-info WITH ND-Root DISPLAY foo;",
+        "\t1 WITH BT-00-Text DISPLAY bar;",
+        "INVOKE lines();",
+        "--- NAVIGATION ---",
+        "#lot WITH BT-00-Text DISPLAY foo;",
+        "#notice-info WITH ND-Root DISPLAY foo;",
+        "\t1 WITH BT-00-Text DISPLAY bar;",
+        "WITH BT-00-Text DISPLAY a normal line;")));
+  }
+
+  @Test
+  void testNavigationSection_HyperlinkInAHeading() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "#help WITH ND-Root DISPLAY Help;",
+            "--- NAVIGATION ---",
+            "#help WITH ND-Root DISPLAY Help@{'https://example.com'};")));
+    assertEquals(InvalidUsageException.ErrorCode.HYPERLINK_IN_NAVIGATION_HEADING,
+        exception.getErrorCode());
+    assertEquals(
+        "line 3:0 A heading of the navigation section cannot display a hyperlink block, because what it displays is the link to its heading in the main section.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testNavigationSection_HyperlinkInANormalLineOfAnInvokedTemplate() {
+    // The navigation heading displays nothing itself; the line of the template, with its
+    // hyperlink, is displayed outside any link.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE help-link ---",
+        "DISPLAY Help@{'https://example.com'};",
+        "--- TEMPLATE help ---",
+        "INVOKE help-link();",
+        "--- MAIN ---",
+        "#help WITH ND-Root DISPLAY Help;",
+        "--- NAVIGATION ---",
+        "#help WITH ND-Root DISPLAY Help;",
+        "\tWITH ND-Root INVOKE help();")));
+  }
+
+  @Test
+  void testNavigationSection_HyperlinkInAHeadingOfAnInvokedTemplate() {
+    // The heading of the template is a navigation heading too: what it displays is a link.
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "--- TEMPLATE help ---",
+            "#help DISPLAY Help@{'https://example.com'};",
+            "--- MAIN ---",
+            "WITH ND-Root INVOKE help();",
+            "--- NAVIGATION ---",
+            "WITH ND-Root INVOKE help();")));
+    assertEquals(InvalidUsageException.ErrorCode.HYPERLINK_IN_NAVIGATION_HEADING,
+        exception.getErrorCode());
+    assertTrue(exception.getMessage().startsWith("line 2:"), exception.getMessage());
+  }
+
+  @Test
+  void testNavigationSection_HyperlinkInANormalLine() {
+    // A line without an outline marker is not a link to a heading, so it may hold a hyperlink.
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "#help WITH ND-Root DISPLAY Help;",
+        "--- NAVIGATION ---",
+        "#help WITH ND-Root DISPLAY Help;",
+        "\tWITH ND-Root DISPLAY More@{'https://example.com'};")));
+  }
+
+  @Test
+  void testNavigationSection_TagOfATemplateInvokedThroughAnother() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "--- TEMPLATE lot ---",
+        "#lot WITH BT-00-Text DISPLAY foo;",
+        "--- TEMPLATE lots ---",
+        "INVOKE lot();",
+        "--- MAIN ---",
+        "INVOKE lots();",
+        "--- NAVIGATION ---",
+        "#lot WITH BT-00-Text DISPLAY foo;")));
+  }
+
+  @Test
+  void testNavigationSection_TagOfATemplateThatTheMainSectionDoesNotInvoke() {
+    // Neither a template that nothing invokes nor one that only the summary section invokes.
+    for (String summary : new String[] {"WITH BT-00-Text DISPLAY bar;", "INVOKE lot();"}) {
+      InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+          () -> translateTemplate(lines(
+              "--- TEMPLATE lot ---",
+              "#lot WITH BT-00-Text DISPLAY foo;",
+              "--- MAIN ---",
+              "WITH BT-00-Text DISPLAY bar;",
+              "--- SUMMARY ---",
+              summary,
+              "--- NAVIGATION ---",
+              "#lot WITH BT-00-Text DISPLAY foo;")));
+      assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ENTRY_WITHOUT_HEADING, exception.getErrorCode());
+    }
+  }
+
+  @Test
+  void testNavigationSection_HeadingWithoutTag() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "# WITH BT-00-Text DISPLAY foo;",
+            "--- NAVIGATION ---",
+            "# WITH BT-00-Text DISPLAY foo;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_HEADING_WITHOUT_TAG,
+        exception.getErrorCode());
+    assertEquals(
+        "line 3:0 A heading of the navigation section needs an outline number or a tag, as in '#notice-info', to name the heading it links to.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testNavigationSection_TagWithoutHeading() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "#notice-info WITH BT-00-Text DISPLAY foo;",
+            "--- SUMMARY ---",
+            "#lot WITH BT-00-Text DISPLAY foo;",
+            "--- NAVIGATION ---",
+            "#lot WITH BT-00-Text DISPLAY foo;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ENTRY_WITHOUT_HEADING,
+        exception.getErrorCode());
+    assertEquals(
+        "line 5:0 No heading of the main section, or of a template it invokes, has the navigation address 'lot' of this navigation entry, so it has no heading to link to.",
+        exception.getMessage());
+  }
+
+  @Test
+  void testNavigationSection_OutlineNumberWithoutHeading() {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translateTemplate(lines(
+            "1 WITH ND-Root DISPLAY foo;",
+            "\t1 WITH BT-00-Text DISPLAY bar;",
+            "--- NAVIGATION ---",
+            "1 WITH ND-Root DISPLAY foo;",
+            "\t2 WITH BT-00-Text DISPLAY bar;")));
+    assertEquals(InvalidUsageException.ErrorCode.NAVIGATION_ENTRY_WITHOUT_HEADING,
+        exception.getErrorCode());
+    assertEquals(
+        "line 5:1 No heading of the main section, or of a template it invokes, has the navigation address '1_2' of this navigation entry, so it has no heading to link to.",
         exception.getMessage());
   }
 
@@ -3251,46 +4091,34 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testChooseTemplate_OtherwiseBlock_InvokeTemplate() {
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let fallback-template(string:reason) -> { text('Fallback: ')eval($reason) }",
-            "let otherwise-invoke-template(boolean:condition, string:reason) -> { choose { when $condition: text('Condition met'), otherwise: call(fallback-template(string:reason=$reason)) } }",
-            "let body01() -> { call(otherwise-invoke-template(boolean:condition=false(), string:reason='default')) }",
-            "MAIN:",
-            "for-each(/*).call(body01())"),
-        translateTemplate(lines(
+    // A line either displays content or invokes a template in all of its alternatives.
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
             "--- TEMPLATE fallback-template ---", "PARAMETERS text:$reason;", "DISPLAY Fallback: ${$reason};",
             "--- TEMPLATE otherwise-invoke-template ---", "PARAMETERS indicator:$condition, text:$reason;",
             "WHEN $condition DISPLAY Condition met",
             "OTHERWISE INVOKE fallback-template($reason);",
             "--- MAIN ---", "INVOKE otherwise-invoke-template(FALSE, 'default');")));
+    assertTrue(exception.getMessage().endsWith(
+        "A line cannot both display content and invoke a template. Use DISPLAY in all its alternatives, or INVOKE in all of them."),
+        exception.getMessage());
   }
 
   @Test
   void testChooseTemplate_WhenOtherwise() {
-    assertEquals(
-        lines(
-            "TEMPLATES:",
-            "let some-template(string:txt) -> { text('&#62;')eval($txt)text('&#60;') }",
-            "let body01(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: call(some-template(string:txt='1')), otherwise: text('foo-bar') } }",
-            "let body02(string:t) -> { choose { when 1 > 2: text('foo'), when 2 < 3: text('bar'), when 3 > 3: text('foo-bar'), otherwise: call(some-template(string:txt='2')) } }",
-            "MAIN:",
-            "for-each(/*/PathNode/TextField).call(body01(string:t='test'))",
-            "for-each(/*/PathNode/TextField).call(body02(string:t='test'))"),
-        translateTemplate(lines(
+    // A line either displays content or invokes a template in all of its alternatives.
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(
             "// test",
             "--- TEMPLATE some-template ---", "PARAMETERS text:$txt;", "DISPLAY >${$txt}<;",
             "--- MAIN ---", "WITH BT-00-Text, text:$t='test'",
             "WHEN 1 > 2 DISPLAY foo",
             "WHEN 2 < 3 DISPLAY bar",
             "WHEN 3 > 3 INVOKE some-template('1')",
-            "OTHERWISE DISPLAY foo-bar;",
-            "WITH BT-00-Text, text:$t='test'",
-            "WHEN 1 > 2 DISPLAY foo",
-            "WHEN 2 < 3 DISPLAY bar",
-            "WHEN 3 > 3 DISPLAY foo-bar",
-            "OTHERWISE INVOKE some-template('2');")));
+            "OTHERWISE DISPLAY foo-bar;")));
+    assertTrue(exception.getMessage().endsWith(
+        "A line cannot both display content and invoke a template. Use DISPLAY in all its alternatives, or INVOKE in all of them."),
+        exception.getMessage());
   }
 
   @Test
