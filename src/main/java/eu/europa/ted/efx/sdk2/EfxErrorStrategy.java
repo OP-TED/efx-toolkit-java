@@ -45,6 +45,12 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     private static final int MOST_EXPECTED = 3;
 
     private static final String END_OF_INPUT = "end of input";
+    private static final String HEADING_INVOKES =
+            "A heading cannot invoke a template. Invoke it from a line under the heading.";
+    private static final String DISPLAY_AND_INVOKE_MIXED =
+            "A line cannot both display content and invoke a template. Use DISPLAY in all its"
+                    + " alternatives, or INVOKE in all of them.";
+    private static final String TAG_SPELLING = "A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.";
 
     private static final String CONTEXT_OVERRIDE_HINT =
             "Only a context variable can stand before '::', as in "
@@ -126,11 +132,14 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_labelBlock, "label block"),
             Map.entry(RULE_textBlock, "text"),
             Map.entry(RULE_linkBlock, "link block"),
-            Map.entry(RULE_chooseTemplate, "choose block"),
+            Map.entry(RULE_chooseDisplayTemplate, "choose block"),
+            Map.entry(RULE_chooseInvokeTemplate, "choose block"),
             Map.entry(RULE_displayTemplate, "display clause"),
             Map.entry(RULE_invokeTemplate, "invoke clause"),
-            Map.entry(RULE_whenBlock, "when clause"),
-            Map.entry(RULE_otherwiseBlock, "otherwise clause"),
+            Map.entry(RULE_whenDisplayTemplate, "when clause"),
+            Map.entry(RULE_whenInvokeTemplate, "when clause"),
+            Map.entry(RULE_otherwiseDisplayTemplate, "otherwise clause"),
+            Map.entry(RULE_otherwiseInvokeTemplate, "otherwise clause"),
 
             // Global declarations
             Map.entry(RULE_globalDeclaration, "global declaration"),
@@ -177,6 +186,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.OutlineNumber, "an outline number"),
             Map.entry(EfxLexer.AutoOutlineNumber, "'?'"),
             Map.entry(EfxLexer.NoOutlineNumber, "'#'"),
+            Map.entry(EfxLexer.OutlineTag, "a tag"),
 
             // Headers and directives
             Map.entry(EfxLexer.TemplateSectionHeaderStart, "a template section header"),
@@ -320,6 +330,10 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      * @return the hint, after a space, or nothing
      */
     private static String hintFor(final Parser recognizer, final Token found) {
+        final String templateLineHint = templateLineHintFor(recognizer, found);
+        if (!templateLineHint.isEmpty()) {
+            return templateLineHint;
+        }
         if (found.getType() == HashPrefix) {
             return inAnExpression(recognizer) ? codelistHintFor(recognizer.getTokenStream(), found)
                     : "";
@@ -334,6 +348,52 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             if (endsAnExpression((ParserRuleContext) context, before)) {
                 return " " + CONTEXT_OVERRIDE_HINT;
             }
+        }
+        return "";
+    }
+
+    /**
+     * Gives a hint for a template line that breaks the rules of a line that invokes a template: a
+     * heading that invokes one, or a line whose alternatives both display content and invoke a
+     * template. The template is displayed in the place of the line that invokes it, so that line is
+     * neither a heading nor a line with content of its own.
+     *
+     * @return the hint, after a space, or nothing
+     */
+    private static String templateLineHintFor(final Parser recognizer, final Token found) {
+        final RuleContext context = recognizer.getContext();
+        TemplateLineContext line = null;
+        for (RuleContext above = context; above != null && line == null; above = above.parent) {
+            if (above instanceof TemplateLineContext) {
+                line = (TemplateLineContext) above;
+            }
+        }
+        if (line == null) {
+            return "";
+        }
+        final boolean invoke = found.getType() == Invoke;
+        final boolean marked = line.OutlineNumber() != null || line.AutoOutlineNumber() != null
+                || line.NoOutlineNumber() != null || line.OutlineTag() != null;
+        // Only where a template could be invoked or displayed: an INVOKE where the line or a display
+        // clause is read, or a DISPLAY where an invoke clause is read. An error inside a condition,
+        // an argument list or a template keeps its own message.
+        final boolean readingDisplay = context instanceof DisplayTemplateContext
+                || context instanceof OtherwiseDisplayTemplateContext
+                || context instanceof ChooseDisplayTemplateContext;
+        if (invoke && marked && (readingDisplay || context instanceof TemplateLineContext)) {
+            return " " + HEADING_INVOKES;
+        }
+        final boolean readingInvoke = context instanceof InvokeTemplateContext
+                || context instanceof OtherwiseInvokeTemplateContext
+                || context instanceof ChooseInvokeTemplateContext;
+        // After OTHERWISE, DISPLAY may be left out, and the lexer reads "OTHERWISE DISPLAY" as a
+        // single token: anything but INVOKE after OTHERWISE is a displaying alternative.
+        final int before = tokenBefore(recognizer.getTokenStream(), found.getTokenIndex());
+        final Token previous = before >= 0 ? recognizer.getTokenStream().get(before) : null;
+        final boolean display = found.getType() == Display || previous != null
+                && (previous.getType() == Display || previous.getType() == Otherwise && !invoke);
+        if (invoke && readingDisplay || display && readingInvoke) {
+            return " " + DISPLAY_AND_INVOKE_MIXED;
         }
         return "";
     }
@@ -501,9 +561,20 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      * @param stop the character the lexer stopped at, or {@link IntStream#EOF} at the end of the
      *        input
      * @param mode the mode of the lexer, as {@link EfxLexer#INCLUDE_PATH}
+     * @param previousTokenType the type of the token the lexer read last, as
+     *        {@link EfxLexer#NoOutlineNumber}, so that an error right after the '#' of a template
+     *        line is reported as a tag that is not written as one, at the first character after
+     *        the '#'
      * @return the message of the lexer's error
      */
-    static String unreadable(final String read, final int stop, final int mode) {
+    static String unreadable(final String read, final int stop, final int mode,
+            final int previousTokenType) {
+        final int first = read.isEmpty() ? stop : read.codePointAt(0);
+        if (previousTokenType == EfxLexer.NoOutlineNumber && first != IntStream.EOF
+                && first != '\n' && first != '\r') {
+            return "Syntax error: unexpected " + nameOfCharacter(first, false) + " after '#'. "
+                    + TAG_SPELLING;
+        }
         return "Syntax error: unexpected " + nameOfCharacter(stop, read.isEmpty())
                 + placeOf(read, mode) + ".";
     }

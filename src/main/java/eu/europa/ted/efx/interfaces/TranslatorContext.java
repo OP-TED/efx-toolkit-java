@@ -10,6 +10,10 @@ public class TranslatorContext {
     /**
      * Gets the current section of the template being processed.
      *
+     * <p>It is the section that is being translated. A callable template is translated once and
+     * displayed wherever it is invoked, so the current section does not tell in which sections the
+     * lines of a template will be displayed.
+     *
      * @return the current section
      */
     public TemplateSection getCurrentSection() {

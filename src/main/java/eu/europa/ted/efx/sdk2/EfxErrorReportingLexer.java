@@ -15,6 +15,7 @@ package eu.europa.ted.efx.sdk2;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.LexerNoViableAltException;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 
 /**
@@ -26,6 +27,9 @@ import org.antlr.v4.runtime.misc.Interval;
 public class EfxErrorReportingLexer extends EfxLexer {
 
     private int syntaxErrors = 0;
+
+    // The type of the token emitted last, which tells what a character that starts no token follows.
+    private int previousTokenType = Token.INVALID_TYPE;
 
     public EfxErrorReportingLexer(final CharStream input) {
         super(input);
@@ -44,6 +48,13 @@ public class EfxErrorReportingLexer extends EfxLexer {
     public void reset() {
         super.reset();
         this.syntaxErrors = 0;
+        this.previousTokenType = Token.INVALID_TYPE;
+    }
+
+    @Override
+    public void emit(final Token token) {
+        super.emit(token);
+        this.previousTokenType = token.getType();
     }
 
     @Override
@@ -53,6 +64,8 @@ public class EfxErrorReportingLexer extends EfxLexer {
                 .getText(Interval.of(this._tokenStartCharIndex, this._input.index() - 1));
         this.getErrorListenerDispatch().syntaxError(this, null, this._tokenStartLine,
                 this._tokenStartCharPositionInLine,
-                EfxErrorStrategy.unreadable(read, this._input.LA(1), this._mode), e);
+                EfxErrorStrategy.unreadable(read, this._input.LA(1), this._mode,
+                        this.previousTokenType),
+                e);
     }
 }

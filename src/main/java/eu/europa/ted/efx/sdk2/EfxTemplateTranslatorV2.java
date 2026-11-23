@@ -28,8 +28,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -99,7 +101,7 @@ import eu.europa.ted.efx.model.templates.LabelContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromExpressionContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LabelFromKeyContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.LineBreakContentTemplateFragment;
-import eu.europa.ted.efx.model.templates.LineStyle;
+import eu.europa.ted.efx.model.templates.OutlineMarker;
 import eu.europa.ted.efx.model.templates.TextContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.ContentBlock;
 import eu.europa.ted.efx.model.templates.ContentBlockStack;
@@ -156,6 +158,10 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   /** A label block, as a type error names it with the one of its parts that is at fault. */
   private static final String LABEL_BLOCK = "Label block";
+
+  // '#include' followed by a space or a tab starts an include directive, so 'include' cannot be a
+  // tag.
+  private static final String RESERVED_TAG = "include";
 
   /** The parts of a label block, each as a type error names it. */
   private static final Clause ASSET_TYPE = Clause.of(LABEL_BLOCK, parameter("asset type", TEXT));
@@ -415,6 +421,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   public void exitTemplateFile(TemplateFileContext ctx) {
     this.closeOpenBlocks();
     this.checkTemplateNamesAreNotGenerated();
+    new NavigationCheck(this.viewTemplate).run();
   }
 
   /**
@@ -530,9 +537,9 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
       final ContentBlock templates = this.viewTemplate.getTemplateDeclarations();
       templates.removeChild(declaredTemplate);
       final String name = ctx.templateName.getText();
-      // The template displays its line, at the level of the line.
+      // The template displays its line, at the nesting level of the line.
       final TemplateDefinition template = templates.addChild(name, line.getContentTemplates(),
-          this.translation.stack().getTemplate(name).parameters, line.getLevel());
+          this.translation.stack().getTemplate(name).parameters, line.getNestingLevel());
       template.adoptChildrenOf(line);
     }
   }
@@ -1506,7 +1513,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   public void exitInvokeTemplate(InvokeTemplateContext ctx) {
     final Template template = this.translation.stack().getTemplate(ctx.templateName.getText());
     this.translation.stack().push(new InvokeContentTemplate(ctx.templateName.getText(),
-        this.expressions.argumentsOf(ctx, template, ctx.argumentList())));
+        this.expressions.argumentsOf(ctx, template, ctx.argumentList()), ctx.getStart()));
   }
   
   // #endregion Conditional template blocks ---------------------------------
@@ -1687,7 +1694,10 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     final Variables variables = this.translation.stack().pop(Variables.class);
     final int outlineNumber = this.outlineNumberOf(ctx);
     // A line with an outline marker is a heading.
-    final LineStyle style = hasOutlineMarker(ctx) ? LineStyle.HEADING : LineStyle.NORMAL;
+    final OutlineMarker marker = outlineMarkerOf(ctx);
+    if (marker.getTag().equals(RESERVED_TAG)) {
+      throw InvalidUsageException.tagReserved(marker.getToken(), RESERVED_TAG);
+    }
     assert this.translation.stack().empty() : "Stack should be empty at this point.";
 
     if (indentLevel > this.sectionLevels && this.hasNoLineAbove()) {
@@ -1695,16 +1705,21 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     } else if (indentChange > 1) {
       throw InvalidIndentationException.indentationLevelSkipped(ctx);
     } else if (indentChange == 1) {
-      this.blockStack.pushChild(outlineNumber, style, lineContext, variables, contentTemplates);
+      if (this.blockStack.peek().isInvocation()) {
+        throw InvalidUsageException.linesNestedInInvocation(ctx.getStart());
+      }
+      this.blockStack.pushChild(outlineNumber, marker, lineContext, variables,
+          contentTemplates);
     } else if (indentLevel == 0) {
       // A top-level line is a new block of the current section, also when it follows a declared
       // template and its lines.
       this.blockStack.clear();
       final ContentBlock sectionRoot = this.viewTemplate.getSection(this.translatorContext.getCurrentSection()).getRoot();
-      this.blockStack.push(sectionRoot.addChild(outlineNumber, style, lineContext, variables,
+      this.blockStack.push(sectionRoot.addChild(outlineNumber, marker, lineContext, variables,
           contentTemplates));
     } else {
-      this.blockStack.pushSibling(outlineNumber, style, lineContext, variables, contentTemplates);
+      this.blockStack.pushSibling(outlineNumber, marker, lineContext, variables,
+          contentTemplates);
     }
   }
 
@@ -1770,11 +1785,25 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   }
 
   /**
-   * @return whether the line starts with a marker of its outline number: a number, '?' or '#'
+   * @return whether the line starts with a marker of its outline number: a number, '?', '#' or a
+   *         tag
    */
   private static boolean hasOutlineMarker(TemplateLineContext ctx) {
-    return ctx.OutlineNumber() != null || ctx.AutoOutlineNumber() != null
-        || ctx.NoOutlineNumber() != null;
+    return outlineMarkerOf(ctx) != OutlineMarker.NONE;
+  }
+
+  /**
+   * @return the marker of its outline number that the line starts with: a number, '?', '#' or '#'
+   *         followed by a tag; or {@link OutlineMarker#NONE} when it starts with none
+   */
+  private static OutlineMarker outlineMarkerOf(TemplateLineContext ctx) {
+    if (ctx.OutlineTag() != null) {
+      return new OutlineMarker(ctx.OutlineTag().getSymbol(),
+          ctx.OutlineTag().getText().substring(1));
+    }
+    return Stream.of(ctx.OutlineNumber(), ctx.AutoOutlineNumber(), ctx.NoOutlineNumber())
+        .filter(Objects::nonNull).findFirst()
+        .map(node -> new OutlineMarker(node.getSymbol(), "")).orElse(OutlineMarker.NONE);
   }
 
   /**

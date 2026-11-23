@@ -23,17 +23,18 @@ public class ContentBlockStack extends Stack<ContentBlock> {
   }
 
   /**
-   * Adds a new child block to the top of the stack, displayed in the given style.
+   * Adds a new child block to the top of the stack, started by the given marker.
    *
    * @param number         the outline number of the child block.
-   * @param style          how the child block is displayed.
+   * @param marker         the marker the child block starts with.
    * @param context        the context of the child block.
    * @param variables      the variables of the child block.
    * @param contentTemplates what the child block displays.
    */
-  public void pushChild(final int number, final LineStyle style, final Context context,
-      final Variables variables, final List<ContentTemplate> contentTemplates) {
-    this.push(this.peek().addChild(number, style, context, variables, contentTemplates));
+  public void pushChild(final int number, final OutlineMarker marker,
+      final Context context, final Variables variables,
+      final List<ContentTemplate> contentTemplates) {
+    this.push(this.peek().addChild(number, marker, context, variables, contentTemplates));
   }
 
   /**
@@ -51,17 +52,17 @@ public class ContentBlockStack extends Stack<ContentBlock> {
   }
 
   /**
-   * Replaces the block at the top of the stack by a new sibling block, displayed in the given style.
+   * Replaces the block at the top of the stack by a new sibling block, started by the given marker.
    *
    * @param number the outline number of the sibling block.
-   * @param style how the sibling block is displayed.
+   * @param marker the marker the sibling block starts with.
    * @param context the context of the sibling block.
    * @param variables the variables of the sibling block.
    * @param contentTemplates what the sibling block displays.
    */
-  public void pushSibling(final int number, final LineStyle style, Context context,
-      final Variables variables, final List<ContentTemplate> contentTemplates) {
-    this.push(this.pop().addSibling(number, style, context, variables, contentTemplates));
+  public void pushSibling(final int number, final OutlineMarker marker,
+      Context context, final Variables variables, final List<ContentTemplate> contentTemplates) {
+    this.push(this.pop().addSibling(number, marker, context, variables, contentTemplates));
   }
 
   /**

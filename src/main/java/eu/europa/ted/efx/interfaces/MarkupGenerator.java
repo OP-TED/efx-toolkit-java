@@ -13,6 +13,7 @@
  */
 package eu.europa.ted.efx.interfaces;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,8 +25,11 @@ import eu.europa.ted.efx.model.expressions.TypedExpression;
 import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
-import eu.europa.ted.efx.model.templates.LineStyle;
+import eu.europa.ted.efx.model.templates.FragmentKind;
+import eu.europa.ted.efx.model.templates.FragmentOutline;
 import eu.europa.ted.efx.model.templates.Markup;
+import eu.europa.ted.efx.model.templates.OutlineAddress;
+import eu.europa.ted.efx.model.templates.OutlineOffset;
 import eu.europa.ted.efx.model.types.EfxDataType;
 
 /**
@@ -301,8 +305,9 @@ public interface MarkupGenerator {
      * returns the code that encapsulates it in the target template.
      *
      * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeFragmentDefinition(String, String, LineStyle, int, Set, Markup,
-     *             Markup, Set, TranslatorContext)} instead. We are keeping the method temporarily to prevent
+     *             Use {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Set,
+     *             TranslatorContext)}
+     *             instead. We are keeping the method temporarily to prevent
      *             build errors. This method is being deprecated as of version 2.0.0-alpha.6 and
      *             will be removed before version 2.0.0 is released. The default implementation
      *             provided here only throws UnsupportedOperationException to prevent accidental
@@ -318,18 +323,21 @@ public interface MarkupGenerator {
     default Markup composeFragmentDefinition(final String name, String number, Markup content,
             Set<String> parameters) {
         throw new UnsupportedOperationException(
-                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, String, LineStyle, int, Set<Conditional>, Markup, Markup, Set<Parameter>, TranslatorContext) instead.");
+                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, FragmentOutline, List<Conditional>, Markup, Markup, Set<Parameter>, TranslatorContext) instead.");
     }    
     
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
      * returns the code that encapsulates it in the target template.
      *
-     * @deprecated Use {@link #composeFragmentDefinition(String, String, LineStyle, int, Set, Markup,
-     *             Markup, Set, TranslatorContext)} instead, which also receives the style and the
-     *             level of the template line. This method will be removed before version 2.0.0 is
-     *             released. The default implementation calls the new method for a normal line at
-     *             level 0. The EfxTemplateTranslator will not call this method.
+     * @deprecated Use {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup,
+     *             Markup, Set, TranslatorContext)} instead, which also receives the outline of the
+     *             fragment: what it is, its nesting level, its heading level and the body of its
+     *             navigation id, and receives the alternatives in their order. This method will be
+     *             removed before version 2.0.0 is released. The default implementation calls the
+     *             new method for a normal line with the given outline number at nesting level 1, the
+     *             nesting level of a line at the top, and the alternatives in the order the set
+     *             gives them. The EfxTemplateTranslator will not call this method.
      *
      * @param name              the name of the fragment.
      * @param number            the outline number of the fragment.
@@ -343,31 +351,55 @@ public interface MarkupGenerator {
     @Deprecated(since = "2.0.0-alpha.10", forRemoval = true)
     default Markup composeFragmentDefinition(final String name, final String number, final Set<Conditional> conditionals, final Markup content, final Markup children,
             final Set<Parameter> parameters, final TranslatorContext translatorContext) {
-        return this.composeFragmentDefinition(name, number, LineStyle.NORMAL, 0, conditionals, content,
-                children, parameters, translatorContext);
+        return this.composeFragmentDefinition(name, FragmentOutline.normalLine(number, 1),
+                conditionals == null ? null : new ArrayList<>(conditionals), content, children,
+                parameters, translatorContext);
     }
 
     /**
      * Given a fragment name (identifier) and some pre-rendered content, this method
-     * returns the code that encapsulates it in the target template. It also receives how the
-     * template line is displayed and its level, for a markup generator that lays out its output by
-     * them.
+     * returns the code that encapsulates it in the target template. It also receives the outline of
+     * the fragment: what it is, its nesting level and its heading level, for a markup generator that
+     * lays out its output by them, and the body of its navigation id, for a visualisation that links
+     * navigation entries to their headings.
+     *
+     * <p>The navigation id has three parts. The prefix is passed by the caller and gives the place of
+     * the line in the whole notice. The body is passed by the toolkit when the output is generated
+     * and gives the place of the line in its own section or template: the outline numbers and tags
+     * of the headings it is nested in there, then its own (see {@link OutlineAddress}). The suffix is
+     * made by the implementer when the notice is rendered and tells apart the elements of that
+     * notice. A heading displayed in the main section must be reachable by its navigation id; a
+     * heading displayed in the navigation section links to the heading of the main section that has
+     * the same navigation id; a heading displayed in the summary section is neither.
+     *
+     * <p>A callable template is displayed wherever it is invoked, so the levels and the prefix of a
+     * line depend on the calls that lead to it. Where a line is displayed, its nesting level is the
+     * sum of the {@code nestingLevelOffset} of the calls that led to it plus its own
+     * {@code nestingLevel}; for a heading, its heading level is the sum of the
+     * {@code headingLevelOffset} of those calls plus its own {@code headingLevel}, and for any other
+     * line it stays 0; its navigation id is the {@code navIdPrefix} values of those calls, then its
+     * own {@code navIdBody}, joined by {@link OutlineAddress#SEPARATOR}, then the suffix (see
+     * {@link OutlineOffset} and
+     * {@link #renderFragmentInvocation(String, OutlineOffset, Set, TranslatorContext)}).
      *
      * @param name              the name of the fragment.
-     * @param number            the outline number of the fragment.
-     * @param style             how the template line is displayed: as a heading or as a normal line.
-     * @param level             the level of the template line: 1 for a line at the top of its section
-     *                          or template, one more for each line it is nested in, and 0 for a
-     *                          template that only holds lines.
-     * @param conditionals      the conditionals of the fragment.
+     * @param outline           where the fragment is in the outline of its own section or template
+     *                          (see {@link FragmentOutline}). A fragment of kind
+     *                          {@link FragmentKind#INVOCATION} holds only the choice between its
+     *                          alternatives, if any, and the calls of the templates, which take the
+     *                          place of the line; a fragment of kind {@link FragmentKind#TEMPLATE}
+     *                          holds only the calls of its top lines, which take the place of the
+     *                          line that invokes the template.
+     * @param conditionals      the WHEN alternatives of the fragment, in the order they are
+     *                          written: the first one whose condition is true is displayed.
      * @param content           the content of the fragment.
      * @param children          the children of the fragment.
      * @param parameters        the parameters of the fragment.
      * @param translatorContext additional context information provided by the template translator.
      * @return                  the code that encapsulates the fragment in the target template.
      */
-    Markup composeFragmentDefinition(final String name, final String number, final LineStyle style,
-            final int level, final Set<Conditional> conditionals, final Markup content, final Markup children,
+    Markup composeFragmentDefinition(final String name, final FragmentOutline outline,
+            final List<Conditional> conditionals, final Markup content, final Markup children,
             final Set<Parameter> parameters, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
@@ -390,12 +422,48 @@ public interface MarkupGenerator {
      * In EFX to XSLT translation, this method would generate the xsl:call-template
      * that will invoke the fragment.
      * 
+     * @deprecated Use {@link #renderFragmentInvocation(String, OutlineOffset, Set, TranslatorContext)}
+     *             instead, which also receives what the call puts above the fragment: a nesting level
+     *             offset, a heading level offset and a navigation id prefix. This method will be
+     *             removed before version 2.0.0 is released. The default implementation calls the new
+     *             method with {@link OutlineOffset#NONE}. The EfxTemplateTranslator will not call
+     *             this method.
+     *
      * @param name      the name of the fragment.
      * @param arguments the arguments of the fragment.
      * @param translatorContext   additional context information provided by the template translator.
      * @return          the code that invokes (uses) the fragment.
      */
-    Markup renderFragmentInvocation(final String name, final Set<Argument> arguments, final TranslatorContext translatorContext);
+    @Deprecated(since = "2.0.0-alpha.10", forRemoval = true)
+    default Markup renderFragmentInvocation(final String name, final Set<Argument> arguments,
+            final TranslatorContext translatorContext) {
+        return this.renderFragmentInvocation(name, OutlineOffset.NONE, arguments, translatorContext);
+    }
+
+    /**
+     * Given a fragment name (identifier), and an evaluation context, this method
+     * returns the code that invokes the fragment.
+     *
+     * The EfxTemplateTranslator will call this method to generate the
+     * fragment invocation code and then will pass the generated Markup to the
+     * {@link #renderContextLoop(PathExpression, Markup, Set)}.
+     *
+     * <p>The call also gives what it puts above the lines of the fragment it invokes (see
+     * {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Set, TranslatorContext)}
+     * for how it makes the nesting level, the heading level and the navigation id of a line where it
+     * is displayed).
+     *
+     * @param name              the name of the fragment.
+     * @param offset            what this call puts above the fragment: {@link OutlineOffset#NONE}
+     *                          for a call of a nested line, and for a call of a template, which
+     *                          takes the place of the calling line, what is above the calling line
+     *                          (see {@link OutlineOffset#ofTemplateCall(int, int, String)}).
+     * @param arguments         the arguments of the fragment, as EFX writes them.
+     * @param translatorContext additional context information provided by the template translator.
+     * @return                  the code that invokes (uses) the fragment.
+     */
+    Markup renderFragmentInvocation(final String name, final OutlineOffset offset,
+            final Set<Argument> arguments, final TranslatorContext translatorContext);
 
     /**
      * Given a fragment name (identifier), and an evaluation context, this method
