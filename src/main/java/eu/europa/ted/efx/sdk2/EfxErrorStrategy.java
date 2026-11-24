@@ -162,7 +162,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_inClause, "in clause"),
             Map.entry(RULE_noticeTypeList, "notice type list"),
             Map.entry(RULE_noticeTypeRange, "notice type range"),
-            Map.entry(RULE_noticeType, "notice type"),
 
             // API declarations
             Map.entry(RULE_apiEndpointDeclaration, "API endpoint declaration"),

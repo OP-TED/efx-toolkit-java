@@ -454,7 +454,7 @@ class EfxErrorStrategyTest extends EfxTestsBase {
   @Test
   void testRule_WithoutSemicolon_BeforeAStageHeading() {
     assertSyntaxErrorMessage(
-        "line 7:1 Syntax error: unexpected '-' in notice type; expected a notice subtype.",
+        "line 7:1 Syntax error: unexpected '-' in notice type range; expected a notice subtype.",
         () -> translateRules(lines(RULE_START, "    ASSERT TRUE", "    AS ERROR R-K7P-M2Q",
             "    FOR BT-00-Text IN 1", "--- STAGE 2a ---")));
   }

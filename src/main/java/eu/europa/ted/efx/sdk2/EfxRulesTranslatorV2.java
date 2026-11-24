@@ -585,14 +585,17 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
    */
   private static void addNoticeSubtypes(final NoticeTypeRangeContext range,
       final NoticeSubtypeRange.Builder noticeSubtypes) {
-    // One notice subtype, or the first and the last of the range
+    // One notice subtype, or the first and the last of the range. A token that the parser
+    // invented to recover from a syntax error is not one of them.
     final List<Token> ends = new ArrayList<>();
-    for (final NoticeTypeContext noticeType : range.noticeType()) {
-      final Token end = matchedNoticeSubtype(noticeType);
-      if (end == null) {
+    for (final TerminalNode end : range.NoticeType()) {
+      if (end instanceof ErrorNode) {
         return;
       }
-      ends.add(end);
+      ends.add(end.getSymbol());
+    }
+    if (ends.size() != (range.Minus() == null ? 1 : 2)) {
+      return;
     }
     try {
       if (ends.size() == 1) {
@@ -603,20 +606,6 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     } catch (final EfxCompilationException e) {
       throw e.at(ends.get(0));
     }
-  }
-
-  /**
-   * @return the token that the parser matched as the given notice subtype, or null
-   *         if a syntax error left it without one; a token that the parser skipped is not a match
-   */
-  private static Token matchedNoticeSubtype(final NoticeTypeContext noticeType) {
-    for (int i = 0; i < noticeType.getChildCount(); i++) {
-      final ParseTree child = noticeType.getChild(i);
-      if (child instanceof TerminalNode && !(child instanceof ErrorNode)) {
-        return ((TerminalNode) child).getSymbol();
-      }
-    }
-    return null;
   }
 
   @Override

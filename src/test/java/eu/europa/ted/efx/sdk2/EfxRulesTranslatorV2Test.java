@@ -618,6 +618,7 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   @Test
   void testInClause_ListThatIsNotRead_AddsNoSubtype() throws InstantiationException {
     assertEquals(translateInAfterOneSyntaxError("1-"), translateInAfterOneSyntaxError(","));
+    assertEquals(translateInAfterOneSyntaxError("2-*"), translateInAfterOneSyntaxError(","));
   }
 
   // Behind a listener that does not throw, a missing semicolon before OTHERWISE leaves a rule set
