@@ -110,6 +110,25 @@ class EfxValidationDependencyExtractorTest extends EfxTestsBase {
 
   // #endregion: Field reference variations
 
+  // #region: Behaviours -------------------------------------------------------
+
+  // A rule written with a behaviour has the dependencies of the rule written with the expression
+  // that the behaviour stands for. The test extracts the graph of the same rules twice: written
+  // with behaviours (input.efx), and written with these expressions (expressions.efx).
+
+  @Test
+  void testBehaviours() throws IOException {
+    assertDependencyGraph("testBehaviours");
+    assertEquals(
+        this.extractor.extractDependencyGraph(this.readResource("testBehaviours", "expressions.efx"))
+            .toJson(),
+        this.extractor.extractDependencyGraph(this.readResource("testBehaviours", "input.efx"))
+            .toJson(),
+        "The rules written with behaviours and with expressions should have the same dependencies");
+  }
+
+  // #endregion: Behaviours
+
   // #region: Structure --------------------------------------------------------
 
   @Test

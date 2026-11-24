@@ -1,0 +1,45 @@
+// The rules of input.efx, written with the expressions that their behaviours stand for.
+
+---- STAGE test ----
+
+WITH ND-Root
+    // The target is not a dependency of its own rule.
+    ASSERT BT-00-Text is present
+    AS ERROR R-T13-001
+    FOR BT-00-Text IN *;
+
+    // The field of the condition is a dependency.
+    WHEN BT-00-Indicator == TRUE
+        ASSERT BT-00-Number is not present
+        AS ERROR R-T13-002
+        FOR BT-00-Number IN *;
+
+    // The codelist is a dependency.
+    ASSERT BT-00-Code in [...accessibility]
+    AS ERROR R-T13-003
+    FOR BT-00-Code IN *;
+
+    // The fields of the expression after VIA are dependencies.
+    ASSERT BT-00-Identifier == BT-00-Url
+    AS ERROR R-T13-004
+    FOR BT-00-Email IN *;
+
+    ASSERT count(BT-00-Repeatable-Text) < 2
+    AS ERROR R-T13-005
+    FOR BT-00-Repeatable-Text IN *;
+
+    ASSERT count(BT-00-Repeatable-Number) >= 2 and count(BT-00-Repeatable-Number) <= 5
+    AS ERROR R-T13-006
+    FOR BT-00-Repeatable-Number IN *;
+
+    ASSERT string-length(BT-00-Phone) <= 100
+    AS ERROR R-T13-007
+    FOR BT-00-Phone IN *;
+
+    ASSERT BT-00-Integer >= 0 and BT-00-Integer <= 9999
+    AS ERROR R-T13-008
+    FOR BT-00-Integer IN *;
+
+    ASSERT BT-00-Amount:rawValue like '^[0-9]+$'
+    AS ERROR R-T13-009
+    FOR BT-00-Amount IN *;

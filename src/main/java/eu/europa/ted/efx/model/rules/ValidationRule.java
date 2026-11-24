@@ -36,6 +36,7 @@ public class ValidationRule implements ParsedEntity {
     BooleanExpression invertedCondition;
     BooleanExpression expression;
     BooleanExpression invertedConditionOrExpression;
+    Behaviour behaviour;
     NoticeSubtypeRange noticeSubtypeRange;
     String flag;
     RuleScope scope = RuleScope.ANY;
@@ -103,6 +104,28 @@ public class ValidationRule implements ParsedEntity {
 
     public BooleanExpression getInvertedConditionOrExpressionCombination() {
         return this.invertedConditionOrExpression;
+    }
+
+    /**
+     * Sets the behaviour that the rule states for its subject.
+     *
+     * @param behaviour the behaviour written after {@code ASSERT} or {@code OTHERWISE ASSERT},
+     *        or {@code null} if the rule is written with an expression
+     */
+    public void setBehaviour(Behaviour behaviour) {
+        this.behaviour = behaviour;
+    }
+
+    /**
+     * Gives the behaviour that the rule states for its subject. The expression of the rule is the
+     * test that the behaviour is translated to, so a generator of validation code does not need
+     * the behaviour. A generator for a client application reads it, to tell the application how
+     * to configure the control of the subject.
+     *
+     * @return the behaviour, or {@code null} if the rule is written with an expression
+     */
+    public Behaviour getBehaviour() {
+        return this.behaviour;
     }
 
     public void setNoticeSubtypeRange(NoticeSubtypeRange noticeSubtypeRange) {

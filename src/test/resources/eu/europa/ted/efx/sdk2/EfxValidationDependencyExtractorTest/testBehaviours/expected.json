@@ -1,0 +1,107 @@
+{
+  "fields" : [ {
+    "id" : "BT-00-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-001",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-002",
+        "fields" : [ "BT-00-Indicator" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Code",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-003",
+        "nodes" : [ "ND-Root" ],
+        "codelists" : [ "accessibility" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Email",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-004",
+        "fields" : [ "BT-00-Identifier", "BT-00-Url" ],
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Repeatable-Text",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-005",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Repeatable-Number",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-006",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Phone",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-007",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Integer",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-008",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Amount",
+    "dependsOn" : {
+      "assert" : [ {
+        "ruleId" : "R-T13-009",
+        "nodes" : [ "ND-Root" ]
+      } ]
+    }
+  }, {
+    "id" : "BT-00-Indicator",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Number" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Identifier",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Email" ]
+      }
+    }
+  }, {
+    "id" : "BT-00-Url",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Email" ]
+      }
+    }
+  } ],
+  "nodes" : [ {
+    "id" : "ND-Root",
+    "requiredBy" : {
+      "assert" : {
+        "fields" : [ "BT-00-Text", "BT-00-Number", "BT-00-Code", "BT-00-Email", "BT-00-Repeatable-Text", "BT-00-Repeatable-Number", "BT-00-Phone", "BT-00-Integer", "BT-00-Amount" ]
+      }
+    }
+  } ]
+}

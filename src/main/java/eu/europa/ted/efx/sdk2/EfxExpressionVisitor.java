@@ -403,6 +403,17 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
   }
 
   /**
+   * A field written with its identifier only, as the subject of a rule is after {@code FOR}, by
+   * its path from the current context.
+   */
+  @Override
+  public Subexpression<?> visitSimpleFieldReference(final SimpleFieldReferenceContext ctx) {
+    final String fieldId = ctx.fieldId.getText();
+    return new Subexpression<>(this.relativePathOfField(fieldId),
+        new FieldOrigin(this, ctx, fieldId, this.translation.efxContext().symbol()));
+  }
+
+  /**
    * A field, by its path from the root, which its error names as the context it is read from.
    */
   @Override
@@ -625,8 +636,19 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
 
   @Override
   public Subexpression<?> visitRawValueExpression(final RawValueExpressionContext ctx) {
-    return this.visit(ctx.expression()).readFromField(ctx,
-        Spelling.operator(":" + ctx.RawValue().getText()),
+    return this.rawValueOf(this.visit(ctx.expression()), ctx);
+  }
+
+  /**
+   * Reads the raw value of a field, as {@code :rawValue} does: its value as it is written, on
+   * each element the field's path selects.
+   *
+   * @param reference the reference to the field
+   * @param step where the raw value is read, at which an error is reported
+   * @return the raw value
+   */
+  Subexpression<?> rawValueOf(final Subexpression<?> reference, final ParserRuleContext step) {
+    return reference.readFromField(step, Spelling.operator(":rawValue"),
         (field, origin) -> new Subexpression<>(
             this.translation.script().composeFieldRawValueReference(field), origin.asValue()));
   }
@@ -1044,7 +1066,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * @param operator the token of a comparison or arithmetic operator
    * @return the operator of the catalogue that has the token's symbol as its name
    */
-  private BuiltIn operatorNamed(final Token operator) {
+  BuiltIn operatorNamed(final Token operator) {
     return BuiltIns.INSTANCE.find(operator.getText()).orElseThrow(
         () -> TranslatorConfigurationException.unhandledOperator(operator.getText(),
             "operatorNamed"));
@@ -1937,7 +1959,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    *        origin of a sub-expression does not report
    * @return the result of the call
    */
-  private Subexpression<?> builtIn(final ParserRuleContext call, final BuiltIn builtIn,
+  Subexpression<?> builtIn(final ParserRuleContext call, final BuiltIn builtIn,
       final Spelling spelling, final List<Subexpression<?>> subexpressions,
       final ReadAs readAs) {
     final List<TypedExpression> arguments =
@@ -1958,7 +1980,7 @@ class EfxExpressionVisitor extends EfxBaseVisitor<Subexpression<?>> {
    * How a call of a built-in reads its sub-expressions, and the error of a mismatch that the origin
    * of a sub-expression does not report.
    */
-  private enum ReadAs {
+  enum ReadAs {
 
     /** As values: an argument of the wrong primitive cannot be converted. */
     VALUES,
