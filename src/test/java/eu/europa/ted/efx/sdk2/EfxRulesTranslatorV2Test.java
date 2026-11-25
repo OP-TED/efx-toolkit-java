@@ -575,19 +575,22 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
   }
 
   @Test
+  void testInClause_CommentsInTheList_AreIgnored() {
+    assertEquals(translateIn("1, 2"), translateIn("1, // the first\n    2 // the second\n"));
+  }
+
+  @Test
   void testInClause_RangeWrittenWithoutSpaces_IsARange() {
-    // The lexer reads E1-E2 as a single name
+    // The lexer reads each notice subtype as one token, so a dash always separates two of them
     assertEquals(translateIn("E1, E2"), translateIn("E1-E2"));
     assertEquals(translateIn("E1, E2"), translateIn("E1 - E2"));
   }
 
   @Test
-  void testInClause_NameWithTwoDashes_ThrowsInvalidToken() {
-    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+  void testInClause_RangeOfThree_IsSyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
         () -> translateIn("1, E1-E2-X01"));
-    assertEquals(InvalidUsageException.ErrorCode.INVALID_NOTICE_SUBTYPE_TOKEN,
-        exception.getErrorCode());
-    assertEquals("line 6:25 Invalid notice subtype token 'E1-E2-X01'. Expected format: 'X' or 'X-Y'.",
+    assertEquals("line 6:30 Syntax error: unexpected '-' in rule; expected ';' or 'SCOPE'.",
         exception.getMessage());
   }
 
@@ -619,7 +622,37 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
 
   @Test
   void testInClause_ListThatIsNotRead_AddsNoSubtype() throws InstantiationException {
-    assertEquals(translateInAfterOneSyntaxError("1-"), translateInAfterOneSyntaxError(")"));
+    assertEquals(translateInAfterOneSyntaxError("1-"), translateInAfterOneSyntaxError(","));
+    assertEquals(translateInAfterOneSyntaxError("2-*"), translateInAfterOneSyntaxError(","));
+  }
+
+  // Behind a listener that does not throw, a missing semicolon before OTHERWISE leaves a rule set
+  // that the parser could not read; the translator reports the error and does not fail.
+
+  @Test
+  void testInClause_MissingSemicolonBeforeAFallbackRule_IsReported() throws InstantiationException {
+    assertOneSyntaxError(lines("WITH BT-00-Text", "    WHEN TRUE ASSERT TRUE",
+        "    AS ERROR R-X3F-N8W", "    FOR BT-00-Text IN 1", "    OTHERWISE ASSERT FALSE",
+        "    AS ERROR R-X3F-N8X", "    FOR BT-00-Text IN 1;", "WITH ND-Root", "    ASSERT TRUE",
+        "    AS ERROR R-X3F-N8Y", "    FOR BT-00-Text IN 1;"));
+  }
+
+  /**
+   * Translates the given rule sets, in which one rule lacks its semicolon, behind a listener that
+   * does not throw, and checks that only one syntax error is reported.
+   */
+  private void assertOneSyntaxError(final String ruleSets) throws InstantiationException {
+    final List<String> syntaxErrors = new ArrayList<>();
+    final EfxRulesTranslatorV2 lenient = translatorWith(new BaseErrorListener() {
+      @Override
+      public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
+          final int line, final int column, final String message,
+          final RecognitionException exception) {
+        syntaxErrors.add(message);
+      }
+    });
+    lenient.translateRules(lines("---- STAGE 1a ----", "", ruleSets));
+    assertEquals(1, syntaxErrors.size(), syntaxErrors.toString());
   }
 
   private String ruleIn(final String list) {

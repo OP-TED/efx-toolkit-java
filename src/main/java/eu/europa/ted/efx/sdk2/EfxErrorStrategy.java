@@ -162,7 +162,6 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_inClause, "in clause"),
             Map.entry(RULE_noticeTypeList, "notice type list"),
             Map.entry(RULE_noticeTypeRange, "notice type range"),
-            Map.entry(RULE_noticeType, "notice type"),
 
             // API declarations
             Map.entry(RULE_apiEndpointDeclaration, "API endpoint declaration"),
@@ -250,6 +249,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             // Literals and operators
             Map.entry(EfxLexer.StringLiteral, "a text literal"),
             Map.entry(EfxLexer.IntegerLiteral, "an integer"),
+            Map.entry(EfxLexer.NoticeType, "a notice subtype"),
             Map.entry(EfxLexer.DecimalLiteral, "a decimal number"),
             Map.entry(EfxLexer.DateLiteral, "a date"),
             Map.entry(EfxLexer.TimeLiteral, "a time"),

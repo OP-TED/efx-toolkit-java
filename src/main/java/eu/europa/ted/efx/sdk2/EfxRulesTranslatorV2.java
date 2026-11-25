@@ -425,6 +425,12 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
 
     var ruleSet = this.ruleStack.pop(RuleSet.class);
     this.translation.stack().popStackFrame();
+    if (ruleSet.getContext() == null) {
+      // After a syntax error, the parser may keep a rule set whose WITH clause it could not read,
+      // as when the semicolon before OTHERWISE is missing. It declares no context and has no rule
+      // to add; the error is already reported.
+      return;
+    }
     var stage = this.ruleStack.peek(ValidationStage.class);
     stage.addRuleSet(ruleSet);
     assert !this.translation.efxContext().isEmpty() : "Expected context to be set in rule block (WITH clause should have pushed it)";
@@ -588,51 +594,31 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
 
   /**
    * Adds the notice subtypes of a range of an IN list, as in {@code 1}, {@code 1-3} or
-   * {@code E3 - E6}. The lexer reads {@code E3-E6}, written without spaces, as a single name, since a
-   * name can hold dashes; the dashes in a name therefore separate the ends of a range, as a minus
-   * does.
+   * {@code E3-E6}. The lexer reads each notice subtype as one token, so a range has its two ends.
    */
   private static void addNoticeSubtypes(final NoticeTypeRangeContext range,
       final NoticeSubtypeRange.Builder noticeSubtypes) {
-    final List<Token> names = new ArrayList<>();
-    for (final NoticeTypeContext noticeType : range.noticeType()) {
-      final Token name = matchedName(noticeType);
-      if (name == null) {
+    // One notice subtype, or the first and the last of the range. A token that the parser
+    // invented to recover from a syntax error is not one of them.
+    final List<Token> ends = new ArrayList<>();
+    for (final TerminalNode end : range.NoticeType()) {
+      if (end instanceof ErrorNode) {
         return;
       }
-      names.add(name);
+      ends.add(end.getSymbol());
     }
-    // One notice subtype, or the first and the last of the range
-    final List<String> ends = new ArrayList<>();
-    for (final Token name : names) {
-      ends.addAll(List.of(name.getText().split("-")));
-    }
-    if (ends.size() > 2) {
-      throw InvalidUsageException.invalidNoticeSubtypeToken(String.join("-", ends)).at(names.get(0));
+    if (ends.size() != (range.Minus() == null ? 1 : 2)) {
+      return;
     }
     try {
       if (ends.size() == 1) {
-        noticeSubtypes.add(ends.get(0));
+        noticeSubtypes.add(ends.get(0).getText());
       } else {
-        noticeSubtypes.add(ends.get(0), ends.get(1));
+        noticeSubtypes.add(ends.get(0).getText(), ends.get(1).getText());
       }
     } catch (final EfxCompilationException e) {
-      throw e.at(names.get(0));
+      throw e.at(ends.get(0));
     }
-  }
-
-  /**
-   * @return the integer or identifier that the parser matched as the given notice subtype, or null
-   *         if a syntax error left it without one; a token that the parser skipped is not a match
-   */
-  private static Token matchedName(final NoticeTypeContext noticeType) {
-    for (int i = 0; i < noticeType.getChildCount(); i++) {
-      final ParseTree child = noticeType.getChild(i);
-      if (child instanceof TerminalNode && !(child instanceof ErrorNode)) {
-        return ((TerminalNode) child).getSymbol();
-      }
-    }
-    return null;
   }
 
   @Override
