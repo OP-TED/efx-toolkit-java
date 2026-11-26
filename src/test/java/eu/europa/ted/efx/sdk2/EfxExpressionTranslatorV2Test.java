@@ -1819,6 +1819,55 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
     testExpressionTranslationWithContext("3.1415", "BT-00-Text", "3.1415");
   }
 
+  // A decimal number can have any number of digits before the decimal point (TEDEFO-5395).
+
+  @Test
+  void testNumericLiteralExpression_WithSeveralDigitsBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("12.5", "BT-00-Text", "12.5");
+    testExpressionTranslationWithContext("100.0", "BT-00-Text", "100.0");
+    testExpressionTranslationWithContext("9999.99", "BT-00-Text", "9999.99");
+  }
+
+  @Test
+  void testNumericLiteralExpression_NegativeWithSeveralDigitsBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("-12.5", "BT-00-Text", "-12.5");
+    testExpressionTranslationWithContext("-9999.99", "BT-00-Text", "-9999.99");
+    // A space may follow the minus sign.
+    testExpressionTranslationWithContext("-12.5", "BT-00-Text", "- 12.5");
+  }
+
+  @Test
+  void testNumericLiteralExpression_WithOneOrNoDigitBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("0.25", "BT-00-Text", "0.25");
+    testExpressionTranslationWithContext(".5", "BT-00-Text", ".5");
+    testExpressionTranslationWithContext("-.5", "BT-00-Text", "-.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InAComparison() {
+    testExpressionTranslationWithContext("PathNode/NumberField/number() > 12.5", "ND-Root",
+        "BT-00-Number > 12.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InArithmetic() {
+    testExpressionTranslationWithContext("100.25 - 12.5", "BT-00-Text", "100.25 - 12.5");
+    testExpressionTranslationWithContext("100.25 - 12.5", "BT-00-Text", "100.25-12.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InAList() {
+    testExpressionTranslationWithContext("PathNode/NumberField/number() = (12.5,100.0,.5)",
+        "ND-Root", "BT-00-Number in [12.5, 100.0, .5]");
+  }
+
+  /** A number still needs a digit after its decimal point, and has one decimal point only. */
+  @Test
+  void testNumericLiteral_WithoutDigitsAfterTheDecimalPoint_IsSyntaxError() {
+    assertSyntaxError(() -> translateExpressionWithContext("BT-00-Text", "12."));
+    assertSyntaxError(() -> translateExpressionWithContext("BT-00-Text", "12.5.25"));
+  }
+
   // #endregion: Numeric expressions
 
   // #region: Lists -----------------------------------------------------------
