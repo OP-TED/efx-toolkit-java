@@ -1162,6 +1162,10 @@ public class XPathScriptGenerator implements ScriptGenerator {
    * EFX uses backslash escaping for quotes ({@code \'} or {@code \"}), while XPath uses
    * quote doubling ({@code ''} or {@code ""}). Other backslash sequences (e.g. regex
    * escapes like {@code \d}, {@code \w}) are passed through unchanged.
+   *
+   * A backslash and the character after it are read as one pair, as the lexer of the grammar
+   * reads them. So the second backslash of {@code \\} is never taken for the start of a new
+   * sequence: {@code 'a\\"b'} keeps both backslashes and the double quote.
    */
   protected static String efxToXPathLiteral(String efxLiteral) {
     if (efxLiteral == null || efxLiteral.length() < 2) {
@@ -1184,10 +1188,11 @@ public class XPathScriptGenerator implements ScriptGenerator {
           } else {
             result.append(next);
           }
-          i++;
         } else {
           result.append(c);
+          result.append(next);
         }
+        i++;
       } else {
         result.append(c);
       }

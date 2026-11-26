@@ -1671,6 +1671,8 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         "    ASSERT LIKE '^O\\'Neil \\\"x\\\" \\\\ [0-9]{2}\\.$'",
         "        AS ERROR R-KND-016 FOR BT-00-Text IN 1;",
         "    ASSERT LIKE \"^a\\\"b'c$\" AS ERROR R-KND-017 FOR BT-00-Text IN 1;",
+        "    ASSERT VALUE <= 12.5 AS ERROR R-KND-018 FOR BT-00-Number IN 1;",
+        "    ASSERT VALUE BETWEEN -100.25 AND 9999.99 AS ERROR R-KND-019 FOR BT-00-Number IN 1;",
         "",
         "WITH ND-SubNode",
         "    WHEN BT-00-Indicator == TRUE",
@@ -1717,6 +1719,8 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
     expected.put("R-KND-015", "no behaviour");
     expected.put("R-KND-016", "MATCH_PATTERN ^O'Neil \"x\" \\\\ [0-9]{2}\\.$");
     expected.put("R-KND-017", "MATCH_PATTERN ^a\"b'c$");
+    expected.put("R-KND-018", "LIMIT_RANGE <= 12.5");
+    expected.put("R-KND-019", "LIMIT_RANGE from -100.25 to 9999.99");
     expected.put("R-KND-020", "no behaviour");
     expected.put("R-KND-021", "FORBIDDEN");
     assertEquals(expected, behaviours);
@@ -1900,6 +1904,39 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
             + " and string-length(PathNode/TextField/normalize-space(text())) &lt;= 9");
     assertTestOf("    ASSERT VALUE BETWEEN -5 AND 0.5", "BT-00-Number",
         "PathNode/NumberField/number() &gt;= -5 and PathNode/NumberField/number() &lt;= 0.5");
+  }
+
+  // A number after VALUE can have any number of digits before its decimal point (TEDEFO-5395).
+
+  @Test
+  void testBehaviour_ValueWithSeveralDigitsBeforeTheDecimalPoint() {
+    assertTestOf("    ASSERT VALUE >= 12.5", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= 12.5");
+    assertTestOf("    ASSERT VALUE BETWEEN 0 AND 9999.99", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= 0 and PathNode/NumberField/number() &lt;= 9999.99");
+    assertTestOf("    ASSERT VALUE BETWEEN -100.25 AND -12.5", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= -100.25"
+            + " and PathNode/NumberField/number() &lt;= -12.5");
+  }
+
+  /** As numbers, 100.5 is greater than 12.25; as texts it would come first. */
+  @Test
+  void testBehaviour_ValueBetweenWithSeveralDigitsBeforeTheDecimalPoint_ChecksTheOrder() {
+    assertBoundsNotInOrder("    ASSERT VALUE BETWEEN 100.5 AND 12.25", "BT-00-Number",
+        "line 4:17 The lower bound 100.5 of BETWEEN is greater than its upper bound 12.25, so"
+            + " this semantic assertion can never be satisfied. Write the lower bound first.");
+    assertTestOf("    ASSERT VALUE BETWEEN 12.25 AND 100.5", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= 12.25"
+            + " and PathNode/NumberField/number() &lt;= 100.5");
+  }
+
+  /** OCCURS and LENGTH count, so they take whole numbers only, as before. */
+  @Test
+  void testBehaviour_OccursOrLengthWithADecimalNumber_IsSyntaxError() {
+    assertBehaviourSyntaxError("    ASSERT LENGTH <= 12.5",
+        "line 4:21 Syntax error: unexpected '12.5' in assert clause; expected an integer.");
+    assertBehaviourSyntaxError("    ASSERT OCCURS BETWEEN 1 AND 12.5",
+        "line 4:32 Syntax error: unexpected '12.5' in assert clause; expected an integer.");
   }
 
   private void assertTestOf(String clause, String target, String expectedTest) {

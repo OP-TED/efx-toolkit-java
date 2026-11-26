@@ -369,6 +369,33 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
         "BT-00-Text", "'test' like 'a\\\"b'");
   }
 
+  // A backslash and the character after it are one pair, so the second backslash of two is not
+  // taken for a backslash before a quote (TEDEFO-5398).
+
+  @Test
+  void testLikePatternCondition_WithTwoBackslashesBeforeADoubleQuote() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), '^a\\\\\"b$')",
+        "BT-00-Text", "'test' like '^a\\\\\"b$'");
+  }
+
+  @Test
+  void testLikePatternCondition_WithTwoBackslashesBeforeASingleQuote() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), \"^a\\\\'b$\")",
+        "BT-00-Text", "'test' like \"^a\\\\'b$\"");
+  }
+
+  @Test
+  void testLikePatternCondition_WithTwoBackslashesBeforeAnotherCharacter() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), '^a\\\\b$')",
+        "BT-00-Text", "'test' like '^a\\\\b$'");
+  }
+
+  @Test
+  void testLikePatternCondition_WithTwoBackslashesBeforeAnEscapedQuote() {
+    testExpressionTranslationWithContext("fn:matches(normalize-space('test'), '^a\\\\''b$')",
+        "BT-00-Text", "'test' like '^a\\\\\\'b$'");
+  }
+
   @Test
   void testLikePatternCondition_WithNot() {
     testExpressionTranslationWithContext("not(fn:matches(normalize-space('123'), '[0-9]*'))",
@@ -542,6 +569,39 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testStringComparison_WithEscapedSingleQuote() {
     testExpressionTranslationWithContext("'a''b' = 'c''d'", "BT-00-Text", "'a\\'b' == 'c\\'d'");
+  }
+
+  @Test
+  void testStringComparison_WithEscapedDoubleQuote() {
+    testExpressionTranslationWithContext("'a\"b' = \"c\"\"d\"", "BT-00-Text",
+        "'a\\\"b' == \"c\\\"d\"");
+  }
+
+  // A backslash and the character after it are one pair, so the second backslash of two is not
+  // taken for a backslash before a quote (TEDEFO-5398).
+
+  @Test
+  void testStringComparison_WithTwoBackslashesBeforeADoubleQuote() {
+    testExpressionTranslationWithContext("'a\\\\\"b' = 'c'", "BT-00-Text",
+        "'a\\\\\"b' == 'c'");
+  }
+
+  @Test
+  void testStringComparison_WithTwoBackslashesBeforeASingleQuote() {
+    testExpressionTranslationWithContext("\"a\\\\'b\" = 'c'", "BT-00-Text",
+        "\"a\\\\'b\" == 'c'");
+  }
+
+  @Test
+  void testStringComparison_WithTwoBackslashesBeforeAnotherCharacter() {
+    testExpressionTranslationWithContext("'a\\\\b' = 'c\\\\'", "BT-00-Text",
+        "'a\\\\b' == 'c\\\\'");
+  }
+
+  @Test
+  void testStringComparison_WithTwoBackslashesBeforeAnEscapedQuote() {
+    testExpressionTranslationWithContext("'a\\\\''b' = \"c\\\\\"\"d\"", "BT-00-Text",
+        "'a\\\\\\'b' == \"c\\\\\\\"d\"");
   }
 
   @Test
@@ -1757,6 +1817,55 @@ class EfxExpressionTranslatorV2Test extends EfxTestsBase {
   @Test
   void testNumericLiteralExpression() {
     testExpressionTranslationWithContext("3.1415", "BT-00-Text", "3.1415");
+  }
+
+  // A decimal number can have any number of digits before the decimal point (TEDEFO-5395).
+
+  @Test
+  void testNumericLiteralExpression_WithSeveralDigitsBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("12.5", "BT-00-Text", "12.5");
+    testExpressionTranslationWithContext("100.0", "BT-00-Text", "100.0");
+    testExpressionTranslationWithContext("9999.99", "BT-00-Text", "9999.99");
+  }
+
+  @Test
+  void testNumericLiteralExpression_NegativeWithSeveralDigitsBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("-12.5", "BT-00-Text", "-12.5");
+    testExpressionTranslationWithContext("-9999.99", "BT-00-Text", "-9999.99");
+    // A space may follow the minus sign.
+    testExpressionTranslationWithContext("-12.5", "BT-00-Text", "- 12.5");
+  }
+
+  @Test
+  void testNumericLiteralExpression_WithOneOrNoDigitBeforeTheDecimalPoint() {
+    testExpressionTranslationWithContext("0.25", "BT-00-Text", "0.25");
+    testExpressionTranslationWithContext(".5", "BT-00-Text", ".5");
+    testExpressionTranslationWithContext("-.5", "BT-00-Text", "-.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InAComparison() {
+    testExpressionTranslationWithContext("PathNode/NumberField/number() > 12.5", "ND-Root",
+        "BT-00-Number > 12.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InArithmetic() {
+    testExpressionTranslationWithContext("100.25 - 12.5", "BT-00-Text", "100.25 - 12.5");
+    testExpressionTranslationWithContext("100.25 - 12.5", "BT-00-Text", "100.25-12.5");
+  }
+
+  @Test
+  void testNumericLiteral_WithSeveralDigitsBeforeTheDecimalPoint_InAList() {
+    testExpressionTranslationWithContext("PathNode/NumberField/number() = (12.5,100.0,.5)",
+        "ND-Root", "BT-00-Number in [12.5, 100.0, .5]");
+  }
+
+  /** A number still needs a digit after its decimal point, and has one decimal point only. */
+  @Test
+  void testNumericLiteral_WithoutDigitsAfterTheDecimalPoint_IsSyntaxError() {
+    assertSyntaxError(() -> translateExpressionWithContext("BT-00-Text", "12."));
+    assertSyntaxError(() -> translateExpressionWithContext("BT-00-Text", "12.5.25"));
   }
 
   // #endregion: Numeric expressions
