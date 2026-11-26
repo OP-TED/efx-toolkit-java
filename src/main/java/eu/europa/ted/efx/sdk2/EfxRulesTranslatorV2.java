@@ -890,15 +890,24 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
    * Gives the rule a limit written with a range, as in {@code VALUE BETWEEN 0 AND 9999}, and its
    * test: what is limited is not below the lower bound and not above the upper bound.
    *
+   * <p>The lower bound is written first. A range whose first number is greater than its second
+   * can never be satisfied, so it is an error of the author. The two numbers may be equal.</p>
+   *
    * @param ctx the behaviour
    * @param kind the kind of the limit
    * @param limited gives what is limited: the count, the length or the value of the subject. It
    *        is read twice, as the expression names it twice.
    * @param lower the lower bound, as it is written
    * @param upper the upper bound, as it is written
+   * @throws InvalidUsageException if the lower bound is greater than the upper bound, placed at
+   *         BETWEEN
    */
   private void setLimits(final ParserRuleContext ctx, final BehaviourKind kind,
       final Supplier<Subexpression<?>> limited, final String lower, final String upper) {
+    if (new BigDecimal(lower).compareTo(new BigDecimal(upper)) > 0) {
+      throw InvalidUsageException.betweenBoundsNotInOrder(
+          ctx.getToken(EfxParser.BETWEEN, 0).getSymbol(), lower, upper);
+    }
     final Subexpression<?> notBelow = this.compared(ctx, limited.get(),
         ComparisonOperators.GREATER_OR_EQUAL, this.numberOf(lower));
     final Subexpression<?> notAbove = this.compared(ctx, limited.get(),
