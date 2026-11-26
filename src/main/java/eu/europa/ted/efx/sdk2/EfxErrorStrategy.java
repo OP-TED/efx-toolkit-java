@@ -178,7 +178,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(Token.EOF, END_OF_INPUT),
 
             // Lines and indentation
-            Map.entry(EfxLexer.CRLF, "end of line"),
+            Map.entry(EfxLexer.EndOfLine, "end of line"),
             Map.entry(EfxLexer.Tabs, "tabs"),
             Map.entry(EfxLexer.Spaces, "spaces"),
             Map.entry(EfxLexer.MixedIndent, "tabs and spaces"),
@@ -200,22 +200,22 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.IncludePath, "a path in double quotes"),
 
             // Keywords
-            Map.entry(EfxLexer.Let, "'LET'"),
-            Map.entry(EfxLexer.Endpoint, "'ENDPOINT'"),
-            Map.entry(EfxLexer.With, "'WITH'"),
-            Map.entry(EfxLexer.When, "'WHEN'"),
-            Map.entry(EfxLexer.Otherwise, "'OTHERWISE'"),
-            Map.entry(EfxLexer.Display, "'DISPLAY'"),
-            Map.entry(EfxLexer.Invoke, "'INVOKE'"),
-            Map.entry(EfxLexer.Parameters, "'PARAMETERS'"),
-            Map.entry(EfxLexer.Index, "'INDEX'"),
-            Map.entry(EfxLexer.By, "'BY'"),
-            Map.entry(EfxLexer.Assert, "'ASSERT'"),
-            Map.entry(EfxLexer.Report, "'REPORT'"),
-            Map.entry(EfxLexer.OtherwiseAssert, "'OTHERWISE ASSERT'"),
-            Map.entry(EfxLexer.OtherwiseReport, "'OTHERWISE REPORT'"),
-            Map.entry(EfxLexer.Compute, "'COMPUTE'"),
-            Map.entry(EfxLexer.Select, "'SELECT'"),
+            Map.entry(EfxLexer.LET, "'LET'"),
+            Map.entry(EfxLexer.ENDPOINT, "'ENDPOINT'"),
+            Map.entry(EfxLexer.WITH, "'WITH'"),
+            Map.entry(EfxLexer.WHEN, "'WHEN'"),
+            Map.entry(EfxLexer.OTHERWISE, "'OTHERWISE'"),
+            Map.entry(EfxLexer.DISPLAY, "'DISPLAY'"),
+            Map.entry(EfxLexer.INVOKE, "'INVOKE'"),
+            Map.entry(EfxLexer.PARAMETERS, "'PARAMETERS'"),
+            Map.entry(EfxLexer.INDEX, "'INDEX'"),
+            Map.entry(EfxLexer.BY, "'BY'"),
+            Map.entry(EfxLexer.ASSERT, "'ASSERT'"),
+            Map.entry(EfxLexer.REPORT, "'REPORT'"),
+            Map.entry(EfxLexer.OTHERWISE_ASSERT, "'OTHERWISE ASSERT'"),
+            Map.entry(EfxLexer.OTHERWISE_REPORT, "'OTHERWISE REPORT'"),
+            Map.entry(EfxLexer.COMPUTE, "'COMPUTE'"),
+            Map.entry(EfxLexer.SELECT, "'SELECT'"),
 
             // Template text and blocks
             Map.entry(EfxLexer.FreeText, "text"),
@@ -249,7 +249,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             // Literals and operators
             Map.entry(EfxLexer.StringLiteral, "a text literal"),
             Map.entry(EfxLexer.IntegerLiteral, "an integer"),
-            Map.entry(EfxLexer.NoticeType, "a notice subtype"),
+            Map.entry(EfxLexer.NoticeSubtype, "a notice subtype"),
             Map.entry(EfxLexer.DecimalLiteral, "a decimal number"),
             Map.entry(EfxLexer.DateLiteral, "a date"),
             Map.entry(EfxLexer.TimeLiteral, "a time"),
@@ -371,7 +371,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         if (line == null) {
             return "";
         }
-        final boolean invoke = found.getType() == Invoke;
+        final boolean invoke = found.getType() == INVOKE;
         final boolean marked = line.OutlineNumber() != null || line.AutoOutlineNumber() != null
                 || line.NoOutlineNumber() != null || line.OutlineTag() != null;
         // Only where a template could be invoked or displayed: an INVOKE where the line or a display
@@ -390,8 +390,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         // single token: anything but INVOKE after OTHERWISE is a displaying alternative.
         final int before = tokenBefore(recognizer.getTokenStream(), found.getTokenIndex());
         final Token previous = before >= 0 ? recognizer.getTokenStream().get(before) : null;
-        final boolean display = found.getType() == Display || previous != null
-                && (previous.getType() == Display || previous.getType() == Otherwise && !invoke);
+        final boolean display = found.getType() == DISPLAY || previous != null
+                && (previous.getType() == DISPLAY || previous.getType() == OTHERWISE && !invoke);
         if (invoke && readingDisplay || display && readingInvoke) {
             return " " + DISPLAY_AND_INVOKE_MIXED;
         }

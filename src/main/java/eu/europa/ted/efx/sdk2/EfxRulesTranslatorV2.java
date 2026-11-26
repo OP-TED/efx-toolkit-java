@@ -601,7 +601,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
     // One notice subtype, or the first and the last of the range. A token that the parser
     // invented to recover from a syntax error is not one of them.
     final List<Token> ends = new ArrayList<>();
-    for (final TerminalNode end : range.NoticeType()) {
+    for (final TerminalNode end : range.NoticeSubtype()) {
       if (end instanceof ErrorNode) {
         return;
       }
@@ -628,7 +628,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
       rule.setFlag(ctx.flag().flagName.getText());
     }
     if (ctx.scopeAnnotation() != null) {
-      if (ctx.scopeAnnotation().Pre() != null) {
+      if (ctx.scopeAnnotation().PRE() != null) {
         rule.setScope(RuleScope.PRE);
       } else {
         rule.setScope(RuleScope.POST);
@@ -1064,7 +1064,7 @@ public class EfxRulesTranslatorV2 extends TranslatorListener
       throw InvalidIdentifierException.undeclaredEndpoint(ctx,
           Function.spellingOf(apiName).describe(), endpointName);
     }
-    RuleSeverity errorSeverity = ctx.onErrorClause() != null && ctx.onErrorClause().Warn() != null
+    RuleSeverity errorSeverity = ctx.onErrorClause() != null && ctx.onErrorClause().WARN() != null
         ? RuleSeverity.WARNING : RuleSeverity.ERROR;
     String errorLabel = ctx.onErrorClause() != null && ctx.onErrorClause().errorLabel != null
         ? unquote(ctx.onErrorClause().errorLabel.getText()) : null;
