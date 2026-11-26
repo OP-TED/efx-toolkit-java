@@ -170,13 +170,13 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   private static final Clause PLURALISER = Clause.of(LABEL_BLOCK, parameter("pluraliser", NUMBER));
   private static final Clause LABEL_KEY = Clause.of(LABEL_BLOCK, parameter("key", TEXT));
 
-  private static final String LABEL_TYPE_NAME = getLexerSymbol(EfxLexer.LABEL_TYPE_NAME);
-  private static final String LABEL_TYPE_WHEN = getLexerSymbol(EfxLexer.LABEL_TYPE_WHEN_TRUE).replace("-true", "");
-  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = getLexerSymbol(EfxLexer.ValueKeyword);
+  private static final String LABEL_TYPE_NAME = getLexerSymbol(EfxLexer.LabelTypeName);
+  private static final String LABEL_TYPE_WHEN = getLexerSymbol(EfxLexer.LabelTypeWhenTrue).replace("-true", "");
+  private static final String SHORTHAND_CONTEXT_FIELD_LABEL_REFERENCE = getLexerSymbol(EfxLexer.Value);
   private static final String ASSET_TYPE_INDICATOR = getLexerSymbol(EfxLexer.Indicator);
-  private static final String ASSET_TYPE_BT = getLexerSymbol(EfxLexer.ASSET_TYPE_BT);
-  private static final String ASSET_TYPE_FIELD = getLexerSymbol(EfxLexer.ASSET_TYPE_FIELD);
-  private static final String ASSET_TYPE_NODE = getLexerSymbol(EfxLexer.ASSET_TYPE_NODE);
+  private static final String ASSET_TYPE_BT = getLexerSymbol(EfxLexer.AssetTypeBusinessTerm);
+  private static final String ASSET_TYPE_FIELD = getLexerSymbol(EfxLexer.AssetTypeField);
+  private static final String ASSET_TYPE_NODE = getLexerSymbol(EfxLexer.AssetTypeNode);
   private static final String ASSET_TYPE_CODE = getLexerSymbol(EfxLexer.Code);
 
   /**

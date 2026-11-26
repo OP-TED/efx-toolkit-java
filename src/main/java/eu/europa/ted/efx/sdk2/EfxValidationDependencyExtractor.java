@@ -163,7 +163,7 @@ public class EfxValidationDependencyExtractor extends EfxComputeDependencyExtrac
   private boolean isPostOnly(final ScopeClauseContext scopeClause) {
     return scopeClause != null
         && scopeClause.scopeAnnotation() != null
-        && scopeClause.scopeAnnotation().Post() != null;
+        && scopeClause.scopeAnnotation().POST() != null;
   }
 
   private void commitRule(final AsClauseContext asClause, final ForClauseContext forClause,
