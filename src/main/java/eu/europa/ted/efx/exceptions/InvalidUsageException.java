@@ -51,7 +51,8 @@ public class InvalidUsageException extends EfxCompilationException {
         HYPERLINK_IN_NAVIGATION_HEADING,
         NAVIGATION_ENTRY_WITHOUT_HEADING,
         RECURSIVE_TEMPLATE_INVOCATION,
-        LINES_NESTED_IN_INVOCATION
+        LINES_NESTED_IN_INVOCATION,
+        BETWEEN_BOUNDS_NOT_IN_ORDER
     }
 
     private static final String SHORTHAND_REQUIRES_CODE_OR_INDICATOR = "'#{%1$s}' needs a field of type 'code' or 'indicator', but '%1$s' is of type '%2$s'.";
@@ -76,6 +77,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String NAVIGATION_ENTRY_WITHOUT_HEADING = "No heading of the main section, or of a template it invokes, has the navigation address '%s' of this navigation entry, so it has no heading to link to.";
     private static final String LINES_NESTED_IN_INVOCATION = "A line that invokes a template cannot have nested lines.";
     private static final String RECURSIVE_TEMPLATE_INVOCATION = "Template '%s' invokes itself, directly or through other templates. A template cannot be invoked recursively.";
+    private static final String BETWEEN_BOUNDS_NOT_IN_ORDER = "The lower bound %s of BETWEEN is greater than its upper bound %s, so this semantic assertion can never be satisfied. Write the lower bound first.";
 
     private final ErrorCode errorCode;
 
@@ -296,5 +298,18 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException recursiveTemplateInvocation(Token invocation, String template) {
         return new InvalidUsageException(ErrorCode.RECURSIVE_TEMPLATE_INVOCATION, invocation, RECURSIVE_TEMPLATE_INVOCATION, template);
+    }
+
+    /**
+     * A semantic assertion written with BETWEEN whose first number, the lower bound, is greater
+     * than its second number, the upper bound, so that nothing can satisfy it.
+     *
+     * @param between the token of BETWEEN, where the error is placed
+     * @param lower the lower bound, as it is written
+     * @param upper the upper bound, as it is written
+     * @return the exception
+     */
+    public static InvalidUsageException betweenBoundsNotInOrder(Token between, String lower, String upper) {
+        return new InvalidUsageException(ErrorCode.BETWEEN_BOUNDS_NOT_IN_ORDER, between, BETWEEN_BOUNDS_NOT_IN_ORDER, lower, upper);
     }
 }

@@ -1791,8 +1791,8 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         + " Its condition must be 'indicator'.", exception.getMessage());
   }
 
-  // No check of its own is made for a behaviour: it is valid where the expression that it stands
-  // for is valid, and the error of that expression is reported at the behaviour.
+  // No check of the target is made for a behaviour: it is valid where the expression that it
+  // stands for is valid, and the error of that expression is reported at the behaviour.
 
   @Test
   void testBehaviour_ThatItsTargetDoesNotFit_GivesTheErrorOfItsExpression() {
@@ -1807,6 +1807,116 @@ class EfxRulesTranslatorV2Test extends EfxTestsBase {
         () -> translator.translateRules(rules));
     assertEquals("line 4:11 Type mismatch. Function 'string-length' cannot take 'date'."
         + " Its argument must be 'text'.", exception.getMessage());
+  }
+
+  // The one check of its own: the lower bound of BETWEEN is written first (TEDEFO-5394).
+
+  @Test
+  void testBehaviour_OccursBetweenWithReversedBounds_Throws() {
+    assertBoundsNotInOrder("    ASSERT OCCURS BETWEEN 5 AND 1", "BT-00-Repeatable-Text",
+        "line 4:18 The lower bound 5 of BETWEEN is greater than its upper bound 1, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+  }
+
+  @Test
+  void testBehaviour_LengthBetweenWithReversedBounds_Throws() {
+    assertBoundsNotInOrder("    ASSERT LENGTH BETWEEN 9 AND 2", "BT-00-Text",
+        "line 4:18 The lower bound 9 of BETWEEN is greater than its upper bound 2, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+  }
+
+  @Test
+  void testBehaviour_ValueBetweenWithReversedBounds_Throws() {
+    assertBoundsNotInOrder("    ASSERT VALUE BETWEEN 9999 AND 0", "BT-00-Number",
+        "line 4:17 The lower bound 9999 of BETWEEN is greater than its upper bound 0, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+  }
+
+  @Test
+  void testBehaviour_ValueBetweenWithReversedDecimalAndNegativeBounds_Throws() {
+    assertBoundsNotInOrder("    ASSERT VALUE BETWEEN 0.5 AND -5", "BT-00-Number",
+        "line 4:17 The lower bound 0.5 of BETWEEN is greater than its upper bound -5, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+    assertBoundsNotInOrder("    ASSERT VALUE BETWEEN -1 AND -2.5", "BT-00-Number",
+        "line 4:17 The lower bound -1 of BETWEEN is greater than its upper bound -2.5, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+  }
+
+  /**
+   * The bounds are compared as numbers, however they are written: without a digit before the
+   * decimal point, with a space after the minus sign, or with leading zeros.
+   */
+  @Test
+  void testBehaviour_BetweenBoundsAreComparedAsNumbers() {
+    assertBoundsNotInOrder("    ASSERT VALUE BETWEEN .5 AND - 5", "BT-00-Number",
+        "line 4:17 The lower bound .5 of BETWEEN is greater than its upper bound -5, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+    assertBoundsNotInOrder("    ASSERT OCCURS BETWEEN 010 AND 9", "BT-00-Repeatable-Text",
+        "line 4:18 The lower bound 010 of BETWEEN is greater than its upper bound 9, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+    assertTestOf("    ASSERT OCCURS BETWEEN 002 AND 2", "BT-00-Repeatable-Text",
+        "count(PathNode/RepeatableTextField/normalize-space(text())) &gt;= 002"
+            + " and count(PathNode/RepeatableTextField/normalize-space(text())) &lt;= 2");
+  }
+
+  /** The error of the bounds is reported also when the target does not fit the behaviour. */
+  @Test
+  void testBehaviour_BetweenWithReversedBounds_IsReportedBeforeTheErrorOfTheTarget() {
+    assertBoundsNotInOrder("    ASSERT LENGTH BETWEEN 9 AND 2", "BT-00-Number",
+        "line 4:18 The lower bound 9 of BETWEEN is greater than its upper bound 2, so this"
+            + " semantic assertion can never be satisfied. Write the lower bound first.");
+  }
+
+  private void assertBoundsNotInOrder(String clause, String target, String expectedMessage) {
+    InvalidUsageException exception = assertThrows(InvalidUsageException.class,
+        () -> translator.translateRules(ruleWith(clause, target)));
+    assertEquals(expectedMessage, exception.getMessage());
+    assertEquals(InvalidUsageException.ErrorCode.BETWEEN_BOUNDS_NOT_IN_ORDER,
+        exception.getErrorCode());
+  }
+
+  @Test
+  void testBehaviour_BetweenWithEqualBounds_IsAllowed() {
+    assertTestOf("    ASSERT OCCURS BETWEEN 2 AND 2", "BT-00-Repeatable-Text",
+        "count(PathNode/RepeatableTextField/normalize-space(text())) &gt;= 2"
+            + " and count(PathNode/RepeatableTextField/normalize-space(text())) &lt;= 2");
+    assertTestOf("    ASSERT LENGTH BETWEEN 3 AND 3", "BT-00-Text",
+        "string-length(PathNode/TextField/normalize-space(text())) &gt;= 3"
+            + " and string-length(PathNode/TextField/normalize-space(text())) &lt;= 3");
+    assertTestOf("    ASSERT VALUE BETWEEN -1.5 AND -1.5", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= -1.5 and PathNode/NumberField/number() &lt;= -1.5");
+    // The same number written in two ways
+    assertTestOf("    ASSERT VALUE BETWEEN 1.0 AND 1", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= 1.0 and PathNode/NumberField/number() &lt;= 1");
+  }
+
+  @Test
+  void testBehaviour_BetweenWithOrderedBounds_TranslatesAsBefore() {
+    assertTestOf("    ASSERT OCCURS BETWEEN 1 AND 5", "BT-00-Repeatable-Text",
+        "count(PathNode/RepeatableTextField/normalize-space(text())) &gt;= 1"
+            + " and count(PathNode/RepeatableTextField/normalize-space(text())) &lt;= 5");
+    assertTestOf("    ASSERT LENGTH BETWEEN 2 AND 9", "BT-00-Text",
+        "string-length(PathNode/TextField/normalize-space(text())) &gt;= 2"
+            + " and string-length(PathNode/TextField/normalize-space(text())) &lt;= 9");
+    assertTestOf("    ASSERT VALUE BETWEEN -5 AND 0.5", "BT-00-Number",
+        "PathNode/NumberField/number() &gt;= -5 and PathNode/NumberField/number() &lt;= 0.5");
+  }
+
+  private void assertTestOf(String clause, String target, String expectedTest) {
+    Map<String, String> output = translator.translateRules(ruleWith(clause, target));
+    assertTrue(output.get("static/validation-stage-1a-1.sch").contains(
+        "test=\"" + expectedTest + "\""), () -> "Expected the test " + expectedTest + " in "
+            + output.get("static/validation-stage-1a-1.sch"));
+  }
+
+  private String ruleWith(String clause, String target) {
+    return lines(
+        "---- STAGE 1a ----",
+        "",
+        "WITH ND-Root",
+        clause,
+        "    AS ERROR R-K7P-M2Q",
+        "    FOR " + target + " IN 1;");
   }
 
   //#endregion Behaviour tests
