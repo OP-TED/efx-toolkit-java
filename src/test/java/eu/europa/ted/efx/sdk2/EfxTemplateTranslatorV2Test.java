@@ -2855,6 +2855,398 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   // #endregion otherSections --------------------------------------------------
 
+  // #region headerSection -----------------------------------------------------
+
+  @Test
+  void testHeaderSection_EveryPart() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { text('h') }",
+            "let header02() -> { text('s') }",
+            "let header03() -> { text('t') }",
+            "let header04() -> { text('c') }",
+            "let header05() -> { text('mc') }",
+            "let header06() -> { text('mn') }",
+            "let header07() -> { text('ft') }",
+            "let header08() -> { text('nt') }",
+            "let header09() -> { text('pn') }",
+            "let header10() -> { text('oj') }",
+            "let header11() -> { text('pd') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { HEADING: for-each(/*).call(header01()), SUBHEADING: for-each(/*).call(header02()), "
+                + "TITLE: for-each(/*).call(header03()), COUNTRY: for-each(/*).call(header04()), "
+                + "MAIN_CLASSIFICATION: for-each(/*).call(header05()), MAIN_NATURE: for-each(/*).call(header06()), "
+                + "FORM_TYPE: for-each(/*).call(header07()), NOTICE_TYPE: for-each(/*).call(header08()), "
+                + "PUBLICATION_NUMBER: for-each(/*).call(header09()), OJ_ISSUE: for-each(/*).call(header10()), "
+                + "PUBLICATION_DATE: for-each(/*).call(header11()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;",
+            "--- HEADER ---",
+            "#HEADING DISPLAY h;",
+            "#SUBHEADING DISPLAY s;",
+            "#TITLE DISPLAY t;",
+            "#COUNTRY DISPLAY c;",
+            "#MAIN-CLASSIFICATION DISPLAY mc;",
+            "#MAIN-NATURE DISPLAY mn;",
+            "#FORM-TYPE DISPLAY ft;",
+            "#NOTICE-TYPE DISPLAY nt;",
+            "#PUBLICATION-NUMBER DISPLAY pn;",
+            "#OJ-ISSUE DISPLAY oj;",
+            "#PUBLICATION-DATE DISPLAY pd;")));
+  }
+
+  @Test
+  void testHeaderSection_SomeParts_InTheirOrder() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { text('t') }",
+            "let header02() -> { text('pd') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { TITLE: for-each(/*).call(header01()), PUBLICATION_DATE: for-each(/*).call(header02()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#TITLE DISPLAY t;", "#PUBLICATION-DATE DISPLAY pd;")));
+  }
+
+  @Test
+  void testHeaderSection_PartWithACaption() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { caption(text('Number'))text('123') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { PUBLICATION_NUMBER: for-each(/*).call(header01()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#PUBLICATION-NUMBER DISPLAY Number: 123;")));
+  }
+
+  @Test
+  void testHeaderSection_PartWithAlternatives() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { choose { when true(): caption(text('a'))text('b'), otherwise: text('c') } }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { TITLE: for-each(/*).call(header01()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#TITLE WHEN TRUE DISPLAY a: b OTHERWISE DISPLAY c;")));
+  }
+
+  @Test
+  void testHeaderSection_PartWithAContext() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { caption(label(concat('field', '|', 'name', '|', 'BT-00-Text')))eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { COUNTRY: for-each(/*/PathNode/TextField).call(header01()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#COUNTRY WITH BT-00-Text DISPLAY #{name}: $value;")));
+  }
+
+  @Test
+  void testHeaderSection_PartWithAVariable() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01(string:x) -> { eval($x) }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { TITLE: for-each(/*/PathNode/TextField).call(header01(string:x='q')); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#TITLE WITH BT-00-Text, text:$x = 'q' DISPLAY ${$x};")));
+  }
+
+  @Test
+  void testHeaderSection_HeadingAndSubheading_HaveNoCaption() {
+    // The heading and the subheading are heading templates: their colons are text.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { text('a: b: c') }",
+            "let header02() -> { text('a: b') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { HEADING: for-each(/*).call(header01()), SUBHEADING: for-each(/*).call(header02()); lines:  }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "#HEADING DISPLAY a: b: c;", "#SUBHEADING DISPLAY a: b;")));
+  }
+
+  @Test
+  void testHeaderSection_LinesAfterTheParts() {
+    // The lines after the parts are lines like those of the other sections, with their own nested
+    // lines.
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { text('t') }",
+            "let header02() -> { text('x')",
+            "for-each(.).call(header0201()) }",
+            "let header0201() -> { text('y') }",
+            "let header03() -> { caption(label(concat('auxiliary', '|', 'text', '|', 'z')))text('z') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { TITLE: for-each(/*).call(header01()); lines: for-each(/*).call(header02()), for-each(/*).call(header03()) }"),
+        translateTemplate(lines(
+            "DISPLAY Main;",
+            "--- HEADER ---",
+            "#TITLE DISPLAY t;",
+            "DISPLAY x;",
+            "\tDISPLAY y;",
+            "DISPLAY #{auxiliary|text|z}: z;")));
+  }
+
+  @Test
+  void testHeaderSection_OnlyLines() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let header01() -> { text('x') }",
+            "let header02() -> { #1: text('y')",
+            "for-each(.).call(header0201()) }",
+            "let header0201() -> { text('z') }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "",
+            "",
+            "HEADER:",
+            "header { ; lines: for-each(/*).call(header01()), for-each(/*).call(header02()) }"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- HEADER ---", "DISPLAY x;", "1 DISPLAY y;", "\tDISPLAY z;")));
+  }
+
+  @Test
+  void testHeaderSection_Empty_TranslatesAsWithout() {
+    assertEquals(translateTemplate("DISPLAY Main;"),
+        translateTemplate(lines("DISPLAY Main;", "--- HEADER ---")));
+  }
+
+  @Test
+  void testHeaderSection_BetweenTheOtherSections() {
+    final String expected = lines(
+        "TEMPLATES:",
+        "let body01() -> { text('Main') }",
+        "let summary01() -> { text('s') }",
+        "let nav01() -> { text('n') }",
+        "let header01() -> { text('t') }",
+        "MAIN:",
+        "for-each(/*).call(body01())",
+        "SUMMARY:",
+        "for-each(/*).call(summary01())",
+        "NAV:",
+        "for-each(/*).call(nav01())",
+        "HEADER:",
+        "header { TITLE: for-each(/*).call(header01()); lines:  }");
+    final String main = "1 DISPLAY Main;";
+    final String[] header = {"--- HEADER ---", "#TITLE DISPLAY t;"};
+    final String[] summary = {"--- SUMMARY ---", "DISPLAY s;"};
+    final String[] navigation = {"--- NAVIGATION ---", "1 DISPLAY n;"};
+    assertEquals(expected, translateTemplate(lines(main, header[0], header[1], summary[0],
+        summary[1], navigation[0], navigation[1])));
+    assertEquals(expected, translateTemplate(lines(main, navigation[0], navigation[1], header[0],
+        header[1], summary[0], summary[1])));
+    assertEquals(expected, translateTemplate(lines(main, summary[0], summary[1], navigation[0],
+        navigation[1], header[0], header[1])));
+  }
+
+  @Test
+  void testHeaderSection_LineNestedInAPart_IsAnError() {
+    assertInvalidUsage(InvalidUsageException.ErrorCode.LINES_NESTED_IN_HEADER_PART,
+        "line 4:0 A line that displays a part of the header, such as #TITLE, cannot have nested lines.",
+        lines("DISPLAY Main;", "--- HEADER ---", "#TITLE DISPLAY t;", "\tDISPLAY n;"));
+  }
+
+  @Test
+  void testHeaderSection_LineNestedInALineAfterTheParts() {
+    assertDoesNotThrow(() -> translateTemplate(lines(
+        "DISPLAY Main;", "--- HEADER ---", "#TITLE DISPLAY t;", "DISPLAY x;", "\tDISPLAY n;")));
+  }
+
+  @Test
+  void testHeaderSection_IndentedFirstLine_IsAnError() {
+    assertThrows(InvalidIndentationException.class, () -> translateTemplate(lines(
+        "DISPLAY Main;", "--- HEADER ---", "\tDISPLAY x;")));
+  }
+
+  @Test
+  void testHeaderSection_PartOutOfOrder_IsASyntaxError() {
+    assertHeaderSyntaxError(
+        "line 4:0 Syntax error: unexpected '#HEADING' in template; expected end of input. " + HEADER_PART_ORDER,
+        "#TITLE DISPLAY t;", "#HEADING DISPLAY h;");
+  }
+
+  @Test
+  void testHeaderSection_PartTwice_IsASyntaxError() {
+    assertHeaderSyntaxError(
+        "line 4:0 Syntax error: unexpected '#TITLE' in template; expected end of input. " + HEADER_PART_ORDER,
+        "#TITLE DISPLAY t;", "#TITLE DISPLAY t;");
+  }
+
+  @Test
+  void testHeaderSection_PartAfterALine_IsASyntaxError() {
+    assertHeaderSyntaxError(
+        "line 4:0 Syntax error: unexpected '#TITLE' in template; expected end of input. " + HEADER_PART_ORDER,
+        "DISPLAY x;", "#TITLE DISPLAY t;");
+  }
+
+  @Test
+  void testHeaderSection_PartInTheMainSection_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("DISPLAY a;", "#TITLE DISPLAY t;")));
+    assertEquals("line 2:0 Syntax error: unexpected '#TITLE' in template. A part of the header, such as #TITLE, can only be written in the header section.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_PartInTheSummarySection_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("DISPLAY a;", "--- SUMMARY ---", "#TITLE DISPLAY t;")));
+    assertEquals("line 3:0 Syntax error: unexpected '#TITLE' in summary section. A part of the header, such as #TITLE, can only be written in the header section.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_PartInTheNavigationSection_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("DISPLAY a;", "--- NAVIGATION ---", "#TITLE DISPLAY t;")));
+    assertEquals("line 3:0 Syntax error: unexpected '#TITLE' in navigation section. A part of the header, such as #TITLE, can only be written in the header section.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_IndentedPartInTheMainSection_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("DISPLAY a;", "\t#TITLE DISPLAY t;")));
+    assertEquals("line 2:0 Syntax error: unexpected '\\t#TITLE' in template line. A part of the header, such as #TITLE, can only be written in the header section.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_IndentedPartUnderALine_IsASyntaxError() {
+    assertHeaderSyntaxError(
+        "line 4:0 Syntax error: unexpected '\\t#TITLE' in template line. " + HEADER_PART_ORDER,
+        "DISPLAY x;", "\t#TITLE DISPLAY t;");
+  }
+
+  @Test
+  void testHeaderSection_HeadingThatInvokes_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("--- TEMPLATE t ---", "DISPLAY x;", "--- MAIN ---",
+            "DISPLAY Main;", "--- HEADER ---", "#HEADING WHEN TRUE INVOKE t();")));
+    assertEquals("line 6:19 Syntax error: unexpected 'INVOKE' in display clause; expected 'DISPLAY'.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_PartWithAnAlternativeThatInvokes_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("--- TEMPLATE t ---", "DISPLAY x;", "--- MAIN ---",
+            "DISPLAY Main;", "--- HEADER ---", "#TITLE WHEN TRUE INVOKE t();")));
+    assertEquals("line 6:17 Syntax error: unexpected 'INVOKE' in display clause; expected 'DISPLAY'.", exception.getMessage());
+  }
+
+  @Test
+  void testHeaderSection_SecondColonInAPart_IsASyntaxError() {
+    assertHeaderSyntaxError(
+        "line 3:19 Syntax error: unexpected ': ' in header section; expected ';'. Write a colon that is text as '\\:'.",
+        "#TITLE DISPLAY a: b: c;");
+  }
+
+  @Test
+  void testHeaderSection_PartThatInvokes_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines("--- TEMPLATE t ---", "DISPLAY x;", "--- MAIN ---",
+            "DISPLAY Main;", "--- HEADER ---", "#TITLE INVOKE t();")));
+    assertEquals("line 6:7 Syntax error: unexpected 'INVOKE' in header section; expected 'WITH' or 'WHEN' or 'DISPLAY'.", exception.getMessage());
+  }
+
+  // A main section that ends with lines nested two levels deep, the middle one declaring $x. The
+  // variables of its lines go out of scope at the next section.
+  private static final String[] MAIN_WITH_NESTED_VARIABLE = {
+      "DISPLAY a;", "\tWITH BT-00-Text, text:$x = 'q' DISPLAY ${$x};", "\t\tDISPLAY b;"};
+
+  private String translateAfterNestedVariable(final String... section) {
+    final List<String> template = new ArrayList<>(List.of(MAIN_WITH_NESTED_VARIABLE));
+    template.addAll(List.of(section));
+    return translateTemplate(lines(template.toArray(new String[0])));
+  }
+
+  private void assertNotDeclaredAfterNestedVariable(final String expected, final String... section) {
+    InvalidIdentifierException exception = assertThrows(InvalidIdentifierException.class,
+        () -> translateAfterNestedVariable(section));
+    assertEquals(expected, exception.getMessage());
+  }
+
+  @Test
+  void testVariableOfTheMainSection_CanBeDeclaredAgainInTheNextSection() {
+    final String line = "WITH BT-00-Text, text:$x = 'r' DISPLAY ${$x};";
+    assertDoesNotThrow(() -> translateAfterNestedVariable("--- SUMMARY ---", line));
+    assertDoesNotThrow(() -> translateAfterNestedVariable("--- NAVIGATION ---", line));
+    assertDoesNotThrow(() -> translateAfterNestedVariable("--- HEADER ---", line));
+    assertDoesNotThrow(() -> translateAfterNestedVariable("--- HEADER ---", "#TITLE " + line));
+  }
+
+  @Test
+  void testVariableOfTheMainSection_IsNotDeclaredInTheNextSection() {
+    assertNotDeclaredAfterNestedVariable("line 5:10 Variable '$x' is not declared.",
+        "--- SUMMARY ---", "DISPLAY ${$x};");
+    assertNotDeclaredAfterNestedVariable("line 5:10 Variable '$x' is not declared.",
+        "--- NAVIGATION ---", "DISPLAY ${$x};");
+    assertNotDeclaredAfterNestedVariable("line 5:10 Variable '$x' is not declared.",
+        "--- HEADER ---", "DISPLAY ${$x};");
+    assertNotDeclaredAfterNestedVariable("line 5:17 Variable '$x' is not declared.",
+        "--- HEADER ---", "#TITLE DISPLAY ${$x};");
+  }
+
+  private static final String HEADER_PART_ORDER = "The parts of the header are written in this order, each at most once, before any other line: #HEADING, #SUBHEADING, #TITLE, #COUNTRY, #MAIN-CLASSIFICATION, #MAIN-NATURE, #FORM-TYPE, #NOTICE-TYPE, #PUBLICATION-NUMBER, #OJ-ISSUE, #PUBLICATION-DATE.";
+
+  /**
+   * Checks the syntax error of a header section that holds the given lines, after a main section.
+   */
+  private void assertHeaderSyntaxError(final String expected, final String... headerLines) {
+    final List<String> template = new ArrayList<>(List.of("DISPLAY Main;", "--- HEADER ---"));
+    template.addAll(List.of(headerLines));
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate(lines(template.toArray(new String[0]))));
+    assertEquals(expected, exception.getMessage());
+  }
+
+  // #endregion headerSection --------------------------------------------------
+
   // #region Labels ------------------------------------------------------------
 
   @Test

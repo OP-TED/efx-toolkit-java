@@ -30,6 +30,7 @@ import eu.europa.ted.efx.model.expressions.scalar.NumericExpression;
 import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
 import eu.europa.ted.efx.model.templates.FragmentOutline;
+import eu.europa.ted.efx.model.templates.HeaderPart;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.templates.OutlineOffset;
 import eu.europa.ted.efx.model.types.EfxDataType;
@@ -206,19 +207,36 @@ public class MarkupGeneratorMock implements MarkupGenerator {
   }
 
   @Override
-  public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> summary, List<Markup> navigation, final List<Markup> fragments) {
+  public Markup composeOutputFile(List<Markup> globals, List<Markup> body, List<Markup> summary, List<Markup> navigation, final Markup header, final List<Markup> fragments) {
     var renderedGlobals = renderSection("GLOBALS", globals);
     var renderedTemplates = renderSection("TEMPLATES", fragments);
     var renderedMain = renderSection("MAIN", body);
     var renderedSummary = renderSection("SUMMARY", summary);
     var renderedNavigation = renderSection("NAV", navigation);
+    // The header comes last, so that a template without one is rendered as before.
+    var renderedHeader = header.isEmpty() ? "" : renderSection("HEADER", List.of(header));
 
-    return new Markup(String.format("%1$s%6$s%2$s%6$s%3$s%6$s%4$s%6$s%5$s",
+    return new Markup(String.format("%1$s%7$s%2$s%7$s%3$s%7$s%4$s%7$s%5$s%7$s%6$s",
         renderedGlobals,
         renderedTemplates,
         renderedMain,
         renderedSummary,
-        renderedNavigation, "\n").trim());
+        renderedNavigation,
+        renderedHeader, "\n").trim());
+  }
+
+  @Override
+  public Markup composeNoticeHeader(final Map<HeaderPart, Markup> parts, final List<Markup> lines,
+      final TranslatorContext translatorContext) {
+    // A template without a header has an empty one.
+    if (parts.isEmpty() && lines.isEmpty()) {
+      return Markup.empty();
+    }
+    return new Markup(String.format("header { %s; lines: %s }",
+        parts.entrySet().stream()
+            .map(part -> String.format("%s: %s", part.getKey(), part.getValue().script))
+            .collect(Collectors.joining(", ")),
+        lines.stream().map(line -> line.script).collect(Collectors.joining(", "))));
   }
 
   private String renderSection(String heading, List<Markup> markupList) {

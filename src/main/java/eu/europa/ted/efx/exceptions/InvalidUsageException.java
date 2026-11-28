@@ -52,6 +52,7 @@ public class InvalidUsageException extends EfxCompilationException {
         NAVIGATION_ENTRY_WITHOUT_HEADING,
         RECURSIVE_TEMPLATE_INVOCATION,
         LINES_NESTED_IN_INVOCATION,
+        LINES_NESTED_IN_HEADER_PART,
         BETWEEN_BOUNDS_NOT_IN_ORDER
     }
 
@@ -76,6 +77,7 @@ public class InvalidUsageException extends EfxCompilationException {
     private static final String HYPERLINK_IN_NAVIGATION_HEADING = "A heading of the navigation section cannot display a hyperlink block, because what it displays is the link to its heading in the main section.";
     private static final String NAVIGATION_ENTRY_WITHOUT_HEADING = "No heading of the main section, or of a template it invokes, has the navigation address '%s' of this navigation entry, so it has no heading to link to.";
     private static final String LINES_NESTED_IN_INVOCATION = "A line that invokes a template cannot have nested lines.";
+    private static final String LINES_NESTED_IN_HEADER_PART = "A line that displays a part of the header, such as #TITLE, cannot have nested lines.";
     private static final String RECURSIVE_TEMPLATE_INVOCATION = "Template '%s' invokes itself, directly or through other templates. A template cannot be invoked recursively.";
     private static final String BETWEEN_BOUNDS_NOT_IN_ORDER = "The lower bound %s of BETWEEN is greater than its upper bound %s, so this semantic assertion can never be satisfied. Write the lower bound first.";
 
@@ -236,6 +238,14 @@ public class InvalidUsageException extends EfxCompilationException {
      */
     public static InvalidUsageException linesNestedInInvocation(Token line) {
         return new InvalidUsageException(ErrorCode.LINES_NESTED_IN_INVOCATION, line, LINES_NESTED_IN_INVOCATION);
+    }
+
+    /**
+     * A line nested in a line that displays a part of the header: the part is what that line
+     * displays, and nothing else.
+     */
+    public static InvalidUsageException linesNestedInHeaderPart(Token line) {
+        return new InvalidUsageException(ErrorCode.LINES_NESTED_IN_HEADER_PART, line, LINES_NESTED_IN_HEADER_PART);
     }
 
     public static InvalidUsageException tagReserved(Token marker, String tag) {
