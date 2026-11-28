@@ -47,6 +47,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     private static final String END_OF_INPUT = "end of input";
     private static final String HEADING_INVOKES =
             "A heading cannot invoke a template. Invoke it from a line under the heading.";
+    private static final String COLON_AS_TEXT = "Write a colon that is text as '\\:'.";
     private static final String DISPLAY_AND_INVOKE_MIXED =
             "A line cannot both display content and invoke a template. Use DISPLAY in all its"
                     + " alternatives, or INVOKE in all of them.";
@@ -121,7 +122,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_mainSectionWithHeader, "main section"),
             Map.entry(RULE_mainSection, "main section"),
             Map.entry(RULE_mainSectionLines, "main section"),
-            Map.entry(RULE_template, "template content"),
+            Map.entry(RULE_normalTemplate, "template content"),
+            Map.entry(RULE_headingTemplate, "template content"),
             Map.entry(RULE_templateFragment, "template content"),
             Map.entry(RULE_indentation, "indentation"),
             Map.entry(RULE_lineBreak, "line break"),
@@ -132,13 +134,17 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_labelBlock, "label block"),
             Map.entry(RULE_textBlock, "text"),
             Map.entry(RULE_linkBlock, "link block"),
-            Map.entry(RULE_chooseDisplayTemplate, "choose block"),
+            Map.entry(RULE_chooseNormalTemplate, "choose block"),
+            Map.entry(RULE_chooseHeadingTemplate, "choose block"),
             Map.entry(RULE_chooseInvokeTemplate, "choose block"),
-            Map.entry(RULE_displayTemplate, "display clause"),
+            Map.entry(RULE_displayNormalTemplate, "display clause"),
+            Map.entry(RULE_displayHeadingTemplate, "display clause"),
             Map.entry(RULE_invokeTemplate, "invoke clause"),
-            Map.entry(RULE_whenDisplayTemplate, "when clause"),
+            Map.entry(RULE_whenNormalTemplate, "when clause"),
+            Map.entry(RULE_whenHeadingTemplate, "when clause"),
             Map.entry(RULE_whenInvokeTemplate, "when clause"),
-            Map.entry(RULE_otherwiseDisplayTemplate, "otherwise clause"),
+            Map.entry(RULE_otherwiseNormalTemplate, "otherwise clause"),
+            Map.entry(RULE_otherwiseHeadingTemplate, "otherwise clause"),
             Map.entry(RULE_otherwiseInvokeTemplate, "otherwise clause"),
 
             // Global declarations
@@ -377,11 +383,23 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         // Only where a template could be invoked or displayed: an INVOKE where the line or a display
         // clause is read, or a DISPLAY where an invoke clause is read. An error inside a condition,
         // an argument list or a template keeps its own message.
-        final boolean readingDisplay = context instanceof DisplayTemplateContext
-                || context instanceof OtherwiseDisplayTemplateContext
-                || context instanceof ChooseDisplayTemplateContext;
+        final boolean readingDisplay = context instanceof DisplayNormalTemplateContext
+                || context instanceof DisplayHeadingTemplateContext
+                || context instanceof OtherwiseNormalTemplateContext
+                || context instanceof OtherwiseHeadingTemplateContext
+                || context instanceof ChooseNormalTemplateContext
+                || context instanceof ChooseHeadingTemplateContext;
         if (invoke && marked && (readingDisplay || context instanceof TemplateLineContext)) {
             return " " + HEADING_INVOKES;
+        }
+        // A colon where a template is read, or right after one: a colon that is text must be escaped.
+        // A colon in a condition, a context declaration or an argument list keeps its own message.
+        final RuleContext last = context == line && line.getChildCount() > 0
+                && line.getChild(line.getChildCount() - 1) instanceof RuleContext
+                        ? (RuleContext) line.getChild(line.getChildCount() - 1)
+                        : null;
+        if (found.getType() == Colon && (readsTemplate(context) || readsTemplate(last))) {
+            return " " + COLON_AS_TEXT;
         }
         final boolean readingInvoke = context instanceof InvokeTemplateContext
                 || context instanceof OtherwiseInvokeTemplateContext
@@ -396,6 +414,24 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             return " " + DISPLAY_AND_INVOKE_MIXED;
         }
         return "";
+    }
+
+    /**
+     * @return whether the context is a normal or heading template, a fragment of one, or a clause that
+     *         displays one
+     */
+    private static boolean readsTemplate(final RuleContext context) {
+        return context instanceof NormalTemplateContext
+                || context instanceof HeadingTemplateContext
+                || context instanceof TemplateFragmentContext
+                || context instanceof DisplayNormalTemplateContext
+                || context instanceof DisplayHeadingTemplateContext
+                || context instanceof WhenNormalTemplateContext
+                || context instanceof WhenHeadingTemplateContext
+                || context instanceof OtherwiseNormalTemplateContext
+                || context instanceof OtherwiseHeadingTemplateContext
+                || context instanceof ChooseNormalTemplateContext
+                || context instanceof ChooseHeadingTemplateContext;
     }
 
     /**

@@ -140,7 +140,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET text:?f() = 'hi';",
-            "DISPLAY count: ${count(?f())};")));
+            "DISPLAY count\\: ${count(?f())};")));
   }
 
   @Test
@@ -242,7 +242,7 @@ class LateBoundTypeResolutionTest extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET text:$x = 'a';",
-            "DISPLAY count: ${count($x)};")));
+            "DISPLAY count\\: ${count($x)};")));
   }
 
   @Test

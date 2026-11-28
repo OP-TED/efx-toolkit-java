@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -41,6 +43,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.runtime.atn.ParseInfo;
 import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -552,7 +555,59 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   @Override
   public void exitTextBlock(TextBlockContext ctx) {
-    this.translation.stack().push(new TextContentTemplateFragment(ctx.getText()));
+    // In a word, a colon that is text is written \:.
+    final String text = ctx.FreeText() != null ? ctx.getText().replace("\\:", ":") : ctx.getText();
+    this.translation.stack().push(new TextContentTemplateFragment(text));
+  }
+
+  /**
+   * A normal template with a colon followed by a template fragment displays a caption, the template
+   * fragment before the colon, and then the template fragment after it; the colon and the whitespace
+   * around it are not displayed. A colon at the end of a normal template is displayed after it.
+   */
+  @Override
+  public void exitNormalTemplate(NormalTemplateContext ctx) {
+    if (ctx.content != null) {
+      final DisplayContentTemplate template = this.translation.stack().pop(DisplayContentTemplate.class);
+      template.setCaption(this.translation.stack().pop(DisplayContentTemplate.class));
+      this.translation.stack().push(template);
+    } else if (ctx.Colon() != null) {
+      final DisplayContentTemplate template = this.translation.stack().pop(DisplayContentTemplate.class);
+      template.appendText(endingColon(ctx.Colon()));
+      this.translation.stack().push(template);
+    }
+  }
+
+  /**
+   * A heading template displays its fragments and its colons in the order they are written.
+   */
+  @Override
+  public void exitHeadingTemplate(HeadingTemplateContext ctx) {
+    final Deque<DisplayContentTemplate> fragments = new ArrayDeque<>();
+    for (int i = 0; i < ctx.templateFragment().size(); i++) {
+      fragments.addFirst(this.translation.stack().pop(DisplayContentTemplate.class));
+    }
+    final DisplayContentTemplate template = new DisplayContentTemplate();
+    final int last = ctx.getChildCount() - 1;
+    for (int i = 0; i <= last; i++) {
+      final ParseTree child = ctx.getChild(i);
+      if (child instanceof TemplateFragmentContext) {
+        template.append(fragments.removeFirst());
+      } else if (i == last) {
+        template.appendText(endingColon((TerminalNode) child));
+      } else {
+        template.appendText(new TextContentTemplateFragment(child.getText()));
+      }
+    }
+    this.translation.stack().push(template);
+  }
+
+  /**
+   * A colon that ends a template, without the whitespace after it: whitespace at the end of a
+   * template is ignored.
+   */
+  private static TextContentTemplateFragment endingColon(final TerminalNode colon) {
+    return new TextContentTemplateFragment(colon.getText().stripTrailing());
   }
 
   @Override
@@ -1491,10 +1546,18 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
 
   @Override
-  public void exitWhenDisplayTemplate(WhenDisplayTemplateContext ctx) {
+  public void exitWhenNormalTemplate(WhenNormalTemplateContext ctx) {
+    this.setConditionOfDisplayedTemplate(ctx.expression());
+  }
+
+  @Override
+  public void exitWhenHeadingTemplate(WhenHeadingTemplateContext ctx) {
+    this.setConditionOfDisplayedTemplate(ctx.expression());
+  }
+
+  private void setConditionOfDisplayedTemplate(final ExpressionContext condition) {
     var template = this.translation.stack().pop(DisplayContentTemplate.class);
-    template.setCondition(
-        this.expressions.valueOf(ctx.expression(), WHEN).booleanAt(0));
+    template.setCondition(this.expressions.valueOf(condition, WHEN).booleanAt(0));
     this.translation.stack().push(template);
   }
 

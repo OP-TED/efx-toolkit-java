@@ -43,11 +43,11 @@ class FragmentKindAndLevelTest {
 
     @Override
     public Markup composeFragmentDefinition(String name, FragmentOutline outline,
-        List<Conditional> conditionals, Markup content, Markup children,
+        List<Conditional> conditionals, Markup caption, Markup content, Markup children,
         Set<Parameter> parameters, TranslatorContext translatorContext) {
       this.lines.put(name, outline.getKind() + " " + outline.getNestingLevel() + " "
           + outline.getHeadingLevel());
-      return super.composeFragmentDefinition(name, outline, conditionals, content, children,
+      return super.composeFragmentDefinition(name, outline, conditionals, caption, content, children,
           parameters, translatorContext);
     }
 
@@ -283,7 +283,7 @@ class FragmentKindAndLevelTest {
     final MarkupGeneratorMock generator = new MarkupGeneratorMock() {
       @Override
       public Markup composeFragmentDefinition(String name, FragmentOutline outline,
-          List<Conditional> conditionals, Markup content, Markup children,
+          List<Conditional> conditionals, Markup caption, Markup content, Markup children,
           Set<Parameter> parameters, TranslatorContext translatorContext) {
         received.add(outline.toString());
         received.add(conditionals.stream().map(conditional -> conditional.getMarkup().script)

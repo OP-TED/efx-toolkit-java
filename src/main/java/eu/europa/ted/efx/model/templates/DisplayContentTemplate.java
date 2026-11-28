@@ -30,6 +30,14 @@ public class DisplayContentTemplate extends ContentTemplate {
   // front of those already there.
   private final Deque<ContentTemplateFragment> fragments = new ArrayDeque<>();
 
+  // What the template displays before the colon that separates its caption, when it has one. The
+  // fragments are then what it displays after that colon.
+  private DisplayContentTemplate caption = null;
+
+  public void setCaption(final DisplayContentTemplate caption) {
+    this.caption = caption;
+  }
+
   /**
    * Puts a fragment in front of those already in the template.
    */
@@ -53,10 +61,39 @@ public class DisplayContentTemplate extends ContentTemplate {
   }
 
   /**
+   * Puts a text after the fragments already in the template. When the template ends with a text,
+   * the two are joined into one text, as {@link #prependText} joins them at the front.
+   */
+  public void appendText(final TextContentTemplateFragment text) {
+    final ContentTemplateFragment last = this.fragments.peekLast();
+    if (last instanceof TextContentTemplateFragment) {
+      this.fragments.removeLast();
+      this.fragments.addLast(((TextContentTemplateFragment) last).followedBy(text));
+    } else {
+      this.fragments.addLast(text);
+    }
+  }
+
+  /**
+   * Puts the fragments of another template after those already in this one. Two texts that meet
+   * are joined into one text.
+   */
+  public void append(final DisplayContentTemplate next) {
+    for (final ContentTemplateFragment fragment : next.fragments) {
+      if (fragment instanceof TextContentTemplateFragment) {
+        this.appendText((TextContentTemplateFragment) fragment);
+      } else {
+        this.fragments.addLast(fragment);
+      }
+    }
+  }
+
+  /**
    * @return whether the template displays a hyperlink block
    */
   public boolean displaysHyperlink() {
-    return this.fragments.stream().anyMatch(HyperlinkContentTemplateFragment.class::isInstance);
+    return this.fragments.stream().anyMatch(HyperlinkContentTemplateFragment.class::isInstance)
+        || (this.caption != null && this.caption.displaysHyperlink());
   }
 
   @Override
@@ -66,5 +103,10 @@ public class DisplayContentTemplate extends ContentTemplate {
       markup.append(fragment.render(markupGenerator, translatorContext).script);
     }
     return new Markup(markup.toString());
+  }
+
+  @Override
+  public Markup renderCaption(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
+    return this.caption == null ? Markup.empty() : this.caption.render(markupGenerator, translatorContext);
   }
 }

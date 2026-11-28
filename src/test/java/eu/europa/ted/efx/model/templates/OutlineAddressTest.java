@@ -39,11 +39,11 @@ class OutlineAddressTest {
 
     @Override
     public Markup composeFragmentDefinition(String name, FragmentOutline outline,
-        List<Conditional> conditionals, Markup content, Markup children,
+        List<Conditional> conditionals, Markup caption, Markup content, Markup children,
         Set<Parameter> parameters, TranslatorContext translatorContext) {
       final String navIdBody = outline.getNavIdBody();
       this.records.add(name + ": " + (navIdBody.isEmpty() ? "no address" : navIdBody));
-      return super.composeFragmentDefinition(name, outline, conditionals, content, children,
+      return super.composeFragmentDefinition(name, outline, conditionals, caption, content, children,
           parameters, translatorContext);
     }
 
