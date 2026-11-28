@@ -9,5 +9,6 @@ package eu.europa.ted.efx.interfaces;
 public enum TemplateSection {
   DEFAULT,
   SUMMARY,
-  NAVIGATION
+  NAVIGATION,
+  HEADER
 }

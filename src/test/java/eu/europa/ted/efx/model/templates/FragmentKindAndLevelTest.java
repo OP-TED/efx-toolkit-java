@@ -40,6 +40,14 @@ class FragmentKindAndLevelTest {
   private static final class RecordingMarkupGenerator extends MarkupGeneratorMock {
     final Map<String, String> lines = new LinkedHashMap<>();
     final List<String> calls = new ArrayList<>();
+    final List<String> headers = new ArrayList<>();
+
+    @Override
+    public Markup composeNoticeHeader(Map<HeaderPart, Markup> parts, List<Markup> lines,
+        TranslatorContext translatorContext) {
+      this.headers.add(parts.keySet() + " " + lines.size());
+      return super.composeNoticeHeader(parts, lines, translatorContext);
+    }
 
     @Override
     public Markup composeFragmentDefinition(String name, FragmentOutline outline,
@@ -313,6 +321,51 @@ class FragmentKindAndLevelTest {
     };
     generator.renderFragmentInvocation("legacy", Set.of(), TranslatorContext.DEFAULT);
     assertEquals(List.of(OutlineOffset.NONE), received);
+  }
+
+  @Test
+  @SuppressWarnings({"deprecation", "removal"})
+  void testTheDeprecatedOutputFileHasNoHeader() {
+    final List<Markup> received = new ArrayList<>();
+    final MarkupGeneratorMock generator = new MarkupGeneratorMock() {
+      @Override
+      public Markup composeOutputFile(List<Markup> globals, List<Markup> body,
+          List<Markup> summary, List<Markup> navigation, Markup header, List<Markup> fragments) {
+        received.add(header);
+        return super.composeOutputFile(globals, body, summary, navigation, header, fragments);
+      }
+    };
+    assertEquals("MAIN:\nm", generator.composeOutputFile(List.of(), List.of(new Markup("m")),
+        List.of(), List.of(), List.of()).script);
+    assertEquals(1, received.size());
+    assertEquals("", received.get(0).script);
+  }
+
+  @Test
+  void testEfx2_ALineThatDisplaysAPartOfTheHeaderIsANormalLineAtTheTop() throws Exception {
+    assertEquals(String.join("\n",
+        "body01: NORMAL 1 0",
+        "header01: NORMAL 1 0",
+        "header02: NORMAL 1 0",
+        "header0201: NORMAL 2 0"),
+        linesOf("eforms-sdk-2.0",
+            "DISPLAY a;",
+            "--- HEADER ---",
+            "#TITLE DISPLAY b;",
+            "DISPLAY c;",
+            "\tDISPLAY d;"));
+  }
+
+  @Test
+  void testEfx2_TheHeaderIsComposedOnce() throws Exception {
+    assertEquals(List.of("[TITLE, COUNTRY] 1"), translate("eforms-sdk-2.0",
+        "DISPLAY a;", "--- HEADER ---", "#TITLE DISPLAY b;", "#COUNTRY DISPLAY c;", "DISPLAY d;")
+        .headers);
+  }
+
+  @Test
+  void testEfx2_TheHeaderIsComposedWithoutAHeaderSection() throws Exception {
+    assertEquals(List.of("[] 0"), translate("eforms-sdk-2.0", "DISPLAY a;").headers);
   }
 
   @Test

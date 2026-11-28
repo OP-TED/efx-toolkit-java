@@ -16,9 +16,11 @@ package eu.europa.ted.efx.sdk2;
 import static eu.europa.ted.efx.sdk2.EfxParser.*;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.InputMismatchException;
@@ -51,6 +53,25 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     private static final String DISPLAY_AND_INVOKE_MIXED =
             "A line cannot both display content and invoke a template. Use DISPLAY in all its"
                     + " alternatives, or INVOKE in all of them.";
+    /** The tokens that name a part of the header, in the order of the header section. */
+    private static final List<Integer> HEADER_PARTS = List.of(HEADING, SUBHEADING, TITLE, COUNTRY,
+            MAIN_CLASSIFICATION, MAIN_NATURE, FORM_TYPE, NOTICE_TYPE, PUBLICATION_NUMBER, OJ_ISSUE,
+            PUBLICATION_DATE);
+
+    /** The order of the parts of the header, with their names as the lexer spells them. */
+    private static final String HEADER_PART_ORDER =
+            "The parts of the header are written in this order, each at most once, before any other"
+                    + " line: " + HEADER_PARTS.stream()
+                            .map(type -> EfxLexer.VOCABULARY.getLiteralName(type).replace("'", ""))
+                            .collect(Collectors.joining(", ")) + ".";
+    private static final String HEADER_PART_OUTSIDE_HEADER =
+            "A part of the header, such as #TITLE, can only be written in the header section.";
+
+    /** The tokens that start a section. */
+    private static final Set<Integer> SECTION_HEADERS = Set.of(MainSectionHeader,
+            SummarySectionHeader, NavigationSectionHeader, HeaderSectionHeader,
+            TemplateSectionHeaderStart);
+
     private static final String TAG_SPELLING = "A tag after '#' is written in lower-case letters, digits and hyphens, and starts with a letter, as in #notice-info.";
 
     private static final String CONTEXT_OVERRIDE_HINT =
@@ -129,6 +150,10 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(RULE_lineBreak, "line break"),
             Map.entry(RULE_summarySection, "summary section"),
             Map.entry(RULE_navigationSection, "navigation section"),
+            Map.entry(RULE_headerSection, "header section"),
+            Map.entry(RULE_headerSectionLines, "header section"),
+            Map.entry(RULE_headerHeadingTemplate, "header section"),
+            Map.entry(RULE_headerNormalTemplate, "header section"),
 
             // Template blocks
             Map.entry(RULE_labelBlock, "label block"),
@@ -199,6 +224,7 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             Map.entry(EfxLexer.MainSectionHeader, "a main section header"),
             Map.entry(EfxLexer.SummarySectionHeader, "a summary section header"),
             Map.entry(EfxLexer.NavigationSectionHeader, "a navigation section header"),
+            Map.entry(EfxLexer.HeaderSectionHeader, "a header section header"),
             Map.entry(EfxLexer.StageHeaderStart, "a stage header"),
             Map.entry(EfxLexer.StageIdentifier, "a stage identifier"),
             Map.entry(EfxLexer.StageHeaderEnd, "'---'"),
@@ -295,7 +321,10 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         final Token start = e.getStartToken();
         final String found = start.getType() == Token.EOF ? END_OF_INPUT
                 : quoted(recognizer.getTokenStream().getText(start, e.getOffendingToken()));
-        recognizer.notifyErrorListeners(start, message(found, recognizer, ""), e);
+        // The name of a part of the header can follow the indentation that starts the text.
+        final String hint = headerPartHintFor(recognizer, start);
+        recognizer.notifyErrorListeners(start, message(found, recognizer, "")
+                + (hint.isEmpty() ? headerPartHintFor(recognizer, e.getOffendingToken()) : hint), e);
     }
 
     @Override
@@ -329,6 +358,8 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
     }
 
     /**
+     * Gives a hint for the name of a part of the header where the parser cannot read it (see
+     * {@link #headerPartHintFor(Parser, Token)}).
      * Gives a hint for {@code ::} written right after an expression, as in {@code ND-1::BT-1}, which
      * is a context override that the grammar no longer takes. Elsewhere, as in a context declaration
      * or after the type of a parameter, {@code ::} is a mistake of another kind, so it gets no hint.
@@ -336,6 +367,10 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      * @return the hint, after a space, or nothing
      */
     private static String hintFor(final Parser recognizer, final Token found) {
+        final String headerPartHint = headerPartHintFor(recognizer, found);
+        if (!headerPartHint.isEmpty()) {
+            return headerPartHint;
+        }
         final String templateLineHint = templateLineHintFor(recognizer, found);
         if (!templateLineHint.isEmpty()) {
             return templateLineHint;
@@ -368,18 +403,22 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
      */
     private static String templateLineHintFor(final Parser recognizer, final Token found) {
         final RuleContext context = recognizer.getContext();
-        TemplateLineContext line = null;
+        // A template line, or the lines of a header section.
+        ParserRuleContext line = null;
         for (RuleContext above = context; above != null && line == null; above = above.parent) {
-            if (above instanceof TemplateLineContext) {
-                line = (TemplateLineContext) above;
+            if (above instanceof TemplateLineContext || above instanceof HeaderSectionLinesContext) {
+                line = (ParserRuleContext) above;
             }
         }
         if (line == null) {
             return "";
         }
         final boolean invoke = found.getType() == INVOKE;
-        final boolean marked = line.OutlineNumber() != null || line.AutoOutlineNumber() != null
-                || line.NoOutlineNumber() != null || line.OutlineTag() != null;
+        final boolean marked = line instanceof TemplateLineContext
+                && (((TemplateLineContext) line).OutlineNumber() != null
+                        || ((TemplateLineContext) line).AutoOutlineNumber() != null
+                        || ((TemplateLineContext) line).NoOutlineNumber() != null
+                        || ((TemplateLineContext) line).OutlineTag() != null);
         // Only where a template could be invoked or displayed: an INVOKE where the line or a display
         // clause is read, or a DISPLAY where an invoke clause is read. An error inside a condition,
         // an argument list or a template keeps its own message.
@@ -398,7 +437,9 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
                 && line.getChild(line.getChildCount() - 1) instanceof RuleContext
                         ? (RuleContext) line.getChild(line.getChildCount() - 1)
                         : null;
-        if (found.getType() == Colon && (readsTemplate(context) || readsTemplate(last))) {
+        if (found.getType() == Colon && (readsTemplate(context) || readsTemplate(last)
+                || last instanceof HeaderHeadingTemplateContext
+                || last instanceof HeaderNormalTemplateContext)) {
             return " " + COLON_AS_TEXT;
         }
         final boolean readingInvoke = context instanceof InvokeTemplateContext
@@ -410,7 +451,9 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
         final Token previous = before >= 0 ? recognizer.getTokenStream().get(before) : null;
         final boolean display = found.getType() == DISPLAY || previous != null
                 && (previous.getType() == DISPLAY || previous.getType() == OTHERWISE && !invoke);
-        if (invoke && readingDisplay || display && readingInvoke) {
+        // A line that displays a part of the header cannot invoke a template at all.
+        if (line instanceof TemplateLineContext
+                && (invoke && readingDisplay || display && readingInvoke)) {
             return " " + DISPLAY_AND_INVOKE_MIXED;
         }
         return "";
@@ -463,6 +506,34 @@ public class EfxErrorStrategy extends DefaultErrorStrategy {
             }
         }
         return "";
+    }
+
+    /**
+     * Gives a hint for the name of a part of the header where the parser cannot read it: in the
+     * header section, the order of the parts; elsewhere, that a part belongs to that section.
+     *
+     * @return the hint, after a space, or nothing when the token is not the name of a part
+     */
+    private static String headerPartHintFor(final Parser recognizer, final Token found) {
+        if (!HEADER_PARTS.contains(found.getType())) {
+            return "";
+        }
+        return " " + (inHeaderSection(recognizer.getTokenStream(), found.getTokenIndex())
+                ? HEADER_PART_ORDER
+                : HEADER_PART_OUTSIDE_HEADER);
+    }
+
+    /**
+     * @return whether the token at the given index comes after the header of a header section, and
+     *         no other section has started since
+     */
+    private static boolean inHeaderSection(final TokenStream tokens, final int index) {
+        for (int i = index - 1; i >= 0; i--) {
+            if (SECTION_HEADERS.contains(tokens.get(i).getType())) {
+                return tokens.get(i).getType() == HeaderSectionHeader;
+            }
+        }
+        return false;
     }
 
     /**

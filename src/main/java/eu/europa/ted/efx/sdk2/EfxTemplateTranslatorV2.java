@@ -98,6 +98,7 @@ import eu.europa.ted.efx.model.templates.FormatOptions.DefaultFormatOptions;
 import eu.europa.ted.efx.model.templates.FormatOptions.FormatStyle;
 import eu.europa.ted.efx.model.templates.FormatOptions.NoFormattingOptions;
 import eu.europa.ted.efx.model.templates.FormatOptions.NumberFormatOptions;
+import eu.europa.ted.efx.model.templates.HeaderPart;
 import eu.europa.ted.efx.model.templates.HyperlinkContentTemplateFragment;
 import eu.europa.ted.efx.model.templates.InvokeContentTemplate;
 import eu.europa.ted.efx.model.templates.LabelContentTemplateFragment;
@@ -1642,9 +1643,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   
   @Override
   public void enterSummarySection(SummarySectionContext ctx) {
-    while (!this.blockStack.isEmpty()) {
-      this.blockStack.pop();
-    }
+    this.closeOpenBlocks();
     this.translatorContext.setCurrentSection(TemplateSection.SUMMARY);
   }
 
@@ -1656,9 +1655,7 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
 
   @Override
   public void enterNavigationSection(NavigationSectionContext ctx) {
-    while (!this.blockStack.isEmpty()) {
-      this.blockStack.pop();
-    }
+    this.closeOpenBlocks();
     this.translatorContext.setCurrentSection(TemplateSection.NAVIGATION);
   }
 
@@ -1666,6 +1663,95 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
   public void exitNavigationSection(NavigationSectionContext ctx) {
       this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
   }
+
+  @Override
+  public void enterHeaderSection(HeaderSectionContext ctx) {
+    this.closeOpenBlocks();
+    this.translatorContext.setCurrentSection(TemplateSection.HEADER);
+  }
+
+  @Override
+  public void exitHeaderSection(HeaderSectionContext ctx) {
+    this.translatorContext.setCurrentSection(TemplateSection.DEFAULT);
+  }
+
+  // #region Header parts  ----------------------------------------------------
+
+  // A line that displays a part of the header is translated as a line at the top of the header
+  // section that has no outline number. It can have no nested lines.
+
+  /** The part of the header that each of their names names. */
+  private static final Map<Integer, HeaderPart> HEADER_PARTS = Map.ofEntries(
+      Map.entry(EfxLexer.HEADING, HeaderPart.HEADING),
+      Map.entry(EfxLexer.SUBHEADING, HeaderPart.SUBHEADING),
+      Map.entry(EfxLexer.TITLE, HeaderPart.TITLE),
+      Map.entry(EfxLexer.COUNTRY, HeaderPart.COUNTRY),
+      Map.entry(EfxLexer.MAIN_CLASSIFICATION, HeaderPart.MAIN_CLASSIFICATION),
+      Map.entry(EfxLexer.MAIN_NATURE, HeaderPart.MAIN_NATURE),
+      Map.entry(EfxLexer.FORM_TYPE, HeaderPart.FORM_TYPE),
+      Map.entry(EfxLexer.NOTICE_TYPE, HeaderPart.NOTICE_TYPE),
+      Map.entry(EfxLexer.PUBLICATION_NUMBER, HeaderPart.PUBLICATION_NUMBER),
+      Map.entry(EfxLexer.OJ_ISSUE, HeaderPart.OJ_ISSUE),
+      Map.entry(EfxLexer.PUBLICATION_DATE, HeaderPart.PUBLICATION_DATE));
+
+  @Override
+  public void enterHeaderHeadingTemplate(HeaderHeadingTemplateContext ctx) {
+    this.enterHeaderPart(ctx, ctx.contextDeclarationBlock());
+  }
+
+  @Override
+  public void exitHeaderHeadingTemplate(HeaderHeadingTemplateContext ctx) {
+    this.exitHeaderPart(ctx);
+  }
+
+  @Override
+  public void enterHeaderNormalTemplate(HeaderNormalTemplateContext ctx) {
+    this.enterHeaderPart(ctx, ctx.contextDeclarationBlock());
+  }
+
+  @Override
+  public void exitHeaderNormalTemplate(HeaderNormalTemplateContext ctx) {
+    this.exitHeaderPart(ctx);
+  }
+
+  /**
+   * Opens a line that displays a part of the header, as a line at the top of the header section.
+   *
+   * @param ctx the template of the line
+   * @param contextDeclaration the context the line declares after WITH, or {@code null}
+   */
+  private void enterHeaderPart(final ParserRuleContext ctx,
+      final ContextDeclarationBlockContext contextDeclaration) {
+    this.enterTemplateLine(ctx, 0);
+    this.blockAbove = this.blockStack.blockAtLevel(-1);
+    if (contextDeclaration == null) {
+      this.declareRootLineContext();
+      this.translation.stack().push(new Variables());
+    }
+  }
+
+  /**
+   * Adds a line that displays a part of the header to the header section, as a line at its top.
+   * The part is the one named just before the template of the line.
+   *
+   * @param ctx the template of the line
+   */
+  private void exitHeaderPart(final ParserRuleContext ctx) {
+    final ParserRuleContext lines = ctx.getParent();
+    final Token name = ((TerminalNode) lines.getChild(lines.children.indexOf(ctx) - 1)).getSymbol();
+    final Context lineContext = this.translation.efxContext().pop();
+    final LinkedList<ContentTemplate> contentTemplates = new LinkedList<>();
+    while (this.translation.stack().peek() instanceof ContentTemplate) {
+      contentTemplates.addFirst(this.translation.stack().pop(ContentTemplate.class));
+    }
+    final Variables variables = this.translation.stack().pop(Variables.class);
+    assert this.translation.stack().empty() : "Stack should be empty at this point.";
+    this.blockStack.clear();
+    this.blockStack.push(this.viewTemplate.addHeaderPart(HEADER_PARTS.get(name.getType()),
+        lineContext, variables, contentTemplates));
+  }
+
+  // #endregion Header parts  -------------------------------------------------
 
   // #region Template lines  --------------------------------------------------
 
@@ -1770,6 +1856,9 @@ public class EfxTemplateTranslatorV2 extends TranslatorListener
     } else if (indentChange == 1) {
       if (this.blockStack.peek().isInvocation()) {
         throw InvalidUsageException.linesNestedInInvocation(ctx.getStart());
+      }
+      if (this.viewTemplate.displaysHeaderPart(this.blockStack.peek())) {
+        throw InvalidUsageException.linesNestedInHeaderPart(ctx.getStart());
       }
       this.blockStack.pushChild(outlineNumber, marker, lineContext, variables,
           contentTemplates);

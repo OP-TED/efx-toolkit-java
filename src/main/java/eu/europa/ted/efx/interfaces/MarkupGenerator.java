@@ -27,6 +27,7 @@ import eu.europa.ted.efx.model.expressions.scalar.StringExpression;
 import eu.europa.ted.efx.model.templates.Conditional;
 import eu.europa.ted.efx.model.templates.FragmentKind;
 import eu.europa.ted.efx.model.templates.FragmentOutline;
+import eu.europa.ted.efx.model.templates.HeaderPart;
 import eu.europa.ted.efx.model.templates.Markup;
 import eu.europa.ted.efx.model.templates.OutlineAddress;
 import eu.europa.ted.efx.model.templates.OutlineOffset;
@@ -55,10 +56,58 @@ public interface MarkupGenerator {
      * @param mainSection   the main section (body) of the template.
      * @param summarySection the summary section of the template.
      * @param navigationSection the navigation section of the template.
+     * @param header    the header of the notice, as
+     *                  {@link #composeNoticeHeader(Map, List, TranslatorContext)} composes it.
      * @param fragments the fragments to be included in the template file.
      * @return          the full content of the target template file.
      */
-    Markup composeOutputFile(List<Markup> globals, final List<Markup> mainSection, final List<Markup> summarySection, final List<Markup> navigationSection, final List<Markup> fragments);
+    Markup composeOutputFile(List<Markup> globals, final List<Markup> mainSection, final List<Markup> summarySection, final List<Markup> navigationSection, final Markup header, final List<Markup> fragments);
+
+    /**
+     * Given a body (main content) and a set of fragments, this method returns the
+     * full content of the
+     * target template file.
+     * 
+     * @deprecated Use {@link #composeOutputFile(List, List, List, List, Markup, List)} instead,
+     *             which also receives the header of the notice. This method will be removed
+     *             before version 2.0.0 is released. The default implementation calls the new
+     *             method with an empty header. The EFX-2 template translator does not call this
+     *             method; an EFX-1 template still reaches the new method through it.
+     *
+     * @param globals   the global variables and functions to be included in the
+     *                  template file.
+     * @param mainSection   the main section (body) of the template.
+     * @param summarySection the summary section of the template.
+     * @param navigationSection the navigation section of the template.
+     * @param fragments the fragments to be included in the template file.
+     * @return          the full content of the target template file.
+     */
+    @Deprecated(since = "2.0.0-alpha.10", forRemoval = true)
+    default Markup composeOutputFile(List<Markup> globals, final List<Markup> mainSection, final List<Markup> summarySection, final List<Markup> navigationSection, final List<Markup> fragments) {
+        return this.composeOutputFile(globals, mainSection, summarySection, navigationSection, Markup.empty(), fragments);
+    }
+
+    /**
+     * Composes the header of the notice from the lines of the header section of the template. The
+     * EfxTemplateTranslator calls this method once for each EFX-2 template, also when the template
+     * has no header section, and passes its result to
+     * {@link #composeOutputFile(List, List, List, List, Markup, List)}. An EFX-1 template has an
+     * empty header.
+     *
+     * <p>Each line of the header section is a fragment, defined with
+     * {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Markup, Set, TranslatorContext)}
+     * like the lines of the other sections. A line that displays a part of the header has no nested
+     * lines.
+     *
+     * @param parts             for each part that the template displays, the call of the line that
+     *                          displays it, in the order of {@link HeaderPart}; empty when the
+     *                          template displays none.
+     * @param lines             the calls of the other lines at the top of the header section, in
+     *                          the order they are written; empty when there are none.
+     * @param translatorContext additional context information provided by the template translator.
+     * @return                  the code that displays the header of the notice.
+     */
+    Markup composeNoticeHeader(final Map<HeaderPart, Markup> parts, final List<Markup> lines, final TranslatorContext translatorContext);
 
     /**
      * Given a body (main content) and a set of fragments, this method returns the

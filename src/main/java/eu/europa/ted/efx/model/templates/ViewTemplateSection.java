@@ -21,7 +21,7 @@ import eu.europa.ted.efx.interfaces.TemplateSection;
 import eu.europa.ted.efx.interfaces.TranslatorContext;
 
 /**
- * A section of a view template: the body, the summary or the navigation section.
+ * A section of a view template: the body, the summary, the navigation or the header section.
  */
 public class ViewTemplateSection {
 
@@ -33,7 +33,7 @@ public class ViewTemplateSection {
 
   /**
    * @param templateSection Which section this is.
-   * @param name The name of the section's root block: body, summary or nav.
+   * @param name The name of the section's root block: body, summary, nav or header.
    */
   public ViewTemplateSection(final TemplateSection templateSection, final String name) {
     this.templateSection = templateSection;
