@@ -305,7 +305,7 @@ public interface MarkupGenerator {
      * returns the code that encapsulates it in the target template.
      *
      * @deprecated This method is deprecated and will be removed in future versions.
-     *             Use {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Set,
+     *             Use {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Markup, Set,
      *             TranslatorContext)}
      *             instead. We are keeping the method temporarily to prevent
      *             build errors. This method is being deprecated as of version 2.0.0-alpha.6 and
@@ -323,7 +323,7 @@ public interface MarkupGenerator {
     default Markup composeFragmentDefinition(final String name, String number, Markup content,
             Set<String> parameters) {
         throw new UnsupportedOperationException(
-                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, FragmentOutline, List<Conditional>, Markup, Markup, Set<Parameter>, TranslatorContext) instead.");
+                "This method is deprecated and will be removed in future versions. Use composeFragmentDefinition(String, FragmentOutline, List<Conditional>, Markup, Markup, Markup, Set<Parameter>, TranslatorContext) instead.");
     }    
     
     /**
@@ -331,7 +331,7 @@ public interface MarkupGenerator {
      * returns the code that encapsulates it in the target template.
      *
      * @deprecated Use {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup,
-     *             Markup, Set, TranslatorContext)} instead, which also receives the outline of the
+     *             Markup, Markup, Set, TranslatorContext)} instead, which also receives the outline of the
      *             fragment: what it is, its nesting level, its heading level and the body of its
      *             navigation id, and receives the alternatives in their order. This method will be
      *             removed before version 2.0.0 is released. The default implementation calls the
@@ -352,7 +352,7 @@ public interface MarkupGenerator {
     default Markup composeFragmentDefinition(final String name, final String number, final Set<Conditional> conditionals, final Markup content, final Markup children,
             final Set<Parameter> parameters, final TranslatorContext translatorContext) {
         return this.composeFragmentDefinition(name, FragmentOutline.normalLine(number, 1),
-                conditionals == null ? null : new ArrayList<>(conditionals), content, children,
+                conditionals == null ? null : new ArrayList<>(conditionals), Markup.empty(), content, children,
                 parameters, translatorContext);
     }
 
@@ -391,15 +391,21 @@ public interface MarkupGenerator {
      *                          holds only the calls of its top lines, which take the place of the
      *                          line that invokes the template.
      * @param conditionals      the WHEN alternatives of the fragment, in the order they are
-     *                          written: the first one whose condition is true is displayed.
-     * @param content           the content of the fragment.
+     *                          written: the first one whose condition is true is displayed. Each
+     *                          has its own caption (see {@link Conditional#getCaption()}).
+     * @param caption           the caption of the content: what its template displays before the
+     *                          colon that separates it from the content. It is empty when the
+     *                          template has no caption, and always in EFX-1. The markup generator decides how to display a
+     *                          caption and the content after it.
+     * @param content           the content of the fragment: when it has a caption, what its
+     *                          template displays after that colon.
      * @param children          the children of the fragment.
      * @param parameters        the parameters of the fragment.
      * @param translatorContext additional context information provided by the template translator.
      * @return                  the code that encapsulates the fragment in the target template.
      */
     Markup composeFragmentDefinition(final String name, final FragmentOutline outline,
-            final List<Conditional> conditionals, final Markup content, final Markup children,
+            final List<Conditional> conditionals, final Markup caption, final Markup content, final Markup children,
             final Set<Parameter> parameters, final TranslatorContext translatorContext);
 
     @Deprecated(since = "2.0.0-alpha.6", forRemoval = true)
@@ -449,7 +455,7 @@ public interface MarkupGenerator {
      * {@link #renderContextLoop(PathExpression, Markup, Set)}.
      *
      * <p>The call also gives what it puts above the lines of the fragment it invokes (see
-     * {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Set, TranslatorContext)}
+     * {@link #composeFragmentDefinition(String, FragmentOutline, List, Markup, Markup, Markup, Set, TranslatorContext)}
      * for how it makes the nesting level, the heading level and the navigation id of a line where it
      * is displayed).
      *

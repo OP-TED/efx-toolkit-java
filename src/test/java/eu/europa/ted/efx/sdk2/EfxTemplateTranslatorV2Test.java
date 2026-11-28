@@ -94,7 +94,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "--- TEMPLATE some-template ---", "PARAMETERS text:$content;", "DISPLAY Content: ${$content};",
+            "--- TEMPLATE some-template ---", "PARAMETERS text:$content;", "DISPLAY Content\\: ${$content};",
             "--- MAIN ---", "INVOKE some-template('test');")));
   }
 
@@ -109,7 +109,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "--- TEMPLATE other-template ---", "PARAMETERS text:$value;", "DISPLAY Value: ${$value};",
+            "--- TEMPLATE other-template ---", "PARAMETERS text:$value;", "DISPLAY Value\\: ${$value};",
             "--- TEMPLATE invoke-template ---", "PARAMETERS text:$param;", "INVOKE other-template($param);",
             "--- MAIN ---", "INVOKE invoke-template('test');")));
   }
@@ -125,9 +125,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "--- TEMPLATE conditional-template ---", "PARAMETERS indicator:$condition, text:$value;",
-            "WHEN $condition DISPLAY Condition met: ${$value}",
+            "WHEN $condition DISPLAY Condition met\\: ${$value}",
             "WHEN $condition == FALSE DISPLAY Condition not met",
-            "OTHERWISE DISPLAY Unknown condition: ${$condition};",
+            "OTHERWISE DISPLAY Unknown condition\\: ${$condition};",
             "--- MAIN ---", "INVOKE conditional-template(TRUE, 'test');")));
   }
 
@@ -187,7 +187,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "--- TEMPLATE complex-template ---", "PARAMETERS text:$first, number:$second, indicator:$third;", "DISPLAY Values: ${$first}, ${$second}, ${$third};",
+            "--- TEMPLATE complex-template ---", "PARAMETERS text:$first, number:$second, indicator:$third;", "DISPLAY Values\\: ${$first}, ${$second}, ${$third};",
             "--- MAIN ---", "INVOKE complex-template('test', 42, TRUE);")));
   }
 
@@ -201,7 +201,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "--- TEMPLATE all-types-template ---", "PARAMETERS text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur;", "DISPLAY Params: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
+            "--- TEMPLATE all-types-template ---", "PARAMETERS text:$str, number:$num, indicator:$bool, date:$dt, time:$tm, duration:$dur;", "DISPLAY Params\\: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};",
             "--- MAIN ---", "INVOKE all-types-template('text', 123, TRUE, date('2023-01-01'), time('12:00:00'), day-time-duration('P1D'));")));
   }
 
@@ -215,7 +215,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
-            "--- TEMPLATE template-with-dashes ---", "PARAMETERS text:$param;", "DISPLAY Template: ${$param};",
+            "--- TEMPLATE template-with-dashes ---", "PARAMETERS text:$param;", "DISPLAY Template\\: ${$param};",
             "--- MAIN ---", "INVOKE template-with-dashes('test');")));
   }
 
@@ -508,6 +508,209 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
 
   // #endregion Template sections with several lines ---------------------------
 
+  // #region normalTemplate and headingTemplate ---------------------------------
+
+  @Test
+  void testNormalTemplate_Caption() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { caption(text('Name'))eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Name: ${BT-00-Text};"));
+  }
+
+  @Test
+  void testNormalTemplate_CaptionWithoutWhitespace() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { caption(text('Name'))eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Name:${BT-00-Text};"));
+  }
+
+  @Test
+  void testNormalTemplate_CaptionWithWhitespaceBeforeTheColon() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { caption(text('Name'))eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Name : ${BT-00-Text};"));
+  }
+
+  @Test
+  void testNormalTemplate_ColonAtTheEnd_IsDisplayed() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Title:') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Title:;"));
+  }
+
+  @Test
+  void testNormalTemplate_ColonAtTheEndAfterWhitespace_IsDisplayedWithoutTheWhitespaceAfterIt() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Title :') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Title : ;"));
+  }
+
+  @Test
+  void testNormalTemplate_EscapedColonInTheContent() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { caption(text('Time'))text('10:30') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Time: 10\\:30;"));
+  }
+
+  @Test
+  void testNormalTemplate_EscapedColonInAWord() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('See https://example.com') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY See https\\://example.com;"));
+  }
+
+  @Test
+  void testNormalTemplate_EscapedColonBeforeALink_IsPartOfTheLinkText() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { hyperlink(text('Read:'), 'u') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text DISPLAY Read\\:@{'u'};"));
+  }
+
+  @Test
+  void testHeadingTemplate_Colon_IsText() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Name: ')eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("1 WITH BT-00-Text DISPLAY Name: ${BT-00-Text};"));
+  }
+
+  @Test
+  void testHeadingTemplate_ColonAtTheEnd_IsText() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Title:') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("1 WITH BT-00-Text DISPLAY Title:;"));
+  }
+
+  @Test
+  void testHeadingTemplate_SeveralColons_AreText() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Time: 10:30') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("1 WITH BT-00-Text DISPLAY Time: 10:30;"));
+  }
+
+  @Test
+  void testHeadingTemplate_EscapedColon_IsText() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('a:b') }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("1 WITH BT-00-Text DISPLAY a\\:b;"));
+  }
+
+  @Test
+  void testNormalTemplate_CaptionAndEndingColonInAlternatives() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { choose { when 1 = 1: caption(text('One'))eval(for $__item in 1 return format-number($__item, '# ##0,#########')), when 1 = 2: text('Two:'), otherwise: text('Three') } }",
+            "MAIN:",
+            "for-each(/*/PathNode/TextField).call(body01())"),
+        translateTemplate("WITH BT-00-Text WHEN 1 == 1 DISPLAY One: ${1} WHEN 1 == 2 DISPLAY Two: OTHERWISE DISPLAY Three;"));
+  }
+
+  @Test
+  void testNormalTemplate_CaptionInATemplateSection() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let with-caption(string:content) -> { caption(text('Content'))eval($content) }",
+            "let body01() -> { call(with-caption(string:content='test')) }",
+            "MAIN:",
+            "for-each(/*).call(body01())"),
+        translateTemplate(lines(
+            "--- TEMPLATE with-caption ---", "PARAMETERS text:$content;", "DISPLAY Content: ${$content};", "--- MAIN ---", "INVOKE with-caption('test');")));
+  }
+
+  @Test
+  void testNormalTemplate_CaptionInTheSummarySection() {
+    assertEquals(
+        lines(
+            "TEMPLATES:",
+            "let body01() -> { text('Main') }",
+            "let summary01() -> { caption(text('Summary'))eval(./normalize-space(text())) }",
+            "MAIN:",
+            "for-each(/*).call(body01())",
+            "SUMMARY:",
+            "for-each(/*/PathNode/TextField).call(summary01())"),
+        translateTemplate(lines(
+            "DISPLAY Main;", "--- SUMMARY ---", "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};")));
+  }
+
+  @Test
+  void testNormalTemplate_SecondColon_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate("WITH BT-00-Text DISPLAY a: b: c;"));
+    assertEquals("line 1:28 Syntax error: unexpected ': ' in template line; expected ';'. Write a colon that is text as '\\:'.", exception.getMessage());
+  }
+
+  @Test
+  void testNormalTemplate_ColonAtTheStart_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate("WITH BT-00-Text DISPLAY : x;"));
+    assertEquals("line 1:24 Syntax error: unexpected ': ' in template content. Write a colon that is text as '\\:'.", exception.getMessage());
+  }
+
+  @Test
+  void testHeadingTemplate_ColonAtTheStart_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate("1 WITH BT-00-Text DISPLAY : x;"));
+    assertEquals("line 1:26 Syntax error: unexpected ': ' in template content. Write a colon that is text as '\\:'.", exception.getMessage());
+  }
+
+  @Test
+  void testNormalTemplate_ColonBeforeALink_IsASyntaxError() {
+    ParseCancellationException exception = assertThrows(ParseCancellationException.class,
+        () -> translateTemplate("WITH BT-00-Text DISPLAY Read:@{'u'};"));
+    assertEquals("line 1:29 Syntax error: unexpected '@{' in template line; expected ';'.", exception.getMessage());
+  }
+
+  // #endregion normalTemplate and headingTemplate ------------------------------
+
   // #region templateFragment --------------------------------------------------
 
   @Test
@@ -518,7 +721,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Value is: ')eval(./normalize-space(text())) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
-        translateTemplate("WITH BT-00-Text DISPLAY Value is: ${BT-00-Text};"));
+        translateTemplate("WITH BT-00-Text DISPLAY Value is\\: ${BT-00-Text};"));
   }
 
   @Test
@@ -529,7 +732,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Field: ')label(concat('field', '|', 'name', '|', 'BT-00-Text')) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
-        translateTemplate("WITH BT-00-Text DISPLAY Field: #{field|name|BT-00-Text};"));
+        translateTemplate("WITH BT-00-Text DISPLAY Field\\: #{field|name|BT-00-Text};"));
   }
 
   @Test
@@ -540,7 +743,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Label: ')label(concat('field', '|', 'name', '|', 'BT-00-Text'))text(' Value: ')eval(./normalize-space(text()))text(' End') }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01())"),
-        translateTemplate("WITH BT-00-Text DISPLAY Label: #{field|name|BT-00-Text} Value: ${BT-00-Text} End;"));
+        translateTemplate("WITH BT-00-Text DISPLAY Label\\: #{field|name|BT-00-Text} Value\\: ${BT-00-Text} End;"));
   }
 
   @Test
@@ -608,7 +811,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Text with special chars: &#60;&#62;&#38;&#34;&#39;') }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("DISPLAY Text with special chars: <>&#38;\"';"));
+        translateTemplate("DISPLAY Text with special chars\\: <>&#38;\"';"));
   }
 
   @Test
@@ -641,7 +844,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Text with quotes: &#34;&#39; and backslash: \\\\') }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("DISPLAY Text with quotes: \"' and backslash: \\\\;"));
+        translateTemplate("DISPLAY Text with quotes\\: \"' and backslash\\: \\\\;"));
   }
 
   // #endregion textBlock ------------------------------------------------------
@@ -678,7 +881,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('here is a linked label: ')hyperlink(label(concat('field', '|', 'name', '|', 'BT-00-Text')), 'http://example.com')text('. How about it?') }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("DISPLAY here is a linked label: #{field|name|BT-00-Text}@{'http://example.com'}. How about it?;"));
+        translateTemplate("DISPLAY here is a linked label\\: #{field|name|BT-00-Text}@{'http://example.com'}. How about it?;"));
   }
 
     @Test
@@ -1011,7 +1214,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET text*:$items = ['a', 'b', 'c'];",
-            "DISPLAY count: ${count($items)};")));
+            "DISPLAY count\\: ${count($items)};")));
   }
 
   @Test
@@ -1026,7 +1229,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET number*:$nums = [1, 2, 3];",
-            "DISPLAY count: ${count($nums)};")));
+            "DISPLAY count\\: ${count($nums)};")));
   }
 
   @Test
@@ -1041,7 +1244,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET indicator*:$flags = [TRUE, FALSE];",
-            "DISPLAY count: ${count($flags)};")));
+            "DISPLAY count\\: ${count($flags)};")));
   }
 
   @Test
@@ -1056,7 +1259,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET date*:$dates = [2024-01-01Z, 2024-12-31Z];",
-            "DISPLAY count: ${count($dates)};")));
+            "DISPLAY count\\: ${count($dates)};")));
   }
 
   @Test
@@ -1071,7 +1274,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET time*:$times = [10:00:00Z, 18:00:00Z];",
-            "DISPLAY count: ${count($times)};")));
+            "DISPLAY count\\: ${count($times)};")));
   }
 
   @Test
@@ -1086,7 +1289,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET duration*:$durs = [P1Y, P2M];",
-            "DISPLAY count: ${count($durs)};")));
+            "DISPLAY count\\: ${count($durs)};")));
   }
 
   // #endregion Sequence variable declarations ---------------------------------
@@ -1105,7 +1308,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET number:?twice(number:$n) = $n * 2;",
-            "DISPLAY twice: ${?twice(21)};")));
+            "DISPLAY twice\\: ${?twice(21)};")));
   }
 
   @Test
@@ -1120,7 +1323,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET date:?nextDay(date:$d) = add-duration($d, P1D);",
-            "DISPLAY next day: ${?nextDay(2024-01-01Z)};")));
+            "DISPLAY next day\\: ${?nextDay(2024-01-01Z)};")));
   }
 
   @Test
@@ -1131,7 +1334,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('deadline: ')eval(format-date((PathNode/StartDateField/xs:date(text()) + xs:dayTimeDuration('P3D')), '[D01]/[M01]/[Y0001]')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("DISPLAY deadline: ${BT-00-StartDate + P3D};"));
+        translateTemplate("DISPLAY deadline\\: ${BT-00-StartDate + P3D};"));
   }
 
   @Test
@@ -1146,7 +1349,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET time:?noon() = 12:00:00Z;",
-            "DISPLAY noon: ${?noon()};")));
+            "DISPLAY noon\\: ${?noon()};")));
   }
 
   @Test
@@ -1161,7 +1364,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET duration:?week() = P1W;",
-            "DISPLAY days: ${days(?week())};")));
+            "DISPLAY days\\: ${days(?week())};")));
   }
 
   // A function's parameters are declared in its own scope, which closes after its body.
@@ -1267,7 +1470,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET text*:?getItems() = ['a', 'b', 'c'];",
-            "DISPLAY count: ${count(?getItems())};")));
+            "DISPLAY count\\: ${count(?getItems())};")));
   }
 
   @Test
@@ -1282,7 +1485,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET number*:?getNumbers() = [1, 2, 3];",
-            "DISPLAY count: ${count(?getNumbers())};")));
+            "DISPLAY count\\: ${count(?getNumbers())};")));
   }
 
   @Test
@@ -1297,7 +1500,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET indicator*:?getFlags() = [TRUE, FALSE];",
-            "DISPLAY count: ${count(?getFlags())};")));
+            "DISPLAY count\\: ${count(?getFlags())};")));
   }
 
   @Test
@@ -1312,7 +1515,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET date*:?getDates() = [2024-01-01Z, 2024-12-31Z];",
-            "DISPLAY count: ${count(?getDates())};")));
+            "DISPLAY count\\: ${count(?getDates())};")));
   }
 
   @Test
@@ -1327,7 +1530,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET time*:?getTimes() = [10:00:00Z, 18:00:00Z];",
-            "DISPLAY count: ${count(?getTimes())};")));
+            "DISPLAY count\\: ${count(?getTimes())};")));
   }
 
   @Test
@@ -1342,7 +1545,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "LET duration*:?getDurations() = [P1Y, P2M];",
-            "DISPLAY count: ${count(?getDurations())};")));
+            "DISPLAY count\\: ${count(?getDurations())};")));
   }
 
   // #endregion Sequence function declarations ---------------------------------
@@ -2589,14 +2792,14 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*/PathNode/TextField).call(nav01())",
             "for-each(/*/PathNode/TextField).call(nav02())"),
         translateTemplate(lines(
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};",
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};",
             "--- SUMMARY ---",
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};",
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};",
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};",
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};",
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};",
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};",
             "--- NAVIGATION ---",
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};",
-            "WITH BT-00-Text DISPLAY Summary: ${BT-00-Text};")));
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};",
+            "WITH BT-00-Text DISPLAY Summary\\: ${BT-00-Text};")));
   }
 
   @Test
@@ -3928,7 +4131,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:ctx) -> { text('Context: ')eval($ctx/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:ctx=.))"),
-        translateTemplate("WITH context:$ctx = BT-00-Text DISPLAY Context: ${$ctx};"));
+        translateTemplate("WITH context:$ctx = BT-00-Text DISPLAY Context\\: ${$ctx};"));
   }
 
   @Test
@@ -3943,8 +4146,8 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:ctx=.))",
             "for-each(/*/PathNode/TextField).call(body02(string:ctx='a'))"),
-        translateTemplate(lines("WITH context:$ctx = BT-00-Text DISPLAY Context: ${$ctx};",
-            "WITH BT-00-Text, text:$ctx = 'a' DISPLAY Text: ${$ctx};")));
+        translateTemplate(lines("WITH context:$ctx = BT-00-Text DISPLAY Context\\: ${$ctx};",
+            "WITH BT-00-Text, text:$ctx = 'a' DISPLAY Text\\: ${$ctx};")));
   }
 
   @Test
@@ -3955,7 +4158,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(context:ctx) -> { text('Context: ')eval($ctx/PathNode/TextField/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*).call(body01(context:ctx=.))"),
-        translateTemplate("WITH context:$ctx = ND-Root DISPLAY Context: ${$ctx::BT-00-Text};"));
+        translateTemplate("WITH context:$ctx = ND-Root DISPLAY Context\\: ${$ctx::BT-00-Text};"));
   }
 
   @Test
@@ -3966,7 +4169,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:var1, decimal:var2) -> { text('Variables: ')eval($var1)text(', ')eval(for $__item in $var2 return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:var1='hello', decimal:var2=42))"),
-        translateTemplate("WITH text:$var1='hello', number:$var2=42, BT-00-Text DISPLAY Variables: ${$var1}, ${$var2};"));
+        translateTemplate("WITH text:$var1='hello', number:$var2=42, BT-00-Text DISPLAY Variables\\: ${$var1}, ${$var2};"));
   }
 
   @Test
@@ -3977,7 +4180,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:prefix) -> { text('Prefix: ')eval($prefix)text(' Value: ')eval(./normalize-space(text())) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:prefix='test'))"),
-        translateTemplate("WITH text:$prefix='test', BT-00-Text DISPLAY Prefix: ${$prefix} Value: ${BT-00-Text};"));
+        translateTemplate("WITH text:$prefix='test', BT-00-Text DISPLAY Prefix\\: ${$prefix} Value\\: ${BT-00-Text};"));
   }
 
   @Test
@@ -3992,7 +4195,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
    */
   @Test
   void testContextDeclarationBlock_RepeatableFieldContextVariable_UsedAsScalar() {
-    String result = translateTemplate("WITH context:$ctx = BT-13-Number DISPLAY Value plus one: ${$ctx + 1};");
+    String result = translateTemplate("WITH context:$ctx = BT-13-Number DISPLAY Value plus one\\: ${$ctx + 1};");
 
     assertTrue(result.contains("decimal:ctx"),
         "Context variable should be scalar (decimal:ctx), not sequence. Actual: " + result);
@@ -4065,10 +4268,10 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "for-each(/*).call(body01())"),
         translateTemplate(lines(
             "--- TEMPLATE multi-when-template ---", "PARAMETERS text:$status;",
-            "WHEN $status == 'active' DISPLAY Status: Active",
-            "WHEN $status == 'inactive' DISPLAY Status: Inactive",
-            "WHEN $status == 'pending' DISPLAY Status: Pending",
-            "OTHERWISE DISPLAY Status: Unknown;",
+            "WHEN $status == 'active' DISPLAY Status\\: Active",
+            "WHEN $status == 'inactive' DISPLAY Status\\: Inactive",
+            "WHEN $status == 'pending' DISPLAY Status\\: Pending",
+            "OTHERWISE DISPLAY Status\\: Unknown;",
             "--- MAIN ---", "INVOKE multi-when-template('active');")));
   }
 
@@ -4164,7 +4367,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01(string:str='text', decimal:num=42, boolean:bool=true(), date:dt=xs:date('2023-01-01'), time:tm=xs:time('12:00:00'), duration:dur=xs:dayTimeDuration('P1D')))"),
         translateTemplate(
-            "WITH ND-Root, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), duration:$dur=day-time-duration('P1D') DISPLAY All types: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};"));
+            "WITH ND-Root, text:$str='text', number:$num=42, indicator:$bool=TRUE, date:$dt=date('2023-01-01'), time:$tm=time('12:00:00'), duration:$dur=day-time-duration('P1D') DISPLAY All types\\: ${$str}, ${$num}, ${$bool}, ${$dt}, ${$tm}, ${$dur};"));
   }
 
   @Test
@@ -4175,7 +4378,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01(string:computed) -> { text('Computed: ')eval($computed) }",
             "MAIN:",
             "for-each(/*/PathNode/TextField).call(body01(string:computed=concat('prefix-', ./normalize-space(text()))))"),
-        translateTemplate("WITH BT-00-Text, text:$computed=concat('prefix-', BT-00-Text) DISPLAY Computed: ${$computed};"));
+        translateTemplate("WITH BT-00-Text, text:$computed=concat('prefix-', BT-00-Text) DISPLAY Computed\\: ${$computed};"));
   }
 
   // #endregion variableList ---------------------------------------------------
@@ -4661,7 +4864,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Value: ')eval(PathNode/RepeatableTextField/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("WITH ND-Root DISPLAY Value: ${BT-00-Repeatable-Text};"));
+        translateTemplate("WITH ND-Root DISPLAY Value\\: ${BT-00-Repeatable-Text};"));
   }
 
   @Test
@@ -4672,7 +4875,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Value: ')eval(for $x in PathNode/RepeatableTextField/normalize-space(text()) return $x) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("WITH ND-Root DISPLAY Value: ${for text:$x in BT-00-Repeatable-Text return $x};"));
+        translateTemplate("WITH ND-Root DISPLAY Value\\: ${for text:$x in BT-00-Repeatable-Text return $x};"));
   }
 
   @Test
@@ -4683,7 +4886,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Value: ')eval(PathNode/TextField/normalize-space(text())) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("WITH ND-Root DISPLAY Value: ${BT-00-Text};"));
+        translateTemplate("WITH ND-Root DISPLAY Value\\: ${BT-00-Text};"));
   }
 
   @Test
@@ -4694,7 +4897,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Values: ')eval(for $__item in (1,2,3) return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("WITH ND-Root DISPLAY Values: ${[1,2,3]};"));
+        translateTemplate("WITH ND-Root DISPLAY Values\\: ${[1,2,3]};"));
   }
 
   @Test
@@ -4705,7 +4908,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "let body01() -> { text('Values: ')eval(for $__item in (1,2,PathNode/NumberField/number()) return format-number($__item, '# ##0,#########')) }",
             "MAIN:",
             "for-each(/*).call(body01())"),
-        translateTemplate("WITH ND-Root DISPLAY Values: ${[1,2,BT-00-Number]};"));
+        translateTemplate("WITH ND-Root DISPLAY Values\\: ${[1,2,BT-00-Number]};"));
   }
 
   @Test
@@ -4717,7 +4920,7 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*).call(body01())"),
         translateTemplate(
-            "WITH ND-Root DISPLAY Values: ${if BT-00-Indicator then BT-00-Repeatable-Text else 'a'};"));
+            "WITH ND-Root DISPLAY Values\\: ${if BT-00-Indicator then BT-00-Repeatable-Text else 'a'};"));
   }
 
   // #endregion Repeatable Fields in Expression Blocks -------------------------
@@ -4876,9 +5079,9 @@ class EfxTemplateTranslatorV2Test extends EfxTestsBase {
             "MAIN:",
             "for-each(/*/SubNode/SubSubNode/SubTextField[0 = 0]).call(body01())"),
         translateTemplate(lines(
-            "? WITH BT-01-SubSubNode-Text DISPLAY line1: ${BT-01-SubSubNode-Text[1==1]};",
-            "  ? WITH BT-01-SubSubNode-Text[1==2] DISPLAY line2: ${BT-01-SubSubNode-Text[1==4]};",
-            "    WITH BT-01-SubSubNode-Text[1==4] DISPLAY line3: ${BT-01-SubSubNode-Text[1==5]};")));
+            "? WITH BT-01-SubSubNode-Text DISPLAY line1\\: ${BT-01-SubSubNode-Text[1==1]};",
+            "  ? WITH BT-01-SubSubNode-Text[1==2] DISPLAY line2\\: ${BT-01-SubSubNode-Text[1==4]};",
+            "    WITH BT-01-SubSubNode-Text[1==4] DISPLAY line3\\: ${BT-01-SubSubNode-Text[1==5]};")));
   }
 
   @Test

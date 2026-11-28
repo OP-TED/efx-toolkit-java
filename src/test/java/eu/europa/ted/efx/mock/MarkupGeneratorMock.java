@@ -142,16 +142,23 @@ public class MarkupGeneratorMock implements MarkupGenerator {
     return new Markup("line-break()");
   }
 
+  // A caption is shown as caption(...) before what the template displays after it.
+  private static Markup captioned(Markup caption, Markup displayed) {
+    return caption.isEmpty() ? displayed : new Markup("caption(" + caption.script + ")").join(displayed);
+  }
+
   @Override
   public Markup composeFragmentDefinition(String name, FragmentOutline outline,
-      List<Conditional> conditionals, Markup content, Markup children,
+      List<Conditional> conditionals, Markup caption, Markup displayed, Markup children,
       Set<Parameter> parameters, TranslatorContext translatorContext) {
     final String number = outline.getNumber();
+    final Markup content = captioned(caption, displayed);
     String contents = "";
 
     if (conditionals != null && !conditionals.isEmpty()) {
       contents = conditionals.stream()
-          .map(c -> String.format("when %s: %s", c.getCondition().getScript(), c.getMarkup().script))
+          .map(c -> String.format("when %s: %s", c.getCondition().getScript(),
+              captioned(c.getCaption(), c.getMarkup()).script))
           .collect(Collectors.joining(", ", contents, ""));
       if (content.isEmpty()) {
         contents += ", otherwise nothing";

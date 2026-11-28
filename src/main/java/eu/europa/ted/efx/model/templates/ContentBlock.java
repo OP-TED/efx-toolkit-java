@@ -464,18 +464,21 @@ public class ContentBlock {
         .map(param -> new Parameter.Impl(param.name, markupGenerator.getEfxDataTypeEquivalent(param.dataType)))
         .collect(Collectors.toCollection(LinkedHashSet::new));
     List<Conditional> conditionals = new ArrayList<>();
+    Markup caption = Markup.empty();
     Markup content = Markup.empty();
     for (ContentTemplate contentTemplate : this.contentTemplates) {
       if (contentTemplate.getCondition().isEmpty()) {
+        caption = contentTemplate.renderCaption(markupGenerator, translatorContext);
         content = this.render(contentTemplate, markupGenerator, translatorContext);
       } else {
         conditionals.add(new Conditional(contentTemplate.getCondition(),
+            contentTemplate.renderCaption(markupGenerator, translatorContext),
             this.render(contentTemplate, markupGenerator, translatorContext)));
       }
     }
     List<Markup> templates = new ArrayList<>();
     templates.add(markupGenerator.composeFragmentDefinition(this.id, this.getOutline(),
-        conditionals, content, this.renderChildren(markupGenerator, translatorContext), params,
+        conditionals, caption, content, this.renderChildren(markupGenerator, translatorContext), params,
         translatorContext));
     for (ContentBlock child : this.children) {
       templates.addAll(child.renderDefinition(markupGenerator, translatorContext));

@@ -41,4 +41,13 @@ public abstract class ContentTemplate implements ParsedEntity {
    * which section of the view template is being rendered (see ContentTemplateFragment).
    */
   public abstract Markup render(MarkupGenerator markupGenerator, TranslatorContext translatorContext);
+
+  /**
+   * Renders the caption of this content template: what its template displays before the colon
+   * that separates it from the rest.
+   * Returns empty markup when it has no caption.
+   */
+  public Markup renderCaption(MarkupGenerator markupGenerator, TranslatorContext translatorContext) {
+    return Markup.empty();
+  }
 }
